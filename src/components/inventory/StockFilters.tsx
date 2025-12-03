@@ -9,7 +9,9 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
-import { Search, LayoutGrid, List as ListIcon, Grip, FilterX } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { Search, LayoutGrid, List as ListIcon, Grip, FilterX, SlidersHorizontal } from "lucide-react";
 
 export type ViewStyle = "grid" | "list" | "compact-grid";
 export type SortOption = "name-asc" | "name-desc" | "qty-asc" | "qty-desc" | "date-new" | "date-old";
@@ -60,134 +62,186 @@ export function StockFilters({
     assignedStatusFilter,
     onAssignedStatusChange,
 }: StockFiltersProps) {
+    const hasActiveFilters = 
+        selectedCategory !== "All" || 
+        stockStatus !== "all" || 
+        selectedSize !== "All" || 
+        selectedBrand !== "All" || 
+        assignedStatusFilter !== "all" || 
+        searchTerm !== "";
+
     return (
-        <div className="space-y-4">
-            <div className="flex gap-2">
-                <div className="relative flex-grow">
+        <Card className="p-4 space-y-4 bg-card/50 backdrop-blur-sm border-muted/60 shadow-sm">
+            {/* Top Row: Search and View Toggles */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
+                <div className="relative w-full sm:max-w-md">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search items by name or SKU..."
+                        placeholder="Search items by name, SKU, or brand..."
                         value={searchTerm}
                         onChange={(e) => onSearchChange(e.target.value)}
-                        className="pl-9"
+                        className="pl-9 bg-background/50"
                     />
                 </div>
-                <Select value={selectedCategory} onValueChange={onCategoryChange}>
-                    <SelectTrigger className="w-auto min-w-[120px]">
-                        <SelectValue placeholder="Category" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="All">All Categories</SelectItem>
-                        {categories.map((cat) => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div className="flex flex-wrap gap-2 items-center">
-                <Select value={sortOrder} onValueChange={(v) => onSortChange(v as SortOption)}>
-                    <SelectTrigger className="w-auto min-w-[120px]">
-                        <SelectValue placeholder="Sort by" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="date-new">Newest First</SelectItem>
-                        <SelectItem value="date-old">Oldest First</SelectItem>
-                        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                        <SelectItem value="qty-asc">Qty (Low-High)</SelectItem>
-                        <SelectItem value="qty-desc">Qty (High-Low)</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <Select value={stockStatus} onValueChange={(v) => onStatusChange(v as StockStatusFilter)}>
-                    <SelectTrigger className="w-auto min-w-[120px]">
-                        <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Items</SelectItem>
-                        <SelectItem value="out">Out of Stock</SelectItem>
-                        <SelectItem value="low">Low Stock</SelectItem>
-                        <SelectItem value="limited">Limited Stock</SelectItem>
-                        <SelectItem value="in-stock-not-low">In Stock</SelectItem>
-                    </SelectContent>
-                </Select>
-
-                <Select value={selectedSize} onValueChange={onSizeChange}>
-                    <SelectTrigger className="w-auto min-w-[120px]">
-                        <SelectValue placeholder="Size" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="All">All Sizes</SelectItem>
-                        {sizes.filter(Boolean).map((size) => (
-                            <SelectItem key={size} value={size!}>{size}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={selectedBrand} onValueChange={onBrandChange}>
-                    <SelectTrigger className="w-auto min-w-[120px]">
-                        <SelectValue placeholder="Brand" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="All">All Brands</SelectItem>
-                        {brands.filter(Boolean).map((brand) => (
-                            <SelectItem key={brand} value={brand!}>{brand}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-
-                <Select value={assignedStatusFilter} onValueChange={onAssignedStatusChange}>
-                    <SelectTrigger className="w-auto min-w-[120px]">
-                        <SelectValue placeholder="Assigned" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Status</SelectItem>
-                        <SelectItem value="not-assigned">Not Assigned</SelectItem>
-                        <SelectItem value="assigned">Using</SelectItem>
-                        <SelectItem value="assigned-for-replacement">Replacement</SelectItem>
-                    </SelectContent>
-                </Select>
-            </div>
-
-            <div className="flex items-center gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onResetFilters}
-                    className="gap-2"
-                >
-                    <FilterX className="h-4 w-4" />
-                    Reset Filters
-                </Button>
-
-
-                <div className="flex items-center border rounded-md">
-                    <Button
-                        variant={viewStyle === 'list' ? 'secondary' : 'ghost'}
-                        size="icon"
-                        className="h-9 w-9 rounded-r-none"
-                        onClick={() => onViewStyleChange('list')}
-                    >
-                        <ListIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant={viewStyle === 'grid' ? 'secondary' : 'ghost'}
-                        size="icon"
-                        className="h-9 w-9 rounded-none border-l border-r"
-                        onClick={() => onViewStyleChange('grid')}
-                    >
-                        <LayoutGrid className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant={viewStyle === 'compact-grid' ? 'secondary' : 'ghost'}
-                        size="icon"
-                        className="h-9 w-9 rounded-l-none"
-                        onClick={() => onViewStyleChange('compact-grid')}
-                    >
-                        <Grip className="h-4 w-4" />
-                    </Button>
+                
+                <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+                    {hasActiveFilters && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={onResetFilters}
+                            className="text-muted-foreground hover:text-foreground hidden sm:flex"
+                        >
+                            <FilterX className="h-4 w-4 mr-2" />
+                            Reset
+                        </Button>
+                    )}
+                    
+                    <div className="flex items-center border rounded-md bg-background/50 shadow-sm">
+                        <Button
+                            variant={viewStyle === 'list' ? 'secondary' : 'ghost'}
+                            size="icon"
+                            className="h-9 w-9 rounded-r-none"
+                            onClick={() => onViewStyleChange('list')}
+                            title="List View"
+                        >
+                            <ListIcon className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant={viewStyle === 'grid' ? 'secondary' : 'ghost'}
+                            size="icon"
+                            className="h-9 w-9 rounded-none border-l border-r"
+                            onClick={() => onViewStyleChange('grid')}
+                            title="Grid View"
+                        >
+                            <LayoutGrid className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant={viewStyle === 'compact-grid' ? 'secondary' : 'ghost'}
+                            size="icon"
+                            className="h-9 w-9 rounded-l-none"
+                            onClick={() => onViewStyleChange('compact-grid')}
+                            title="Compact Grid View"
+                        >
+                            <Grip className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </div>
             </div>
-        </div>
+
+            <Separator className="bg-border/60" />
+
+            {/* Filters Grid */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1">Category</label>
+                    <Select value={selectedCategory} onValueChange={onCategoryChange}>
+                        <SelectTrigger className="w-full bg-background/50">
+                            <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Categories</SelectItem>
+                            {categories.map((cat) => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1">Status</label>
+                    <Select value={stockStatus} onValueChange={(v) => onStatusChange(v as StockStatusFilter)}>
+                        <SelectTrigger className="w-full bg-background/50">
+                            <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Items</SelectItem>
+                            <SelectItem value="out">Out of Stock</SelectItem>
+                            <SelectItem value="low">Low Stock</SelectItem>
+                            <SelectItem value="limited">Limited Stock</SelectItem>
+                            <SelectItem value="in-stock-not-low">In Stock</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1">Size</label>
+                    <Select value={selectedSize} onValueChange={onSizeChange}>
+                        <SelectTrigger className="w-full bg-background/50">
+                            <SelectValue placeholder="Size" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Sizes</SelectItem>
+                            {sizes.filter(Boolean).map((size) => (
+                                <SelectItem key={size} value={size!}>{size}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1">Brand</label>
+                    <Select value={selectedBrand} onValueChange={onBrandChange}>
+                        <SelectTrigger className="w-full bg-background/50">
+                            <SelectValue placeholder="Brand" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="All">All Brands</SelectItem>
+                            {brands.filter(Boolean).map((brand) => (
+                                <SelectItem key={brand} value={brand!}>{brand}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1">Assigned</label>
+                    <Select value={assignedStatusFilter} onValueChange={onAssignedStatusChange}>
+                        <SelectTrigger className="w-full bg-background/50">
+                            <SelectValue placeholder="Assigned" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="not-assigned">Not Assigned</SelectItem>
+                            <SelectItem value="assigned">Using</SelectItem>
+                            <SelectItem value="assigned-for-replacement">Replacement</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="space-y-1">
+                    <label className="text-xs font-medium text-muted-foreground ml-1">Sort By</label>
+                    <Select value={sortOrder} onValueChange={(v) => onSortChange(v as SortOption)}>
+                        <SelectTrigger className="w-full bg-background/50">
+                            <SlidersHorizontal className="w-3 h-3 mr-2 opacity-50" />
+                            <SelectValue placeholder="Sort by" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="date-new">Newest First</SelectItem>
+                            <SelectItem value="date-old">Oldest First</SelectItem>
+                            <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                            <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                            <SelectItem value="qty-asc">Qty (Low-High)</SelectItem>
+                            <SelectItem value="qty-desc">Qty (High-Low)</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
+
+            {/* Mobile Reset Button */}
+            {hasActiveFilters && (
+                <div className="sm:hidden pt-2">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onResetFilters}
+                        className="w-full text-muted-foreground"
+                    >
+                        <FilterX className="h-4 w-4 mr-2" />
+                        Reset Filters
+                    </Button>
+                </div>
+            )}
+        </Card>
     );
 }
