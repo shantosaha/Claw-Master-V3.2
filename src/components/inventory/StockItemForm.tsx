@@ -204,6 +204,9 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
     const [isValidationErrorDialogOpen, setIsValidationErrorDialogOpen] = React.useState(false);
     const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
 
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+    const cameraInputRef = React.useRef<HTMLInputElement>(null);
+
     const generateDefaultFormValues = (item?: StockItem): RawFormValues => {
         if (!item) {
             return {
@@ -460,20 +463,20 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                             </div>
 
                             <div className="flex flex-col sm:flex-row gap-2">
-                                <Button type="button" variant="outline" onClick={() => document.getElementById('imageUrlInput')?.click()} className="font-body text-sm">
+                                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()} className="font-body text-sm">
                                     <PlusCircle className="mr-2 h-4 w-4" />
                                     Add Image
                                 </Button>
-                                <Button type="button" variant="outline" onClick={() => document.getElementById('cameraInput')?.click()} className="font-body text-sm">
+                                <Button type="button" variant="outline" onClick={() => cameraInputRef.current?.click()} className="font-body text-sm">
                                     <Camera className="mr-2 h-4 w-4" />
                                     Camera
                                 </Button>
                             </div>
                             <FormControl>
                                 <Input
-                                    id="imageUrlInput"
+                                    ref={fileInputRef}
                                     type="file"
-                                    className="font-body sr-only"
+                                    className="hidden"
                                     accept="image/*"
                                     multiple
                                     onChange={handleImageChange}
@@ -483,9 +486,9 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                             </FormControl>
                             <FormControl>
                                 <Input
-                                    id="cameraInput"
+                                    ref={cameraInputRef}
                                     type="file"
-                                    className="font-body sr-only"
+                                    className="hidden"
                                     accept="image/*"
                                     capture="environment"
                                     onChange={handleImageChange}
@@ -586,10 +589,10 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                 </Button>
                                             </FormControl>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[9999] max-h-[300px]">
                                             <Command>
                                                 <CommandInput placeholder="Search category..." />
-                                                <CommandList>
+                                                <CommandList className="max-h-[300px] overflow-y-auto">
                                                     <CommandEmpty>No category found.</CommandEmpty>
                                                     <CommandGroup>
                                                         {categories.map((category) => (
@@ -645,10 +648,10 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                 </Button>
                                             </FormControl>
                                         </PopoverTrigger>
-                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[9999] max-h-[300px]">
                                             <Command>
                                                 <CommandInput placeholder="Search size..." />
-                                                <CommandList>
+                                                <CommandList className="max-h-[300px] overflow-y-auto">
                                                     <CommandEmpty>No size found.</CommandEmpty>
                                                     <CommandGroup>
                                                         {["Small", "Medium", "Large", "Big", ...sizes.filter(s => !["Small", "Medium", "Large", "Big"].includes(s))].map((size) => (
@@ -713,7 +716,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[9999] max-h-[300px]">
                                                 <Command
                                                     filter={(value, search) => {
                                                         const machine = machines.find((m) => m.id === value);
@@ -724,7 +727,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                     }}
                                                 >
                                                     <CommandInput placeholder="Search machines..." />
-                                                    <CommandList>
+                                                    <CommandList className="max-h-[300px] overflow-y-auto">
                                                         <CommandEmpty>No machine found.</CommandEmpty>
                                                         <CommandGroup>
                                                             <CommandItem
@@ -797,10 +800,10 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                         </Button>
                                                     </FormControl>
                                                 </PopoverTrigger>
-                                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[9999] max-h-[300px]">
                                                     <Command>
                                                         <CommandInput placeholder="Search slot..." />
-                                                        <CommandList>
+                                                        <CommandList className="max-h-[300px] overflow-y-auto">
                                                             <CommandEmpty>No slot found.</CommandEmpty>
                                                             <CommandGroup>
                                                                 <CommandItem
@@ -879,10 +882,10 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                             </Button>
                                                         </FormControl>
                                                     </PopoverTrigger>
-                                                    <PopoverContent className="w-[200px] p-0">
+                                                    <PopoverContent className="w-[200px] p-0 z-[9999] max-h-[300px]">
                                                         <Command>
                                                             <CommandInput placeholder="Search location..." />
-                                                            <CommandList>
+                                                            <CommandList className="max-h-[300px] overflow-y-auto">
                                                                 <CommandEmpty>No location found.</CommandEmpty>
                                                                 <CommandGroup heading="Primary Locations">
                                                                     {["B-Plushy Room", "B-Capsule Room", "G-Storage Room", "L-Storage Room"].map((option) => (
