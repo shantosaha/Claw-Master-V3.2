@@ -1,5 +1,5 @@
 # Claw Master - Arcade Inventory & Settings Tracker
-
+# This is a fresh git upload of claw-master-v3
 A comprehensive management application for arcade operations, built to track machines, inventory, maintenance, and staff workflows.
 
 ## 🚀 Tech Stack
