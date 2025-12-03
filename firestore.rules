@@ -1,0 +1,70 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    
+    function hasRole(role) {
+      return isAuthenticated() && getUserData().role == role;
+    }
+    
+    function isStaff() {
+      return isAuthenticated() && (getUserData().role in ['staff', 'manager', 'admin', 'tech', 'crew']);
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated(); // Users can read profiles (for team view)
+      allow write: if request.auth.uid == userId || isAdmin(); // Users edit own, Admin edits all
+    }
+
+    // Stock Items
+    match /stockItems/{itemId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // Arcade Machines
+    match /machines/{machineId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // Playfield Settings
+    match /playfieldSettings/{settingId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // Maintenance Tasks
+    match /maintenanceTasks/{taskId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // Reorder Requests
+    match /reorderRequests/{requestId} {
+      allow read: if isAuthenticated();
+      allow write: if isStaff();
+    }
+
+    // Audit Logs
+    match /auditLogs/{logId} {
+      allow read: if isAuthenticated();
+      allow create: if isStaff(); // Client-side logging
+      allow update, delete: if false; // Audit logs are immutable
+    }
+  }
+}
