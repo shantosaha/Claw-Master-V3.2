@@ -36,11 +36,9 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-
 const ADD_NEW_CATEGORY_VALUE = "add_new_category_custom_value";
 const NO_MACHINE_ASSIGNED_VALUE = "no_machine_assigned";
 const ANY_SLOT_VALUE = "any_slot";
-
 
 const addStockItemSchemaStep1 = z.object({
     name: z.string().min(1, { message: "Name is required." }),
@@ -97,7 +95,6 @@ const addStockItemSchemaStep1 = z.object({
         })
     ).optional(),
 }).superRefine((data, ctx) => {
-    // Check if a slot is selected without a machine
     if (data.assignedSlotId && data.assignedSlotId !== ANY_SLOT_VALUE && (!data.assignedMachineId || data.assignedMachineId === NO_MACHINE_ASSIGNED_VALUE)) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -106,7 +103,6 @@ const addStockItemSchemaStep1 = z.object({
         });
     }
 
-    // Check assignment type if machine is selected
     if (data.assignedMachineId && data.assignedMachineId !== NO_MACHINE_ASSIGNED_VALUE && !data.assignmentType) {
         ctx.addIssue({
             code: z.ZodIssueCode.custom,
@@ -134,7 +130,6 @@ const addStockItemSchemaIntermediate = addStockItemSchemaStep1.transform(data =>
         _sumOfLocationQuantities: sumOfLocationQuantities,
     };
 });
-
 
 const stockItemFormSchema = addStockItemSchemaIntermediate.superRefine((data, ctx) => {
     if (data.category === ADD_NEW_CATEGORY_VALUE && (!data.newCategoryName || data.newCategoryName.trim() === "")) {
@@ -180,16 +175,14 @@ const stockItemFormSchema = addStockItemSchemaIntermediate.superRefine((data, ct
             locations: (data._numericLocationsParsed || []).map(loc => ({ name: loc.name, quantity: loc.quantity })),
             payouts: transformedPayouts.length > 0 ? transformedPayouts : undefined,
             assignedMachineId: data.assignedMachineId === NO_MACHINE_ASSIGNED_VALUE ? undefined : data.assignedMachineId,
-            assignedSlotId: data.assignedSlotId, // Let ANY_SLOT_VALUE pass through
+            assignedSlotId: data.assignedSlotId,
             assignmentType: data.assignmentType,
             _parsedOverallNumericQuantity: data._parsedOverallNumericQuantity,
             _sumOfLocationQuantities: data._sumOfLocationQuantities,
         };
     });
 
-
 type RawFormValues = z.input<typeof addStockItemSchemaStep1>;
-
 
 interface StockItemFormProps {
     onSubmit: (data: StockItemFormOutputValues) => void;
@@ -204,10 +197,10 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
     const [previewImages, setPreviewImages] = React.useState<string[]>(initialData?.imageUrls || (initialData?.imageUrl ? [initialData.imageUrl] : []));
     const [isGeneratingNote, setIsGeneratingNote] = React.useState(false);
     const { toast } = useToast();
-    const [machineComboboxOpen, setMachineComboboxOpen] = React.useState(false);
-    const [slotComboboxOpen, setSlotComboboxOpen] = React.useState(false);
     const [categoryOpen, setCategoryOpen] = React.useState(false);
     const [sizeOpen, setSizeOpen] = React.useState(false);
+    const [machineOpen, setMachineOpen] = React.useState(false);
+    const [slotOpen, setSlotOpen] = React.useState(false);
     const [isValidationErrorDialogOpen, setIsValidationErrorDialogOpen] = React.useState(false);
     const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
 
@@ -266,7 +259,6 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
     };
 
     const form = useForm<RawFormValues>({
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         resolver: zodResolver(stockItemFormSchema) as any,
         defaultValues: generateDefaultFormValues(initialData),
         mode: "onChange",
@@ -290,26 +282,18 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
             form.reset(generateDefaultFormValues());
             setPreviewImages([]);
         }
-    }, [initialData, form]);
-
+    }, [initialData]);
 
     const watchCategory = form.watch("category");
     const watchName = form.watch("name");
     const watchExistingNote = form.watch("description");
     const watchedAssignedMachineId = form.watch("assignedMachineId");
 
-
     const availableSlots = React.useMemo(() => {
         if (!watchedAssignedMachineId || watchedAssignedMachineId === NO_MACHINE_ASSIGNED_VALUE) return [];
         const machine = machines.find(m => m.id === watchedAssignedMachineId);
         return machine?.slots || [];
     }, [watchedAssignedMachineId, machines]);
-
-
-
-
-
-
 
     const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
@@ -321,7 +305,6 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
             const newPreviews = newImages.map(file => URL.createObjectURL(file));
             setPreviewImages(prev => [...prev, ...newPreviews]);
 
-            // Also set the first image as the main imageUrl for backward compatibility
             if (currentImages.length === 0 && newImages.length > 0) {
                 form.setValue("imageUrl", newImages[0]);
             }
@@ -338,7 +321,6 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
         newPreviews.splice(index, 1);
         setPreviewImages(newPreviews);
 
-        // Update main imageUrl
         if (newImages.length > 0) {
             form.setValue("imageUrl", newImages[0]);
         } else {
@@ -385,10 +367,8 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
         }
     };
 
-
     const onInvalid = (errors: FieldErrors<RawFormValues>) => {
         const messages: string[] = [];
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const extractMessages = (obj: any) => {
             if (!obj) return;
             if (typeof obj.message === 'string') {
@@ -408,11 +388,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
         setIsValidationErrorDialogOpen(true);
     };
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleValidSubmit = (data: any) => {
-        // The `data` received here from `handleSubmit` is actually already transformed by the Zod resolver.
-        // The type annotation `RawFormValues` is what `useForm`'s `handleSubmit` expects,
-        // but the runtime value is the transformed one. So we cast it to the output type.
         onSubmit(data as StockItemFormOutputValues);
     };
 
@@ -443,8 +419,10 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
             <Form {...form}>
                 <form onSubmit={form.handleSubmit(handleValidSubmit, onInvalid)} className="space-y-6">
+                    {/* Image Upload Section */}
                     <FormItem>
                         <FormLabel>Item Images (Optional)</FormLabel>
                         <div className="mt-2 flex flex-col gap-4">
@@ -519,8 +497,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                         <FormMessage>{form.formState.errors.imageUrls?.message as string}</FormMessage>
                     </FormItem>
 
-
-
+                    {/* Item Name */}
                     <FormField
                         control={form.control}
                         name="name"
@@ -535,6 +512,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                         )}
                     />
 
+                    {/* Quantity and Low Stock */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <FormField
                             control={form.control}
@@ -583,6 +561,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                         />
                     </div>
 
+                    {/* Category and Size */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
@@ -596,14 +575,13 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                 <Button
                                                     variant="outline"
                                                     role="combobox"
+                                                    aria-expanded={categoryOpen}
                                                     className={cn(
                                                         "w-full justify-between font-normal",
                                                         !field.value && "text-muted-foreground"
                                                     )}
                                                 >
-                                                    {field.value
-                                                        ? field.value
-                                                        : "Select category"}
+                                                    {field.value || "Select category"}
                                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                 </Button>
                                             </FormControl>
@@ -612,23 +590,21 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                             <Command>
                                                 <CommandInput placeholder="Search category..." />
                                                 <CommandList>
-                                                    <CommandEmpty>
-                                                        No category found.
-                                                    </CommandEmpty>
+                                                    <CommandEmpty>No category found.</CommandEmpty>
                                                     <CommandGroup>
                                                         {categories.map((category) => (
                                                             <CommandItem
-                                                                value={category}
                                                                 key={category}
-                                                                onSelect={() => {
-                                                                    field.onChange(category);
+                                                                value={category}
+                                                                onSelect={(currentValue) => {
+                                                                    field.onChange(currentValue === field.value ? "" : currentValue);
                                                                     setCategoryOpen(false);
                                                                 }}
                                                             >
                                                                 <Check
                                                                     className={cn(
                                                                         "mr-2 h-4 w-4",
-                                                                        category === field.value
+                                                                        category.toLowerCase() === field.value?.toLowerCase()
                                                                             ? "opacity-100"
                                                                             : "opacity-0"
                                                                     )}
@@ -658,14 +634,13 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                 <Button
                                                     variant="outline"
                                                     role="combobox"
+                                                    aria-expanded={sizeOpen}
                                                     className={cn(
                                                         "w-full justify-between font-normal",
                                                         !field.value && "text-muted-foreground"
                                                     )}
                                                 >
-                                                    {field.value
-                                                        ? field.value
-                                                        : "Select size"}
+                                                    {field.value || "Select size"}
                                                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                 </Button>
                                             </FormControl>
@@ -678,17 +653,17 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                     <CommandGroup>
                                                         {["Small", "Medium", "Large", "Big", ...sizes.filter(s => !["Small", "Medium", "Large", "Big"].includes(s))].map((size) => (
                                                             <CommandItem
-                                                                value={size}
                                                                 key={size}
-                                                                onSelect={() => {
-                                                                    field.onChange(size);
+                                                                value={size}
+                                                                onSelect={(currentValue) => {
+                                                                    field.onChange(currentValue === field.value ? "" : currentValue);
                                                                     setSizeOpen(false);
                                                                 }}
                                                             >
                                                                 <Check
                                                                     className={cn(
                                                                         "mr-2 h-4 w-4",
-                                                                        size === field.value
+                                                                        size.toLowerCase() === field.value?.toLowerCase()
                                                                             ? "opacity-100"
                                                                             : "opacity-0"
                                                                     )}
@@ -707,6 +682,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                         />
                     </div>
 
+                    {/* Machine Assignment */}
                     <div className="space-y-4 rounded-md border p-4">
                         <h3 className="text-md font-semibold leading-none tracking-tight flex items-center">
                             <Gamepad2 className="mr-2 h-5 w-5 text-primary" />
@@ -719,12 +695,13 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
                                         <FormLabel>Machine</FormLabel>
-                                        <Popover open={machineComboboxOpen} onOpenChange={setMachineComboboxOpen}>
+                                        <Popover open={machineOpen} onOpenChange={setMachineOpen}>
                                             <PopoverTrigger asChild>
                                                 <FormControl>
                                                     <Button
                                                         variant="outline"
                                                         role="combobox"
+                                                        aria-expanded={machineOpen}
                                                         className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
                                                     >
                                                         <span className="truncate">
@@ -756,7 +733,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                                     field.onChange(NO_MACHINE_ASSIGNED_VALUE);
                                                                     form.setValue("assignedSlotId", undefined);
                                                                     form.setValue("assignmentType", undefined);
-                                                                    setMachineComboboxOpen(false);
+                                                                    setMachineOpen(false);
                                                                 }}
                                                             >
                                                                 <Check className={cn("mr-2 h-4 w-4", field.value === NO_MACHINE_ASSIGNED_VALUE || !field.value ? "opacity-100" : "opacity-0")} />
@@ -768,8 +745,8 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                                     key={machine.id}
                                                                     onSelect={() => {
                                                                         field.onChange(machine.id);
-                                                                        form.setValue("assignedSlotId", ANY_SLOT_VALUE); // Default to Any Slot on new machine selection
-                                                                        setMachineComboboxOpen(false);
+                                                                        form.setValue("assignedSlotId", ANY_SLOT_VALUE);
+                                                                        setMachineOpen(false);
                                                                     }}
                                                                 >
                                                                     <Check className={cn("mr-2 h-4 w-4", machine.id === field.value ? "opacity-100" : "opacity-0")} />
@@ -801,12 +778,13 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                     render={({ field }) => (
                                         <FormItem className="flex flex-col">
                                             <FormLabel>Slot</FormLabel>
-                                            <Popover open={slotComboboxOpen} onOpenChange={setSlotComboboxOpen}>
+                                            <Popover open={slotOpen} onOpenChange={setSlotOpen}>
                                                 <PopoverTrigger asChild>
                                                     <FormControl>
                                                         <Button
                                                             variant="outline"
                                                             role="combobox"
+                                                            aria-expanded={slotOpen}
                                                             className={cn(
                                                                 "w-full justify-between font-normal",
                                                                 !field.value && "text-muted-foreground"
@@ -829,7 +807,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                                     value={ANY_SLOT_VALUE}
                                                                     onSelect={() => {
                                                                         field.onChange(ANY_SLOT_VALUE);
-                                                                        setSlotComboboxOpen(false);
+                                                                        setSlotOpen(false);
                                                                     }}
                                                                 >
                                                                     <Check
@@ -846,7 +824,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                                         key={slot.id}
                                                                         onSelect={() => {
                                                                             field.onChange(slot.id);
-                                                                            setSlotComboboxOpen(false);
+                                                                            setSlotOpen(false);
                                                                         }}
                                                                     >
                                                                         <Check
@@ -871,8 +849,9 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                         </div>
                     </div>
 
+                    {/* Locations */}
                     <div>
-                        <Label className="text-sm font-medium">Locations &amp; Specific Quantities (Units)</Label>
+                        <Label className="text-sm font-medium">Locations & Specific Quantities (Units)</Label>
                         <div className="space-y-3 mt-2">
                             {locationFields.map((item, index) => (
                                 <div key={item.id} className="flex items-end gap-2 p-3 border rounded-md bg-secondary/30">
@@ -895,9 +874,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                                     !itemField.value && "text-muted-foreground"
                                                                 )}
                                                             >
-                                                                {itemField.value
-                                                                    ? itemField.value
-                                                                    : "Select location"}
+                                                                {itemField.value || "Select location"}
                                                                 <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                                                             </Button>
                                                         </FormControl>
@@ -912,14 +889,14 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                                         <CommandItem
                                                                             value={option}
                                                                             key={option}
-                                                                            onSelect={() => {
-                                                                                itemField.onChange(option);
+                                                                            onSelect={(currentValue) => {
+                                                                                itemField.onChange(currentValue);
                                                                             }}
                                                                         >
                                                                             <Check
                                                                                 className={cn(
                                                                                     "mr-2 h-4 w-4",
-                                                                                    option === itemField.value
+                                                                                    option.toLowerCase() === itemField.value?.toLowerCase()
                                                                                         ? "opacity-100"
                                                                                         : "opacity-0"
                                                                                 )}
@@ -933,14 +910,14 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                                                                         <CommandItem
                                                                             value={option}
                                                                             key={option}
-                                                                            onSelect={() => {
-                                                                                itemField.onChange(option);
+                                                                            onSelect={(currentValue) => {
+                                                                                itemField.onChange(currentValue);
                                                                             }}
                                                                         >
                                                                             <Check
                                                                                 className={cn(
                                                                                     "mr-2 h-4 w-4",
-                                                                                    option === itemField.value
+                                                                                    option.toLowerCase() === itemField.value?.toLowerCase()
                                                                                         ? "opacity-100"
                                                                                         : "opacity-0"
                                                                                 )}
@@ -1006,6 +983,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                         <FormMessage>{form.formState.errors.locations?.message || form.formState.errors?.locations?.root?.message}</FormMessage>
                     </div>
 
+                    {/* Payout Rules */}
                     <div>
                         <Label className="text-sm font-medium">Payout Rules (Optional)</Label>
                         <div className="space-y-3 mt-2">
@@ -1063,6 +1041,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                         <FormMessage>{form.formState.errors.payouts?.message || form.formState.errors.payouts?.root?.message}</FormMessage>
                     </div>
 
+                    {/* Description */}
                     <FormField
                         control={form.control}
                         name="description"
@@ -1094,6 +1073,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                         )}
                     />
 
+                    {/* Cost and Value */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <FormField
                             control={form.control}
@@ -1132,6 +1112,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, sizes, initialDa
                         />
                     </div>
 
+                    {/* Form Actions */}
                     <div className="flex justify-end space-x-3 pt-4">
                         <Button type="button" variant="outline" onClick={onCancel} className="font-body">
                             Cancel
