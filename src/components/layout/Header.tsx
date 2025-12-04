@@ -1,6 +1,6 @@
 "use client";
 
-import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, Search, CircleUser } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -48,20 +48,18 @@ export function Header() {
                     </Button>
                 </SheetTrigger>
                 <SheetContent side="left" className="flex flex-col p-0 w-64">
-                    <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
                     {/* We can reuse the Sidebar content here or create a MobileNav component */}
-                    <Sidebar className="block w-full h-full border-none" />
+                    <div className="p-4">Mobile Nav Placeholder</div>
                 </SheetContent>
             </Sheet>
             <div className="w-full flex-1">
-                <form suppressHydrationWarning>
+                <form>
                     <div className="relative">
                         <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                         <Input
                             type="search"
                             placeholder="Search products..."
                             className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-                            suppressHydrationWarning
                         />
                     </div>
                 </form>
