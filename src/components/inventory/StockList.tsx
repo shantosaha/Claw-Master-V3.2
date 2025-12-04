@@ -322,41 +322,132 @@ export function StockList() {
 
     const handleSaveItem = async (data: any) => {
         try {
+            let imageUrl = data.imageUrl;
+            let imageUrls: string[] = [];
+
+            // Check if Firebase is initialized before attempting storage operations
+            const { isFirebaseInitialized, storage } = await import('@/lib/firebase');
+
+            if (!isFirebaseInitialized) {
+                console.warn("Firebase not initialized, converting images to Base64 for local storage");
+                toast.warning("Firebase not connected. Saving images locally (Base64).");
+
+                // Convert new files to Base64
+                if (data.imageUrls && Array.isArray(data.imageUrls)) {
+                    const base64Promises = data.imageUrls.map(async (item: any) => {
+                        if (item instanceof File) {
+                            return new Promise<string>((resolve, reject) => {
+                                const reader = new FileReader();
+                                reader.onload = () => resolve(reader.result as string);
+                                reader.onerror = reject;
+                                reader.readAsDataURL(item);
+                            });
+                        } else if (typeof item === 'string') {
+                            return item;
+                        }
+                        return null;
+                    });
+
+                    const results = await Promise.all(base64Promises);
+                    imageUrls = results.filter((url): url is string => typeof url === 'string' && url.length > 0);
+                } else if (data.imageUrl instanceof File) {
+                    // Fallback for single image file
+                    const base64 = await new Promise<string>((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.onload = () => resolve(reader.result as string);
+                        reader.onerror = reject;
+                        reader.readAsDataURL(data.imageUrl);
+                    });
+                    imageUrls = [base64];
+                } else if (typeof data.imageUrl === 'string') {
+                    imageUrls = [data.imageUrl];
+                }
+
+                if (imageUrls.length > 0) {
+                    imageUrl = imageUrls[0];
+                }
+            } else if (data.imageUrls && Array.isArray(data.imageUrls)) {
+                const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
+
+                const uploadPromises = data.imageUrls.map(async (item: any) => {
+                    if (item instanceof File) {
+                        try {
+                            const storageRef = ref(storage, `stock-items/${Date.now()}-${item.name}`);
+                            await uploadBytes(storageRef, item);
+                            return await getDownloadURL(storageRef);
+                        } catch (err) {
+                            console.error("Error uploading file:", item.name, err);
+                            toast.error(`Failed to upload image: ${item.name}`);
+                            return null;
+                        }
+                    } else if (typeof item === 'string') {
+                        return item;
+                    }
+                    return null;
+                });
+
+                const results = await Promise.all(uploadPromises);
+                imageUrls = results.filter((url): url is string => typeof url === 'string' && url.length > 0);
+
+                if (imageUrls.length > 0) {
+                    imageUrl = imageUrls[0];
+                }
+            } else if (imageUrl instanceof File) {
+                try {
+                    const { ref, uploadBytes, getDownloadURL } = await import("firebase/storage");
+                    const storageRef = ref(storage, `stock-items/${Date.now()}-${imageUrl.name}`);
+                    const snapshot = await uploadBytes(storageRef, imageUrl);
+                    imageUrl = await getDownloadURL(storageRef);
+                    imageUrls = [imageUrl];
+                } catch (uploadError) {
+                    console.error("Failed to upload image:", uploadError);
+                    toast.error("Image Upload Failed", { description: "The item will be saved without an image." });
+                    imageUrl = undefined;
+                }
+            }
+
+            // Create the item data with the uploaded image URLs
+            const itemData = {
+                ...data,
+                imageUrl: imageUrl || (typeof data.imageUrl === 'string' ? data.imageUrl : undefined),
+                imageUrls: imageUrls.length > 0 ? imageUrls : (Array.isArray(data.imageUrls) ? data.imageUrls.filter((u: any) => typeof u === 'string') : [])
+            };
+
             if (editingItem) {
                 const historyLog = createHistoryLog("UPDATE_ITEM", {
                     changes: "Item details updated",
-                    name: data.name !== editingItem.name ? `Name changed from ${editingItem.name} to ${data.name}` : undefined,
-                    quantity: data.quantity !== editingItem.quantity ? `Quantity changed from ${editingItem.quantity} to ${data.quantity}` : undefined
+                    name: itemData.name !== editingItem.name ? `Name changed from ${editingItem.name} to ${itemData.name}` : undefined,
+                    quantity: itemData.quantity !== editingItem.quantity ? `Quantity changed from ${editingItem.quantity} to ${itemData.quantity}` : undefined
                 }, editingItem.id);
 
                 const updatedHistory = [...(editingItem.history || []), historyLog];
 
                 await stockService.update(editingItem.id, {
-                    ...data,
+                    ...itemData,
                     history: updatedHistory,
                     updatedAt: new Date()
                 });
                 // Update state directly instead of reloading
                 setItems(prevItems => prevItems.map(item =>
-                    item.id === editingItem.id ? { ...item, ...data, history: updatedHistory, updatedAt: new Date() } : item
+                    item.id === editingItem.id ? { ...item, ...itemData, history: updatedHistory, updatedAt: new Date() } : item
                 ));
-                toast.success("Item Updated", { description: `${data.name} has been updated.` });
+                toast.success("Item Updated", { description: `${itemData.name} has been updated.` });
             } else {
                 const historyLog = createHistoryLog("CREATE_ITEM", {
-                    name: data.name,
-                    category: data.category,
-                    initialQuantity: data.quantity
+                    name: itemData.name,
+                    category: itemData.category,
+                    initialQuantity: itemData.quantity
                 });
 
                 const newId = await stockService.add({
-                    ...data,
+                    ...itemData,
                     history: [historyLog],
                     createdAt: new Date(),
                     updatedAt: new Date()
                 });
                 // Add to state directly
-                setItems(prevItems => [...prevItems, { ...data, id: newId, history: [historyLog], createdAt: new Date(), updatedAt: new Date() }]);
-                toast.success("Item Created", { description: `${data.name} has been added.` });
+                setItems(prevItems => [...prevItems, { ...itemData, id: newId, history: [historyLog], createdAt: new Date(), updatedAt: new Date() }]);
+                toast.success("Item Created", { description: `${itemData.name} has been added.` });
             }
             setIsFormOpen(false);
             setEditingItem(null);
@@ -650,10 +741,11 @@ export function StockList() {
                 setMachines(updatedMachines);
             }
 
-            toast.success("Status Updated", { description: `Item status changed to ${newStatus}` });
+            toast.success(`Status updated to ${newStatus}`);
         } catch (error) {
+
             console.error("Failed to update status:", error);
-            toast.error("Error", { description: "Failed to update status." });
+            toast.error("Failed to update status");
         }
     };
 
@@ -674,14 +766,14 @@ export function StockList() {
                     setWarningAlert({
                         open: true,
                         title: "Out of Stock",
-                        description: `This item is out of stock and cannot be assigned by crew. Please ask a supervisor to assign it or update stock first.`,
+                        description: `This item is out of stock and cannot be assigned by crew.Please ask a supervisor to assign it or update stock first.`,
                     });
                     return;
                 } else {
                     setWarningAlert({
                         open: true,
                         title: "Supervisor Override - Out of Stock",
-                        description: `This item is currently out of stock. As a supervisor you can still assign it, but machines may appear empty until stock is received.`,
+                        description: `This item is currently out of stock.As a supervisor you can still assign it, but machines may appear empty until stock is received.`,
                     });
                 }
             } else if (isLow) {
@@ -689,7 +781,7 @@ export function StockList() {
                 setWarningAlert({
                     open: true,
                     title: "Low Stock Warning",
-                    description: `This item is low on stock. Assigning it now may cause the machine to run out soon.`,
+                    description: `This item is low on stock.Assigning it now may cause the machine to run out soon.`,
                 });
             }
         }
@@ -722,7 +814,7 @@ export function StockList() {
                 setWarningAlert({
                     open: true,
                     title: "Status Change Warning",
-                    description: `You are changing this item to "Replacement". It will remain assigned to ${item.assignedMachineName} but will no longer be the active item.`
+                    description: `You are changing this item to "Replacement".It will remain assigned to ${item.assignedMachineName} but will no longer be the active item.`
                 });
                 await processStatusChange(item, newStatus);
                 return;
@@ -765,21 +857,21 @@ export function StockList() {
                     setWarningAlert({
                         open: true,
                         title: "Out of Stock",
-                        description: `This item is out of stock and cannot be assigned by crew. Please ask a supervisor to assign it or update stock first.`,
+                        description: `This item is out of stock and cannot be assigned by crew.Please ask a supervisor to assign it or update stock first.`,
                     });
                     return;
                 } else {
                     setWarningAlert({
                         open: true,
                         title: "Supervisor Override - Out of Stock",
-                        description: `This item is currently out of stock. As a supervisor you can still assign it, but machines may appear empty until stock is received.`,
+                        description: `This item is currently out of stock.As a supervisor you can still assign it, but machines may appear empty until stock is received.`,
                     });
                 }
             } else if (isLow) {
                 setWarningAlert({
                     open: true,
                     title: "Low Stock Warning",
-                    description: `This item is low on stock. Assigning it now may cause the machine to run out soon.`,
+                    description: `This item is low on stock.Assigning it now may cause the machine to run out soon.`,
                 });
             }
 
@@ -1043,7 +1135,7 @@ export function StockList() {
                                             </TableCell>
                                             <TableCell className="font-medium">
                                                 <Link
-                                                    href={`/inventory/${item.id}`}
+                                                    href={`/ inventory / ${item.id} `}
                                                     className="text-primary underline underline-offset-4 group-hover:decoration-2"
                                                 >
                                                     {item.name}
@@ -1087,12 +1179,12 @@ export function StockList() {
                                                     value={item.assignedStatus || "Not Assigned"}
                                                     onValueChange={(value) => handleQuickStatusChange(item.id, value)}
                                                 >
-                                                    <SelectTrigger className={`h-8 w-[140px] ${item.assignedStatus === "Assigned"
+                                                    <SelectTrigger className={`h - 8 w - [140px] ${item.assignedStatus === "Assigned"
                                                         ? "bg-green-100 text-green-700 border-green-200"
                                                         : item.assignedStatus === "Assigned for Replacement"
                                                             ? "bg-blue-100 text-blue-700 border-blue-200"
                                                             : "bg-gray-100 text-gray-700 border-gray-200"
-                                                        }`}>
+                                                        } `}>
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
@@ -1105,7 +1197,7 @@ export function StockList() {
                                             <TableCell>
                                                 {item.assignedMachineName ? (
                                                     <Link
-                                                        href={`/machines/${item.assignedMachineId || ''}`}
+                                                        href={`/ machines / ${item.assignedMachineId || ''} `}
                                                         onClick={(e) => e.stopPropagation()}
                                                         className="text-primary hover:underline"
                                                     >
@@ -1164,7 +1256,9 @@ export function StockList() {
                             onAdjust={(i) => { setAdjustItem(i); setIsAdjustOpen(true); }}
                             onViewHistory={(i) => { setHistoryItemId(i.id); setIsHistoryOpen(true); }}
                             onChangeAssignedStatus={(id, status) => handleQuickStatusChange(id, status)}
+                            onChangeStockStatus={(id, status) => handleQuickStockLevelChange(id, status)}
                         />
+
                     ))}
                     {filteredItems.length === 0 && (
                         <div className="col-span-full text-center py-12 text-muted-foreground">
@@ -1189,7 +1283,6 @@ export function StockList() {
                         onSubmit={handleSaveItem}
                         onCancel={() => setIsFormOpen(false)}
                         categories={categories}
-                        sizes={sizes}
                         machines={machines}
                     />
                 </DialogContent>
@@ -1512,12 +1605,12 @@ export function StockList() {
 
                                                 return (
                                                     <Button
-                                                        key={`${machine.id}-${slot.id}`}
+                                                        key={`${machine.id} -${slot.id} `}
                                                         variant="outline"
-                                                        className={`w-full justify-start h-auto py-3 mb-2 ${isOccupied
+                                                        className={`w - full justify - start h - auto py - 3 mb - 2 ${isOccupied
                                                             ? "border-red-200 bg-red-50/50 hover:bg-red-50 hover:border-red-300"
                                                             : "border-green-200 bg-green-50/50 hover:bg-green-50 hover:border-green-300"
-                                                            }`}
+                                                            } `}
                                                         onClick={() => handleAssignMachine(machine.id, slot.id)}
                                                     >
                                                         <div className="flex flex-col items-start gap-1 w-full">
@@ -1779,8 +1872,8 @@ export function StockList() {
                             {pendingStockChange?.newLevel === "Out of Stock"
                                 ? "Choose how you want to handle the existing quantity for this item."
                                 : `You're changing the stock status for ${pendingStockChange?.item.name}. Enter how many units are being restocked now.`}
-                        </DialogDescription>
-                    </DialogHeader>
+                        </DialogDescription >
+                    </DialogHeader >
 
                     {pendingStockChange?.newLevel === "Out of Stock" ? (
                         <div className="space-y-3">
@@ -1830,7 +1923,8 @@ export function StockList() {
                                 This will set the quantity for the first location and set others to 0.
                             </p>
                         </div>
-                    )}
+                    )
+                    }
 
                     <DialogFooter>
                         <Button
@@ -1924,11 +2018,11 @@ export function StockList() {
                             Confirm
                         </Button>
                     </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                </DialogContent >
+            </Dialog >
 
             {/* Supervisor password dialog (for crew override) */}
-            <AlertDialog open={!!supervisorOverride} onOpenChange={(open) => {
+            < AlertDialog open={!!supervisorOverride} onOpenChange={(open) => {
                 if (!open) {
                     setSupervisorOverride(null);
                     setSupervisorPassword("");
@@ -2004,10 +2098,10 @@ export function StockList() {
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog>
+            </AlertDialog >
 
             {/* Replacement -> Using conflict dialog (one Using per machine) */}
-            <AlertDialog
+            < AlertDialog
                 open={!!assignmentConflict}
                 onOpenChange={(open) => {
                     if (!open) setAssignmentConflict(null);
@@ -2078,8 +2172,8 @@ export function StockList() {
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
-            </AlertDialog>
-        </div>
+            </AlertDialog >
+        </div >
     );
 }
 

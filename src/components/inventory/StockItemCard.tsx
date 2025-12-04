@@ -27,6 +27,7 @@ interface StockItemCardProps {
     onAdjust: (item: StockItem) => void;
     onViewHistory: (item: StockItem) => void;
     onChangeAssignedStatus: (itemId: string, newStatus: string) => void;
+    onChangeStockStatus: (itemId: string, newStatus: string) => void;
 }
 
 export function StockItemCard({
@@ -37,6 +38,7 @@ export function StockItemCard({
     onAdjust,
     onViewHistory,
     onChangeAssignedStatus,
+    onChangeStockStatus = () => console.warn("onChangeStockStatus missing"),
 }: StockItemCardProps) {
     const [currentImageIndex, setCurrentImageIndex] = React.useState(0);
     const totalQuantity = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
@@ -209,10 +211,31 @@ export function StockItemCard({
                         )}
                     </div>
 
-                    {/* Stock Status (read-only) */}
-                    <Badge className={cn("w-full justify-center text-xs py-1", stockStatus.colorClass)}>
-                        {stockStatus.label}
-                    </Badge>
+                    {/* Stock Status (clickable) */}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Badge className={cn("w-full justify-center text-xs py-1 cursor-pointer", stockStatus.colorClass)}>
+                                {stockStatus.label}
+                            </Badge>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                            <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "")}>
+                                Auto (Calculate)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "In Stock")}>
+                                In Stock
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "Limited Stock")}>
+                                Limited Stock
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "Low Stock")}>
+                                Low Stock
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "Out of Stock")}>
+                                Out of Stock
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
 
                     {/* Assignment Status (clickable) */}
                     <DropdownMenu>
@@ -374,14 +397,35 @@ export function StockItemCard({
                                 Low alert at {item.lowStockThreshold} units
                             </span>
                         </div>
-                        <Badge
-                            className={cn(
-                                "min-w-[110px] justify-center text-xs py-1",
-                                stockStatus.colorClass
-                            )}
-                        >
-                            {stockStatus.label}
-                        </Badge>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Badge
+                                    className={cn(
+                                        "min-w-[110px] justify-center text-xs py-1 cursor-pointer",
+                                        stockStatus.colorClass
+                                    )}
+                                >
+                                    {stockStatus.label}
+                                </Badge>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "")}>
+                                    Auto (Calculate)
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "In Stock")}>
+                                    In Stock
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "Limited Stock")}>
+                                    Limited Stock
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "Low Stock")}>
+                                    Low Stock
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "Out of Stock")}>
+                                    Out of Stock
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
 
                     {/* Assignment row */}
