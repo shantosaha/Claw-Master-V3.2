@@ -31,11 +31,13 @@ const navItems = [
     { name: "Settings", href: "/settings", icon: Settings },
 ];
 
-export function Sidebar() {
+interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> { }
+
+export function Sidebar({ className }: SidebarProps) {
     const pathname = usePathname();
 
     return (
-        <div className="hidden border-r bg-muted/40 md:block w-64 overflow-y-auto">
+        <div className={cn("hidden border-r bg-muted/40 md:block w-64 overflow-y-auto", className)}>
 
             <div className="flex h-14 items-center border-b px-4 lg:h-[60px] lg:px-6">
                 <Link href="/" className="flex items-center gap-2 font-semibold">

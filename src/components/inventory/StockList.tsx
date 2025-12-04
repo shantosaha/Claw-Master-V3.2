@@ -968,7 +968,7 @@ export function StockList() {
             />
 
             {viewStyle === 'list' ? (
-                <div className="rounded-md border">
+                <div className="rounded-md border overflow-x-auto">
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -1177,7 +1177,7 @@ export function StockList() {
 
             {/* Dialogs */}
             <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-                <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+                <DialogContent className="max-w-3xl max-h-[90vh] overflow-auto">
                     <DialogHeader>
                         <DialogTitle>{editingItem ? "Edit Stock Item" : "Add New Stock Item"}</DialogTitle>
                         <DialogDescription>
