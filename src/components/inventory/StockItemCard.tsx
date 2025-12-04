@@ -219,9 +219,7 @@ export function StockItemCard({
                             </Badge>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "")}>
-                                Auto (Calculate)
-                            </DropdownMenuItem>
+
                             <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "In Stock")}>
                                 In Stock
                             </DropdownMenuItem>
@@ -409,9 +407,7 @@ export function StockItemCard({
                                 </Badge>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "")}>
-                                    Auto (Calculate)
-                                </DropdownMenuItem>
+
                                 <DropdownMenuItem onClick={() => onChangeStockStatus(item.id, "In Stock")}>
                                     In Stock
                                 </DropdownMenuItem>

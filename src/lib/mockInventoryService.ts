@@ -16,11 +16,28 @@ const normalizeItem = (item: any): StockItem => {
 // Initialize in-memory items with normalized sample data
 let inMemoryItems: StockItem[] = sampleInventoryData.map(normalizeItem);
 
+// Listeners for real-time updates
+let listeners: ((items: StockItem[]) => void)[] = [];
+
+const notifyListeners = () => {
+    const items = [...inMemoryItems];
+    listeners.forEach(listener => listener(items));
+};
+
 export const mockInventoryService = {
     getAll: async () => {
         // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, 500));
         return [...inMemoryItems];
+    },
+
+    subscribe: (callback: (items: StockItem[]) => void) => {
+        listeners.push(callback);
+        // Initial call
+        callback([...inMemoryItems]);
+        return () => {
+            listeners = listeners.filter(l => l !== callback);
+        };
     },
 
     getById: async (id: string) => {
@@ -37,6 +54,7 @@ export const mockInventoryService = {
             updatedAt: new Date()
         } as StockItem;
         inMemoryItems.push(newItem);
+        notifyListeners();
         return newItem.id;
     },
 
@@ -49,12 +67,14 @@ export const mockInventoryService = {
                 ...data,
                 updatedAt: new Date()
             };
+            notifyListeners();
         }
     },
 
     remove: async (id: string) => {
         await new Promise(resolve => setTimeout(resolve, 500));
         inMemoryItems = inMemoryItems.filter(i => i.id !== id);
+        notifyListeners();
     },
 
     getUniqueCategories: async () => {

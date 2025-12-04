@@ -158,7 +158,32 @@ export function StockList() {
 
 
     useEffect(() => {
+        let unsubscribeStock: (() => void) | undefined;
+        let unsubscribeMachines: (() => void) | undefined;
+
+        const setupSubscriptions = () => {
+            // Subscribe to stock updates
+            if (typeof (stockService as any).subscribe === 'function') {
+                unsubscribeStock = (stockService as any).subscribe((data: StockItem[]) => {
+                    setItems(data);
+                });
+            }
+
+            // Subscribe to machine updates
+            if (typeof (machineService as any).subscribe === 'function') {
+                unsubscribeMachines = (machineService as any).subscribe((data: ArcadeMachine[]) => {
+                    setMachines(data);
+                });
+            }
+        };
+
+        setupSubscriptions();
         loadData();
+
+        return () => {
+            if (unsubscribeStock) unsubscribeStock();
+            if (unsubscribeMachines) unsubscribeMachines();
+        };
     }, []);
 
     useEffect(() => {

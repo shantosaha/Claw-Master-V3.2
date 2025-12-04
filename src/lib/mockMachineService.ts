@@ -1,4 +1,4 @@
-import { ArcadeMachine, ArcadeMachineSlot } from "@/types";
+import { ArcadeMachine, ArcadeMachineSlot, StockItem } from "@/types";
 
 // Initial data provided by the user
 const INITIAL_MACHINES: any[] = [
@@ -735,10 +735,51 @@ const saveToStorage = () => {
     }
 };
 
+// Listeners
+let listeners: ((machines: ArcadeMachine[]) => void)[] = [];
+
+const notifyListeners = () => {
+    const machines = [...inMemoryMachines];
+    listeners.forEach(listener => listener(machines));
+};
+
 export const mockMachineService = {
     getAll: async (): Promise<ArcadeMachine[]> => {
         initializeMachines();
         return [...inMemoryMachines];
+    },
+
+    subscribe: (callback: (machines: ArcadeMachine[]) => void) => {
+        listeners.push(callback);
+        // Initial call
+        initializeMachines();
+        callback([...inMemoryMachines]);
+        return () => {
+            listeners = listeners.filter(l => l !== callback);
+        };
+    },
+
+    syncStockItems: async (items: StockItem[]) => {
+        initializeMachines();
+        let changed = false;
+        inMemoryMachines.forEach(machine => {
+            machine.slots.forEach(slot => {
+                if (slot.currentItem) {
+                    const freshItem = items.find(i => i.id === slot.currentItem!.id);
+                    if (freshItem) {
+                        // Check if changed (simple comparison)
+                        if (JSON.stringify(slot.currentItem) !== JSON.stringify(freshItem)) {
+                            slot.currentItem = freshItem;
+                            changed = true;
+                        }
+                    }
+                }
+            });
+        });
+        if (changed) {
+            saveToStorage();
+            notifyListeners();
+        }
     },
 
     getById: async (id: string): Promise<ArcadeMachine | null> => {
@@ -753,6 +794,7 @@ export const mockMachineService = {
         const newMachine = { ...data, id: newId } as ArcadeMachine;
         inMemoryMachines.push(newMachine);
         saveToStorage();
+        notifyListeners();
         return newId;
     },
 
@@ -765,6 +807,7 @@ export const mockMachineService = {
             inMemoryMachines.push({ ...data, id } as ArcadeMachine);
         }
         saveToStorage();
+        notifyListeners();
     },
 
     update: async (id: string, data: Partial<ArcadeMachine>): Promise<void> => {
@@ -773,6 +816,7 @@ export const mockMachineService = {
         if (index >= 0) {
             inMemoryMachines[index] = { ...inMemoryMachines[index], ...data };
             saveToStorage();
+            notifyListeners();
         }
     },
 
@@ -780,6 +824,7 @@ export const mockMachineService = {
         initializeMachines();
         inMemoryMachines = inMemoryMachines.filter(m => m.id !== id);
         saveToStorage();
+        notifyListeners();
     },
 
     query: async (...constraints: any[]): Promise<ArcadeMachine[]> => {

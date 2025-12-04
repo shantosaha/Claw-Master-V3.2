@@ -21,3 +21,11 @@ export const maintenanceService = createFirestoreService<MaintenanceTask>("maint
 export const orderService = createFirestoreService<ReorderRequest>("reorderRequests");
 export const auditService = createFirestoreService<AuditLog>("auditLogs");
 export { apiService } from "./apiService";
+
+// Setup synchronization between services
+// When inventory changes, update any machines that reference those items
+if (typeof (mockInventoryService as any).subscribe === 'function' && typeof (mockMachineService as any).syncStockItems === 'function') {
+    (mockInventoryService as any).subscribe((items: StockItem[]) => {
+        (mockMachineService as any).syncStockItems(items);
+    });
+}
