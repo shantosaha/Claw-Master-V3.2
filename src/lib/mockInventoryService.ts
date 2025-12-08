@@ -95,5 +95,13 @@ export const mockInventoryService = {
         await new Promise(resolve => setTimeout(resolve, 100));
         const sizes = inMemoryItems.map(item => item.size).filter(Boolean) as string[];
         return [...new Set(sizes)];
+    },
+
+    seed: async (count: number) => {
+        const { generateMockStockItems } = await import("@/utils/generateMockData");
+        const newItems = generateMockStockItems(count);
+        inMemoryItems = [...inMemoryItems, ...newItems];
+        notifyListeners();
+        return newItems.length;
     }
 };

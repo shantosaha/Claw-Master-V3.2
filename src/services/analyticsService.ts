@@ -164,13 +164,13 @@ export interface FinancialMetrics {
 }
 
 export const analyticsService = {
-    getOverview: async (): Promise<AnalyticsOverview> => {
+    getOverview: async (days: number = 30): Promise<AnalyticsOverview> => {
         const [machines, stock] = await Promise.all([
             machineService.getAll(),
             stockService.getAll(),
         ]);
 
-        const revenueData = generateMockRevenueData(30);
+        const revenueData = generateMockRevenueData(days);
         const totalRevenue = revenueData.reduce((sum, d) => sum + d.revenue, 0);
         const totalPlays = revenueData.reduce((sum, d) => sum + d.plays, 0);
         const totalWins = revenueData.reduce((sum, d) => sum + d.wins, 0);

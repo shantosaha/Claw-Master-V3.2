@@ -111,8 +111,8 @@ export function StockDetailHero({
                                         key={index}
                                         onClick={() => setSelectedImageIndex(index)}
                                         className={`relative w-14 h-14 shrink-0 rounded-md overflow-hidden border-2 transition-all ${selectedImageIndex === index
-                                                ? "border-primary ring-2 ring-primary/20"
-                                                : "border-transparent opacity-60 hover:opacity-100"
+                                            ? "border-primary ring-2 ring-primary/20"
+                                            : "border-transparent opacity-60 hover:opacity-100"
                                             }`}
                                     >
                                         <img src={url} alt={`Thumbnail ${index + 1}`} className="object-cover w-full h-full" />
@@ -189,21 +189,31 @@ export function StockDetailHero({
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Badge
-                                        variant={item.assignedStatus === "Assigned" ? "default" : "secondary"}
-                                        className="cursor-pointer hover:opacity-80"
+                                        className={`cursor-pointer hover:opacity-80 ${item.assignedStatus === "Assigned"
+                                                ? "bg-purple-500 text-white hover:bg-purple-600"
+                                                : item.assignedStatus === "Assigned for Replacement"
+                                                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
+                                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                            }`}
                                     >
-                                        {item.assignedStatus || "Not Assigned"}
+                                        {item.assignedStatus === "Assigned"
+                                            ? "Using"
+                                            : item.assignedStatus === "Assigned for Replacement"
+                                                ? "Replacement"
+                                                : "Not Assigned"
+                                        }
                                     </Badge>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent>
-                                    {assignedStatusOptions.map(status => (
-                                        <DropdownMenuItem
-                                            key={status}
-                                            onClick={() => onChangeAssignedStatus?.(status)}
-                                        >
-                                            {status}
-                                        </DropdownMenuItem>
-                                    ))}
+                                    <DropdownMenuItem onClick={() => onChangeAssignedStatus?.("Not Assigned")}>
+                                        Not Assigned
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onChangeAssignedStatus?.("Assigned")}>
+                                        Using (Assigned)
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onChangeAssignedStatus?.("Assigned for Replacement")}>
+                                        Replacement (Assigned for Replacement)
+                                    </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>
 

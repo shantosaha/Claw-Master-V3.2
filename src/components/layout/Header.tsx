@@ -19,7 +19,11 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { isFirebaseInitialized } from "@/lib/firebase";
 import Link from "next/link";
 
-export function Header() {
+interface HeaderProps {
+    onMenuClick?: () => void;
+}
+
+export function Header({ onMenuClick }: HeaderProps) {
 
     const { user, logout, signInWithGoogle } = useAuth();
 

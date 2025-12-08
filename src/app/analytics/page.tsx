@@ -58,10 +58,15 @@ import {
 import { TrendIndicator } from "@/components/analytics/TrendIndicator";
 import { PeriodComparisonCard } from "@/components/analytics/PeriodComparisonCard";
 import { LocationCompareChart } from "@/components/analytics/LocationCompareChart";
+import { ChartTypeSelector, ChartType } from "@/components/analytics/ChartTypeSelector";
+import { DatePickerWithRange } from "@/components/analytics/DateRangePicker";
+import { DateRange } from "react-day-picker";
+import { differenceInDays, subDays } from "date-fns";
 import { MultiMachineCompare } from "@/components/analytics/MultiMachineCompare";
 import { ReorderRecommendations } from "@/components/analytics/ReorderRecommendations";
 import { FinancialAnalyticsTab } from "@/components/analytics/FinancialAnalyticsTab";
 import { AdvancedReportsTab } from "@/components/analytics/AdvancedReportsTab";
+import { AdvancedFilters, FilterState, defaultFilterState } from "@/components/analytics/AdvancedFilters";
 import { cn } from "@/lib/utils";
 
 // Color palette
@@ -81,6 +86,8 @@ export default function AnalyticsPage() {
     const { userProfile, loading: authLoading, hasRole } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
+    const [overviewChartType, setOverviewChartType] = useState<ChartType>("area");
+    const [machineChartType, setMachineChartType] = useState<ChartType>("bar");
     const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
     const [revenueData, setRevenueData] = useState<TimeSeriesData[]>([]);
     const [machinePerformance, setMachinePerformance] = useState<MachinePerformance[]>([]);
@@ -92,10 +99,30 @@ export default function AnalyticsPage() {
     const [timePeriod, setTimePeriod] = useState("30");
     const [selectedTab, setSelectedTab] = useState("overview");
 
+    // Advanced filter states for each tab
+    const [overviewFilters, setOverviewFilters] = useState<FilterState>(defaultFilterState);
+    const [machineFilters, setMachineFilters] = useState<FilterState>(defaultFilterState);
+    const [stockFilters, setStockFilters] = useState<FilterState>(defaultFilterState);
+    const [compareFilters, setCompareFilters] = useState<FilterState>(defaultFilterState);
+
     // Machine comparison state
     const [comparisonMachine1, setComparisonMachine1] = useState<string>("");
     const [comparisonMachine2, setComparisonMachine2] = useState<string>("");
     const [comparisonData, setComparisonData] = useState<any[]>([]);
+
+
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+        from: subDays(new Date(), 30),
+        to: new Date(),
+    });
+
+    const handleDateRangeChange = (range: DateRange | undefined) => {
+        setDateRange(range);
+        if (range?.from && range?.to) {
+            const days = differenceInDays(range.to, range.from) + 1;
+            setTimePeriod(days.toString());
+        }
+    };
 
     useEffect(() => {
         if (!authLoading && !hasRole(ALLOWED_ROLES as any)) {
@@ -103,7 +130,7 @@ export default function AnalyticsPage() {
         } else if (!authLoading) {
             loadAllData();
         }
-    }, [authLoading, hasRole, router]);
+    }, [authLoading, hasRole, router, timePeriod]);
 
     const loadAllData = async () => {
         setLoading(true);
@@ -118,7 +145,7 @@ export default function AnalyticsPage() {
                 catStock,
                 brStock
             ] = await Promise.all([
-                analyticsService.getOverview(),
+                analyticsService.getOverview(parseInt(timePeriod)),
                 analyticsService.getRevenueTimeSeries(parseInt(timePeriod)),
                 analyticsService.getMachinePerformance(),
                 analyticsService.getStockPerformance(),
@@ -159,6 +186,88 @@ export default function AnalyticsPage() {
             loadAllData();
         }
     }, [timePeriod]);
+
+    // Filter and Sort Logic
+    const getFilteredMachines = () => {
+        let result = [...machinePerformance];
+
+        // Apply filters
+        if (machineFilters.location !== "All Locations") {
+            result = result.filter(m => m.location === machineFilters.location);
+        }
+        if (machineFilters.machineType !== "All Types") {
+            result = result.filter(m => m.type === machineFilters.machineType);
+        }
+        if (machineFilters.status !== "All Status") {
+            result = result.filter(m => m.status.toLowerCase() === machineFilters.status.toLowerCase());
+        }
+        if (machineFilters.performanceLevel !== "all") {
+            const maxRev = Math.max(...machinePerformance.map(m => m.revenue));
+            const minRev = Math.min(...machinePerformance.map(m => m.revenue));
+            const range = maxRev - minRev;
+
+            result = result.filter(m => {
+                if (machineFilters.performanceLevel === "high") return m.revenue > minRev + (range * 0.66);
+                if (machineFilters.performanceLevel === "medium") return m.revenue >= minRev + (range * 0.33) && m.revenue <= minRev + (range * 0.66);
+                if (machineFilters.performanceLevel === "low") return m.revenue < minRev + (range * 0.33);
+                return true;
+            });
+        }
+        if (machineFilters.revenueRange !== "all") {
+            result = result.filter(m => {
+                if (machineFilters.revenueRange === "0-100") return m.revenue >= 0 && m.revenue <= 100;
+                if (machineFilters.revenueRange === "100-500") return m.revenue > 100 && m.revenue <= 500;
+                if (machineFilters.revenueRange === "500-1000") return m.revenue > 500 && m.revenue <= 1000;
+                if (machineFilters.revenueRange === "1000+") return m.revenue > 1000;
+                return true;
+            });
+        }
+
+        // Apply Sort
+        result.sort((a, b) => {
+            let valA: any = a[machineFilters.sortBy as keyof typeof a] || a.revenue;
+            let valB: any = b[machineFilters.sortBy as keyof typeof b] || b.revenue;
+
+            if (machineFilters.sortBy === "name") {
+                valA = a.name.toLowerCase();
+                valB = b.name.toLowerCase();
+            }
+
+            if (valA < valB) return machineFilters.sortOrder === "asc" ? -1 : 1;
+            if (valA > valB) return machineFilters.sortOrder === "asc" ? 1 : -1;
+            return 0;
+        });
+
+        return result;
+    };
+
+    const getFilteredStock = () => {
+        let result = [...stockPerformance];
+
+        // Apply filters
+        if (stockFilters.category !== "All Categories") {
+            result = result.filter(s => s.category === stockFilters.category);
+        }
+        if (stockFilters.brand !== "All Brands") {
+            result = result.filter(s => s.brand === stockFilters.brand);
+        }
+
+        // Apply Sort
+        result.sort((a, b) => {
+            const sortKey = stockFilters.sortBy === "revenue" ? "stockValue" : stockFilters.sortBy === "name" ? "name" : "stockValue";
+            const valA = a[sortKey as keyof typeof a];
+            const valB = b[sortKey as keyof typeof b];
+
+            if (valA < valB) return stockFilters.sortOrder === "asc" ? -1 : 1;
+            if (valA > valB) return stockFilters.sortOrder === "asc" ? 1 : -1;
+            return 0;
+        });
+
+        return result;
+    };
+
+    const filteredMachines = getFilteredMachines();
+    const filteredStock = getFilteredStock();
 
     // Access denied screen
     if (!authLoading && !hasRole(ALLOWED_ROLES as any)) {
@@ -368,31 +477,65 @@ export default function AnalyticsPage() {
 
                 {/* Overview Tab */}
                 <TabsContent value="overview" className="space-y-4">
+                    {/* Filters for Overview Tab */}
+                    <AdvancedFilters
+                        filters={overviewFilters}
+                        onFilterChange={(f) => {
+                            setOverviewFilters(f);
+                            setTimePeriod(f.timePeriod);
+                        }}
+                        showSortOptions={true}
+                        showRevenueFilter={true}
+                    />
+
                     <div className="grid gap-4 lg:grid-cols-7">
                         {/* Revenue Trend */}
                         <Card className="lg:col-span-4">
-                            <CardHeader>
-                                <CardTitle>Revenue Trend</CardTitle>
-                                <CardDescription>Daily revenue over the selected period</CardDescription>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <div className="space-y-1">
+                                    <CardTitle>Revenue Trend</CardTitle>
+                                    <CardDescription>Daily revenue over selected period</CardDescription>
+                                </div>
+                                <ChartTypeSelector
+                                    value={overviewChartType}
+                                    onChange={setOverviewChartType}
+                                    options={["area", "line", "bar"]}
+                                    size="sm"
+                                />
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
-                                    <AreaChart data={revenueData}>
-                                        <defs>
-                                            <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
-                                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
-                                            </linearGradient>
-                                        </defs>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                        <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                        <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                                        <Tooltip
-                                            contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
-                                            formatter={(value: number) => [`$${value}`, 'Revenue']}
-                                        />
-                                        <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} fill="url(#colorRevenue)" />
-                                    </AreaChart>
+                                    {overviewChartType === "bar" ? (
+                                        <BarChart data={revenueData}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                                            <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} formatter={(value: number) => [`$${value}`, 'Revenue']} />
+                                            <Bar dataKey="revenue" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                                        </BarChart>
+                                    ) : overviewChartType === "line" ? (
+                                        <LineChart data={revenueData}>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                                            <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} formatter={(value: number) => [`$${value}`, 'Revenue']} />
+                                            <Line type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: "#8b5cf6" }} />
+                                        </LineChart>
+                                    ) : (
+                                        <AreaChart data={revenueData}>
+                                            <defs>
+                                                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                                                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                                </linearGradient>
+                                            </defs>
+                                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
+                                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
+                                            <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} formatter={(value: number) => [`$${value}`, 'Revenue']} />
+                                            <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} fill="url(#colorRevenue)" />
+                                        </AreaChart>
+                                    )}
                                 </ResponsiveContainer>
                             </CardContent>
                         </Card>
@@ -477,6 +620,14 @@ export default function AnalyticsPage() {
 
                 {/* Machines Tab */}
                 <TabsContent value="machines" className="space-y-4">
+                    {/* Filters for Machines Tab */}
+                    <AdvancedFilters
+                        filters={machineFilters}
+                        onFilterChange={setMachineFilters}
+                        showSortOptions={true}
+                        showPerformanceFilter={true}
+                        showRevenueFilter={true}
+                    />
                     {/* Top/Bottom Performers */}
                     <div className="grid gap-4 lg:grid-cols-2">
                         <Card>
@@ -489,7 +640,7 @@ export default function AnalyticsPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">
-                                    {machinePerformance
+                                    {[...filteredMachines]
                                         .sort((a, b) => b.revenue - a.revenue)
                                         .slice(0, 5)
                                         .map((machine, idx) => (
@@ -523,7 +674,7 @@ export default function AnalyticsPage() {
                             </CardHeader>
                             <CardContent>
                                 <div className="space-y-3">
-                                    {machinePerformance
+                                    {[...filteredMachines]
                                         .sort((a, b) => a.uptime - b.uptime)
                                         .slice(0, 5)
                                         .map((machine, idx) => (
@@ -552,22 +703,58 @@ export default function AnalyticsPage() {
 
                     {/* Machine Performance Chart */}
                     <Card>
-                        <CardHeader>
-                            <CardTitle>Machine Performance Overview</CardTitle>
-                            <CardDescription>Revenue and plays by machine</CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <div className="space-y-1">
+                                <CardTitle>Machine Performance Overview</CardTitle>
+                                <CardDescription>Revenue and plays by machine</CardDescription>
+                            </div>
+                            <ChartTypeSelector
+                                value={machineChartType}
+                                onChange={setMachineChartType}
+                                options={["bar", "line", "area"]}
+                                size="sm"
+                            />
                         </CardHeader>
                         <CardContent>
                             <ResponsiveContainer width="100%" height={400}>
-                                <BarChart data={machinePerformance.slice(0, 15)}>
-                                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                                    <XAxis dataKey="name" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
-                                    <YAxis yAxisId="left" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <YAxis yAxisId="right" orientation="right" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                    <Tooltip contentStyle={{ borderRadius: '8px' }} />
-                                    <Legend />
-                                    <Bar yAxisId="left" dataKey="revenue" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Revenue ($)" />
-                                    <Bar yAxisId="right" dataKey="plays" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Plays" />
-                                </BarChart>
+                                {machineChartType === "area" ? (
+                                    <AreaChart data={filteredMachines.slice(0, 15)}>
+                                        <defs>
+                                            <linearGradient id="colorMachineRev" x1="0" y1="0" x2="0" y2="1">
+                                                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                                                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
+                                            </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="name" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
+                                        <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                        <Tooltip contentStyle={{ borderRadius: '8px' }} />
+                                        <Legend />
+                                        <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} fill="url(#colorMachineRev)" name="Revenue ($)" />
+                                    </AreaChart>
+                                ) : machineChartType === "line" ? (
+                                    <LineChart data={filteredMachines.slice(0, 15)}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="name" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
+                                        <YAxis yAxisId="left" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis yAxisId="right" orientation="right" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                        <Tooltip contentStyle={{ borderRadius: '8px' }} />
+                                        <Legend />
+                                        <Line yAxisId="left" type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} name="Revenue ($)" />
+                                        <Line yAxisId="right" type="monotone" dataKey="plays" stroke="#06b6d4" strokeWidth={2} name="Plays" />
+                                    </LineChart>
+                                ) : (
+                                    <BarChart data={filteredMachines.slice(0, 15)}>
+                                        <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                                        <XAxis dataKey="name" stroke="#888888" fontSize={10} tickLine={false} axisLine={false} angle={-45} textAnchor="end" height={80} />
+                                        <YAxis yAxisId="left" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                        <YAxis yAxisId="right" orientation="right" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
+                                        <Tooltip contentStyle={{ borderRadius: '8px' }} />
+                                        <Legend />
+                                        <Bar yAxisId="left" dataKey="revenue" fill="#8b5cf6" radius={[4, 4, 0, 0]} name="Revenue ($)" />
+                                        <Bar yAxisId="right" dataKey="plays" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Plays" />
+                                    </BarChart>
+                                )}
                             </ResponsiveContainer>
                         </CardContent>
                     </Card>
@@ -594,7 +781,7 @@ export default function AnalyticsPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {machinePerformance.slice(0, 20).map((machine) => (
+                                        {filteredMachines.slice(0, 20).map((machine) => (
                                             <tr key={machine.id} className="border-b hover:bg-muted/50">
                                                 <td className="p-4 font-medium">{machine.name}</td>
                                                 <td className="p-4">{machine.location}</td>
@@ -623,6 +810,13 @@ export default function AnalyticsPage() {
 
                 {/* Stock Tab */}
                 <TabsContent value="stock" className="space-y-4">
+                    {/* Filters for Stock Tab */}
+                    <AdvancedFilters
+                        filters={stockFilters}
+                        onFilterChange={setStockFilters}
+                        showCategoryFilter={true}
+                        showBrandFilter={true}
+                    />
                     <div className="grid gap-4 lg:grid-cols-2">
                         {/* Stock by Category */}
                         <Card>
@@ -689,7 +883,7 @@ export default function AnalyticsPage() {
                         </CardHeader>
                         <CardContent>
                             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
-                                {stockPerformance
+                                {filteredStock
                                     .filter(s => s.isLowStock)
                                     .slice(0, 9)
                                     .map((item) => (
@@ -730,7 +924,7 @@ export default function AnalyticsPage() {
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {stockPerformance.slice(0, 20).map((item) => (
+                                        {filteredStock.slice(0, 20).map((item) => (
                                             <tr key={item.id} className="border-b hover:bg-muted/50">
                                                 <td className="p-4 font-medium max-w-[200px] truncate">{item.name}</td>
                                                 <td className="p-4">{item.category}</td>
@@ -768,6 +962,13 @@ export default function AnalyticsPage() {
 
                 {/* Compare Tab */}
                 <TabsContent value="compare" className="space-y-4">
+                    {/* Filters for Compare Tab */}
+                    <AdvancedFilters
+                        filters={compareFilters}
+                        onFilterChange={setCompareFilters}
+                        locations={["All Locations", "Zone A", "Zone B", "Zone C", "Ground Floor", "Level 1"]} // Explicit locations if needed
+                        className="mb-4"
+                    />
                     <Card>
                         <CardHeader>
                             <CardTitle>Machine Comparison</CardTitle>
@@ -915,6 +1116,16 @@ export default function AnalyticsPage() {
 
                 {/* Financial Tab - NEW */}
                 <TabsContent value="financial" className="space-y-4">
+                    {/* Filters for Financial Tab */}
+                    <AdvancedFilters
+                        filters={overviewFilters} // Sharing with overview for now as financial data is broad
+                        onFilterChange={(f) => {
+                            setOverviewFilters(f);
+                            setTimePeriod(f.timePeriod);
+                        }}
+                        showRevenueFilter={true}
+                        variant="compact"
+                    />
                     <FinancialAnalyticsTab timePeriod={parseInt(timePeriod)} />
                 </TabsContent>
 

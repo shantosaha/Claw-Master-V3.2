@@ -2,9 +2,9 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { stockService } from "@/services";
+import { machineService, stockService } from "@/services";
 import { useData } from "@/context/DataProvider";
-import { StockItem } from "@/types";
+import { AuditLog, StockItem } from "@/types";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,14 +24,26 @@ import { formatDistanceToNow, format } from "date-fns";
 import { StockDetailHero } from "@/components/inventory/StockDetailHero";
 import { StockActivitySidebar } from "@/components/inventory/StockActivitySidebar";
 import { MachineAssignmentHistory } from "@/components/inventory/MachineAssignmentHistory";
+import { useAuth } from "@/context/AuthContext"; // Added auth context
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export default function InventoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const router = useRouter();
-    const { getItemById, machines, itemsLoading, machinesLoading } = useData();
+    const { getItemById, machines, items, itemsLoading, machinesLoading, refreshMachines } = useData();
+    const { userProfile, hasRole } = useAuth();
 
     const [categories, setCategories] = useState<string[]>([]);
-    const [sizes, setSizes] = useState<string[]>([]);
+    // sizes is managed internally by StockItemForm
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
     const [isAdjustOpen, setIsAdjustOpen] = useState(false);
@@ -41,6 +53,14 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
     const [editingField, setEditingField] = useState<string | null>(null);
     const [editValue, setEditValue] = useState<string>("");
 
+    // Assignment Logic States
+    const [statusConfirm, setStatusConfirm] = useState<{ item: StockItem, status: string } | null>(null);
+    const [warningAlert, setWarningAlert] = useState<{ title: string, description: string, open: boolean }>({ title: "", description: "", open: false });
+    const [assignmentConflict, setAssignmentConflict] = useState<{
+        item: StockItem;
+        currentUsingItem: StockItem;
+    } | null>(null);
+
     // Get item from context (auto-updates when data changes)
     const item = getItemById(id) || null;
     const loading = itemsLoading || machinesLoading;
@@ -49,12 +69,8 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
     useEffect(() => {
         const loadFormData = async () => {
             try {
-                const [categoriesData, sizesData] = await Promise.all([
-                    stockService.getUniqueCategories(),
-                    stockService.getUniqueSizes(),
-                ]);
+                const categoriesData = await stockService.getUniqueCategories();
                 setCategories(categoriesData);
-                setSizes(sizesData);
             } catch (error) {
                 console.error("Failed to load form data:", error);
             }
@@ -145,17 +161,148 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
         }
     };
 
+    const createHistoryLog = (action: string, details: any, entityId: string = "temp"): AuditLog => ({
+        id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        action,
+        entityType: "StockItem",
+        entityId,
+        userId: userProfile?.uid || "system",
+        userRole: userProfile?.role || "system",
+        timestamp: new Date(),
+        details
+    });
+
+    const processStatusChange = async (targetItem: StockItem, newStatus: string) => {
+        try {
+            const oldStatus = targetItem.assignedStatus;
+            const historyLog = createHistoryLog("STATUS_CHANGE", {
+                oldStatus: oldStatus || "Not Assigned",
+                newStatus: newStatus,
+                machine: targetItem.assignedMachineName || "None"
+            }, targetItem.id);
+            const updatedHistory = [...(targetItem.history || []), historyLog];
+
+            const updates: Partial<StockItem> = {
+                assignedStatus: newStatus,
+                history: updatedHistory,
+                updatedAt: new Date()
+            };
+
+            if (newStatus === "Not Assigned") {
+                updates.assignedMachineId = undefined;
+                updates.assignedMachineName = undefined;
+            }
+
+            await stockService.update(targetItem.id, updates);
+
+            // Logic for "Machine Without an Active Item" & "Replacement Queue Auto-Assignment"
+            if (oldStatus === "Assigned" && (newStatus === "Not Assigned" || newStatus === "Assigned for Replacement")) {
+                const machineId = targetItem.assignedMachineId;
+                if (machineId) {
+                    // Replacement Queue Auto-Assignment
+                    const replacementQueue = items.filter(i =>
+                        i.assignedMachineId === machineId &&
+                        i.assignedStatus === "Assigned for Replacement" &&
+                        i.id !== targetItem.id
+                    );
+
+                    if (replacementQueue.length > 0) {
+                        replacementQueue.sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+                        const nextItem = replacementQueue[0];
+
+                        await stockService.update(nextItem.id, {
+                            assignedStatus: "Assigned",
+                            updatedAt: new Date()
+                        });
+
+                        toast.success("Auto-Assigned Replacement", {
+                            description: `${nextItem.name} has been automatically promoted to active item.`
+                        });
+                    }
+                }
+            }
+
+            // Refresh machines to update slot status if we changed assignment status
+            if ((newStatus === "Not Assigned" && targetItem.assignedMachineId) || (oldStatus === "Assigned" && newStatus !== "Assigned") || newStatus === "Assigned") {
+                await refreshMachines(); // Use useData's refresh
+            }
+
+            toast.success(`Status updated to ${newStatus}`);
+        } catch (error) {
+            console.error("Failed to update status:", error);
+            toast.error("Failed to update status");
+        }
+    };
+
     const handleChangeAssignedStatus = async (status: string) => {
         if (!item) return;
-        try {
-            await stockService.update(item.id, {
-                assignedStatus: status,
-                updatedAt: new Date()
-            });
-            toast.success("Status Updated", { description: `Assigned status changed to ${status}.` });
-        } catch (error) {
-            toast.error("Error", { description: "Failed to update status." });
+
+        // Validation Logic from StockList
+        if (status === "Assigned" || status === "Assigned for Replacement") {
+            const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+            const isOut = totalQty === 0 || item.stockStatus === "Out of Stock";
+            const isLow = !isOut && (totalQty <= item.lowStockThreshold || item.stockStatus === "Low Stock");
+
+            if (isOut) {
+                if (!hasRole(["manager", "admin"])) {
+                    setWarningAlert({
+                        open: true,
+                        title: "Out of Stock",
+                        description: `This item is out of stock and cannot be assigned by crew. Please ask a supervisor to assign it or update stock first.`,
+                    });
+                    return;
+                } else {
+                    setWarningAlert({
+                        open: true,
+                        title: "Supervisor Override - Out of Stock",
+                        description: `This item is currently out of stock. As a supervisor you can still assign it, but machines may appear empty until stock is received.`,
+                    });
+                }
+            } else if (isLow) {
+                setWarningAlert({
+                    open: true,
+                    title: "Low Stock Warning",
+                    description: `This item is low on stock. Assigning it now may cause the machine to run out soon.`,
+                });
+            }
         }
+
+        // Handle changing from Replacement -> Using
+        if (item.assignedStatus === "Assigned for Replacement" && status === "Assigned") {
+            if (item.assignedMachineId) {
+                const currentActive = items.find(i =>
+                    i.assignedMachineId === item.assignedMachineId &&
+                    i.assignedStatus === "Assigned" &&
+                    i.id !== item.id
+                );
+
+                if (currentActive) {
+                    setAssignmentConflict({ item, currentUsingItem: currentActive });
+                    return;
+                }
+            }
+            await processStatusChange(item, "Assigned");
+            return;
+        }
+
+        // Changing from Using to Not Assigned or Replacement requires warning
+        if (item.assignedStatus === "Assigned" && (status === "Not Assigned" || status === "Assigned for Replacement")) {
+            if (status === "Assigned for Replacement") {
+                setWarningAlert({
+                    open: true,
+                    title: "Status Change Warning",
+                    description: `You are changing this item to "Replacement". It will remain assigned to ${item.assignedMachineName} but will no longer be the active item.`
+                });
+                await processStatusChange(item, status);
+                return;
+            }
+
+            setStatusConfirm({ item, status });
+            return;
+        }
+
+        // Normal path
+        await processStatusChange(item, status);
     };
 
     if (loading) {
@@ -435,15 +582,6 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                                             <span className="text-muted-foreground">Cost Per Unit</span>
                                             <p className="font-medium">${item.supplyChain?.costPerUnit?.toFixed(2) || "0.00"}</p>
                                         </div>
-                                        <div>
-                                            <span className="text-muted-foreground">Last Order Date</span>
-                                            <p className="font-medium">
-                                                {item.supplyChain?.lastOrderDate
-                                                    ? format(new Date(item.supplyChain.lastOrderDate), "MMM d, yyyy")
-                                                    : "N/A"
-                                                }
-                                            </p>
-                                        </div>
                                     </div>
 
                                     {/* Reorder Alert */}
@@ -652,7 +790,6 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                     <StockItemForm
                         initialData={item}
                         categories={categories}
-                        sizes={sizes}
                         machines={machines}
                         onSubmit={handleSaveItem}
                         onCancel={() => setIsEditOpen(false)}
@@ -662,12 +799,85 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
 
             {/* Delete Confirmation Dialog */}
             <ConfirmDialog
-                isOpen={isDeleteConfirmOpen}
-                onClose={() => setIsDeleteConfirmOpen(false)}
+                open={isDeleteConfirmOpen}
+                onOpenChange={setIsDeleteConfirmOpen}
                 onConfirm={handleDeleteItem}
                 title="Are you sure?"
                 description={`This will permanently delete "${item.name}". This action cannot be undone.`}
+                destructive
             />
+
+            {/* Warning Alert */}
+            <AlertDialog open={warningAlert.open} onOpenChange={(open) => setWarningAlert(prev => ({ ...prev, open }))}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>{warningAlert.title}</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {warningAlert.description}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogAction onClick={() => setWarningAlert(prev => ({ ...prev, open: false }))}>
+                            OK
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Status Change Confirmation */}
+            <AlertDialog open={!!statusConfirm} onOpenChange={(open) => !open && setStatusConfirm(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Are you sure you want to change status to "{statusConfirm?.status}"?
+                            {statusConfirm?.item.assignedMachineId && " This may affect the machine's active item."}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                            if (statusConfirm) {
+                                processStatusChange(statusConfirm.item, statusConfirm.status);
+                                setStatusConfirm(null);
+                            }
+                        }}>
+                            Confirm
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Assignment Conflict Dialog */}
+            <AlertDialog open={!!assignmentConflict} onOpenChange={(open) => !open && setAssignmentConflict(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Assignment Conflict</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {assignmentConflict?.currentUsingItem.name} is currently assigned as "Using" in this machine.
+                            Do you want to swap them?
+                            <br /><br />
+                            • {assignmentConflict?.currentUsingItem.name} will become "Replacement"
+                            <br />
+                            • {assignmentConflict?.item.name} (this item) will become "Using"
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={async () => {
+                            if (assignmentConflict) {
+                                // Swap logic
+                                await processStatusChange(assignmentConflict.currentUsingItem, "Assigned for Replacement");
+                                await processStatusChange(assignmentConflict.item, "Assigned");
+                                setAssignmentConflict(null);
+                                toast.success("Items Swapped", { description: "Active item swapped successfully." });
+                            }
+                        }}>
+                            Confirm Swap
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

@@ -8,7 +8,7 @@ import { calculateStockLevel } from "@/utils/inventoryUtils";
 import { useAuth } from "@/context/AuthContext";
 import { StockItemHistoryDialog } from "@/components/inventory/StockItemHistoryDialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Inbox, Loader2, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Plus, Inbox, Loader2, ArrowUpDown, ArrowUp, ArrowDown, WandSparkles } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -1039,6 +1039,26 @@ export function StockList() {
         setAssigningItem(null);
     };
 
+    const handleSeedData = async () => {
+        setLoading(true);
+        try {
+            if (typeof (stockService as any).seed === 'function') {
+                const count = 50;
+                await (stockService as any).seed(count);
+                toast.success("Data Seeded", { description: `Successfully added ${count} mock items.` });
+                // Reload data
+                loadData();
+            } else {
+                toast.error("Not Available", { description: "Seeding is only available in mock mode." });
+            }
+        } catch (error) {
+            console.error("Failed to seed data:", error);
+            toast.error("Error", { description: "Failed to seed data." });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (loading) {
         return <div className="flex justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
     }
@@ -1053,6 +1073,9 @@ export function StockList() {
                 <div className="flex gap-2">
                     <Button variant="outline" onClick={() => setIsReceiveOpen(true)}>
                         <Inbox className="mr-2 h-4 w-4" /> Receive Order
+                    </Button>
+                    <Button variant="secondary" onClick={handleSeedData}>
+                        <WandSparkles className="mr-2 h-4 w-4" /> Seed Data
                     </Button>
                     <Button onClick={() => { setEditingItem(null); setIsFormOpen(true); }}>
                         <Plus className="mr-2 h-4 w-4" /> Add Item
