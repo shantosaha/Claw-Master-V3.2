@@ -40,9 +40,22 @@ export function OrderDialog({ open, onOpenChange, onSuccess }: OrderDialogProps)
     });
 
     useEffect(() => {
+        let unsubscribeStock: (() => void) | undefined;
+
+        // Subscribe to real-time stock updates
+        if (typeof (stockService as any).subscribe === 'function') {
+            unsubscribeStock = (stockService as any).subscribe((items: StockItem[]) => {
+                setStockItems(items);
+            });
+        }
+
         if (open) {
             loadStockItems();
         }
+
+        return () => {
+            if (unsubscribeStock) unsubscribeStock();
+        };
     }, [open]);
 
     const loadStockItems = async () => {

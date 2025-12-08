@@ -2,59 +2,107 @@
 
 import { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
-import { stockService, machineService } from "@/services";
-import { StockItem, ArcadeMachine } from "@/types";
+import { stockService } from "@/services";
+import { useData } from "@/context/DataProvider";
+import { StockItem } from "@/types";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Edit, Trash2, Settings2, Loader2, ExternalLink, Package, History, StickyNote, Warehouse, Bot } from "lucide-react";
-import Link from "next/link";
+import { ArrowLeft, Edit, Loader2, Package, DollarSign, Truck, Settings2, Gamepad2, Bot, StickyNote, Pencil, Warehouse, Info, Clock } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { StockItemForm } from "@/components/inventory/StockItemForm";
-import { ActivityLog } from "@/components/inventory/ActivityLog";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { formatDistanceToNow, format } from "date-fns";
+
+// New Components
+import { StockDetailHero } from "@/components/inventory/StockDetailHero";
+import { StockActivitySidebar } from "@/components/inventory/StockActivitySidebar";
+import { MachineAssignmentHistory } from "@/components/inventory/MachineAssignmentHistory";
 
 export default function InventoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
     const router = useRouter();
-    const [item, setItem] = useState<StockItem | null>(null);
-    const [machines, setMachines] = useState<ArcadeMachine[]>([]);
+    const { getItemById, machines, itemsLoading, machinesLoading } = useData();
+
     const [categories, setCategories] = useState<string[]>([]);
     const [sizes, setSizes] = useState<string[]>([]);
-    const [loading, setLoading] = useState(true);
     const [isEditOpen, setIsEditOpen] = useState(false);
     const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = useState(false);
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    const [isAdjustOpen, setIsAdjustOpen] = useState(false);
+    const [activeTab, setActiveTab] = useState("overview");
 
+    // Inline editing states
+    const [editingField, setEditingField] = useState<string | null>(null);
+    const [editValue, setEditValue] = useState<string>("");
+
+    // Get item from context (auto-updates when data changes)
+    const item = getItemById(id) || null;
+    const loading = itemsLoading || machinesLoading;
+
+    // Load categories and sizes for form
     useEffect(() => {
-        loadData();
-    }, [id]);
+        const loadFormData = async () => {
+            try {
+                const [categoriesData, sizesData] = await Promise.all([
+                    stockService.getUniqueCategories(),
+                    stockService.getUniqueSizes(),
+                ]);
+                setCategories(categoriesData);
+                setSizes(sizesData);
+            } catch (error) {
+                console.error("Failed to load form data:", error);
+            }
+        };
+        loadFormData();
+    }, []);
 
-    const loadData = async () => {
-        setLoading(true);
-        try {
-            const [itemData, machinesData, categoriesData, sizesData] = await Promise.all([
-                stockService.getById(id),
-                machineService.getAll(),
-                stockService.getUniqueCategories(),
-                stockService.getUniqueSizes(),
-            ]);
-            setItem(itemData);
-            setMachines(machinesData);
-            setCategories(categoriesData);
-            setSizes(sizesData);
-        } catch (error) {
-            console.error("Failed to load item:", error);
-            toast.error("Error", { description: "Failed to load item details." });
-        } finally {
-            setLoading(false);
-        }
+    // Inline edit handlers
+    const startEdit = (field: string, currentValue: string) => {
+        setEditingField(field);
+        setEditValue(currentValue);
     };
-    
+
+    const cancelEdit = () => {
+        setEditingField(null);
+        setEditValue("");
+    };
+
+    const saveEdit = async (field: string) => {
+        if (!item) return;
+        try {
+            const updateData: Partial<StockItem> = { updatedAt: new Date() };
+
+            // Handle different field types
+            if (field === "description") {
+                updateData.description = editValue;
+            } else if (field === "lowStockThreshold") {
+                updateData.lowStockThreshold = parseInt(editValue) || 0;
+            } else if (field === "playWinTarget") {
+                updateData.playWinTarget = parseInt(editValue) || 0;
+            } else if (field.startsWith("location_")) {
+                const locIndex = parseInt(field.split("_")[1]);
+                const newLocations = [...(item.locations || [])];
+                if (newLocations[locIndex]) {
+                    newLocations[locIndex].quantity = parseInt(editValue) || 0;
+                }
+                updateData.locations = newLocations;
+            }
+
+            await stockService.update(item.id, updateData);
+            toast.success("Updated", { description: `${field} has been updated.` });
+        } catch (error) {
+            console.error("Failed to update:", error);
+            toast.error("Error", { description: "Failed to update field." });
+        }
+        cancelEdit();
+    };
+
     const handleSaveItem = async (data: any) => {
         if (!item) return;
         try {
@@ -62,7 +110,6 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                 ...data,
                 updatedAt: new Date()
             });
-            await loadData(); // Re-load data to get fresh state
             toast.success("Item Updated", { description: "Item details have been updated." });
             setIsEditOpen(false);
         } catch (error) {
@@ -70,11 +117,11 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
             toast.error("Error", { description: "Failed to update item." });
         }
     };
-    
+
     const handleDeleteItem = async () => {
         if (!item) return;
         try {
-            await stockService.delete(item.id);
+            await stockService.remove(item.id);
             toast.success("Item Deleted", { description: `${item.name} has been permanently deleted.` });
             router.push("/inventory");
         } catch (error) {
@@ -83,7 +130,33 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
         } finally {
             setIsDeleteConfirmOpen(false);
         }
-    }
+    };
+
+    const handleChangeStockStatus = async (status: string) => {
+        if (!item) return;
+        try {
+            await stockService.update(item.id, {
+                stockStatus: status || undefined,
+                updatedAt: new Date()
+            });
+            toast.success("Status Updated", { description: `Stock status changed to ${status || "Auto"}.` });
+        } catch (error) {
+            toast.error("Error", { description: "Failed to update status." });
+        }
+    };
+
+    const handleChangeAssignedStatus = async (status: string) => {
+        if (!item) return;
+        try {
+            await stockService.update(item.id, {
+                assignedStatus: status,
+                updatedAt: new Date()
+            });
+            toast.success("Status Updated", { description: `Assigned status changed to ${status}.` });
+        } catch (error) {
+            toast.error("Error", { description: "Failed to update status." });
+        }
+    };
 
     if (loading) {
         return (
@@ -105,7 +178,7 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
         );
     }
 
-    const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+    const totalQty = item.locations?.reduce((sum, loc) => sum + loc.quantity, 0) || 0;
     const stockLevel = calculateStockLevel(totalQty, item.stockStatus);
     const assignedMachines = machines.filter(m =>
         m.slots.some(slot =>
@@ -114,214 +187,386 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
         )
     );
 
-    return (
-        <div className="p-4 sm:p-6 lg:p-8">
-             <div className="mb-6">
-                <Button variant="ghost" onClick={() => router.push("/inventory")}>
-                    <ArrowLeft className="mr-2 h-4 w-4" />
-                    Back to Inventory
-                </Button>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Left Column */}
-                <div className="lg:col-span-1 space-y-6">
-                    {/* Image Card */}
-                    <Card>
-                        <CardContent className="p-4">
-                            <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-muted/40 border">
-                                {(item.imageUrls && item.imageUrls.length > 0) || item.imageUrl ? (
-                                    <img
-                                        src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[selectedImageIndex] : item.imageUrl || ""}
-                                        alt={item.name}
-                                        className="absolute inset-0 w-full h-full object-contain p-2"
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.src = "https://placehold.co/600x600?text=No+Image";
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="flex items-center justify-center w-full h-full text-muted-foreground">
-                                        No Image
-                                    </div>
-                                )}
-                            </div>
-                            {item.imageUrls && item.imageUrls.length > 1 && (
-                                <div className="flex gap-2 mt-4 overflow-x-auto pb-2 scrollbar-hide">
-                                    {item.imageUrls.map((url, index) => (
-                                        <button
-                                            key={index}
-                                            onClick={() => setSelectedImageIndex(index)}
-                                            className={`relative w-16 h-16 shrink-0 rounded-md overflow-hidden border-2 transition-all ${selectedImageIndex === index ? "border-primary ring-2 ring-primary/20" : "border-transparent opacity-70 hover:opacity-100"}`}
-                                        >
-                                            <img
-                                                src={url}
-                                                alt={`${item.name} thumbnail ${index + 1}`}
-                                                className="object-cover w-full h-full"
-                                            />
-                                        </button>
-                                    ))}
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
-
-                    {/* Primary Info Card */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle className="text-xl">{item.name}</CardTitle>
-                            <CardDescription>SKU: {item.sku}</CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-3 text-sm">
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Category</span>
-                                <span className="font-medium">{item.category}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Brand</span>
-                                <span className="font-medium">{item.brand || "N/A"}</span>
-                            </div>
-                            <div className="flex justify-between">
-                                <span className="text-muted-foreground">Size</span>
-                                <span className="font-medium">{item.size || "N/A"}</span>
-                            </div>
-                        </CardContent>
-                        <Separator />
-                        <CardContent className="p-4">
-                            <h4 className="text-sm font-medium mb-2 text-muted-foreground">Tags</h4>
-                            <div className="flex flex-wrap gap-2">
-                                {item.tags && item.tags.length > 0 ? (
-                                    item.tags.map(tag => <Badge key={tag} variant="secondary">{tag}</Badge>)
-                                ) : (
-                                    <span className="text-sm text-muted-foreground">No tags</span>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    {/* Actions Card */}
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Actions</CardTitle>
-                        </CardHeader>
-                        <CardContent className="flex flex-col space-y-2">
-                            <Button variant="outline" onClick={() => setIsEditOpen(true)}>
-                                <Edit className="mr-2 h-4 w-4" /> Edit Details
-                            </Button>
-                            <Button variant="destructive_outline" onClick={() => setIsDeleteConfirmOpen(true)}>
-                                <Trash2 className="mr-2 h-4 w-4" /> Delete Item
-                            </Button>
-                        </CardContent>
-                    </Card>
+    // Inline editable field component
+    const InlineEdit = ({
+        field,
+        value,
+        type = "text",
+        className = ""
+    }: {
+        field: string;
+        value: string | number;
+        type?: "text" | "number" | "textarea";
+        className?: string;
+    }) => {
+        if (editingField === field) {
+            return (
+                <div className="flex items-center gap-2">
+                    {type === "textarea" ? (
+                        <Textarea
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="min-h-[80px]"
+                            autoFocus
+                        />
+                    ) : (
+                        <Input
+                            type={type}
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="h-8 w-24"
+                            autoFocus
+                        />
+                    )}
+                    <Button size="sm" onClick={() => saveEdit(field)}>Save</Button>
+                    <Button size="sm" variant="ghost" onClick={cancelEdit}>Cancel</Button>
                 </div>
+            );
+        }
+        return (
+            <span
+                className={`cursor-pointer hover:bg-muted/50 px-1 rounded group inline-flex items-center gap-1 ${className}`}
+                onClick={() => startEdit(field, String(value))}
+            >
+                {value}
+                <Pencil className="h-3 w-3 opacity-0 group-hover:opacity-50" />
+            </span>
+        );
+    };
 
-                {/* Right Column */}
+    return (
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6">
+            {/* Back Button */}
+            <Button variant="ghost" onClick={() => router.push("/inventory")}>
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Inventory
+            </Button>
+
+            {/* Hero Section */}
+            <StockDetailHero
+                item={item}
+                onEdit={() => setIsEditOpen(true)}
+                onDelete={() => setIsDeleteConfirmOpen(true)}
+                onAdjustStock={() => setIsAdjustOpen(true)}
+                onRequestReorder={() => toast.info("Reorder feature coming soon")}
+                onChangeStockStatus={handleChangeStockStatus}
+                onChangeAssignedStatus={handleChangeAssignedStatus}
+            />
+
+            {/* Main Content with Sidebar */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Left: Tabbed Content (2/3) */}
                 <div className="lg:col-span-2">
-                    <Tabs defaultValue="details" className="w-full">
-                        <TabsList className="grid w-full grid-cols-4">
-                            <TabsTrigger value="details"><Package className="mr-2 h-4 w-4"/>Details</TabsTrigger>
-                            <TabsTrigger value="history"><History className="mr-2 h-4 w-4"/>History</TabsTrigger>
-                            <TabsTrigger value="machines"><Bot className="mr-2 h-4 w-4"/>Machines</TabsTrigger>
-                            <TabsTrigger value="notes"><StickyNote className="mr-2 h-4 w-4"/>Notes</TabsTrigger>
+                    <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
+                            <TabsTrigger value="overview"><Package className="h-4 w-4 mr-1 hidden sm:inline" />Overview</TabsTrigger>
+                            <TabsTrigger value="financials"><DollarSign className="h-4 w-4 mr-1 hidden sm:inline" />Financials</TabsTrigger>
+                            <TabsTrigger value="supply"><Truck className="h-4 w-4 mr-1 hidden sm:inline" />Supply</TabsTrigger>
+                            <TabsTrigger value="technical"><Settings2 className="h-4 w-4 mr-1 hidden sm:inline" />Tech</TabsTrigger>
+                            <TabsTrigger value="gameplay"><Gamepad2 className="h-4 w-4 mr-1 hidden sm:inline" />Gameplay</TabsTrigger>
+                            <TabsTrigger value="machines"><Bot className="h-4 w-4 mr-1 hidden sm:inline" />Machines</TabsTrigger>
+                            <TabsTrigger value="notes"><StickyNote className="h-4 w-4 mr-1 hidden sm:inline" />Notes</TabsTrigger>
                         </TabsList>
 
-                        <TabsContent value="details" className="space-y-6 mt-6">
-                            {item.description && (
-                                <Card>
-                                    <CardHeader><CardTitle>Description</CardTitle></CardHeader>
-                                    <CardContent><p className="text-sm text-muted-foreground">{item.description}</p></CardContent>
-                                </Card>
-                            )}
-
+                        {/* Overview Tab */}
+                        <TabsContent value="overview" className="space-y-4 mt-4">
+                            {/* Description */}
                             <Card>
-                                <CardHeader><CardTitle>Stock Details</CardTitle></CardHeader>
-                                <CardContent className="divide-y">
-                                    <div className="flex justify-between items-center py-3">
-                                        <span className="text-muted-foreground">Overall Stock</span>
-                                        <span className="font-bold text-lg">{totalQty} units</span>
-                                    </div>
-                                    <div className="flex justify-between items-center py-3">
-                                        <span className="text-muted-foreground">Stock Status</span>
-                                        <Badge className={`${stockLevel.colorClass} text-white`}>{stockLevel.label}</Badge>
-                                    </div>
-                                    <div className="py-3">
-                                         <h4 className="text-sm font-medium mb-3 text-muted-foreground">Locations</h4>
-                                         <div className="space-y-2">
-                                            {item.locations.length > 0 ? (
-                                                item.locations.map((loc, idx) => (
-                                                    <div key={idx} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                                                        <div className="flex items-center gap-2">
-                                                          <Warehouse className="h-4 w-4 text-muted-foreground"/>
-                                                          <span className="font-medium">{loc.name}</span>
-                                                        </div>
-                                                        <Badge variant="secondary">{loc.quantity} units</Badge>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base flex items-center justify-between">
+                                        Description
+                                        <Button variant="ghost" size="sm" onClick={() => startEdit("description", item.description || "")}>
+                                            <Pencil className="h-3 w-3" />
+                                        </Button>
+                                    </CardTitle>
+                                </CardHeader>
+                                <CardContent>
+                                    {editingField === "description" ? (
+                                        <div className="space-y-2">
+                                            <Textarea
+                                                value={editValue}
+                                                onChange={(e) => setEditValue(e.target.value)}
+                                                className="min-h-[100px]"
+                                                placeholder="Add a description..."
+                                            />
+                                            <div className="flex gap-2">
+                                                <Button size="sm" onClick={() => saveEdit("description")}>Save</Button>
+                                                <Button size="sm" variant="ghost" onClick={cancelEdit}>Cancel</Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <p className="text-sm text-muted-foreground">
+                                            {item.description || "No description provided."}
+                                        </p>
+                                    )}
+                                </CardContent>
+                            </Card>
+
+                            {/* Locations */}
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Stock Locations</CardTitle>
+                                    <CardDescription>Where this item is stored</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <div className="space-y-2">
+                                        {item.locations && item.locations.length > 0 ? (
+                                            item.locations.map((loc, idx) => (
+                                                <div key={idx} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
+                                                    <div className="flex items-center gap-2">
+                                                        <Warehouse className="h-4 w-4 text-muted-foreground" />
+                                                        <span className="font-medium">{loc.name}</span>
                                                     </div>
-                                                ))
-                                            ) : (
-                                                <p className="text-sm text-muted-foreground">No locations defined</p>
-                                            )}
+                                                    <InlineEdit
+                                                        field={`location_${idx}`}
+                                                        value={loc.quantity}
+                                                        type="number"
+                                                        className="font-bold"
+                                                    />
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground text-center py-4">No locations defined</p>
+                                        )}
+                                    </div>
+                                    <div className="flex justify-between items-center mt-4 pt-4 border-t">
+                                        <span className="font-medium">Total Stock</span>
+                                        <Badge className={`${stockLevel.colorClass} text-white`}>{totalQty} units</Badge>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Quick Info */}
+                            <Card>
+                                <CardHeader className="pb-2">
+                                    <CardTitle className="text-base">Quick Info</CardTitle>
+                                </CardHeader>
+                                <CardContent className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <span className="text-muted-foreground">Category</span>
+                                        <p className="font-medium">{item.category}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Brand</span>
+                                        <p className="font-medium">{item.brand || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Size</span>
+                                        <p className="font-medium">{item.size || "N/A"}{item.subSize && ` (${item.subSize})`}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Type</span>
+                                        <p className="font-medium">{item.type || "N/A"}</p>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Low Stock Threshold</span>
+                                        <p className="font-medium">
+                                            <InlineEdit field="lowStockThreshold" value={item.lowStockThreshold || 0} type="number" />
+                                        </p>
+                                    </div>
+                                    <div>
+                                        <span className="text-muted-foreground">Last Updated</span>
+                                        <p className="font-medium">
+                                            {item.updatedAt ? formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true }) : "N/A"}
+                                        </p>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* Financials Tab */}
+                        <TabsContent value="financials" className="space-y-4 mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Financial Overview</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                                            <p className="text-sm text-green-600 dark:text-green-400">Total Inventory Value</p>
+                                            <p className="text-2xl font-bold text-green-700 dark:text-green-300">
+                                                ${((item.value || item.supplyChain?.costPerUnit || 0) * totalQty).toFixed(2)}
+                                            </p>
+                                        </div>
+                                        <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                                            <p className="text-sm text-blue-600 dark:text-blue-400">Cost Per Unit</p>
+                                            <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+                                                ${item.supplyChain?.costPerUnit?.toFixed(2) || item.cost?.toFixed(2) || "0.00"}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <Separator />
+                                    <div className="space-y-3 text-sm">
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Estimated Retail Value</span>
+                                            <span className="font-medium">${item.value?.toFixed(2) || "0.00"}</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span className="text-muted-foreground">Margin per Unit</span>
+                                            <span className="font-medium">
+                                                {item.value && item.supplyChain?.costPerUnit
+                                                    ? `$${(item.value - item.supplyChain.costPerUnit).toFixed(2)}`
+                                                    : "N/A"
+                                                }
+                                            </span>
                                         </div>
                                     </div>
                                 </CardContent>
                             </Card>
-
-                            <Card>
-                                <CardHeader><CardTitle>Financials</CardTitle></CardHeader>
-                                <CardContent className="divide-y text-sm">
-                                    <div className="flex justify-between py-3"><span className="text-muted-foreground">Cost Per Unit</span><span className="font-medium">${item.supplyChain?.costPerUnit?.toFixed(2) || '0.00'}</span></div>
-                                    <div className="flex justify-between py-3"><span className="text-muted-foreground">Estimated Value</span><span className="font-medium">${item.value?.toFixed(2) || '0.00'}</span></div>
-                                </CardContent>
-                            </Card>
-                            
-                            <Card>
-                                <CardHeader><CardTitle>Technical Specs</CardTitle></CardHeader>
-                                <CardContent className="divide-y text-sm">
-                                   <div className="flex justify-between py-3"><span className="text-muted-foreground">Weight</span><span className="font-medium">{item.technicalSpecs?.weightGrams ? `${item.technicalSpecs.weightGrams} g` : 'N/A'}</span></div>
-                                    <div className="flex justify-between py-3"><span className="text-muted-foreground">Dimensions (L×W×H)</span><span className="font-medium">{item.technicalSpecs?.dimensions ? `${item.technicalSpecs.dimensions.lengthCm}×${item.technicalSpecs.dimensions.widthCm}×${item.technicalSpecs.dimensions.heightCm} cm` : 'N/A'}</span></div>
-                                    <div className="flex justify-between py-3"><span className="text-muted-foreground">Recommended Claw Strength</span><span className="font-medium">{item.technicalSpecs?.recommendedClawStrength || 'N/A'}</span></div>
-                                </CardContent>
-                            </Card>
-
-                            <Card>
-                                <CardHeader><CardTitle>Supply Chain</CardTitle></CardHeader>
-                                <CardContent className="divide-y text-sm">
-                                   <div className="flex justify-between py-3"><span className="text-muted-foreground">Vendor</span><span className="font-medium">{item.supplyChain?.vendor || 'N/A'}</span></div>
-                                   <div className="flex justify-between py-3"><span className="text-muted-foreground">Reorder Point</span><span className="font-medium">{item.supplyChain?.reorderPoint ? `${item.supplyChain.reorderPoint} units` : 'N/A'}</span></div>
-                                   <div className="flex justify-between py-3"><span className="text-muted-foreground">Last Order Date</span><span className="font-medium">{item.supplyChain?.lastOrderDate ? new Date(item.supplyChain.lastOrderDate).toLocaleDateString() : 'N/A'}</span></div>
-                                </CardContent>
-                            </Card>
-
                         </TabsContent>
 
-                        <TabsContent value="history" className="mt-6">
+                        {/* Supply Chain Tab */}
+                        <TabsContent value="supply" className="space-y-4 mt-4">
                             <Card>
-                                <CardHeader><CardTitle>Activity Log</CardTitle><CardDescription>Recent history for this item</CardDescription></CardHeader>
-                                <CardContent><ActivityLog logs={item.history} /></CardContent>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Supply Chain</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4 text-sm">
+                                        <div>
+                                            <span className="text-muted-foreground">Vendor</span>
+                                            <p className="font-medium">{item.supplyChain?.vendor || "N/A"}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-muted-foreground">Reorder Point</span>
+                                            <p className="font-medium">{item.supplyChain?.reorderPoint || item.lowStockThreshold || "N/A"} units</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-muted-foreground">Cost Per Unit</span>
+                                            <p className="font-medium">${item.supplyChain?.costPerUnit?.toFixed(2) || "0.00"}</p>
+                                        </div>
+                                        <div>
+                                            <span className="text-muted-foreground">Last Order Date</span>
+                                            <p className="font-medium">
+                                                {item.supplyChain?.lastOrderDate
+                                                    ? format(new Date(item.supplyChain.lastOrderDate), "MMM d, yyyy")
+                                                    : "N/A"
+                                                }
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Reorder Alert */}
+                                    {totalQty <= (item.supplyChain?.reorderPoint || item.lowStockThreshold || 0) && (
+                                        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg">
+                                            <p className="text-sm text-amber-700 dark:text-amber-300 font-medium">
+                                                ⚠️ Stock is at or below reorder point. Consider placing an order.
+                                            </p>
+                                        </div>
+                                    )}
+                                </CardContent>
                             </Card>
                         </TabsContent>
 
-                        <TabsContent value="machines" className="mt-6">
+                        {/* Technical Specs Tab */}
+                        <TabsContent value="technical" className="space-y-4 mt-4">
                             <Card>
-                                <CardHeader><CardTitle>Machine Assignments</CardTitle><CardDescription>Where this item is currently or scheduled to be in use.</CardDescription></CardHeader>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Technical Specifications</CardTitle>
+                                </CardHeader>
+                                <CardContent className="space-y-3 text-sm">
+                                    <div className="flex justify-between py-2 border-b">
+                                        <span className="text-muted-foreground">Weight</span>
+                                        <span className="font-medium">
+                                            {item.technicalSpecs?.weightGrams ? `${item.technicalSpecs.weightGrams}g` : "N/A"}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between py-2 border-b">
+                                        <span className="text-muted-foreground">Dimensions (L×W×H)</span>
+                                        <span className="font-medium">
+                                            {item.technicalSpecs?.dimensions
+                                                ? `${item.technicalSpecs.dimensions.lengthCm}×${item.technicalSpecs.dimensions.widthCm}×${item.technicalSpecs.dimensions.heightCm} cm`
+                                                : "N/A"
+                                            }
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between py-2">
+                                        <span className="text-muted-foreground">Recommended Claw Strength</span>
+                                        <span className="font-medium">
+                                            {item.technicalSpecs?.recommendedClawStrength || "N/A"}
+                                        </span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* Gameplay Tab */}
+                        <TabsContent value="gameplay" className="space-y-4 mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Gameplay Settings</CardTitle>
+                                    <CardDescription>Prize win configuration</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                                            <p className="text-sm text-purple-600 dark:text-purple-400">Play/Win Target</p>
+                                            <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+                                                <InlineEdit field="playWinTarget" value={item.playWinTarget || 0} type="number" />
+                                            </p>
+                                        </div>
+                                        <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg">
+                                            <p className="text-sm text-indigo-600 dark:text-indigo-400">Expected Payout Rate</p>
+                                            <p className="text-2xl font-bold text-indigo-700 dark:text-indigo-300">
+                                                {item.playWinTarget ? `${(100 / item.playWinTarget).toFixed(1)}%` : "N/A"}
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    {/* Payout Settings */}
+                                    {item.payouts && item.payouts.length > 0 && (
+                                        <div className="pt-4">
+                                            <h4 className="text-sm font-medium mb-2">Payout Configuration</h4>
+                                            <div className="space-y-2">
+                                                {item.payouts.map((payout, idx) => (
+                                                    <div key={idx} className="flex justify-between items-center p-2 bg-muted/50 rounded">
+                                                        {typeof payout === 'object' && payout !== null ? (
+                                                            <>
+                                                                <span className="text-sm">Play Cost: ${payout.playCost}</span>
+                                                                <span className="text-sm font-medium">{payout.playsRequired} plays required</span>
+                                                            </>
+                                                        ) : (
+                                                            <span className="text-sm">Payout #{idx + 1}: {payout}</span>
+                                                        )}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+
+                        {/* Machines Tab */}
+                        <TabsContent value="machines" className="space-y-4 mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Machine Assignments</CardTitle>
+                                    <CardDescription>Where this item is currently in use</CardDescription>
+                                </CardHeader>
                                 <CardContent>
                                     {assignedMachines.length > 0 ? (
-                                         <div className="space-y-3">
-                                             {assignedMachines.map((machine) => (
+                                        <div className="space-y-3">
+                                            {assignedMachines.map((machine) => (
                                                 <div key={machine.id} className="flex justify-between items-center p-3 bg-muted/50 rounded-lg">
-                                                     <Link href={`/machines/${machine.id}`} className="font-medium text-primary hover:underline flex items-center gap-2">
+                                                    <a
+                                                        href={`/machines/${machine.id}`}
+                                                        className="font-medium text-primary hover:underline flex items-center gap-2"
+                                                    >
+                                                        <Bot className="h-4 w-4" />
                                                         {machine.name}
-                                                        <ExternalLink className="h-4 w-4" />
-                                                     </Link>
-                                                     <div className="text-right text-sm">
+                                                    </a>
+                                                    <div className="text-right text-sm">
                                                         {machine.slots.filter(s => s.currentItem?.id === item.id).map(s => (
-                                                            <div key={s.id}>In use at: <span className="font-semibold">{s.name}</span></div>
+                                                            <div key={s.id}>In use: <span className="font-semibold">{s.name}</span></div>
                                                         ))}
-                                                         {machine.slots.filter(s => s.upcomingQueue?.some(u => u.itemId === item.id)).map(s => (
-                                                            <div key={s.id} className="text-yellow-600">Queued for: <span className="font-semibold">{s.name}</span></div>
+                                                        {machine.slots.filter(s => s.upcomingQueue?.some(u => u.itemId === item.id)).map(s => (
+                                                            <div key={s.id} className="text-yellow-600">Queued: <span className="font-semibold">{s.name}</span></div>
                                                         ))}
-                                                     </div>
+                                                    </div>
                                                 </div>
-                                             ))}
-                                         </div>
+                                            ))}
+                                        </div>
                                     ) : (
                                         <p className="text-sm text-muted-foreground text-center py-8">Not assigned to any machines.</p>
                                     )}
@@ -329,17 +574,69 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                             </Card>
                         </TabsContent>
 
-                        <TabsContent value="notes" className="mt-6">
-                             <Card>
-                                <CardHeader><CardTitle>Notes</CardTitle><CardDescription>Internal notes for this stock item. (Feature coming soon)</CardDescription></CardHeader>
+                        {/* Notes Tab */}
+                        <TabsContent value="notes" className="space-y-4 mt-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="text-base">Notes</CardTitle>
+                                    <CardDescription>Internal notes for this item</CardDescription>
+                                </CardHeader>
                                 <CardContent>
-                                    <div className="border rounded-lg p-4 h-48 flex items-center justify-center bg-muted/20">
-                                        <p className="text-muted-foreground">Notes functionality is under development.</p>
-                                    </div>
+                                    <Textarea
+                                        placeholder="Add notes about this item..."
+                                        className="min-h-[150px]"
+                                    />
+                                    <Button className="mt-3" disabled>
+                                        Save Notes (Coming Soon)
+                                    </Button>
                                 </CardContent>
                             </Card>
                         </TabsContent>
                     </Tabs>
+                </div>
+
+                {/* Right Sidebar (1/3) */}
+                <div className="space-y-6">
+                    {/* Activity Log */}
+                    <StockActivitySidebar
+                        history={item.history}
+                        onViewAll={() => setActiveTab("history")}
+                    />
+
+                    {/* Machine Assignment History */}
+                    <MachineAssignmentHistory
+                        item={item}
+                        machines={machines}
+                        onViewAll={() => setActiveTab("machines")}
+                    />
+
+                    {/* Metadata Card */}
+                    <Card>
+                        <CardHeader className="pb-3">
+                            <CardTitle className="text-sm font-medium flex items-center gap-2">
+                                <Info className="h-4 w-4" />
+                                Metadata
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="text-xs space-y-2">
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Item ID</span>
+                                <span className="font-mono">{item.id}</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Created</span>
+                                <span>
+                                    {item.createdAt ? format(new Date(item.createdAt), "MMM d, yyyy") : "N/A"}
+                                </span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span className="text-muted-foreground">Updated</span>
+                                <span>
+                                    {item.updatedAt ? formatDistanceToNow(new Date(item.updatedAt), { addSuffix: true }) : "N/A"}
+                                </span>
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </div>
 
@@ -362,7 +659,7 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                     />
                 </DialogContent>
             </Dialog>
-            
+
             {/* Delete Confirmation Dialog */}
             <ConfirmDialog
                 isOpen={isDeleteConfirmOpen}
@@ -371,7 +668,6 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                 title="Are you sure?"
                 description={`This will permanently delete "${item.name}". This action cannot be undone.`}
             />
-
         </div>
     );
 }

@@ -464,14 +464,13 @@ export function StockList() {
                     initialQuantity: itemData.quantity
                 });
 
-                const newId = await stockService.add({
+                await stockService.add({
                     ...itemData,
                     history: [historyLog],
                     createdAt: new Date(),
                     updatedAt: new Date()
                 });
-                // Add to state directly
-                setItems(prevItems => [...prevItems, { ...itemData, id: newId, history: [historyLog], createdAt: new Date(), updatedAt: new Date() }]);
+                // State is updated via subscription - no need to manually add here
                 toast.success("Item Created", { description: `${itemData.name} has been added.` });
             }
             setIsFormOpen(false);

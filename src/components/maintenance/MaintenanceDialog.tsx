@@ -42,9 +42,22 @@ export function MaintenanceDialog({ open, onOpenChange, onSuccess }: Maintenance
     });
 
     useEffect(() => {
+        let unsubscribeMachines: (() => void) | undefined;
+
+        // Subscribe to real-time machine updates
+        if (typeof (machineService as any).subscribe === 'function') {
+            unsubscribeMachines = (machineService as any).subscribe((data: ArcadeMachine[]) => {
+                setMachines(data);
+            });
+        }
+
         if (open) {
             loadMachines();
         }
+
+        return () => {
+            if (unsubscribeMachines) unsubscribeMachines();
+        };
     }, [open]);
 
     const loadMachines = async () => {

@@ -46,7 +46,22 @@ export default function MachinesPage() {
     const [machineToEdit, setMachineToEdit] = useState<MachineDisplayItem | null>(null);
 
     useEffect(() => {
+        let unsubscribe: (() => void) | undefined;
+
+        // Subscribe to real-time machine updates
+        if (typeof (machineService as any).subscribe === 'function') {
+            unsubscribe = (machineService as any).subscribe((data: ArcadeMachine[]) => {
+                setMachines(data);
+                setLoading(false);
+            });
+        }
+
+        // Initial load (for services without subscription support)
         loadMachines();
+
+        return () => {
+            if (unsubscribe) unsubscribe();
+        };
     }, []);
 
     const loadMachines = async () => {

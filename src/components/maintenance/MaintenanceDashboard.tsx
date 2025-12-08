@@ -35,7 +35,25 @@ export function MaintenanceDashboard() {
     );
 
     useEffect(() => {
+        let unsubscribeMachines: (() => void) | undefined;
+
+        // Subscribe to real-time machine updates for enriching task data
+        if (typeof (machineService as any).subscribe === 'function') {
+            unsubscribeMachines = (machineService as any).subscribe((machines: any[]) => {
+                // Re-enrich tasks when machine data changes
+                setTasks(prev => prev.map(task => ({
+                    ...task,
+                    machineName: machines.find(m => m.id === task.machineId)?.name || "Unknown Machine",
+                })));
+            });
+        }
+
+        // Initial load
         loadData();
+
+        return () => {
+            if (unsubscribeMachines) unsubscribeMachines();
+        };
     }, []);
 
     const loadData = async () => {

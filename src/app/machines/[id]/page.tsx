@@ -31,9 +31,44 @@ export default function MachineDetailsPage() {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
 
     useEffect(() => {
+        let unsubscribeMachine: (() => void) | undefined;
+        let unsubscribeStock: (() => void) | undefined;
+
+        // Subscribe to real-time machine updates
+        if (typeof (machineService as any).subscribe === 'function') {
+            unsubscribeMachine = (machineService as any).subscribe((machines: ArcadeMachine[]) => {
+                const currentMachine = machines.find(m => m.id === id);
+                if (currentMachine) {
+                    setMachine(currentMachine);
+                }
+            });
+        }
+
+        // Subscribe to real-time stock updates
+        if (typeof (stockService as any).subscribe === 'function') {
+            unsubscribeStock = (stockService as any).subscribe((allStock: StockItem[]) => {
+                if (machine) {
+                    const machineStock = allStock.filter(item => {
+                        if (slotId) {
+                            return item.assignedSlotId === slotId;
+                        }
+                        return item.assignedMachineId === machine.id ||
+                            item.locations?.some(loc => loc.name.toLowerCase().includes(machine.name.toLowerCase()));
+                    });
+                    setAssignedStock(machineStock);
+                }
+            });
+        }
+
+        // Initial load
         if (id) {
             loadMachine();
         }
+
+        return () => {
+            if (unsubscribeMachine) unsubscribeMachine();
+            if (unsubscribeStock) unsubscribeStock();
+        };
     }, [id, slotId]);
 
     const loadMachine = async () => {

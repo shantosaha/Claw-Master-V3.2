@@ -115,15 +115,24 @@ export function StockItemCard({
                         <div className="relative aspect-square bg-gray-100 cursor-pointer hover:opacity-90 transition-opacity">
                             {(item.imageUrls && item.imageUrls.length > 0) || item.imageUrl ? (
                                 <>
-                                    <img
-                                        src={item.imageUrls?.[0] || item.imageUrl || ""}
-                                        alt={item.name}
-                                        className="absolute inset-0 w-full h-full object-cover"
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.src = "https://placehold.co/400x400?text=No+Image";
-                                        }}
-                                    />
+                                    {(() => {
+                                        const imgSrc = item.imageUrls?.[0] || item.imageUrl;
+                                        return imgSrc ? (
+                                            <img
+                                                src={imgSrc}
+                                                alt={item.name}
+                                                className="absolute inset-0 w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    const target = e.target as HTMLImageElement;
+                                                    target.src = "https://placehold.co/400x400?text=No+Image";
+                                                }}
+                                            />
+                                        ) : (
+                                            <div className="flex items-center justify-center w-full h-full text-gray-400 text-sm">
+                                                {item.name.split(' ').slice(0, 2).join(' ')}
+                                            </div>
+                                        );
+                                    })()}
                                     {item.imageUrls && item.imageUrls.length > 1 && (
                                         <div className="absolute bottom-1 right-1 bg-black/50 text-white text-[9px] px-1 py-0.5 rounded-full">
                                             +{item.imageUrls.length - 1}
@@ -148,15 +157,22 @@ export function StockItemCard({
                                 setCurrentImageIndex((prev) => (prev === (item.imageUrls?.length || 1) - 1 ? 0 : prev + 1));
                             }
                         }} tabIndex={0}>
-                            <img
-                                src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[currentImageIndex] : item.imageUrl || ""}
-                                alt={item.name}
-                                className="object-contain max-h-full max-w-full"
-                                onError={(e) => {
-                                    const target = e.target as HTMLImageElement;
-                                    target.src = "https://placehold.co/400x400?text=No+Image";
-                                }}
-                            />
+                            {(() => {
+                                const imgSrc = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[currentImageIndex] : item.imageUrl;
+                                return imgSrc ? (
+                                    <img
+                                        src={imgSrc}
+                                        alt={item.name}
+                                        className="object-contain max-h-full max-w-full"
+                                        onError={(e) => {
+                                            const target = e.target as HTMLImageElement;
+                                            target.src = "https://placehold.co/400x400?text=No+Image";
+                                        }}
+                                    />
+                                ) : (
+                                    <div className="text-white text-lg">No Image Available</div>
+                                );
+                            })()}
 
                             {item.imageUrls && item.imageUrls.length > 1 && (
                                 <>
@@ -307,21 +323,24 @@ export function StockItemCard({
             {/* Image */}
             <div className="relative aspect-[3/2] bg-gray-100 group/image overflow-hidden">
                 <Link href={`/inventory/${item.id}`} className="block w-full h-full">
-                    {(item.imageUrls && item.imageUrls.length > 0) || item.imageUrl ? (
-                        <img
-                            src={item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[currentImageIndex] : item.imageUrl || ""}
-                            alt={item.name}
-                            className="object-cover w-full h-full transition-transform duration-300 group-hover/image:scale-105"
-                            onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.src = "https://placehold.co/400x400?text=No+Image";
-                            }}
-                        />
-                    ) : (
-                        <div className="flex items-center justify-center w-full h-full text-gray-400">
-                            {item.name}
-                        </div>
-                    )}
+                    {(() => {
+                        const imgSrc = item.imageUrls && item.imageUrls.length > 0 ? item.imageUrls[currentImageIndex] : item.imageUrl;
+                        return imgSrc ? (
+                            <img
+                                src={imgSrc}
+                                alt={item.name}
+                                className="object-cover w-full h-full transition-transform duration-300 group-hover/image:scale-105"
+                                onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = "https://placehold.co/400x400?text=No+Image";
+                                }}
+                            />
+                        ) : (
+                            <div className="flex items-center justify-center w-full h-full text-gray-400">
+                                {item.name}
+                            </div>
+                        );
+                    })()}
                 </Link>
 
                 {/* Navigation Arrows - Outside Link */}

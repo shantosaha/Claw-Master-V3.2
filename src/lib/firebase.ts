@@ -29,7 +29,11 @@ try {
         storage = getStorage(app);
     } else {
         // Server-side without keys, use mock
-        throw new Error("Missing Firebase Config on Server");
+        console.info("Firebase: No server keys found, using mocks.");
+        app = mock;
+        auth = mock;
+        db = mock;
+        storage = mock;
     }
 } catch (error) {
     console.warn("Firebase initialization failed (using mocks):", error);

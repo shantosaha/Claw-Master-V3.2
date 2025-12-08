@@ -5,6 +5,7 @@ import { AuthProvider } from "@/context/AuthContext";
 import { AppShell } from "@/components/layout/AppShell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { DataProvider } from "@/context/DataProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,10 +32,12 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <AuthProvider>
-            <AppShell>
-              {children}
-            </AppShell>
-            <Toaster />
+            <DataProvider>
+              <AppShell>
+                {children}
+              </AppShell>
+              <Toaster />
+            </DataProvider>
           </AuthProvider>
         </ThemeProvider>
       </body>

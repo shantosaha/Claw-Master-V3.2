@@ -21,7 +21,25 @@ export default function OrderHistoryPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        let unsubscribeStock: (() => void) | undefined;
+
+        // Subscribe to real-time stock updates
+        if (typeof (stockService as any).subscribe === 'function') {
+            unsubscribeStock = (stockService as any).subscribe((stockData: StockItem[]) => {
+                const stockMap: Record<string, StockItem> = {};
+                stockData.forEach(item => {
+                    stockMap[item.id] = item;
+                });
+                setStockItems(stockMap);
+            });
+        }
+
+        // Initial load
         loadData();
+
+        return () => {
+            if (unsubscribeStock) unsubscribeStock();
+        };
     }, []);
 
     const loadData = async () => {

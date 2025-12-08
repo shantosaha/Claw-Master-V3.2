@@ -10,7 +10,28 @@ export function MachinePerformanceChart() {
     const [data, setData] = useState<{ name: string; plays: number }[]>([]);
 
     useEffect(() => {
+        let unsubscribeMachines: (() => void) | undefined;
+
+        // Subscribe to real-time machine updates
+        if (typeof (machineService as any).subscribe === 'function') {
+            unsubscribeMachines = (machineService as any).subscribe((machines: ArcadeMachine[]) => {
+                const topMachines = machines
+                    .sort((a, b) => (b.playCount || 0) - (a.playCount || 0))
+                    .slice(0, 5)
+                    .map(m => ({
+                        name: m.name,
+                        plays: m.playCount || 0,
+                    }));
+                setData(topMachines);
+            });
+        }
+
+        // Initial load
         loadData();
+
+        return () => {
+            if (unsubscribeMachines) unsubscribeMachines();
+        };
     }, []);
 
     const loadData = async () => {

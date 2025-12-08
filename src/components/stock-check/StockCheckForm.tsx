@@ -21,7 +21,22 @@ export function StockCheckForm() {
     const [notes, setNotes] = useState<Record<string, string>>({});
 
     useEffect(() => {
+        let unsubscribeMachines: (() => void) | undefined;
+
+        // Subscribe to real-time machine updates
+        if (typeof (machineService as any).subscribe === 'function') {
+            unsubscribeMachines = (machineService as any).subscribe((data: ArcadeMachine[]) => {
+                setMachines(data);
+                setLoading(false);
+            });
+        }
+
+        // Initial load
         loadData();
+
+        return () => {
+            if (unsubscribeMachines) unsubscribeMachines();
+        };
     }, []);
 
     const loadData = async () => {

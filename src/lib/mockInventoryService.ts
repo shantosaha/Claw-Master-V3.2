@@ -19,16 +19,22 @@ let inMemoryItems: StockItem[] = sampleInventoryData.map(normalizeItem);
 // Listeners for real-time updates
 let listeners: ((items: StockItem[]) => void)[] = [];
 
+// Counter to ensure unique IDs even when created at the same millisecond
+let idCounter = 0;
+
 const notifyListeners = () => {
-    const items = [...inMemoryItems];
-    listeners.forEach(listener => listener(items));
+    // Deduplicate items by ID to prevent React key errors
+    const uniqueItems = Array.from(new Map(inMemoryItems.map(item => [item.id, item])).values());
+    listeners.forEach(listener => listener(uniqueItems));
 };
 
 export const mockInventoryService = {
     getAll: async () => {
         // Simulate network delay
         await new Promise(resolve => setTimeout(resolve, 500));
-        return [...inMemoryItems];
+        // Deduplicate items by ID
+        const uniqueItems = Array.from(new Map(inMemoryItems.map(item => [item.id, item])).values());
+        return uniqueItems;
     },
 
     subscribe: (callback: (items: StockItem[]) => void) => {
@@ -47,9 +53,11 @@ export const mockInventoryService = {
 
     add: async (item: Omit<StockItem, "id">) => {
         await new Promise(resolve => setTimeout(resolve, 500));
+        // Generate a truly unique ID using timestamp + random string
+        const uniqueId = `inv_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
         const newItem = {
             ...item,
-            id: `inv_new_${Date.now()}`,
+            id: uniqueId,
             createdAt: new Date(),
             updatedAt: new Date()
         } as StockItem;

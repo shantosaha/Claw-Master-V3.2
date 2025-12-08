@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { machineService, stockService, maintenanceService, orderService } from "@/services";
+import { maintenanceService, orderService } from "@/services";
+import { useData } from "@/context/DataProvider";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Activity, AlertTriangle, Box, Wrench, Users, Trophy, PlayCircle, Bell } from "lucide-react";
 import Link from "next/link";
@@ -11,6 +12,8 @@ import { isFirebaseInitialized } from "@/lib/firebase";
 import { MachinePerformanceChart } from "@/components/analytics/MachinePerformanceChart";
 
 export default function Dashboard() {
+  const { items, machines, itemsLoading, machinesLoading } = useData();
+
   const [stats, setStats] = useState({
     totalMachines: 0,
     lowStockItems: 0,
@@ -21,52 +24,56 @@ export default function Dashboard() {
   });
   const [loading, setLoading] = useState(true);
 
+  // Calculate stats from context data
   useEffect(() => {
-    loadStats();
-  }, []);
+    const calculateStats = async () => {
+      if (itemsLoading || machinesLoading) return;
 
-  const loadStats = async () => {
-    try {
-      if (!isFirebaseInitialized) {
+      try {
+        if (!isFirebaseInitialized) {
+          setStats({
+            totalMachines: machines.length || DEMO_METRICS.activeMachines,
+            lowStockItems: items.filter(item => {
+              const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+              return totalQty <= item.lowStockThreshold;
+            }).length || DEMO_METRICS.lowStockItems,
+            openTickets: DEMO_METRICS.openTickets,
+            pendingOrders: DEMO_METRICS.pendingOrders,
+            dailyPlays: DEMO_METRICS.dailyPlays,
+            popularCategory: DEMO_METRICS.popularCategory,
+          });
+          setLoading(false);
+          return;
+        }
+
+        // Fetch additional data not in context
+        const [tickets, orders] = await Promise.all([
+          maintenanceService.query(where("status", "!=", "resolved")),
+          orderService.query(where("status", "==", "submitted")),
+        ]);
+
+        const lowStock = items.filter(item => {
+          const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+          return totalQty <= item.lowStockThreshold;
+        }).length;
+
         setStats({
-          totalMachines: DEMO_METRICS.activeMachines,
-          lowStockItems: DEMO_METRICS.lowStockItems,
-          openTickets: DEMO_METRICS.openTickets,
-          pendingOrders: DEMO_METRICS.pendingOrders,
-          dailyPlays: DEMO_METRICS.dailyPlays,
-          popularCategory: DEMO_METRICS.popularCategory,
+          totalMachines: machines.length,
+          lowStockItems: lowStock,
+          openTickets: tickets.length,
+          pendingOrders: orders.length,
+          dailyPlays: 0,
+          popularCategory: "-",
         });
+      } catch (error) {
+        console.error("Failed to calculate dashboard stats:", error);
+      } finally {
         setLoading(false);
-        return;
       }
+    };
 
-      // Parallel data fetching
-      const [machines, stock, tickets, orders] = await Promise.all([
-        machineService.getAll(),
-        stockService.getAll(),
-        maintenanceService.query(where("status", "!=", "resolved")),
-        orderService.query(where("status", "==", "submitted")),
-      ]);
-
-      const lowStock = stock.filter(item => {
-        const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
-        return totalQty <= item.lowStockThreshold;
-      }).length;
-
-      setStats({
-        totalMachines: machines.length,
-        lowStockItems: lowStock,
-        openTickets: tickets.length,
-        pendingOrders: orders.length,
-        dailyPlays: 0, // Placeholder for real logic
-        popularCategory: "-", // Placeholder for real logic
-      });
-    } catch (error) {
-      console.error("Failed to load dashboard stats:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    calculateStats();
+  }, [items, machines, itemsLoading, machinesLoading]);
 
   return (
     <div className="space-y-6">

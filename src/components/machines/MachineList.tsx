@@ -39,7 +39,23 @@ export function MachineList() {
     const [itemToDelete, setItemToDelete] = useState<MachineDisplayItem | null>(null);
 
     useEffect(() => {
+        let unsubscribeMachines: (() => void) | undefined;
+
+        // Subscribe to real-time machine updates
+        if (typeof (machineService as any).subscribe === 'function') {
+            unsubscribeMachines = (machineService as any).subscribe((data: ArcadeMachine[]) => {
+                const flattenedData = flattenMachinesToSlots(data);
+                setItems(flattenedData);
+                setLoading(false);
+            });
+        }
+
+        // Initial load
         loadItems();
+
+        return () => {
+            if (unsubscribeMachines) unsubscribeMachines();
+        };
     }, []);
 
     const flattenMachinesToSlots = (machines: ArcadeMachine[]): MachineDisplayItem[] => {

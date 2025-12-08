@@ -228,6 +228,21 @@ const stockItemFormSchema = addStockItemSchemaIntermediate.superRefine((data, ct
             playsRequired: p.playsRequired,
         })).filter(p => p.playCost !== undefined && p.playsRequired !== undefined);
 
+        // Auto-allocate unallocated quantity to B-Plushy Room
+        let finalLocations = (data._numericLocationsParsed || []).map(loc => ({ name: loc.name, quantity: loc._parsedNumericQuantity }));
+        const overallQty = data._parsedOverallNumericQuantity || 0;
+        const allocatedQty = data._sumOfLocationQuantities || 0;
+        const unallocated = overallQty - allocatedQty;
+
+        if (unallocated > 0) {
+            const bPlushyIndex = finalLocations.findIndex(loc => loc.name === "B-Plushy Room");
+            if (bPlushyIndex >= 0) {
+                finalLocations[bPlushyIndex].quantity += unallocated;
+            } else {
+                finalLocations.push({ name: "B-Plushy Room", quantity: unallocated });
+            }
+        }
+
         return {
             name: data.name,
             category: data.category === ADD_NEW_CATEGORY_VALUE && data.newCategoryName ? data.newCategoryName : data.category,
@@ -257,7 +272,7 @@ const stockItemFormSchema = addStockItemSchemaIntermediate.superRefine((data, ct
             } : undefined,
             cost: data.cost,
             value: data.value,
-            locations: (data._numericLocationsParsed || []).map(loc => ({ name: loc.name, quantity: loc._parsedNumericQuantity })),
+            locations: finalLocations,
             payouts: transformedPayouts.length > 0 ? transformedPayouts : undefined,
             assignedMachineId: data.assignedMachineId === NO_MACHINE_ASSIGNED_VALUE ? undefined : data.assignedMachineId,
             assignedSlotId: data.assignedSlotId,
@@ -490,17 +505,20 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
     const watchCategoryForSku = useWatch({ control: form.control, name: "category" });
     const watchSize = useWatch({ control: form.control, name: "size" });
     const watchSku = useWatch({ control: form.control, name: "sku" });
+    const watchNameForSku = useWatch({ control: form.control, name: "name" });
 
     React.useEffect(() => {
-        // Only generate if it's a new item (no initialData) and SKU is empty
-        if (!initialData && !watchSku && watchCategoryForSku && watchSize && watchCategoryForSku !== ADD_NEW_CATEGORY_VALUE) {
+        // Auto-generate SKU if it's a new item and SKU hasn't been manually set
+        // Generates when category is set (size is optional)
+        if (!initialData && !watchSku && watchCategoryForSku && watchCategoryForSku !== ADD_NEW_CATEGORY_VALUE) {
             const catPrefix = watchCategoryForSku.substring(0, 3).toUpperCase();
-            const sizePrefix = watchSize.substring(0, 3).toUpperCase();
+            const sizePrefix = watchSize ? watchSize.substring(0, 3).toUpperCase() : 'XXX';
+            const namePrefix = watchNameForSku ? watchNameForSku.substring(0, 2).toUpperCase() : '';
             const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-            const generatedSku = `${catPrefix}-${sizePrefix}-${random}`;
+            const generatedSku = `${catPrefix}-${sizePrefix}-${namePrefix}${random}`;
             form.setValue("sku", generatedSku);
         }
-    }, [watchCategoryForSku, watchSize, watchSku, initialData, form]);
+    }, [watchCategoryForSku, watchSize, watchSku, watchNameForSku, initialData, form]);
 
     const watchCategory = form.watch("category");
     const watchName = form.watch("name");
@@ -564,17 +582,23 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
         setIsGeneratingNote(true);
         try {
             const result = await generateStockItemNote({ itemName, itemCategory: itemCategoryValue, existingNote });
-            form.setValue("description", result.generatedNote, { shouldValidate: true });
-            toast({
-                title: "Description Generated!",
-                description: "The AI has suggested a description for your item.",
-            });
-        } catch (error) {
+            if (result && result.generatedNote) {
+                form.setValue("description", result.generatedNote, { shouldValidate: true });
+                toast({
+                    title: "Description Generated!",
+                    description: "The AI has suggested a description for your item.",
+                });
+            } else {
+                throw new Error("No description returned");
+            }
+        } catch (error: any) {
             console.error("Error generating stock item note:", error);
+            // Fallback: generate a simple description locally
+            const fallbackDescription = `${itemName} - A quality ${itemCategoryValue.toLowerCase()} item. Perfect for arcade claw machines.`;
+            form.setValue("description", fallbackDescription, { shouldValidate: true });
             toast({
-                title: "Generation Failed",
-                description: "Could not generate a description. Please try again or write one manually.",
-                variant: "destructive",
+                title: "Fallback Description Generated",
+                description: "AI unavailable. A basic description has been created.",
             });
         } finally {
             setIsGeneratingNote(false);
@@ -984,6 +1008,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                     </CommandList>
                                                 </Command>
                                             </PopoverContent>
+
                                         </Popover>
                                         <FormMessage />
                                     </FormItem>
@@ -1005,7 +1030,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                             placeholder="Enter quantity"
                                             {...field}
                                             className="font-body"
-                                            value={field.value ?? ''}
+                                            value={typeof field.value === 'number' ? field.value : ''}
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 field.onChange(val === '' ? undefined : parseInt(val, 10));
@@ -1029,7 +1054,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                             placeholder="Alert threshold"
                                             {...field}
                                             className="font-body"
-                                            value={field.value ?? ''}
+                                            value={typeof field.value === 'number' ? field.value : ''}
                                             onChange={(e) => {
                                                 const val = e.target.value;
                                                 field.onChange(val === '' ? undefined : parseInt(val, 10));
@@ -1130,7 +1155,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                             placeholder="Enter quantity"
                                                             {...itemField}
                                                             className="font-body bg-background text-sm h-10"
-                                                            value={itemField.value ?? ''}
+                                                            value={typeof itemField.value === 'number' ? itemField.value : ''}
                                                             onChange={(e) => {
                                                                 const val = e.target.value;
                                                                 itemField.onChange(val === '' ? undefined : parseInt(val, 10));
@@ -1357,7 +1382,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                         placeholder="0.00"
                                                         className="font-body"
                                                         {...field}
-                                                        value={field.value ?? ''}
+                                                        value={typeof field.value === 'number' ? field.value : ''}
                                                         onChange={e => {
                                                             const val = e.target.value;
                                                             field.onChange(val === '' ? undefined : parseFloat(val));
@@ -1381,7 +1406,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                         placeholder="0"
                                                         className="font-body"
                                                         {...field}
-                                                        value={field.value ?? ''}
+                                                        value={typeof field.value === 'number' ? field.value : ''}
                                                         onChange={e => {
                                                             const val = e.target.value;
                                                             field.onChange(val === '' ? undefined : parseInt(val, 10));
@@ -1411,7 +1436,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                         placeholder="0"
                                                         className="font-body"
                                                         {...field}
-                                                        value={field.value ?? ''}
+                                                        value={typeof field.value === 'number' ? field.value : ''}
                                                         onChange={e => {
                                                             const val = e.target.value;
                                                             field.onChange(val === '' ? undefined : parseFloat(val));
@@ -1435,7 +1460,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                         placeholder="0"
                                                         className="font-body"
                                                         {...field}
-                                                        value={field.value ?? ''}
+                                                        value={typeof field.value === 'number' ? field.value : ''}
                                                         onChange={e => {
                                                             const val = e.target.value;
                                                             field.onChange(val === '' ? undefined : parseFloat(val));
@@ -1459,7 +1484,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                         placeholder="0"
                                                         className="font-body"
                                                         {...field}
-                                                        value={field.value ?? ''}
+                                                        value={typeof field.value === 'number' ? field.value : ''}
                                                         onChange={e => {
                                                             const val = e.target.value;
                                                             field.onChange(val === '' ? undefined : parseFloat(val));
@@ -1483,7 +1508,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                         placeholder="0"
                                                         className="font-body"
                                                         {...field}
-                                                        value={field.value ?? ''}
+                                                        value={typeof field.value === 'number' ? field.value : ''}
                                                         onChange={e => {
                                                             const val = e.target.value;
                                                             field.onChange(val === '' ? undefined : parseFloat(val));

@@ -77,7 +77,25 @@ export function OrderBoard() {
     );
 
     useEffect(() => {
+        let unsubscribeStock: (() => void) | undefined;
+
+        // Subscribe to real-time stock updates to enrich order data
+        if (typeof (stockService as any).subscribe === 'function') {
+            unsubscribeStock = (stockService as any).subscribe(async (stockItems: StockItem[]) => {
+                // Re-enrich requests when stock data changes
+                setRequests(prev => prev.map(r => ({
+                    ...r,
+                    itemName: r.itemName || stockItems.find(i => i.id === r.itemId)?.name || "Unknown Item",
+                })));
+            });
+        }
+
+        // Initial load
         loadData();
+
+        return () => {
+            if (unsubscribeStock) unsubscribeStock();
+        };
     }, []);
 
     const loadData = async () => {
