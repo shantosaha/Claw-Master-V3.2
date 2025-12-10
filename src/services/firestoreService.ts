@@ -57,8 +57,12 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
         // Add new document (Auto ID)
         add: async (data: Omit<T, "id">): Promise<string> => {
             if (!isFirebaseInitialized) {
-                console.warn("Firebase not initialized, skipping add");
-                return "mock-id-" + Date.now();
+                console.warn("Firebase not initialized, adding to demo data in-memory");
+                const newId = "mock-id-" + Date.now();
+                const newItem = { ...data, id: newId, createdAt: new Date(), updatedAt: new Date() } as unknown as T;
+                const list = getDemoData();
+                list.push(newItem);
+                return newId;
             }
             const docRef = await addDoc(getCollectionRef(), {
                 ...data,
@@ -70,7 +74,17 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
 
         // Add/Set document with specific ID
         set: async (id: string, data: Omit<T, "id">): Promise<void> => {
-            if (!isFirebaseInitialized) return;
+            if (!isFirebaseInitialized) {
+                const list = getDemoData();
+                const index = list.findIndex((item) => (item as any).id === id);
+                const newItem = { ...data, id, createdAt: new Date(), updatedAt: new Date() } as unknown as T;
+                if (index >= 0) {
+                    list[index] = newItem;
+                } else {
+                    list.push(newItem);
+                }
+                return;
+            }
             const docRef = doc(db, collectionName, id);
             await setDoc(docRef, {
                 ...data,
@@ -81,7 +95,14 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
 
         // Update document
         update: async (id: string, data: Partial<T>): Promise<void> => {
-            if (!isFirebaseInitialized) return;
+            if (!isFirebaseInitialized) {
+                const list = getDemoData();
+                const item = list.find((i) => (i as any).id === id);
+                if (item) {
+                    Object.assign(item, { ...data, updatedAt: new Date() });
+                }
+                return;
+            }
             const docRef = doc(db, collectionName, id);
             await updateDoc(docRef, {
                 ...data,
@@ -91,7 +112,12 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
 
         // Delete document
         remove: async (id: string): Promise<void> => {
-            if (!isFirebaseInitialized) return;
+            if (!isFirebaseInitialized) {
+                const list = getDemoData();
+                const index = list.findIndex((item) => (item as any).id === id);
+                if (index !== -1) list.splice(index, 1);
+                return;
+            }
             const docRef = doc(db, collectionName, id);
             await deleteDoc(docRef);
         },

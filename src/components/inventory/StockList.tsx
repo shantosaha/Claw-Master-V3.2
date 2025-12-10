@@ -8,7 +8,7 @@ import { calculateStockLevel } from "@/utils/inventoryUtils";
 import { useAuth } from "@/context/AuthContext";
 import { StockItemHistoryDialog } from "@/components/inventory/StockItemHistoryDialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Inbox, Loader2, ArrowUpDown, ArrowUp, ArrowDown, WandSparkles } from "lucide-react";
+import { Plus, Inbox, Loader2, ArrowUpDown, ArrowUp, ArrowDown, WandSparkles, AlertTriangle } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -95,6 +95,21 @@ export function StockList() {
     const [selectedBrand, setSelectedBrand] = useState("All");
     const [assignedStatusFilter, setAssignedStatusFilter] = useState<string>("all");
 
+    const categories = useMemo(() => {
+        const cats = new Set(items.map(i => i.category).filter(Boolean));
+        return Array.from(cats).sort();
+    }, [items]);
+
+    const sizes = useMemo(() => {
+        const s = new Set(items.map(i => i.size).filter(Boolean));
+        return Array.from(s).sort();
+    }, [items]);
+
+    const brands = useMemo(() => {
+        const b = new Set(items.map(i => i.brand).filter(Boolean));
+        return Array.from(b).sort();
+    }, [items]);
+
     // Dialog State
     const [isFormOpen, setIsFormOpen] = useState(false);
     const [editingItem, setEditingItem] = useState<StockItem | null>(null);
@@ -133,114 +148,48 @@ export function StockList() {
     const [itemToSetOutOfStock, setItemToSetOutOfStock] = useState<StockItem | null>(null);
     const [restockQuantity, setRestockQuantity] = useState<string>("0");
     const [outOfStockMode, setOutOfStockMode] = useState<"set-zero" | "keep-quantity">("set-zero");
+    const [stockLevelWarning, setStockLevelWarning] = useState<{ item: StockItem, status: string } | null>(null);
 
     // Zoom Dialog State
     const [zoomItem, setZoomItem] = useState<StockItem | null>(null);
     const [zoomImageIndex, setZoomImageIndex] = useState(0);
     const [isZoomOpen, setIsZoomOpen] = useState(false);
 
-
-    const categories = useMemo(() => {
-        const cats = new Set(items.map(i => i.category));
-        return Array.from(cats).sort();
-    }, [items]);
-
-    const sizes = useMemo(() => {
-        const s = new Set(items.map(i => i.size).filter((s): s is string => !!s));
-        return Array.from(s).sort();
-    }, [items]);
-
-    const brands = useMemo(() => {
-        const b = new Set(items.map(i => i.brand).filter(Boolean));
-        return Array.from(b).sort();
-    }, [items]);
-
-
-
-    useEffect(() => {
-        let unsubscribeStock: (() => void) | undefined;
-        let unsubscribeMachines: (() => void) | undefined;
-
-        const setupSubscriptions = () => {
-            // Type for services with optional subscribe method
-            type ServiceWithSubscribe<T> = {
-                subscribe?: (callback: (data: T[]) => void) => () => void;
-            };
-
-            const stockSvc = stockService as unknown as ServiceWithSubscribe<StockItem>;
-            const machineSvc = machineService as unknown as ServiceWithSubscribe<ArcadeMachine>;
-
-            // Subscribe to stock updates
-            if (typeof stockSvc.subscribe === 'function') {
-                unsubscribeStock = stockSvc.subscribe((data: StockItem[]) => {
-                    setItems(data);
-                });
-            }
-
-            // Subscribe to machine updates
-            if (typeof machineSvc.subscribe === 'function') {
-                unsubscribeMachines = machineSvc.subscribe((data: ArcadeMachine[]) => {
-                    setMachines(data);
-                });
-            }
-        };
-
-        setupSubscriptions();
-        loadData();
-
-        return () => {
-            if (unsubscribeStock) unsubscribeStock();
-            if (unsubscribeMachines) unsubscribeMachines();
-        };
-    }, []);
-
-    useEffect(() => {
-        if (isAssignMachineOpen) {
-            machineService.getAll().then(setMachines);
-        }
-    }, [isAssignMachineOpen]);
-
-    // Persist view style preference to localStorage
-    useEffect(() => {
-        if (typeof window !== 'undefined') {
-            localStorage.setItem('inventory-view-style', viewStyle);
-        }
-    }, [viewStyle]);
-
+    // Reset page when filters change
     const loadData = async () => {
         setLoading(true);
         try {
-            const [stockData, requestsData, machinesData] = await Promise.all([
+            const [itemsData, requestsData, machinesData] = await Promise.all([
                 stockService.getAll(),
                 orderService.getAll(),
                 machineService.getAll()
             ]);
-            setItems(stockData);
+            setItems(itemsData);
             setReorderRequests(requestsData);
             setMachines(machinesData);
         } catch (error) {
             console.error("Failed to load data:", error);
-            toast.error("Error", {
-                description: "Failed to load inventory data.",
-            });
+            toast.error("Error", { description: "Failed to load inventory data." });
         } finally {
             setLoading(false);
         }
     };
 
+    useEffect(() => {
+        loadData();
+    }, []);
+
     const handleResetFilters = () => {
         setSearchTerm("");
         setSelectedCategory("All");
+        setSortOrder("date-new");
         setStockStatus("all");
         setSelectedSize("All");
         setSelectedBrand("All");
-        setSortOrder("date-new");
-        setSortColumn(null);
-        setSortDirection("asc");
         setAssignedStatusFilter("all");
     };
 
-
+    // Filter Logic
     const filteredItems = useMemo(() => {
         const result = items.filter(item => {
             const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -274,76 +223,77 @@ export function StockList() {
                 let aVal: string | number, bVal: string | number;
 
                 switch (sortColumn) {
-                    case "name":
-                        aVal = a.name;
-                        bVal = b.name;
+                    case 'name':
+                        aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase();
                         break;
-                    case "category":
-                        aVal = a.category;
-                        bVal = b.category;
+                    case 'sku':
+                        aVal = a.sku.toLowerCase(); bVal = b.sku.toLowerCase();
                         break;
-                    case "size":
-                        aVal = a.size || "";
-                        bVal = b.size || "";
+                    case 'category':
+                        aVal = a.category.toLowerCase(); bVal = b.category.toLowerCase();
                         break;
-                    case "quantity":
-                        aVal = a.locations.reduce((sum, loc) => sum + loc.quantity, 0);
-                        bVal = b.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+                    case 'quantity':
+                        aVal = a.locations.reduce((acc, loc) => acc + loc.quantity, 0);
+                        bVal = b.locations.reduce((acc, loc) => acc + loc.quantity, 0);
                         break;
-                    case "stockStatus":
-                        const qtyA = a.locations.reduce((sum, loc) => sum + loc.quantity, 0);
-                        const qtyB = b.locations.reduce((sum, loc) => sum + loc.quantity, 0);
-
-                        const getStatusRank = (qty: number) => {
-                            if (qty <= 0) return 0; // Out
-                            if (qty <= 12) return 1; // Low
-                            if (qty <= 25) return 2; // Limited
-                            return 3; // In Stock
+                    case 'size':
+                        // Define size order for proper sorting
+                        const sizeOrder: Record<string, number> = {
+                            'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6,
+                            'SMALL': 2, 'MEDIUM': 3, 'LARGE': 4, 'BIG': 5
                         };
-
-                        aVal = getStatusRank(qtyA);
-                        bVal = getStatusRank(qtyB);
+                        aVal = sizeOrder[a.size?.toUpperCase() || ''] || 99;
+                        bVal = sizeOrder[b.size?.toUpperCase() || ''] || 99;
                         break;
-                    case "assignedStatus":
-                        aVal = a.assignedStatus || "";
-                        bVal = b.assignedStatus || "";
+                    case 'stockStatus': {
+                        // Sort by calculated stock level priority: Out of Stock > Low Stock > Limited Stock > In Stock
+                        const stockPriority: Record<string, number> = { 'Out of Stock': 1, 'Low Stock': 2, 'Limited Stock': 3, 'In Stock': 4 };
+                        const aTotalQty = a.locations.reduce((acc, loc) => acc + loc.quantity, 0);
+                        const bTotalQty = b.locations.reduce((acc, loc) => acc + loc.quantity, 0);
+                        const aLevel = calculateStockLevel(aTotalQty, a.stockStatus).status;
+                        const bLevel = calculateStockLevel(bTotalQty, b.stockStatus).status;
+                        aVal = stockPriority[aLevel] || 99;
+                        bVal = stockPriority[bLevel] || 99;
                         break;
-                    case "assignedTo":
-                        aVal = a.assignedMachineName || "";
-                        bVal = b.assignedMachineName || "";
+                    }
+                    case 'assignedStatus':
+                        // Sort by assignment status: Not Assigned -> Assigned for Replacement (Replacement) -> Assigned (Using)
+                        const statusOrder: Record<string, number> = { 'Not Assigned': 1, 'Assigned for Replacement': 2, 'Assigned': 3 };
+                        aVal = statusOrder[a.assignedStatus || 'Not Assigned'] || 99;
+                        bVal = statusOrder[b.assignedStatus || 'Not Assigned'] || 99;
+                        break;
+                    case 'assignedTo':
+                        aVal = (a.assignedMachineName || '').toLowerCase();
+                        bVal = (b.assignedMachineName || '').toLowerCase();
                         break;
                     default:
                         return 0;
                 }
 
-                if (typeof aVal === "string" && typeof bVal === "string") {
-                    return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-                }
-                // At this point, both should be numbers
-                const numA = typeof aVal === "number" ? aVal : 0;
-                const numB = typeof bVal === "number" ? bVal : 0;
-                return sortDirection === "asc" ? numA - numB : numB - numA;
+                if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+                if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+                return 0;
             });
         } else {
-            // Default sorting
+            // Default sorting (by date)
             result.sort((a, b) => {
-                const qtyA = a.locations.reduce((sum, loc) => sum + loc.quantity, 0);
-                const qtyB = b.locations.reduce((sum, loc) => sum + loc.quantity, 0);
-
+                const dateA = new Date(a.createdAt || 0).getTime();
+                const dateB = new Date(b.createdAt || 0).getTime();
                 switch (sortOrder) {
+                    case "date-new": return dateB - dateA;
+                    case "date-old": return dateA - dateB;
+                    case "qty-asc": return (a.totalQuantity || 0) - (b.totalQuantity || 0);
+                    case "qty-desc": return (b.totalQuantity || 0) - (a.totalQuantity || 0);
                     case "name-asc": return a.name.localeCompare(b.name);
                     case "name-desc": return b.name.localeCompare(a.name);
-                    case "qty-asc": return qtyA - qtyB;
-                    case "qty-desc": return qtyB - qtyA;
-                    case "date-old": return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
-                    case "date-new": return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
                     default: return 0;
                 }
             });
         }
-
         return result;
-    }, [items, searchTerm, selectedCategory, sortOrder, stockStatus, selectedSize, selectedBrand, sortColumn, sortDirection, assignedStatusFilter]);
+    }, [items, searchTerm, selectedCategory, selectedSize, selectedBrand, stockStatus, assignedStatusFilter, sortColumn, sortDirection, sortOrder]);
+
+
 
     const createHistoryLog = (action: string, details: Record<string, unknown>, entityId: string = "temp"): AuditLog => ({
         id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -805,20 +755,16 @@ export function StockList() {
                         description: `This item is out of stock and cannot be assigned by crew.Please ask a supervisor to assign it or update stock first.`,
                     });
                     return;
-                } else {
-                    setWarningAlert({
-                        open: true,
-                        title: "Supervisor Override - Out of Stock",
-                        description: `This item is currently out of stock.As a supervisor you can still assign it, but machines may appear empty until stock is received.`,
-                    });
                 }
-            } else if (isLow) {
-                // Low stock: warn but allow
-                setWarningAlert({
-                    open: true,
-                    title: "Low Stock Warning",
-                    description: `This item is low on stock.Assigning it now may cause the machine to run out soon.`,
-                });
+                // Supervisors get the standard warning below (or specific one, but let's use the stock level warning)
+            }
+
+            // Check for stock level warning (Low, Limited, Out)
+            const stockLevel = calculateStockLevel(totalQty, item.stockStatus);
+            if (["Low Stock", "Limited Stock", "Out of Stock"].includes(stockLevel.label)) {
+                // If the user hasn't confirmed yet (this check is implicitly handled by the fact we're here)
+                setStockLevelWarning({ item, status: newStatus });
+                return;
             }
         }
 
@@ -1051,6 +997,80 @@ export function StockList() {
         setAssigningItem(null);
     };
 
+    const handleSyncData = async () => {
+        if (!confirm("This will scan all stock items to ensure consistency:\n1. 'Assign Status' vs 'Assigned Machine' fields.\n2. 'Stock Level' vs 'Quantity'.\n\nProceed?")) return;
+
+        setLoading(true);
+        let updatedCount = 0;
+        try {
+            // Fetch all items freshly
+            const allItems = await stockService.getAll();
+            const updates: Promise<void>[] = [];
+
+            for (const item of allItems) {
+                let needsUpdate = false;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const changes: any = {};
+
+                // 1. Sync Assignment Status
+                const status = item.assignedStatus || "Not Assigned";
+
+                // If "Not Assigned", ensure no machine is linked
+                if (status === "Not Assigned") {
+                    if (item.assignedMachineId || item.assignedMachineName) {
+                        changes.assignedMachineId = null;
+                        changes.assignedMachineName = null;
+                        changes.assignedSlotId = null;
+                        needsUpdate = true;
+                    }
+                }
+                // If "Assigned", ensure machine IS linked. If not, revert status.
+                else if (status === "Assigned" || status === "Assigned for Replacement") {
+                    if (!item.assignedMachineId) {
+                        changes.assignedStatus = "Not Assigned";
+                        changes.assignedMachineId = null;
+                        changes.assignedMachineName = null;
+                        changes.assignedSlotId = null;
+                        needsUpdate = true;
+                    }
+                }
+
+                // 2. Sync Stock Level
+                const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+                const calculatedInfo = calculateStockLevel(totalQty);
+
+                // If the stored string doesn't match the calculated one, update it.
+                if (item.stockStatus !== calculatedInfo.status) {
+                    changes.stockStatus = calculatedInfo.status;
+                    needsUpdate = true;
+                }
+
+                if (needsUpdate) {
+                    updates.push(stockService.update(item.id, {
+                        ...changes,
+                        updatedAt: new Date()
+                    }));
+                    updatedCount++;
+                }
+            }
+
+            await Promise.all(updates);
+
+            if (updatedCount > 0) {
+                toast.success("Sync Complete", { description: `Updated ${updatedCount} items to consistent state.` });
+                await loadData();
+            } else {
+                toast.info("Sync Complete", { description: "All items were already consistent." });
+            }
+
+        } catch (error) {
+            console.error("Sync failed:", error);
+            toast.error("Sync Failed", { description: "An error occurred during synchronization." });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const handleSeedData = async () => {
         setLoading(true);
         try {
@@ -1088,6 +1108,9 @@ export function StockList() {
                     </Button>
                     <Button variant="secondary" onClick={handleSeedData}>
                         <WandSparkles className="mr-2 h-4 w-4" /> Seed Data
+                    </Button>
+                    <Button variant="secondary" onClick={handleSyncData}>
+                        <ArrowUpDown className="mr-2 h-4 w-4" /> Sync Data
                     </Button>
                     <Button onClick={() => { setEditingItem(null); setIsFormOpen(true); }}>
                         <Plus className="mr-2 h-4 w-4" /> Add Item
@@ -1154,13 +1177,18 @@ export function StockList() {
                                 </TableRow>
                             ) : (
                                 filteredItems.map((item) => {
-                                    const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+                                    const totalQty = item.locations.reduce((sum: number, loc: { quantity: number }) => sum + loc.quantity, 0);
                                     const isLow = totalQty <= item.lowStockThreshold && totalQty > 0;
                                     const isOut = totalQty === 0;
+                                    const isAssignedButNoStock = (item.assignedStatus === "Assigned" || item.assignedStatus === "Assigned for Replacement") && isOut;
+
                                     return (
                                         <TableRow
                                             key={item.id}
-                                            className="hover:bg-muted/50 group cursor-pointer"
+                                            className={cn(
+                                                "hover:bg-muted/50 group cursor-pointer transition-all",
+                                                isAssignedButNoStock && "relative z-10 !bg-red-100 dark:!bg-red-900/30 !ring-2 !ring-red-600 !ring-inset animate-pulse"
+                                            )}
                                             onClick={() => {
                                                 setDetailsItem(item);
                                                 setIsDetailsOpen(true);
@@ -1214,6 +1242,7 @@ export function StockList() {
                                                         <div className="cursor-pointer flex justify-start">
                                                             <Badge className={cn("whitespace-nowrap text-xs font-medium px-2 py-0.5 cursor-pointer", calculateStockLevel(totalQty, item.stockStatus).colorClass)}>
                                                                 {calculateStockLevel(totalQty, item.stockStatus).label}
+                                                                <span className="text-[10px] font-bold opacity-80 relative -top-1">{totalQty}</span>
                                                             </Badge>
                                                         </div>
                                                     </DropdownMenuTrigger>
@@ -1301,6 +1330,7 @@ export function StockList() {
                     </Table>
                 </div>
             ) : (
+                // Grid View
                 <div className={viewStyle === 'compact-grid'
                     ? "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"
                     : "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
@@ -1317,7 +1347,6 @@ export function StockList() {
                             onChangeAssignedStatus={(id, status) => handleQuickStatusChange(id, status)}
                             onChangeStockStatus={(id, status) => handleQuickStockLevelChange(id, status)}
                         />
-
                     ))}
                     {filteredItems.length === 0 && (
                         <div className="col-span-full text-center py-12 text-muted-foreground">
@@ -1325,11 +1354,10 @@ export function StockList() {
                         </div>
                     )}
                 </div>
-            )
-            }
+            )}
 
             {/* Dialogs */}
-            <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
+            < Dialog open={isFormOpen} onOpenChange={setIsFormOpen} >
                 <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                         <DialogTitle>{editingItem ? "Edit Stock Item" : "Add New Stock Item"}</DialogTitle>
@@ -1868,6 +1896,106 @@ export function StockList() {
                     <AlertDialogFooter>
                         <AlertDialogAction onClick={() => setWarningAlert(prev => ({ ...prev, open: false }))}>
                             Understood
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Stock Level Assignment Warning Dialog */}
+            <AlertDialog open={!!stockLevelWarning} onOpenChange={(open) => !open && setStockLevelWarning(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                            Stock Level Warning
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This item is currently marked as <strong>{stockLevelWarning ? calculateStockLevel(stockLevelWarning.item.locations.reduce((s, l) => s + l.quantity, 0), stockLevelWarning.item.stockStatus).label : ""}</strong>.
+                            <br /><br />
+                            Are you sure you want to assign it as <strong>{stockLevelWarning?.status === "Assigned" ? "Using" : "Replacement"}</strong>?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setStockLevelWarning(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                            if (stockLevelWarning) {
+                                // Proceed with the assignment logic
+                                // We need to bypass the check we just did.
+                                // We can do this by moving the assignment logic to a separate function or just proceeding.
+                                // The issue is handleQuickStatusChange calls this.
+                                // We can call processStatusChange directly BUT handleQuickStatusChange does other checks (like conflict checks).
+
+                                // Let's call a continuation of handleQuickStatusChange or replicate the logic.
+                                // The remaining logic in handleQuickStatusChange handles "Replacement -> Using" conflict and "Using -> Replacement/Unassigned" override.
+                                // Both come AFTER this check.
+                                // So we can just call processStatusChange? NO. 
+                                // If we are assigning (Assigned/Replacement), we might still hit "Replacement -> Using" conflict check.
+
+                                // Actually, handleQuickStatusChange:
+                                // 1. Checks stock level (here).
+                                // 2. Checks "Replacement -> Using" conflict.
+                                // 3. Checks "Using -> Replacement" override.
+                                // 4. Checks "Assign but no machine" -> Open Dialog.
+                                // 5. Calls processStatusChange.
+
+                                // If we confirm here, we should ideally "continue" the function.
+                                // Since we can't easily jump back, we'll replicate the subsequent checks here or refactor.
+                                // Refactoring is cleaner but riskier.
+                                // Replicating logic is safe for now given the complexity.
+
+                                const { item, status: newStatus } = stockLevelWarning;
+
+                                // Handling "Replacement -> Using" conflict
+                                if (item.assignedStatus === "Assigned for Replacement" && newStatus === "Assigned") {
+                                    if (item.assignedMachineId) {
+                                        const currentActive = items.find(i =>
+                                            i.assignedMachineId === item.assignedMachineId &&
+                                            i.assignedStatus === "Assigned" &&
+                                            i.id !== item.id
+                                        );
+
+                                        if (currentActive) {
+                                            setAssignmentConflict({ item, currentUsingItem: currentActive });
+                                            setStockLevelWarning(null); // Close this dialog
+                                            return;
+                                        }
+                                    }
+                                    processStatusChange(item, "Assigned");
+                                    setStockLevelWarning(null);
+                                    return;
+                                }
+
+                                // If changing to Assigned and no machine is assigned
+                                if (newStatus === "Assigned" && !item.assignedMachineId) {
+                                    setAssigningItem(item);
+                                    setAssignmentMode('primary');
+                                    setIsAssignMachineOpen(true);
+                                    setStockLevelWarning(null);
+                                    return;
+                                }
+
+                                // If changing to Assigned for Replacement and no machine
+                                if (newStatus === "Assigned for Replacement") {
+                                    // If it's already assigned to a machine (e.g. downgrading or just status change?), 
+                                    // no, if we are status changing "Assigned" -> "Assigned for Replacement", we handled that in supervisor check (which is for Using -> Replacement).
+                                    // If "Not Assigned" -> "Assigned for Replacement", we need a machine.
+                                    // If "Assigned" -> "Assigned for Replacement", supervision needed (but we are here for "Assigning").
+
+                                    // If item has no machine, we definitely need to open dialog.
+                                    if (!item.assignedMachineId) {
+                                        setAssigningItem(item);
+                                        setAssignmentMode('replacement');
+                                        setIsAssignMachineOpen(true);
+                                        setStockLevelWarning(null);
+                                        return;
+                                    }
+                                }
+
+                                processStatusChange(item, newStatus);
+                                setStockLevelWarning(null);
+                            }
+                        }}>
+                            Continue Assignment
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

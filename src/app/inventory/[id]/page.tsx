@@ -5,12 +5,13 @@ import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { machineService, stockService } from "@/services";
 import { useData } from "@/context/DataProvider";
-import { AuditLog, StockItem } from "@/types";
+import { AuditLog, StockItem, ArcadeMachine } from "@/types";
+import { Switch } from "@/components/ui/switch";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Loader2, Package, DollarSign, Truck, Settings2, Gamepad2, Bot, StickyNote, Pencil, Warehouse, Info } from "lucide-react";
+import { ArrowLeft, Loader2, Package, DollarSign, Truck, Settings2, Gamepad2, Bot, StickyNote, Pencil, Warehouse, Info, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { StockItemForm } from "@/components/inventory/StockItemForm";
@@ -77,7 +78,8 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
     const [assignmentMode, setAssignmentMode] = useState<'primary' | 'replacement'>('primary');
     const [machineSearch, setMachineSearch] = useState("");
     const [machineFilter, setMachineFilter] = useState("All");
-    const [pendingAssignment, setPendingAssignment] = useState<{ machine: any, status: string, slotId?: string } | null>(null);
+    const [showAllMachines, setShowAllMachines] = useState(false);
+    const [pendingAssignment, setPendingAssignment] = useState<{ machine: ArcadeMachine, status: string, slotId?: string } | null>(null);
 
     // Stock Level Change States
     const [pendingStockChange, setPendingStockChange] = useState<{ item: StockItem; newLevel: string } | null>(null);
@@ -87,9 +89,11 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
     const [outOfStockMode, setOutOfStockMode] = useState<"set-zero" | "keep-quantity">("set-zero");
 
     // Supervisor Override States
-    const [supervisorOverride, setSupervisorOverride] = useState<{ item: StockItem, action: "unassign" | "downgrade-using-to-replacement" } | null>(null);
+    const [supervisorOverride, setSupervisorOverride] = useState<{ item: StockItem, action: "unassign" | "downgrade-using-to-replacement" | "assign-out-of-stock" } | null>(null);
+    const [pendingOverrideAssignment, setPendingOverrideAssignment] = useState<{ machine: ArcadeMachine, slotId: string, status: string } | null>(null);
     const [supervisorPassword, setSupervisorPassword] = useState("");
     const [supervisorError, setSupervisorError] = useState("");
+    const [stockLevelWarning, setStockLevelWarning] = useState<{ item: StockItem, status: string, actionType: 'status_change' | 'assign_machine', machineId?: string, slotId?: string } | null>(null);
 
     // Get item from context (auto-updates when data changes)
     const item = getItemById(id) || null;
@@ -282,7 +286,7 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
     const handleChangeAssignedStatus = async (newStatus: string) => {
         if (!item) return;
 
-        // Validation Logic - use toast notifications instead of modal dialogs
+        // Validation Logic - use modal dialogs to match inventory page
         if (newStatus === "Assigned" || newStatus === "Assigned for Replacement") {
             const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
             const isOut = totalQty === 0 || item.stockStatus === "Out of Stock";
@@ -290,19 +294,21 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
 
             if (isOut) {
                 if (!hasRole(["manager", "admin"])) {
-                    toast.error("Out of Stock", {
+                    setWarningAlert({
+                        open: true,
+                        title: "Out of Stock",
                         description: "This item is out of stock and cannot be assigned by crew. Please ask a supervisor to assign it or update stock first.",
                     });
                     return;
-                } else {
-                    toast.warning("Supervisor Override - Out of Stock", {
-                        description: "This item is currently out of stock. Machines may appear empty until stock is received.",
-                    });
                 }
-            } else if (isLow) {
-                toast.warning("Low Stock Warning", {
-                    description: "This item is low on stock. Assigning it now may cause the machine to run out soon.",
-                });
+                // Supervisors get the standard warning below
+            }
+
+            // Check for stock level warning (Low, Limited, Out)
+            const stockLevel = calculateStockLevel(totalQty, item.stockStatus);
+            if (["Low Stock", "Limited Stock", "Out of Stock"].includes(stockLevel.label)) {
+                setStockLevelWarning({ item, status: newStatus, actionType: 'status_change' });
+                return;
             }
         }
 
@@ -326,13 +332,74 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
 
         // Changing from Using to Not Assigned or Replacement requires warning
         if (item.assignedStatus === "Assigned" && (newStatus === "Not Assigned" || newStatus === "Assigned for Replacement")) {
+            const machineId = item.assignedMachineId;
+            let warningMessage = "";
+
+            if (machineId) {
+                // Find replacement items for this machine
+                const replacements = items.filter(i =>
+                    i.assignedMachineId === machineId &&
+                    i.assignedStatus === "Assigned for Replacement" &&
+                    i.id !== item.id
+                ).sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+
+                if (replacements.length > 0) {
+                    const nextItem = replacements[0];
+                    warningMessage = `Assigning this to "${newStatus}" will promote **${nextItem.name}** to the active item on **${item.assignedMachineName}**.`;
+                } else {
+                    if (newStatus === "Not Assigned") {
+                        warningMessage = `This will make the machine **${item.assignedMachineName}** empty as there are no replacement items.`;
+                    } else {
+                        // Replacement
+                        warningMessage = `This will make the machine **${item.assignedMachineName}** empty as you are moving the only active item to replacement.`;
+                    }
+                }
+            } else {
+                warningMessage = `Are you sure you want to change status to "${newStatus}"?`;
+            }
+
             if (newStatus === "Assigned for Replacement") {
-                toast.info("Status Change", {
-                    description: `Changing to "Replacement". Item will remain assigned to ${item.assignedMachineName} but will no longer be the active item.`
+                setWarningAlert({
+                    open: true,
+                    title: "Status Change Warning",
+                    description: warningMessage
                 });
                 await processStatusChange(item, newStatus);
                 return;
             }
+
+            // For Not Assigned, use the confirm dialog but with custom message?
+            // Existing `statusConfirm` logic uses a generic message. 
+            // Let's use `setWarningAlert` then proceed? No, that's non-blocking info.
+            // We'll update `statusConfirm` to support description or just generic confirm. 
+            // Wait, existing logic uses `statusConfirm` which has a fixed message.
+            // I will replace `setStatusConfirm` usage here with a custom confirm logic or just accept generic.
+            // User requested: "show that item name will be assigned... also change state".
+            // So better to show the message.
+
+            // Using `setStatusConfirm` but modifying the renderer? Or just using `setWarningAlert` and then doing it is risky if user cancels.
+            // I'll skip `setStatusConfirm` and use a dedicated alert or reuse it if I can make it dynamic.
+            // `statusConfirm` state is `{ item, status }`.
+            // The dialog renderer uses: `Are you sure... This may affect...`
+
+            // I will assume `setStatusConfirm` is fine for simple confirm, but I want to show the specific details.
+            // I'll show a warning alert first? No that's bad UX.
+            // I'll show a "Status Change" confirmation using a new state or modifying current.
+            // Let's use `setWarningAlert` for now as "Info" before action? 
+            // "it should show the it will make..."
+
+            // Actually, best is to show a confirmation dialog with this text. 
+            // I will use `statusConfirm` but I need to store the message. 
+            // I don't have a field for 'message' in `statusConfirm`.
+            // Let's modify `statusConfirm` state type? No, too many changes.
+            // I'll use `window.confirm`? No.
+            // I'll use `setAssignmentConflict`? No.
+
+            // Let's just use `setWarningAlert` but with a callback? No.
+            // Okay, looking at `handleChangeAssignedStatus` logic again.
+            // It sets `setStatusConfirm`. 
+            // I can modify the render of `Status Change Confirmation` dialog to calculate this message dynamically!
+            // Yes, that's better. I don't need to change logic here much, just let it set `setStatusConfirm`.
 
             setStatusConfirm({ item, status: newStatus });
             return;
@@ -370,28 +437,42 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
             }
 
             // Global stock checks when assigning via machine dialog
+            // Fix: Use calculateStockLevel for Low Stock check
             const totalQty = currentItem.locations.reduce((sum, loc) => sum + loc.quantity, 0);
             const isOut = totalQty === 0 || currentItem.stockStatus === "Out of Stock";
-            const isLow = !isOut && (totalQty <= currentItem.lowStockThreshold || currentItem.stockStatus === "Low Stock");
+            // Check if calculated level is Low Stock
+            const calculatedLevel = calculateStockLevel(totalQty);
+            const isLow = !isOut && calculatedLevel.status === "Low Stock";
 
-            // Show warnings as toasts but don't block the flow (except for crew on out of stock)
+            // Show warnings as modal dialogs (matching inventory page behavior)
+            // Show warnings as modal dialogs (matching inventory page behavior)
             if (isOut) {
                 if (!hasRole(["manager", "admin"])) {
-                    toast.error("Out of Stock", {
-                        description: "This item is out of stock and cannot be assigned by crew. Please ask a supervisor to assign it or update stock first.",
+                    // Prompt for supervisor override instead of blocking
+                    const modeStatus = assignmentMode === 'replacement' ? "Assigned for Replacement" : "Assigned";
+                    setPendingOverrideAssignment({ machine: machines.find(m => m.id === machineId)!, slotId, status: modeStatus });
+
+                    setSupervisorOverride({
+                        item: currentItem,
+                        action: "assign-out-of-stock"
                     });
-                    setIsAssignMachineOpen(false);
-                    setAssigningItem(null);
                     return;
-                } else {
-                    toast.warning("Supervisor Override - Out of Stock", {
-                        description: "This item is currently out of stock. Machines may appear empty until stock is received.",
-                    });
                 }
-            } else if (isLow) {
-                toast.warning("Low Stock Warning", {
-                    description: "This item is low on stock. Assigning it now may cause the machine to run out soon.",
+                // Supervisors continue to stock warning
+            }
+
+            const stockLevel = calculateStockLevel(totalQty, currentItem.stockStatus);
+            if (["Low Stock", "Limited Stock", "Out of Stock"].includes(stockLevel.label)) {
+                // Target status is derived in next step but we can derive it here for the warning
+                const targetStatus = assignmentMode === 'replacement' ? "Assigned for Replacement" : "Assigned";
+                setStockLevelWarning({
+                    item: currentItem,
+                    status: targetStatus,
+                    actionType: 'assign_machine',
+                    machineId,
+                    slotId
                 });
+                return;
             }
 
             const machine = machines.find(m => m.id === machineId);
@@ -411,10 +492,8 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
             );
 
             if (alreadyOnThisMachine) {
-                const currentStatus = currentItem.assignedStatus || "Not Assigned";
-                toast.error("Already Assigned", {
-                    description: `This item is already "${currentStatus}" to ${machine.name}.`
-                });
+                // Show confirmation dialog instead of blocking
+                setPendingAssignment({ machine, status: targetStatus, slotId });
                 return;
             }
 
@@ -1014,18 +1093,20 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                 destructive
             />
 
-            {/* Warning Alert */}
+            {/* Warning Alert Dialog */}
             <AlertDialog open={warningAlert.open} onOpenChange={(open) => setWarningAlert(prev => ({ ...prev, open }))}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>{warningAlert.title}</AlertDialogTitle>
+                        <AlertDialogTitle className="text-orange-600 flex items-center gap-2">
+                            ⚠️ {warningAlert.title}
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
                             {warningAlert.description}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogAction onClick={() => setWarningAlert(prev => ({ ...prev, open: false }))}>
-                            OK
+                            Understood
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -1037,8 +1118,40 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to change status to &quot;{statusConfirm?.status}&quot;?
-                            {statusConfirm?.item.assignedMachineId && " This may affect the machine's active item."}
+                            {statusConfirm && (() => {
+                                const { item, status: newStatus } = statusConfirm;
+                                if (item.assignedStatus === "Assigned" && (newStatus === "Not Assigned" || newStatus === "Assigned for Replacement")) {
+                                    const machineId = item.assignedMachineId;
+                                    if (machineId) {
+                                        const replacements = items.filter(i =>
+                                            i.assignedMachineId === machineId &&
+                                            i.assignedStatus === "Assigned for Replacement" &&
+                                            i.id !== item.id
+                                        ).sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+
+                                        if (replacements.length > 0) {
+                                            const nextItem = replacements[0];
+                                            return (
+                                                <>
+                                                    Assigning this to &quot;{newStatus}&quot; will promote <strong>{nextItem.name}</strong> to the active item on <strong>{item.assignedMachineName}</strong>.
+                                                </>
+                                            );
+                                        } else {
+                                            if (newStatus === "Not Assigned") {
+                                                return <>This will make the machine <strong>{item.assignedMachineName}</strong> empty as there are no replacement items.</>;
+                                            } else {
+                                                return <>This will make the machine <strong>{item.assignedMachineName}</strong> empty as you are moving the only active item to replacement.</>;
+                                            }
+                                        }
+                                    }
+                                }
+                                return (
+                                    <>
+                                        Are you sure you want to change status to &quot;{statusConfirm?.status}&quot;?
+                                        {statusConfirm?.item.assignedMachineId && " This may affect the machine's active item."}
+                                    </>
+                                );
+                            })()}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -1088,116 +1201,261 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
 
             {/* Machine Assignment Dialog */}
             <Dialog open={isAssignMachineOpen} onOpenChange={setIsAssignMachineOpen}>
-                <DialogContent className="max-w-2xl max-h-[80vh]">
+                <DialogContent className="max-w-md">
                     <DialogHeader>
-                        <DialogTitle>
-                            {assignmentMode === 'primary' ? 'Assign to Machine (Using)' : 'Assign for Replacement'}
-                        </DialogTitle>
+                        <DialogTitle>Assign Machine ({machines.length} loaded)</DialogTitle>
                         <DialogDescription>
-                            {assignmentMode === 'primary'
-                                ? 'Select a machine to assign this item as the active (Using) item.'
-                                : 'Select a machine to add this item to the replacement queue.'}
+                            Select a machine to assign <strong>{assigningItem?.name}</strong> ({assigningItem?.size || "No Size"}).
                         </DialogDescription>
                     </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="flex gap-2">
+                            <Input
+                                placeholder="Search machines..."
+                                value={machineSearch}
+                                onChange={(e) => setMachineSearch(e.target.value)}
+                                className="flex-1"
+                            />
+                            <Select value={machineFilter} onValueChange={setMachineFilter}>
+                                <SelectTrigger className="w-[130px]">
+                                    <SelectValue placeholder="Filter" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="All">All Types</SelectItem>
+                                    {Array.from(new Set(machines.map(m => m.type || "Other"))).map(type => (
+                                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
 
-                    <div className="space-y-4">
-                        <Input
-                            placeholder="Search machines..."
-                            value={machineSearch}
-                            onChange={(e) => setMachineSearch(e.target.value)}
-                        />
+                        {/* Assignment Mode Selection */}
+                        <div className="bg-muted/30 p-3 rounded-lg space-y-2">
+                            <Label className="text-sm font-medium">Assignment Type</Label>
+                            <div className="flex gap-4">
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="radio"
+                                        id="mode-primary"
+                                        name="assignmentMode"
+                                        value="primary"
+                                        checked={assignmentMode === 'primary'}
+                                        onChange={() => setAssignmentMode('primary')}
+                                        className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                                    />
+                                    <Label htmlFor="mode-primary" className="font-normal cursor-pointer">
+                                        Assign (Primary)
+                                    </Label>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                    <input
+                                        type="radio"
+                                        id="mode-replacement"
+                                        name="assignmentMode"
+                                        value="replacement"
+                                        checked={assignmentMode === 'replacement'}
+                                        onChange={() => setAssignmentMode('replacement')}
+                                        className="h-4 w-4 text-primary border-gray-300 focus:ring-primary"
+                                    />
+                                    <Label htmlFor="mode-replacement" className="font-normal cursor-pointer">
+                                        Assign for Replacement
+                                    </Label>
+                                </div>
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                                {assignmentMode === 'primary'
+                                    ? "Assigns item as the active prize. Only empty machines are shown."
+                                    : "Assigns item as backup stock. Can be assigned to occupied machines."}
+                            </p>
+                        </div>
+
+                        {/* Size Matching Info and Override Toggle */}
+                        {assigningItem?.size && (
+                            <div className="flex items-center justify-between py-2">
+                                <div className="text-sm text-muted-foreground">
+                                    Assigning <strong>{assigningItem.name}</strong> (Size: {assigningItem.size})
+                                </div>
+                                {hasRole(['manager', 'admin']) && (
+                                    <div className="flex items-center space-x-2">
+                                        <Switch
+                                            id="supervisor-override"
+                                            checked={showAllMachines}
+                                            onCheckedChange={setShowAllMachines}
+                                        />
+                                        <Label htmlFor="supervisor-override" className="text-orange-500 font-medium">
+                                            Supervisor Override
+                                        </Label>
+                                    </div>
+                                )}
+                            </div>
+                        )}
 
                         <ScrollArea className="h-[400px] pr-4">
-                            <div className="space-y-2">
-                                {machines
-                                    .filter(m => m.name.toLowerCase().includes(machineSearch.toLowerCase()))
-                                    .map(machine => {
-                                        const slotsToRender = (machine.slots && machine.slots.length > 0)
-                                            ? machine.slots
-                                            : [{ id: "slot-1", name: "Slot 1" }]; // Default slot if none
+                            {(() => {
+                                // Base filtering (search + type)
+                                const baseFiltered = machines.filter(m =>
+                                    (m.name.toLowerCase().includes(machineSearch.toLowerCase()) ||
+                                        m.location.toLowerCase().includes(machineSearch.toLowerCase())) &&
+                                    (machineFilter === "All" || m.type === machineFilter || (!m.type && machineFilter === "Other"))
+                                );
 
-                                        return (
-                                            <React.Fragment key={machine.id}>
-                                                {slotsToRender.map((slot: any) => {
-                                                    // Check if THIS slot is occupied
-                                                    const isOccupied = items.some(
-                                                        i =>
-                                                            i.assignedMachineId === machine.id &&
-                                                            i.assignedStatus === "Assigned" &&
-                                                            (!i.assignedSlotId || i.assignedSlotId === slot.id)
-                                                    );
-                                                    const replacementCount = items.filter(
-                                                        i =>
-                                                            i.assignedMachineId === machine.id &&
-                                                            i.assignedStatus === "Assigned for Replacement" &&
-                                                            (!i.assignedSlotId || i.assignedSlotId === slot.id)
-                                                    ).length;
+                                // Split into Compatible and Other
+                                let compatibleMachines: ArcadeMachine[] = [];
+                                let otherMachines: ArcadeMachine[] = [];
 
-                                                    return (
-                                                        <Button
-                                                            key={`${machine.id}-${slot.id}`}
-                                                            variant="outline"
-                                                            className={cn(
-                                                                "w-full justify-start h-auto py-3 mb-2 transition-colors",
-                                                                isOccupied
-                                                                    ? "border-red-200 bg-red-50/50 hover:bg-red-50 hover:border-red-300"
-                                                                    : "border-green-200 bg-green-50/50 hover:bg-green-50 hover:border-green-300"
-                                                            )}
-                                                            onClick={() => handleAssignMachine(machine.id, slot.id)}
-                                                        >
-                                                            <div className="flex flex-col items-start gap-1 w-full text-left">
-                                                                <div className="flex items-center justify-between w-full">
-                                                                    <div className="flex items-center gap-2 flex-wrap">
-                                                                        <span className="font-medium flex items-center gap-1">
-                                                                            {machine.name}
-                                                                            {slot.name && (
-                                                                                <span className="text-xs text-muted-foreground font-normal bg-background/80 px-1.5 py-0.5 rounded border border-border/50">
-                                                                                    {slot.name}
-                                                                                </span>
-                                                                            )}
-                                                                        </span>
-                                                                        {isOccupied ? (
-                                                                            <Badge
-                                                                                variant="destructive"
-                                                                                className="text-[10px] h-5 px-1.5"
-                                                                            >
-                                                                                Occupied
-                                                                            </Badge>
-                                                                        ) : (
-                                                                            <Badge
-                                                                                variant="outline"
-                                                                                className="text-[10px] h-5 px-1.5 border-green-500 text-green-600 bg-green-50"
-                                                                            >
-                                                                                Available
-                                                                            </Badge>
+                                if (assigningItem?.size) {
+                                    compatibleMachines = baseFiltered.filter(m => {
+                                        const machineSize = m.prizeSize?.trim().toLowerCase();
+                                        const itemSize = assigningItem.size?.trim().toLowerCase();
+                                        return machineSize === itemSize;
+                                    });
+
+                                    otherMachines = baseFiltered.filter(m => {
+                                        const machineSize = m.prizeSize?.trim().toLowerCase();
+                                        const itemSize = assigningItem.size?.trim().toLowerCase();
+                                        return machineSize !== itemSize;
+                                    });
+                                } else {
+                                    compatibleMachines = baseFiltered;
+                                }
+
+                                // Sorting Logic: Available first, then by queue length, then alphabetical
+                                const sortMachines = (machineList: ArcadeMachine[]) => {
+                                    return [...machineList].sort((a, b) => {
+                                        const aOccupied = items.some(i => i.assignedMachineId === a.id && i.assignedStatus === "Assigned");
+                                        const bOccupied = items.some(i => i.assignedMachineId === b.id && i.assignedStatus === "Assigned");
+                                        if (aOccupied !== bOccupied) return aOccupied ? 1 : -1;
+                                        const aQueue = items.filter(i => i.assignedMachineId === a.id && i.assignedStatus === "Assigned for Replacement").length;
+                                        const bQueue = items.filter(i => i.assignedMachineId === b.id && i.assignedStatus === "Assigned for Replacement").length;
+                                        if (aQueue !== bQueue) return aQueue - bQueue;
+                                        return a.name.localeCompare(b.name);
+                                    });
+                                };
+
+                                compatibleMachines = sortMachines(compatibleMachines);
+                                otherMachines = sortMachines(otherMachines);
+
+                                const renderMachineButton = (machine: ArcadeMachine) => {
+                                    const slotsToRender = (machine.slots && machine.slots.length > 0)
+                                        ? machine.slots
+                                        : [{ id: "slot-1", name: "Slot 1" }];
+
+                                    return (
+                                        <React.Fragment key={machine.id}>
+                                            {slotsToRender.map((slot: any) => {
+                                                const isOccupied = items.some(
+                                                    i =>
+                                                        i.assignedMachineId === machine.id &&
+                                                        i.assignedStatus === "Assigned" &&
+                                                        (!i.assignedSlotId || i.assignedSlotId === slot.id)
+                                                );
+                                                const replacementCount = items.filter(
+                                                    i =>
+                                                        i.assignedMachineId === machine.id &&
+                                                        i.assignedStatus === "Assigned for Replacement" &&
+                                                        (!i.assignedSlotId || i.assignedSlotId === slot.id)
+                                                ).length;
+
+                                                return (
+                                                    <Button
+                                                        key={`${machine.id}-${slot.id}`}
+                                                        variant="outline"
+                                                        className={cn(
+                                                            "w-full justify-start h-auto py-3 mb-2 transition-colors",
+                                                            isOccupied
+                                                                ? "border-red-200 bg-red-50/50 hover:bg-red-50 hover:border-red-300"
+                                                                : "border-green-200 bg-green-50/50 hover:bg-green-50 hover:border-green-300"
+                                                        )}
+                                                        onClick={() => handleAssignMachine(machine.id, slot.id)}
+                                                    >
+                                                        <div className="flex flex-col items-start gap-1 w-full text-left">
+                                                            <div className="flex items-center justify-between w-full">
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <span className="font-medium flex items-center gap-1">
+                                                                        {machine.name}
+                                                                        {slot.name && (
+                                                                            <span className="text-xs text-muted-foreground font-normal bg-background/80 px-1.5 py-0.5 rounded border border-border/50">
+                                                                                {slot.name}
+                                                                            </span>
                                                                         )}
-                                                                        {replacementCount > 0 && (
-                                                                            <Badge
-                                                                                variant="secondary"
-                                                                                className="text-[10px] h-5 px-1.5"
-                                                                            >
-                                                                                Queue: {replacementCount}
-                                                                            </Badge>
-                                                                        )}
-                                                                    </div>
-                                                                    {machine.prizeSize && (
-                                                                        <Badge variant="secondary" className="text-xs shrink-0 ml-1">
-                                                                            {machine.prizeSize}
+                                                                    </span>
+                                                                    {isOccupied ? (
+                                                                        <Badge
+                                                                            variant="destructive"
+                                                                            className="text-[10px] h-5 px-1.5"
+                                                                        >
+                                                                            Occupied
+                                                                        </Badge>
+                                                                    ) : (
+                                                                        <Badge
+                                                                            variant="outline"
+                                                                            className="text-[10px] h-5 px-1.5 border-green-500 text-green-600 bg-green-50"
+                                                                        >
+                                                                            Available
+                                                                        </Badge>
+                                                                    )}
+                                                                    {replacementCount > 0 && (
+                                                                        <Badge
+                                                                            variant="secondary"
+                                                                            className="text-[10px] h-5 px-1.5"
+                                                                        >
+                                                                            Queue: {replacementCount}
                                                                         </Badge>
                                                                     )}
                                                                 </div>
-                                                                <span className="text-xs text-muted-foreground truncate w-full">
-                                                                    Asset #{machine.assetTag} • {machine.location} •{" "}
-                                                                    {machine.type || "Unknown Type"}
-                                                                </span>
+                                                                {machine.prizeSize && (
+                                                                    <Badge variant="secondary" className="text-xs shrink-0 ml-1">
+                                                                        {machine.prizeSize}
+                                                                    </Badge>
+                                                                )}
                                                             </div>
-                                                        </Button>
-                                                    );
-                                                })}
-                                            </React.Fragment>
-                                        );
-                                    })}
-                            </div>
+                                                            <span className="text-xs text-muted-foreground truncate w-full">
+                                                                Asset #{machine.assetTag} • {machine.location} •{" "}
+                                                                {machine.type || "Unknown Type"}
+                                                            </span>
+                                                        </div>
+                                                    </Button>
+                                                );
+                                            })}
+                                        </React.Fragment>
+                                    );
+                                };
+
+                                if (baseFiltered.length === 0) {
+                                    return (
+                                        <div className="text-sm text-muted-foreground text-center py-8">
+                                            No machines found.
+                                        </div>
+                                    );
+                                }
+
+                                return (
+                                    <div className="space-y-6">
+                                        {compatibleMachines.length > 0 && (
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-purple-700 mb-3">Compatible Machines</h4>
+                                                {compatibleMachines.map(renderMachineButton)}
+                                            </div>
+                                        )}
+
+                                        {showAllMachines && otherMachines.length > 0 && (
+                                            <div>
+                                                <h4 className="text-sm font-semibold text-gray-700 mb-3 mt-4">Other Machines</h4>
+                                                {otherMachines.map(renderMachineButton)}
+                                            </div>
+                                        )}
+
+                                        {!showAllMachines && otherMachines.length > 0 && compatibleMachines.length === 0 && (
+                                            <div className="text-center py-8">
+                                                <p className="text-sm text-muted-foreground mb-2">No compatible machines found.</p>
+                                                <Button variant="link" onClick={() => setShowAllMachines(true)}>
+                                                    Show all machines
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })()}
                         </ScrollArea>
                     </div>
                 </DialogContent>
@@ -1365,6 +1623,18 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                         <AlertDialogTitle>Mark as Out of Stock</AlertDialogTitle>
                         <AlertDialogDescription>
                             This will set all location quantities to 0 and mark the item as Out of Stock.
+                            {itemToSetOutOfStock?.assignedMachineId && (
+                                <>
+                                    <br /><br />
+                                    <strong className="text-orange-600">⚠️ Warning:</strong> This item is currently{" "}
+                                    <strong>{itemToSetOutOfStock.assignedStatus === "Assigned" ? "Using" : "assigned for Replacement"}</strong>{" "}
+                                    on machine <strong>{itemToSetOutOfStock.assignedMachineName}</strong>.
+                                    {itemToSetOutOfStock.assignedStatus === "Assigned" && (
+                                        <> The machine will appear empty until stock is received or another item is assigned.</>
+                                    )}
+                                </>
+                            )}
+                            <br /><br />
                             Are you sure you want to continue?
                         </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -1417,39 +1687,60 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                 </AlertDialogContent>
             </AlertDialog>
 
-            {/* Pending Assignment Confirmation */}
-            <AlertDialog open={!!pendingAssignment} onOpenChange={(open) => {
-                if (!open) setPendingAssignment(null);
-            }}>
+            {/* Pending Assignment Confirmation Dialog */}
+            <AlertDialog open={!!pendingAssignment} onOpenChange={(open) => !open && setPendingAssignment(null)}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Confirm Assignment</AlertDialogTitle>
+                        <AlertDialogTitle>
+                            {(() => {
+                                if (!pendingAssignment) return "Confirm Assignment";
+                                // Check if item is already assigned to this machine
+                                const alreadyAssigned = item?.assignedMachineId === pendingAssignment.machine.id;
+                                if (alreadyAssigned) return "Already Assigned";
+                                return pendingAssignment.status === "Assigned" ? "Machine Occupied" : "Existing Replacement Queue";
+                            })()}
+                        </AlertDialogTitle>
                         <AlertDialogDescription>
-                            {pendingAssignment && (
-                                <>
-                                    {pendingAssignment.status === "Assigned" ? (
+                            {(() => {
+                                if (!pendingAssignment) return null;
+                                const alreadyAssigned = item?.assignedMachineId === pendingAssignment.machine.id;
+
+                                if (alreadyAssigned) {
+                                    const currentStatus = item?.assignedStatus || "Not Assigned";
+                                    return (
                                         <>
-                                            Machine <strong>{pendingAssignment.machine.name}</strong> already has an active item.
-                                            Continuing will replace it with this item.
+                                            This item is already <strong>"{currentStatus}"</strong> to{" "}
+                                            <strong>{pendingAssignment.machine.name}</strong>.
+                                            <br /><br />
+                                            Do you want to re-assign it anyway?
                                         </>
-                                    ) : (
+                                    );
+                                }
+
+                                if (pendingAssignment.status === "Assigned") {
+                                    return (
                                         <>
-                                            Machine <strong>{pendingAssignment.machine.name}</strong> already has items in the replacement queue.
-                                            This item will be added to the queue.
+                                            This machine is already using an item. Continuing will <strong>remove the current item</strong> and assign this one.
                                         </>
-                                    )}
-                                    <br /><br />
-                                    Do you want to continue?
-                                </>
-                            )}
+                                    );
+                                }
+
+                                return (
+                                    <>
+                                        This machine already has items in the replacement queue.
+                                        <br /><br />
+                                        Do you want to add this item to the queue?
+                                    </>
+                                );
+                            })()}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
                         <AlertDialogAction
-                            onClick={async () => {
+                            onClick={() => {
                                 if (pendingAssignment) {
-                                    await executeAssignment(
+                                    executeAssignment(
                                         pendingAssignment.machine,
                                         pendingAssignment.status,
                                         pendingAssignment.slotId
@@ -1510,7 +1801,57 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                                 const action = supervisorOverride.action;
 
                                 try {
-                                    if (action === "downgrade-using-to-replacement") {
+                                    if (action === "assign-out-of-stock") {
+                                        // Supervisor override for assigning out of stock item
+                                        // We need to proceed with assignment logic.
+                                        // Since we can't easily jump back, we'll call executeAssignment directly IF we have pending info
+                                        if (pendingOverrideAssignment) {
+                                            const { machine, slotId, status } = pendingOverrideAssignment;
+
+                                            // We still need to check conflict logic?
+                                            // Yes, but we can assume supervisor overrides that too or we should check it?
+                                            // The original code was blocking. 
+                                            // Let's check conflicts.
+
+                                            const currentItem = item;
+                                            const targetStatus = status;
+                                            const machineId = machine.id;
+
+                                            // Check if item is already assigned to this machine
+                                            const alreadyOnThisMachine = items.some(i =>
+                                                i.id === currentItem.id && i.assignedMachineId === machineId
+                                            );
+
+                                            if (alreadyOnThisMachine) {
+                                                setPendingAssignment({ machine, status: targetStatus, slotId });
+                                                setSupervisorOverride(null);
+                                                setSupervisorPassword("");
+                                                return;
+                                            }
+
+                                            // USING Mode Logic
+                                            if (targetStatus === "Assigned") {
+                                                const currentActiveItem = items.find(i =>
+                                                    i.assignedMachineId === machineId &&
+                                                    i.assignedStatus === "Assigned"
+                                                );
+
+                                                if (currentActiveItem) {
+                                                    setPendingAssignment({ machine, status: targetStatus, slotId });
+                                                    setSupervisorOverride(null);
+                                                    setSupervisorPassword("");
+                                                    return;
+                                                }
+                                            }
+
+                                            setAssigningItem(currentItem);
+                                            await executeAssignment(machine, targetStatus, slotId);
+                                            setSupervisorOverride(null);
+                                            setSupervisorPassword("");
+                                            setPendingOverrideAssignment(null);
+                                            return;
+                                        }
+                                    } else if (action === "downgrade-using-to-replacement") {
                                         const updates: Partial<StockItem> = {
                                             assignedStatus: "Not Assigned",
                                             assignedMachineId: undefined,
@@ -1518,6 +1859,9 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                                             updatedAt: new Date(),
                                         };
                                         await stockService.update(item.id, updates);
+                                        // Update local machine state if needed? 
+                                        // We rely on refreshMachines() called elsewhere or page refresh? 
+                                        // This page uses context data so it might auto update.
                                         toast.success("Status Updated", {
                                             description: "Item removed from machine and set to Not Assigned.",
                                         });
@@ -1535,6 +1879,166 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                             }}
                         >
                             Confirm Override
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Stock Level Assignment Warning Dialog */}
+            <AlertDialog open={!!stockLevelWarning} onOpenChange={(open) => !open && setStockLevelWarning(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                            Stock Level Warning
+                        </AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This item is currently marked as <strong>{stockLevelWarning ? calculateStockLevel(stockLevelWarning.item.locations.reduce((s, l) => s + l.quantity, 0), stockLevelWarning.item.stockStatus).label : ""}</strong>.
+                            <br /><br />
+                            Are you sure you want to assign it as <strong>{stockLevelWarning?.status === "Assigned" ? "Using" : "Replacement"}</strong>?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel onClick={() => setStockLevelWarning(null)}>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={async () => {
+                            if (!stockLevelWarning) return;
+                            const { item: staleItem, status: newStatus, actionType, machineId, slotId } = stockLevelWarning;
+
+                            // Get fresh item data from context
+                            const currentItem = items.find(i => i.id === staleItem.id) || staleItem;
+
+                            setStockLevelWarning(null); // Close dialog
+
+                            if (actionType === 'status_change') {
+                                // Continue handleChangeAssignedStatus logic
+                                // Handle changing from Replacement -> Using
+                                if (currentItem.assignedStatus === "Assigned for Replacement" && newStatus === "Assigned") {
+                                    if (currentItem.assignedMachineId) {
+                                        const currentActive = items.find(i =>
+                                            i.assignedMachineId === currentItem.assignedMachineId &&
+                                            i.assignedStatus === "Assigned" &&
+                                            i.id !== currentItem.id
+                                        );
+
+                                        if (currentActive) {
+                                            setAssignmentConflict({ item: currentItem, currentUsingItem: currentActive });
+                                            return;
+                                        }
+                                    }
+                                    await processStatusChange(currentItem, "Assigned");
+                                    return;
+                                }
+
+                                // Changing from Using to Not Assigned or Replacement requires warning
+                                if (currentItem.assignedStatus === "Assigned" && (newStatus === "Not Assigned" || newStatus === "Assigned for Replacement")) {
+                                    const machineId = currentItem.assignedMachineId;
+                                    if (newStatus === "Assigned for Replacement") {
+                                        let warningMessage = "";
+                                        if (machineId) {
+                                            const replacements = items.filter(i =>
+                                                i.assignedMachineId === machineId &&
+                                                i.assignedStatus === "Assigned for Replacement" &&
+                                                i.id !== currentItem.id
+                                            ).sort((a, b) => new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime());
+
+                                            if (replacements.length > 0) {
+                                                const nextItem = replacements[0];
+                                                warningMessage = `Assigning this to "${newStatus}" will promote **${nextItem.name}** to the active item on **${currentItem.assignedMachineName}**.`;
+                                            } else {
+                                                warningMessage = `This will make the machine **${currentItem.assignedMachineName}** empty as you are moving the only active item to replacement.`;
+                                            }
+                                        }
+                                        setWarningAlert({
+                                            open: true,
+                                            title: "Status Change Warning",
+                                            description: warningMessage || `Are you sure you want to change status to "${newStatus}"?`
+                                        });
+                                        await processStatusChange(currentItem, newStatus);
+                                        return;
+                                    }
+                                    setStatusConfirm({ item: currentItem, status: newStatus });
+                                    return;
+                                }
+
+                                // If changing to Assigned and no machine is assigned, open the assignment dialog
+                                if (newStatus === "Assigned" && !currentItem.assignedMachineId) {
+                                    setAssigningItem(currentItem);
+                                    setAssignmentMode('primary');
+                                    setIsAssignMachineOpen(true);
+                                    return;
+                                }
+
+                                // If changing to Assigned for Replacement and no machine
+                                if (newStatus === "Assigned for Replacement") {
+                                    if (!currentItem.assignedMachineId) {
+                                        setAssigningItem(currentItem);
+                                        setAssignmentMode('replacement');
+                                        setIsAssignMachineOpen(true);
+                                        return;
+                                    }
+                                    // If already on a machine, we just change status?
+                                    // Yes, if we fell through here.
+                                    // But wait, original code:
+
+                                    /*
+                                       if (newStatus === "Assigned for Replacement") {
+                                           setAssigningItem(item);
+                                           setAssignmentMode('replacement');
+                                           setIsAssignMachineOpen(true);
+                                           return;
+                                       }
+                                    */
+                                    // It ALWAYS opens dialog!
+                                    setAssigningItem(currentItem);
+                                    setAssignmentMode('replacement');
+                                    setIsAssignMachineOpen(true);
+                                    return;
+                                }
+
+                                await processStatusChange(currentItem, newStatus);
+                            } else if (actionType === 'assign_machine' && machineId) {
+                                // Continue handleAssignMachine logic
+                                const machine = machines.find(m => m.id === machineId);
+                                if (!machine) return;
+
+                                const targetStatus = newStatus;
+                                const alreadyOnThisMachine = items.some(i =>
+                                    i.id === currentItem.id && i.assignedMachineId === machineId
+                                );
+
+                                if (alreadyOnThisMachine) {
+                                    setPendingAssignment({ machine, status: targetStatus, slotId });
+                                    return;
+                                }
+
+                                if (targetStatus === "Assigned") {
+                                    const currentActiveItem = items.find(i =>
+                                        i.assignedMachineId === machineId &&
+                                        i.assignedStatus === "Assigned"
+                                    );
+                                    if (currentActiveItem) {
+                                        setPendingAssignment({ machine, status: targetStatus, slotId });
+                                        return;
+                                    }
+                                }
+
+                                if (targetStatus === "Assigned for Replacement") {
+                                    const replacementQueue = items.filter(i =>
+                                        i.assignedMachineId === machineId &&
+                                        i.assignedStatus === "Assigned for Replacement"
+                                    );
+                                    if (replacementQueue.length > 0) {
+                                        toast.info("Adding to Queue", {
+                                            description: `This machine already has ${replacementQueue.length} item(s) in the replacement queue. Adding this item.`
+                                        });
+                                    }
+                                }
+
+                                setAssigningItem(currentItem);
+                                await executeAssignment(machine, targetStatus, slotId);
+                            }
+                        }}>
+                            Continue Assignment
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

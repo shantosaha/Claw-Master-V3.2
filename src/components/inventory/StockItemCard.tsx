@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { MoreHorizontal, Edit, Link as LinkIcon, ChevronLeft, ChevronRight } from "lucide-react";
 
+
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -44,6 +45,7 @@ export function StockItemCard({
     const totalQuantity = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
     const isLowStock = totalQuantity <= item.lowStockThreshold && totalQuantity > 0;
     const isOutOfStock = totalQuantity === 0;
+    const isAssignedButNoStock = (item.assignedStatus === "Assigned" || item.assignedStatus === "Assigned for Replacement") && isOutOfStock;
 
     const getStockStatusBadge = () => {
         const status = item.stockStatus;
@@ -83,7 +85,10 @@ export function StockItemCard({
 
     if (viewStyle === "compact-grid") {
         return (
-            <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 group relative">
+            <Card className={cn(
+                "overflow-hidden hover:shadow-lg transition-all duration-200 group relative",
+                isAssignedButNoStock && "relative z-10 !bg-red-100 dark:!bg-red-900/30 !border-2 !border-red-600 animate-pulse"
+            )}>
                 {/* Three-dot menu in top right */}
                 <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                     <DropdownMenu>
@@ -232,6 +237,7 @@ export function StockItemCard({
                         <DropdownMenuTrigger asChild>
                             <Badge className={cn("w-full justify-center text-xs py-1 cursor-pointer", stockStatus.colorClass)}>
                                 {stockStatus.label}
+                                <span className="text-[9px] font-bold opacity-80 relative -top-1">{totalQuantity}</span>
                             </Badge>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="start">
@@ -287,7 +293,10 @@ export function StockItemCard({
 
     // Grid view (larger cards)
     return (
-        <Card className="overflow-hidden hover:shadow-lg transition-all duration-200 group relative h-full flex flex-col">
+        <Card className={cn(
+            "overflow-hidden hover:shadow-lg transition-all duration-200 group relative h-full flex flex-col",
+            isAssignedButNoStock && "relative z-10 !bg-red-100 dark:!bg-red-900/30 !border-2 !border-red-600 animate-pulse"
+        )}>
             {/* Three-dot menu in top right */}
             <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
                 <DropdownMenu>

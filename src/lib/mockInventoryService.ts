@@ -27,8 +27,7 @@ const normalizeItem = (item: SampleDataItem): StockItem => {
 
 // Initialize in-memory items with normalized sample data
 let inMemoryItems: StockItem[] = [
-    ...sampleInventoryData.map(normalizeItem),
-    ...generateMockStockItems(150)
+    ...sampleInventoryData.map(normalizeItem)
 ];
 
 // Listeners for real-time updates

@@ -87,33 +87,9 @@ export const DEMO_STOCK: StockItem[] = [
         id: "demo-s1",
         sku: "PLUSH-001",
         name: "Giant Teddy Bear",
-        category: "Plush",
+        category: "Plushy",
         lowStockThreshold: 10,
         locations: [{ name: "Zone A", quantity: 5 }, { name: "Storage Room 1", quantity: 20 }],
-        imageUrl: "",
-        payouts: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-    },
-    {
-        id: "demo-s2",
-        sku: "ELEC-001",
-        name: "Bluetooth Speaker",
-        category: "Electronics",
-        lowStockThreshold: 5,
-        locations: [{ name: "Prize Counter", quantity: 25 }],
-        imageUrl: "",
-        payouts: [],
-        createdAt: new Date(),
-        updatedAt: new Date()
-    },
-    {
-        id: "demo-s3",
-        sku: "CANDY-001",
-        name: "Choco Bar",
-        category: "Candy",
-        lowStockThreshold: 50,
-        locations: [{ name: "Zone C", quantity: 100 }],
         imageUrl: "",
         payouts: [],
         createdAt: new Date(),
@@ -131,33 +107,22 @@ export const DEMO_ORDERS: ReorderRequest[] = [
         requestedBy: "demo-user",
         createdAt: new Date(),
         updatedAt: new Date()
-    },
-    {
-        id: "demo-o2",
-        itemId: "demo-s3",
-        quantityRequested: 200,
-        itemName: "Choco Bar",
-        status: "approved",
-        requestedBy: "demo-user",
-        createdAt: new Date(),
-        updatedAt: new Date()
     }
 ];
 
 export const DEMO_METRICS = {
     dailyPlays: 124,
-    popularCategory: "Plush",
+    popularCategory: "Plushy",
     activeMachines: 3,
-    totalStockItems: 3,
-    lowStockItems: 1,
+    totalStockItems: 1,
+    lowStockItems: 0,
     openTickets: 1,
-    pendingOrders: 2
+    pendingOrders: 1
 };
 
 export const DEMO_ALERTS = [
     { id: "a1", type: "warning", message: "Low stock: Giant Teddy Bear", time: "10m ago" },
-    { id: "a2", type: "error", message: "Stacker Giant: Coin Jam", time: "1h ago" },
-    { id: "a3", type: "info", message: "New order received: Choco Bar", time: "2h ago" }
+    { id: "a2", type: "error", message: "Stacker Giant: Coin Jam", time: "1h ago" }
 ];
 
 export const DEMO_MAINTENANCE: MaintenanceTask[] = [

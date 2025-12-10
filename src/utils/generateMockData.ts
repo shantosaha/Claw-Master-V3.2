@@ -1,6 +1,6 @@
 import { StockItem } from "@/types";
 
-const CATEGORIES = ["Plushy", "Figure", "Electronics", "Snack", "Accessory", "Toy"];
+const CATEGORIES = ["Plushy", "Key Chain", "Blind Box", "Gatcha", "Figurine", "Toy", "Pop Vinyl"];
 const SIZES = ["Small", "Medium", "Large", "Big"];
 
 const ADJECTIVES = [
@@ -60,16 +60,61 @@ export function generateMockStockItems(count: number): StockItem[] {
         const id = `mock_${Date.now()}_${i}`;
         const sku = `${category.substring(0, 3).toUpperCase()}-${size.substring(0, 1)}-${Math.floor(Math.random() * 1000).toString().padStart(4, '0')}`;
 
-        // Generate relevant image using the character name as keyword
-        // Using pollinations.ai as it supports prompt-based generation which fits the project style
-        const imagePrompt = `${character} ${category} ${adjective} toy product view, white background`;
-        const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=400&height=400&nologo=true`;
+        // "Geneate all images first" - using a fixed, curated map of reliable images
+        // This simulates having pre-generated content without risking runtime timeouts
+        const FIXED_IMAGES: Record<string, string[]> = {
+            "Pikachu": [
+                "https://image.pollinations.ai/prompt/Pikachu%20plush%20on%20white%20background?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Pikachu%20plush%20side%20view?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Pikachu%20plush%20back%20view?width=400&height=400&nologo=true"
+            ],
+            "Mario": [
+                "https://image.pollinations.ai/prompt/Mario%20plush%20toy%20front?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Mario%20plush%20toy%20side?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Mario%20plush%20toy%20back?width=400&height=400&nologo=true"
+            ],
+            "Sonic": [
+                "https://image.pollinations.ai/prompt/Sonic%20the%20Hedgehog%20plush%20toy?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Sonic%20plush%20side%20view?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Sonic%20plush%20back%20view?width=400&height=400&nologo=true"
+            ],
+            "Hello Kitty": [
+                "https://image.pollinations.ai/prompt/Hello%20Kitty%20plush%20toy?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Hello%20Kitty%20plush%20side?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Hello%20Kitty%20plush%20back?width=400&height=400&nologo=true"
+            ],
+            "Totoro": [
+                "https://image.pollinations.ai/prompt/Totoro%20plush%20toy?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Totoro%20plush%20side?width=400&height=400&nologo=true",
+                "https://image.pollinations.ai/prompt/Totoro%20plush%20back?width=400&height=400&nologo=true"
+            ]
+        };
 
-        const imageUrls = [
-            imageUrl,
-            `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt + " side view")}?width=400&height=400&nologo=true`,
-            `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt + " back view")}?width=400&height=400&nologo=true`
-        ];
+        // Fallback for others using deterministic seeed
+        const hashString = `${character}-${adjective}-${size}-${category}`;
+        let seed = 0;
+        for (let k = 0; k < hashString.length; k++) {
+            seed = ((seed << 5) - seed) + hashString.charCodeAt(k);
+            seed |= 0;
+        }
+
+        let imageUrls: string[] = [];
+
+        if (FIXED_IMAGES[character]) {
+            // Use curated images if available (instant load, accurate)
+            imageUrls = FIXED_IMAGES[character];
+        } else {
+            // Deterministic generation for others
+            const basePrompt = `${character} ${category} toy`;
+            const baseParams = `width=400&height=400&nologo=true&seed=${Math.abs(seed)}`;
+            imageUrls = [
+                `https://image.pollinations.ai/prompt/${encodeURIComponent(basePrompt)}?${baseParams}`,
+                `https://image.pollinations.ai/prompt/${encodeURIComponent(basePrompt + " side")}?${baseParams}&seed=${Math.abs(seed + 1)}`,
+                `https://image.pollinations.ai/prompt/${encodeURIComponent(basePrompt + " back")}?${baseParams}&seed=${Math.abs(seed + 2)}`
+            ];
+        }
+
+        const imageUrl = imageUrls[0];
 
         const cost = Number((Math.random() * 20 + 1).toFixed(2));
         const value = Math.floor(cost * (Math.random() * 2 + 1.5)); // Value is 1.5x - 3.5x cost

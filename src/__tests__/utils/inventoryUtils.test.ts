@@ -25,10 +25,10 @@ describe('calculateStockLevel', () => {
         expect(result.colorClass).toContain('emerald');
     });
 
-    it('respects override status', () => {
-        // Even with high quantity, if status is overridden to "Low Stock"
+    it('ignores override status', () => {
+        // Explicit status should be ignored in favor of quantity
         const result = calculateStockLevel(50, 'Low Stock');
-        expect(result.label).toBe('Low Stock');
+        expect(result.label).toBe('In Stock');
     });
 
     it('handles negative quantity', () => {
