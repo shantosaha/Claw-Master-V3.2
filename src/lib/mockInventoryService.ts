@@ -20,7 +20,7 @@ let inMemoryItems: StockItem[] = sampleInventoryData.map(normalizeItem);
 let listeners: ((items: StockItem[]) => void)[] = [];
 
 // Counter to ensure unique IDs even when created at the same millisecond
-let idCounter = 0;
+const idCounter = 0;
 
 const notifyListeners = () => {
     // Deduplicate items by ID to prevent React key errors

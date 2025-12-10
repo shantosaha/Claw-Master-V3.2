@@ -234,7 +234,7 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
                 const remainingToReceive = requestToReceive.quantityRequested - (requestToReceive.quantityReceived || 0);
                 const discrepancyValue = remainingToReceive - processedData.quantity;
 
-                let baseNote = `Received by ${currentUserName} on ${currentTime}.`;
+                const baseNote = `Received by ${currentUserName} on ${currentTime}.`;
 
                 if (discrepancyValue > 0 && processedData.quantity > 0) {
                     processedData.notes = `Partial Receipt: Received ${processedData.quantity} of ${remainingToReceive} remaining units from request #${requestToReceive.id}. ${baseNote}`;

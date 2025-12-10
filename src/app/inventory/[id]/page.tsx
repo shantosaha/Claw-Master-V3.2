@@ -9,7 +9,7 @@ import { calculateStockLevel } from "@/utils/inventoryUtils";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowLeft, Edit, Loader2, Package, DollarSign, Truck, Settings2, Gamepad2, Bot, StickyNote, Pencil, Warehouse, Info, Clock } from "lucide-react";
+import { ArrowLeft, Loader2, Package, DollarSign, Truck, Settings2, Gamepad2, Bot, StickyNote, Pencil, Warehouse, Info } from "lucide-react";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { StockItemForm } from "@/components/inventory/StockItemForm";
@@ -69,8 +69,10 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
     useEffect(() => {
         const loadFormData = async () => {
             try {
-                const categoriesData = await stockService.getUniqueCategories();
-                setCategories(categoriesData);
+                // Get unique categories from all stock items
+                const allItems = await stockService.getAll();
+                const uniqueCategories = [...new Set(allItems.map(item => item.category).filter(Boolean))];
+                setCategories(uniqueCategories);
             } catch (error) {
                 console.error("Failed to load form data:", error);
             }
@@ -830,7 +832,7 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                     <AlertDialogHeader>
                         <AlertDialogTitle>Confirm Status Change</AlertDialogTitle>
                         <AlertDialogDescription>
-                            Are you sure you want to change status to "{statusConfirm?.status}"?
+                            Are you sure you want to change status to &quot;{statusConfirm?.status}&quot;?
                             {statusConfirm?.item.assignedMachineId && " This may affect the machine's active item."}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -854,12 +856,12 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                     <AlertDialogHeader>
                         <AlertDialogTitle>Assignment Conflict</AlertDialogTitle>
                         <AlertDialogDescription>
-                            {assignmentConflict?.currentUsingItem.name} is currently assigned as "Using" in this machine.
+                            {assignmentConflict?.currentUsingItem.name} is currently assigned as &quot;Using&quot; in this machine.
                             Do you want to swap them?
                             <br /><br />
-                            • {assignmentConflict?.currentUsingItem.name} will become "Replacement"
+                            • {assignmentConflict?.currentUsingItem.name} will become &quot;Replacement&quot;
                             <br />
-                            • {assignmentConflict?.item.name} (this item) will become "Using"
+                            • {assignmentConflict?.item.name} (this item) will become &quot;Using&quot;
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

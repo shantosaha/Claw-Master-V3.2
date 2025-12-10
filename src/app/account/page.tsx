@@ -50,13 +50,20 @@ export default function AccountPage() {
         return () => window.removeEventListener('beforeunload', handleBeforeUnload);
     }, [hasUnsavedChanges]);
 
-    // Simulate Sync
+    // Simulate Sync - using callback to avoid setState in effect body
     useEffect(() => {
-        if (hasUnsavedChanges) {
-            setIsSyncing(true);
-            const timer = setTimeout(() => setIsSyncing(false), 2000);
-            return () => clearTimeout(timer);
+        if (!hasUnsavedChanges) {
+            return;
         }
+        // Schedule the sync indicator update
+        const syncTimer = setTimeout(() => {
+            setIsSyncing(true);
+        }, 0);
+        const resetTimer = setTimeout(() => setIsSyncing(false), 2000);
+        return () => {
+            clearTimeout(syncTimer);
+            clearTimeout(resetTimer);
+        };
     }, [hasUnsavedChanges]);
 
     if (!user) return <div>Please log in to view your account.</div>;
@@ -381,7 +388,7 @@ export default function AccountPage() {
                         <CardHeader>
                             <CardTitle>Active Sessions & Devices</CardTitle>
                             <CardDescription>
-                                Manage devices where you're currently logged in.
+                                Manage devices where you&apos;re currently logged in.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">

@@ -77,7 +77,7 @@ export function MachineDialog({ open, onOpenChange, itemToEdit, onSuccess }: Mac
         setLoading(true);
         try {
             if (itemToEdit) {
-                let updatedData = { ...formData };
+                const updatedData = { ...formData };
 
                 // If editing a slot, update the slot status in the slots array
                 if (editingSlotId && updatedData.slots) {

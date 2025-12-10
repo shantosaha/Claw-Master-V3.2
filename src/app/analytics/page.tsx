@@ -23,13 +23,12 @@ import {
     Target,
     RefreshCw,
     Download,
-    Filter,
     Lock,
-    ChevronDown,
     Wallet,
-    FileText
+    FileText,
+    ChevronDown
 } from "lucide-react";
-import { analyticsService, AnalyticsOverview, MachinePerformance, StockPerformance, TimeSeriesData } from "@/services/analyticsService";
+import { analyticsService, AnalyticsOverview } from "@/services/analyticsService";
 import {
     Bar,
     BarChart,
@@ -55,46 +54,41 @@ import {
 } from "recharts";
 
 // Import new analytics components
-import { TrendIndicator } from "@/components/analytics/TrendIndicator";
 import { PeriodComparisonCard } from "@/components/analytics/PeriodComparisonCard";
 import { LocationCompareChart } from "@/components/analytics/LocationCompareChart";
 import { ChartTypeSelector, ChartType } from "@/components/analytics/ChartTypeSelector";
-import { DatePickerWithRange } from "@/components/analytics/DateRangePicker";
-import { DateRange } from "react-day-picker";
-import { differenceInDays, subDays } from "date-fns";
 import { MultiMachineCompare } from "@/components/analytics/MultiMachineCompare";
 import { ReorderRecommendations } from "@/components/analytics/ReorderRecommendations";
 import { FinancialAnalyticsTab } from "@/components/analytics/FinancialAnalyticsTab";
 import { AdvancedReportsTab } from "@/components/analytics/AdvancedReportsTab";
 import { AdvancedFilters, FilterState, defaultFilterState } from "@/components/analytics/AdvancedFilters";
-import { cn } from "@/lib/utils";
 
-// Color palette
+// Color palette for charts
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#6366f1", "#84cc16"];
-const GRADIENT_COLORS = {
-    purple: { from: "#8b5cf6", to: "#6366f1" },
-    cyan: { from: "#06b6d4", to: "#0891b2" },
-    green: { from: "#10b981", to: "#059669" },
-    orange: { from: "#f59e0b", to: "#d97706" },
-    red: { from: "#ef4444", to: "#dc2626" },
-};
 
 // Allowed roles for analytics access
-const ALLOWED_ROLES = ["admin", "manager"];
+const ALLOWED_ROLES: ("admin" | "manager" | "tech" | "crew")[] = ["admin", "manager"];
 
 export default function AnalyticsPage() {
-    const { userProfile, loading: authLoading, hasRole } = useAuth();
+    const { loading: authLoading, hasRole } = useAuth();
     const router = useRouter();
     const [loading, setLoading] = useState(true);
     const [overviewChartType, setOverviewChartType] = useState<ChartType>("area");
     const [machineChartType, setMachineChartType] = useState<ChartType>("bar");
     const [overview, setOverview] = useState<AnalyticsOverview | null>(null);
-    const [revenueData, setRevenueData] = useState<TimeSeriesData[]>([]);
-    const [machinePerformance, setMachinePerformance] = useState<MachinePerformance[]>([]);
-    const [stockPerformance, setStockPerformance] = useState<StockPerformance[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [revenueData, setRevenueData] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [machinePerformance, setMachinePerformance] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [stockPerformance, setStockPerformance] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [locationRevenue, setLocationRevenue] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [typeRevenue, setTypeRevenue] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [categoryStock, setCategoryStock] = useState<any[]>([]);
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [brandStock, setBrandStock] = useState<any[]>([]);
     const [timePeriod, setTimePeriod] = useState("30");
     const [selectedTab, setSelectedTab] = useState("overview");
@@ -108,24 +102,11 @@ export default function AnalyticsPage() {
     // Machine comparison state
     const [comparisonMachine1, setComparisonMachine1] = useState<string>("");
     const [comparisonMachine2, setComparisonMachine2] = useState<string>("");
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [comparisonData, setComparisonData] = useState<any[]>([]);
 
-
-    const [dateRange, setDateRange] = useState<DateRange | undefined>({
-        from: subDays(new Date(), 30),
-        to: new Date(),
-    });
-
-    const handleDateRangeChange = (range: DateRange | undefined) => {
-        setDateRange(range);
-        if (range?.from && range?.to) {
-            const days = differenceInDays(range.to, range.from) + 1;
-            setTimePeriod(days.toString());
-        }
-    };
-
     useEffect(() => {
-        if (!authLoading && !hasRole(ALLOWED_ROLES as any)) {
+        if (!authLoading && !hasRole(ALLOWED_ROLES)) {
             router.push("/");
         } else if (!authLoading) {
             loadAllData();
@@ -182,9 +163,10 @@ export default function AnalyticsPage() {
     }, [comparisonMachine1, comparisonMachine2]);
 
     useEffect(() => {
-        if (!authLoading && hasRole(ALLOWED_ROLES as any)) {
+        if (!authLoading && hasRole(ALLOWED_ROLES)) {
             loadAllData();
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [timePeriod]);
 
     // Filter and Sort Logic
@@ -225,7 +207,7 @@ export default function AnalyticsPage() {
 
         // Apply Sort
         result.sort((a, b) => {
-            let valA: any = a[machineFilters.sortBy as keyof typeof a] || a.revenue;
+            let valA: string | number = (a[machineFilters.sortBy as keyof typeof a] as string | number) || a.revenue;
             let valB: any = b[machineFilters.sortBy as keyof typeof b] || b.revenue;
 
             if (machineFilters.sortBy === "name") {
@@ -270,7 +252,7 @@ export default function AnalyticsPage() {
     const filteredStock = getFilteredStock();
 
     // Access denied screen
-    if (!authLoading && !hasRole(ALLOWED_ROLES as any)) {
+    if (!authLoading && !hasRole(ALLOWED_ROLES)) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-4">
                 <div className="p-6 rounded-full bg-gradient-to-br from-red-500/20 to-orange-500/20">

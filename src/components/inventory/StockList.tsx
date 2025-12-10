@@ -1571,7 +1571,7 @@ export function StockList() {
                         <ScrollArea className="h-[400px] pr-4">
                             {(() => {
                                 // Base filtering (search + type)
-                                let baseFiltered = machines.filter(m =>
+                                const baseFiltered = machines.filter(m =>
                                     (m.name.toLowerCase().includes(machineSearch.toLowerCase()) ||
                                         m.location.toLowerCase().includes(machineSearch.toLowerCase())) &&
                                     (machineFilter === "All" || m.type === machineFilter || (!m.type && machineFilter === "Other"))

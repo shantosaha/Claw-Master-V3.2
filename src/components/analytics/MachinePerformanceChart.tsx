@@ -1,20 +1,44 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { machineService } from "@/services";
 import { ArcadeMachine } from "@/types";
 
+// Type for machine service with optional subscribe method
+interface MachineServiceWithSubscribe {
+    subscribe?: (callback: (machines: ArcadeMachine[]) => void) => () => void;
+}
+
 export function MachinePerformanceChart() {
     const [data, setData] = useState<{ name: string; plays: number }[]>([]);
+
+    // Define loadData before useEffect to fix declaration order
+    const loadData = useCallback(async () => {
+        try {
+            const machines = await machineService.getAll();
+            // Sort by play count and take top 5
+            const topMachines = machines
+                .sort((a, b) => (b.playCount || 0) - (a.playCount || 0))
+                .slice(0, 5)
+                .map(m => ({
+                    name: m.name,
+                    plays: m.playCount || 0,
+                }));
+            setData(topMachines);
+        } catch (error) {
+            console.error("Failed to load machine data:", error);
+        }
+    }, []);
 
     useEffect(() => {
         let unsubscribeMachines: (() => void) | undefined;
 
         // Subscribe to real-time machine updates
-        if (typeof (machineService as any).subscribe === 'function') {
-            unsubscribeMachines = (machineService as any).subscribe((machines: ArcadeMachine[]) => {
+        const serviceWithSubscribe = machineService as unknown as MachineServiceWithSubscribe;
+        if (typeof serviceWithSubscribe.subscribe === 'function') {
+            unsubscribeMachines = serviceWithSubscribe.subscribe((machines: ArcadeMachine[]) => {
                 const topMachines = machines
                     .sort((a, b) => (b.playCount || 0) - (a.playCount || 0))
                     .slice(0, 5)
@@ -32,24 +56,7 @@ export function MachinePerformanceChart() {
         return () => {
             if (unsubscribeMachines) unsubscribeMachines();
         };
-    }, []);
-
-    const loadData = async () => {
-        try {
-            const machines = await machineService.getAll();
-            // Sort by play count and take top 5
-            const topMachines = machines
-                .sort((a, b) => (b.playCount || 0) - (a.playCount || 0))
-                .slice(0, 5)
-                .map(m => ({
-                    name: m.name,
-                    plays: m.playCount || 0,
-                }));
-            setData(topMachines);
-        } catch (error) {
-            console.error("Failed to load machine data:", error);
-        }
-    };
+    }, [loadData]);
 
     return (
         <Card>

@@ -81,6 +81,54 @@ export default function SettingsPage() {
         { key: "Esc", action: "Close dialog" },
     ], []);
 
+    // Storage key for settings persistence
+    const SETTINGS_STORAGE_KEY = 'claw-master-settings';
+
+    // Load settings from localStorage on mount
+    useEffect(() => {
+        try {
+            const storedSettings = localStorage.getItem(SETTINGS_STORAGE_KEY);
+            if (storedSettings) {
+                const settings = JSON.parse(storedSettings);
+                // General
+                if (settings.language) setLanguage(settings.language);
+                if (settings.timezone) setTimezone(settings.timezone);
+                if (settings.dateFormat) setDateFormat(settings.dateFormat);
+                if (settings.currency) setCurrency(settings.currency);
+                // Display
+                if (settings.defaultView) setDefaultView(settings.defaultView);
+                // Accessibility
+                if (settings.fontSize) setFontSize(settings.fontSize);
+                if (typeof settings.highContrast === 'boolean') setHighContrast(settings.highContrast);
+                if (typeof settings.screenReaderOptimized === 'boolean') setScreenReaderOptimized(settings.screenReaderOptimized);
+                if (typeof settings.reducedMotion === 'boolean') setReducedMotion(settings.reducedMotion);
+                // Notifications
+                if (typeof settings.emailNotifications === 'boolean') setEmailNotifications(settings.emailNotifications);
+                if (typeof settings.smsNotifications === 'boolean') setSmsNotifications(settings.smsNotifications);
+                if (typeof settings.emailMarketing === 'boolean') setEmailMarketing(settings.emailMarketing);
+                if (typeof settings.emailSecurity === 'boolean') setEmailSecurity(settings.emailSecurity);
+                if (typeof settings.emailUpdates === 'boolean') setEmailUpdates(settings.emailUpdates);
+                // Privacy
+                if (typeof settings.cookieAnalytics === 'boolean') setCookieAnalytics(settings.cookieAnalytics);
+                if (typeof settings.cookieMarketing === 'boolean') setCookieMarketing(settings.cookieMarketing);
+                if (typeof settings.trackingOptOut === 'boolean') setTrackingOptOut(settings.trackingOptOut);
+                if (settings.dataRetention) setDataRetention(settings.dataRetention);
+                // Automation
+                if (typeof settings.dndEnabled === 'boolean') setDndEnabled(settings.dndEnabled);
+                if (settings.dndStartTime) setDndStartTime(settings.dndStartTime);
+                if (settings.dndEndTime) setDndEndTime(settings.dndEndTime);
+                // System
+                if (typeof settings.autoRefresh === 'boolean') setAutoRefresh(settings.autoRefresh);
+                if (typeof settings.soundEffects === 'boolean') setSoundEffects(settings.soundEffects);
+                // Advanced
+                if (typeof settings.developerMode === 'boolean') setDeveloperMode(settings.developerMode);
+                if (typeof settings.debugLogging === 'boolean') setDebugLogging(settings.debugLogging);
+            }
+        } catch (error) {
+            console.error('Failed to load settings from localStorage:', error);
+        }
+    }, []);
+
     // --- Effects ---
     useEffect(() => {
         const handleBeforeUnload = (e: BeforeUnloadEvent) => {
@@ -102,7 +150,7 @@ export default function SettingsPage() {
     }, [hasUnsavedChanges]);
 
     // --- Handlers (Memoized with useCallback) ---
-    const handleChange = useCallback((setter: (value: any) => void, value: any) => {
+    const handleChange = useCallback(<T,>(setter: (value: T) => void, value: T) => {
         if (settingsLocked) {
             toast.error("Settings are locked. Please unlock to make changes.");
             return;
@@ -116,10 +164,26 @@ export default function SettingsPage() {
     }, []);
 
     const confirmSave = useCallback(() => {
+        // Persist settings to localStorage
+        try {
+            const settingsToSave = {
+                language, timezone, dateFormat, currency,
+                defaultView,
+                fontSize, highContrast, screenReaderOptimized, reducedMotion,
+                emailNotifications, smsNotifications, emailMarketing, emailSecurity, emailUpdates,
+                cookieAnalytics, cookieMarketing, trackingOptOut, dataRetention,
+                dndEnabled, dndStartTime, dndEndTime,
+                autoRefresh, soundEffects,
+                developerMode, debugLogging,
+            };
+            localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settingsToSave));
+        } catch (error) {
+            console.error('Failed to save settings to localStorage:', error);
+        }
         setShowDiffModal(false);
         setHasUnsavedChanges(false);
         toast.success("Settings saved successfully!");
-    }, []);
+    }, [language, timezone, dateFormat, currency, defaultView, fontSize, highContrast, screenReaderOptimized, reducedMotion, emailNotifications, smsNotifications, emailMarketing, emailSecurity, emailUpdates, cookieAnalytics, cookieMarketing, trackingOptOut, dataRetention, dndEnabled, dndStartTime, dndEndTime, autoRefresh, soundEffects, developerMode, debugLogging]);
 
     const handleLockSettings = useCallback(() => {
         setSettingsLocked(prev => !prev);

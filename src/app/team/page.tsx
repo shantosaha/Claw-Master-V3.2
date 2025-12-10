@@ -6,11 +6,12 @@ import { UserProfile } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Plus, Mail, Shield, User } from "lucide-react";
+import { toast } from "sonner";
 
 export default function TeamPage() {
     const { userProfile } = useAuth();
@@ -35,6 +36,12 @@ export default function TeamPage() {
         }
     };
 
+    const handleInviteMember = () => {
+        toast.info("Invite Member", {
+            description: "Team invitation feature coming soon. Contact your administrator to add new team members.",
+        });
+    };
+
     const getRoleIcon = (role: string) => {
         switch (role) {
             case 'admin': return <Shield className="h-3 w-3 mr-1" />;
@@ -43,7 +50,7 @@ export default function TeamPage() {
         }
     };
 
-    const getRoleColor = (role: string) => {
+    const getRoleColor = (role: string): "destructive" | "default" | "secondary" | "outline" => {
         switch (role) {
             case 'admin': return "destructive";
             case 'manager': return "default"; // primary
@@ -64,7 +71,7 @@ export default function TeamPage() {
                             Manage access and roles for your arcade staff.
                         </p>
                     </div>
-                    <Button>
+                    <Button onClick={handleInviteMember}>
                         <Plus className="mr-2 h-4 w-4" /> Invite Member
                     </Button>
                 </div>
@@ -92,7 +99,7 @@ export default function TeamPage() {
                                 </CardHeader>
                                 <CardContent>
                                     <div className="flex items-center justify-between mt-2">
-                                        <Badge variant={getRoleColor(u.role) as any} className="flex items-center px-2 py-0.5">
+                                        <Badge variant={getRoleColor(u.role)} className="flex items-center px-2 py-0.5">
                                             {getRoleIcon(u.role)}
                                             <span className="capitalize">{u.role}</span>
                                         </Badge>

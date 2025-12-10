@@ -6,6 +6,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
 import { DataProvider } from "@/context/DataProvider";
+import { CookieConsent } from "@/components/common/CookieConsent";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -37,6 +38,7 @@ export default function RootLayout({
                 {children}
               </AppShell>
               <Toaster />
+              <CookieConsent />
             </DataProvider>
           </AuthProvider>
         </ThemeProvider>
@@ -45,3 +47,4 @@ export default function RootLayout({
     </html>
   );
 }
+

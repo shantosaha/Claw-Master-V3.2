@@ -229,7 +229,7 @@ const stockItemFormSchema = addStockItemSchemaIntermediate.superRefine((data, ct
         })).filter(p => p.playCost !== undefined && p.playsRequired !== undefined);
 
         // Auto-allocate unallocated quantity to B-Plushy Room
-        let finalLocations = (data._numericLocationsParsed || []).map(loc => ({ name: loc.name, quantity: loc._parsedNumericQuantity }));
+        const finalLocations = (data._numericLocationsParsed || []).map(loc => ({ name: loc.name, quantity: loc._parsedNumericQuantity }));
         const overallQty = data._parsedOverallNumericQuantity || 0;
         const allocatedQty = data._sumOfLocationQuantities || 0;
         const unallocated = overallQty - allocatedQty;
