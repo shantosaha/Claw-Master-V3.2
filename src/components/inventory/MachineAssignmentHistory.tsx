@@ -60,10 +60,14 @@ export function MachineAssignmentHistory({
                 log.action.toLowerCase().includes("machine")
             )
             .forEach(log => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const details = log.details as any;
-                if (details?.machineName || log.newValue?.assignedMachineName) {
-                    const machineName = details?.machineName || log.newValue?.assignedMachineName;
-                    const machineId = details?.machineId || log.newValue?.assignedMachineId;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const newValue = log.newValue as any;
+
+                if (details?.machineName || newValue?.assignedMachineName) {
+                    const machineName = details?.machineName || newValue?.assignedMachineName;
+                    const machineId = details?.machineId || newValue?.assignedMachineId;
 
                     // Avoid duplicating current assignment
                     if (machineId !== item.assignedMachineId) {

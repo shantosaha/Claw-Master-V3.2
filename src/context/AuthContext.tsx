@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (!isFirebaseInitialized) {
             console.warn("Firebase not initialized. Using Mock Auth.");
             // Mock User for Demo
-            const mockUser: any = {
+            const mockUser: Partial<User> & { uid: string } = {
                 uid: "mock-user-123",
                 email: "demo@clawmaster.app",
                 displayName: "Demo Admin",
@@ -48,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 displayName: "Demo Admin",
                 photoURL: "https://github.com/shadcn.png",
             };
-            setUser(mockUser);
+            setUser(mockUser as User);
             setUserProfile(mockProfile);
             setLoading(false);
             return;

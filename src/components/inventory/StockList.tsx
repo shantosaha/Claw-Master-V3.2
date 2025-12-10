@@ -162,16 +162,24 @@ export function StockList() {
         let unsubscribeMachines: (() => void) | undefined;
 
         const setupSubscriptions = () => {
+            // Type for services with optional subscribe method
+            type ServiceWithSubscribe<T> = {
+                subscribe?: (callback: (data: T[]) => void) => () => void;
+            };
+
+            const stockSvc = stockService as unknown as ServiceWithSubscribe<StockItem>;
+            const machineSvc = machineService as unknown as ServiceWithSubscribe<ArcadeMachine>;
+
             // Subscribe to stock updates
-            if (typeof (stockService as any).subscribe === 'function') {
-                unsubscribeStock = (stockService as any).subscribe((data: StockItem[]) => {
+            if (typeof stockSvc.subscribe === 'function') {
+                unsubscribeStock = stockSvc.subscribe((data: StockItem[]) => {
                     setItems(data);
                 });
             }
 
             // Subscribe to machine updates
-            if (typeof (machineService as any).subscribe === 'function') {
-                unsubscribeMachines = (machineService as any).subscribe((data: ArcadeMachine[]) => {
+            if (typeof machineSvc.subscribe === 'function') {
+                unsubscribeMachines = machineSvc.subscribe((data: ArcadeMachine[]) => {
                     setMachines(data);
                 });
             }
@@ -263,7 +271,7 @@ export function StockList() {
         // Sorting
         if (sortColumn) {
             result.sort((a, b) => {
-                let aVal: any, bVal: any;
+                let aVal: string | number, bVal: string | number;
 
                 switch (sortColumn) {
                     case "name":
@@ -311,7 +319,10 @@ export function StockList() {
                 if (typeof aVal === "string" && typeof bVal === "string") {
                     return sortDirection === "asc" ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
                 }
-                return sortDirection === "asc" ? aVal - bVal : bVal - aVal;
+                // At this point, both should be numbers
+                const numA = typeof aVal === "number" ? aVal : 0;
+                const numB = typeof bVal === "number" ? bVal : 0;
+                return sortDirection === "asc" ? numA - numB : numB - numA;
             });
         } else {
             // Default sorting
@@ -334,7 +345,7 @@ export function StockList() {
         return result;
     }, [items, searchTerm, selectedCategory, sortOrder, stockStatus, selectedSize, selectedBrand, sortColumn, sortDirection, assignedStatusFilter]);
 
-    const createHistoryLog = (action: string, details: any, entityId: string = "temp"): AuditLog => ({
+    const createHistoryLog = (action: string, details: Record<string, unknown>, entityId: string = "temp"): AuditLog => ({
         id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         action,
         entityType: "StockItem",
@@ -345,6 +356,7 @@ export function StockList() {
         details
     });
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSaveItem = async (data: any) => {
         try {
             let imageUrl = data.imageUrl;
@@ -496,7 +508,7 @@ export function StockList() {
         }
     };
 
-    const handleAdjustStock = async (itemId: string, values: any) => {
+    const handleAdjustStock = async (itemId: string, values: { locationName: string; adjustmentType: string; quantity: number; notes?: string }) => {
         const item = items.find(i => i.id === itemId);
         if (!item) return;
 
@@ -557,10 +569,10 @@ export function StockList() {
                     // Add to default location or first location
                     const locationName = item.locations[0]?.name || "Warehouse";
                     await handleAdjustStock(itemId, {
-                        type: 'add',
+                        adjustmentType: 'add',
                         quantity: request.quantityRequested,
-                        location: locationName,
-                        reason: `Received Order #${request.id}`
+                        locationName: locationName,
+                        notes: `Received Order #${request.id}`
                     });
                 }
             } else if (action === 'create_new') {
@@ -1182,7 +1194,7 @@ export function StockList() {
                                             </TableCell>
                                             <TableCell className="font-medium">
                                                 <Link
-                                                    href={`/ inventory / ${item.id} `}
+                                                    href={`/inventory/${item.id}`}
                                                     className="text-primary underline underline-offset-4 group-hover:decoration-2"
                                                 >
                                                     {item.name}
@@ -1244,7 +1256,7 @@ export function StockList() {
                                             <TableCell>
                                                 {item.assignedMachineName ? (
                                                     <Link
-                                                        href={`/ machines / ${item.assignedMachineId || ''} `}
+                                                        href={`/machines/${item.assignedMachineId || ''}`}
                                                         onClick={(e) => e.stopPropagation()}
                                                         className="text-primary hover:underline"
                                                     >
@@ -1652,22 +1664,24 @@ export function StockList() {
 
                                                 return (
                                                     <Button
-                                                        key={`${machine.id} -${slot.id} `}
+                                                        key={`${machine.id}-${slot.id}`}
                                                         variant="outline"
-                                                        className={`w - full justify - start h - auto py - 3 mb - 2 ${isOccupied
-                                                            ? "border-red-200 bg-red-50/50 hover:bg-red-50 hover:border-red-300"
-                                                            : "border-green-200 bg-green-50/50 hover:bg-green-50 hover:border-green-300"
-                                                            } `}
+                                                        className={cn(
+                                                            "w-full justify-start h-auto py-3 mb-2 transition-colors",
+                                                            isOccupied
+                                                                ? "border-red-200 bg-red-50/50 hover:bg-red-50 hover:border-red-300"
+                                                                : "border-green-200 bg-green-50/50 hover:bg-green-50 hover:border-green-300"
+                                                        )}
                                                         onClick={() => handleAssignMachine(machine.id, slot.id)}
                                                     >
-                                                        <div className="flex flex-col items-start gap-1 w-full">
+                                                        <div className="flex flex-col items-start gap-1 w-full text-left">
                                                             <div className="flex items-center justify-between w-full">
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="font-medium">
-                                                                        {machine.name}{" "}
+                                                                <div className="flex items-center gap-2 flex-wrap">
+                                                                    <span className="font-medium flex items-center gap-1">
+                                                                        {machine.name}
                                                                         {slot.name && (
-                                                                            <span className="text-xs text-muted-foreground">
-                                                                                • {slot.name}
+                                                                            <span className="text-xs text-muted-foreground font-normal bg-background/80 px-1.5 py-0.5 rounded border border-border/50">
+                                                                                {slot.name}
                                                                             </span>
                                                                         )}
                                                                     </span>
@@ -1696,12 +1710,12 @@ export function StockList() {
                                                                     )}
                                                                 </div>
                                                                 {machine.prizeSize && (
-                                                                    <Badge variant="secondary" className="text-xs">
+                                                                    <Badge variant="secondary" className="text-xs shrink-0 ml-1">
                                                                         {machine.prizeSize}
                                                                     </Badge>
                                                                 )}
                                                             </div>
-                                                            <span className="text-xs text-muted-foreground">
+                                                            <span className="text-xs text-muted-foreground truncate w-full">
                                                                 Asset #{machine.assetTag} • {machine.location} •{" "}
                                                                 {machine.type || "Unknown Type"}
                                                             </span>

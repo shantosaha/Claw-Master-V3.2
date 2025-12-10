@@ -23,9 +23,15 @@ export default function OrderHistoryPage() {
     useEffect(() => {
         let unsubscribeStock: (() => void) | undefined;
 
+        // Type for service with optional subscribe method
+        type ServiceWithSubscribe<T> = {
+            subscribe?: (callback: (data: T[]) => void) => () => void;
+        };
+        const stockSvc = stockService as unknown as ServiceWithSubscribe<StockItem>;
+
         // Subscribe to real-time stock updates
-        if (typeof (stockService as any).subscribe === 'function') {
-            unsubscribeStock = (stockService as any).subscribe((stockData: StockItem[]) => {
+        if (typeof stockSvc.subscribe === 'function') {
+            unsubscribeStock = stockSvc.subscribe((stockData: StockItem[]) => {
                 const stockMap: Record<string, StockItem> = {};
                 stockData.forEach(item => {
                     stockMap[item.id] = item;
@@ -72,7 +78,7 @@ export default function OrderHistoryPage() {
         }
     };
 
-    const getStatusColor = (status: string) => {
+    const getStatusColor = (status: string): "destructive" | "default" | "secondary" | "outline" => {
         switch (status) {
             case "submitted": return "secondary";
             case "approved": return "default"; // Blue/Primary
@@ -126,7 +132,7 @@ export default function OrderHistoryPage() {
                                         </TableCell>
                                         <TableCell>{order.quantityRequested}</TableCell>
                                         <TableCell>
-                                            <Badge variant={getStatusColor(order.status) as any} className="capitalize">
+                                            <Badge variant={getStatusColor(order.status)} className="capitalize">
                                                 {order.status}
                                             </Badge>
                                         </TableCell>

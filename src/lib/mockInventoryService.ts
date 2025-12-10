@@ -1,20 +1,35 @@
 import { StockItem } from "@/types";
 import { sampleInventoryData } from "@/data/inventoryData";
+import { generateMockStockItems } from "@/utils/generateMockData";
+
+// Interface for sample data items with different structure
+interface SampleDataItem {
+    id: string;
+    type?: string;
+    category?: string;
+    stockLocations?: { locationName: string; quantity: number }[];
+    supplyChain?: { reorderPoint?: number };
+    lastUpdateDate?: string;
+    [key: string]: unknown;
+}
 
 // Helper to map sample data to StockItem type if needed
-const normalizeItem = (item: any): StockItem => {
+const normalizeItem = (item: SampleDataItem): StockItem => {
     return {
         ...item,
-        category: item.type, // Map type to category for compatibility
-        locations: item.stockLocations?.map((l: any) => ({ name: l.locationName, quantity: l.quantity })) || [],
+        category: item.type || item.category || '', // Map type to category for compatibility
+        locations: item.stockLocations?.map((l) => ({ name: l.locationName, quantity: l.quantity })) || [],
         lowStockThreshold: item.supplyChain?.reorderPoint || 10, // Default or map
         createdAt: item.lastUpdateDate ? new Date(item.lastUpdateDate) : new Date(),
         updatedAt: item.lastUpdateDate ? new Date(item.lastUpdateDate) : new Date(),
-    };
+    } as StockItem;
 };
 
 // Initialize in-memory items with normalized sample data
-let inMemoryItems: StockItem[] = sampleInventoryData.map(normalizeItem);
+let inMemoryItems: StockItem[] = [
+    ...sampleInventoryData.map(normalizeItem),
+    ...generateMockStockItems(150)
+];
 
 // Listeners for real-time updates
 let listeners: ((items: StockItem[]) => void)[] = [];
@@ -98,7 +113,6 @@ export const mockInventoryService = {
     },
 
     seed: async (count: number) => {
-        const { generateMockStockItems } = await import("@/utils/generateMockData");
         const newItems = generateMockStockItems(count);
         inMemoryItems = [...inMemoryItems, ...newItems];
         notifyListeners();

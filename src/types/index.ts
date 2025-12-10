@@ -8,7 +8,7 @@ export interface UserProfile {
     photoURL?: string;
     preferences?: {
         theme?: 'light' | 'dark' | 'system';
-        layout?: Record<string, any>; // For saving page layouts
+        layout?: Record<string, unknown>; // For saving page layouts
     };
 }
 
@@ -162,12 +162,12 @@ export interface AuditLog {
     action: string; // Changed from actionType to match provided code
     entityType: 'StockItem' | 'Machine' | 'Settings' | 'User' | 'stock' | 'machine' | 'settings' | 'user'; // Expanded to match provided code
     entityId: string;
-    oldValue?: any;
-    newValue?: any;
+    oldValue?: unknown;
+    newValue?: unknown;
     userId: string;
     userRole?: string; // Added for history view
     timestamp: Date | string; // Allow string for flexibility
-    details?: any; // Changed from string to any to support structured data
+    details?: Record<string, unknown>; // Changed from string to Record for structured data
 }
 
 export type User = UserProfile; // Alias for compatibility
@@ -185,8 +185,8 @@ export interface StockItemFormSubmitValues {
     name: string;
     category: string;
     newCategoryName?: string;
-    imageUrl?: any;
-    imageUrls?: any[];
+    imageUrl?: string | File;
+    imageUrls?: (string | File)[];
     aiImageHint?: string;
     quantityDescription: string;
     lowStockThreshold: number;

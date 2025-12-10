@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import React, { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
 import { machineService, stockService } from "@/services";
 import { useData } from "@/context/DataProvider";
 import { AuditLog, StockItem } from "@/types";
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ArrowLeft, Loader2, Package, DollarSign, Truck, Settings2, Gamepad2, Bot, StickyNote, Pencil, Warehouse, Info } from "lucide-react";
 import { toast } from "sonner";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { StockItemForm } from "@/components/inventory/StockItemForm";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { Badge } from "@/components/ui/badge";
@@ -35,6 +36,15 @@ import {
     AlertDialogHeader,
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Label } from "@/components/ui/label";
 
 export default function InventoryDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params);
@@ -60,6 +70,26 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
         item: StockItem;
         currentUsingItem: StockItem;
     } | null>(null);
+
+    // Machine Assignment States
+    const [isAssignMachineOpen, setIsAssignMachineOpen] = useState(false);
+    const [assigningItem, setAssigningItem] = useState<StockItem | null>(null);
+    const [assignmentMode, setAssignmentMode] = useState<'primary' | 'replacement'>('primary');
+    const [machineSearch, setMachineSearch] = useState("");
+    const [machineFilter, setMachineFilter] = useState("All");
+    const [pendingAssignment, setPendingAssignment] = useState<{ machine: any, status: string, slotId?: string } | null>(null);
+
+    // Stock Level Change States
+    const [pendingStockChange, setPendingStockChange] = useState<{ item: StockItem; newLevel: string } | null>(null);
+    const [isOutOfStockConfirmOpen, setIsOutOfStockConfirmOpen] = useState(false);
+    const [itemToSetOutOfStock, setItemToSetOutOfStock] = useState<StockItem | null>(null);
+    const [restockQuantity, setRestockQuantity] = useState<string>("0");
+    const [outOfStockMode, setOutOfStockMode] = useState<"set-zero" | "keep-quantity">("set-zero");
+
+    // Supervisor Override States
+    const [supervisorOverride, setSupervisorOverride] = useState<{ item: StockItem, action: "unassign" | "downgrade-using-to-replacement" } | null>(null);
+    const [supervisorPassword, setSupervisorPassword] = useState("");
+    const [supervisorError, setSupervisorError] = useState("");
 
     // Get item from context (auto-updates when data changes)
     const item = getItemById(id) || null;
@@ -150,17 +180,30 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
         }
     };
 
-    const handleChangeStockStatus = async (status: string) => {
+    const handleChangeStockStatus = async (newLevel: string) => {
         if (!item) return;
-        try {
-            await stockService.update(item.id, {
-                stockStatus: status || undefined,
-                updatedAt: new Date()
-            });
-            toast.success("Status Updated", { description: `Stock status changed to ${status || "Auto"}.` });
-        } catch (error) {
-            toast.error("Error", { description: "Failed to update status." });
+
+        const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+        const currentLevel = calculateStockLevel(totalQty, item.stockStatus).status;
+
+        // If the calculated status already matches the requested level, we don't strictly need to do anything.
+        if (currentLevel === newLevel) return;
+
+        // Handle "Out of Stock" with a confirmation dialog
+        if (newLevel === "Out of Stock") {
+            setItemToSetOutOfStock(item);
+            setIsOutOfStockConfirmOpen(true);
+            return;
         }
+
+        // For other stock levels, show the dialog
+        setPendingStockChange({ item, newLevel });
+
+        // Default quantities based on new level
+        if (newLevel === "In Stock") setRestockQuantity("26");
+        else if (newLevel === "Limited Stock") setRestockQuantity("12");
+        else if (newLevel === "Low Stock") setRestockQuantity("5");
+        else setRestockQuantity("0");
     };
 
     const createHistoryLog = (action: string, details: any, entityId: string = "temp"): AuditLog => ({
@@ -236,41 +279,35 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
         }
     };
 
-    const handleChangeAssignedStatus = async (status: string) => {
+    const handleChangeAssignedStatus = async (newStatus: string) => {
         if (!item) return;
 
-        // Validation Logic from StockList
-        if (status === "Assigned" || status === "Assigned for Replacement") {
+        // Validation Logic - use toast notifications instead of modal dialogs
+        if (newStatus === "Assigned" || newStatus === "Assigned for Replacement") {
             const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
             const isOut = totalQty === 0 || item.stockStatus === "Out of Stock";
             const isLow = !isOut && (totalQty <= item.lowStockThreshold || item.stockStatus === "Low Stock");
 
             if (isOut) {
                 if (!hasRole(["manager", "admin"])) {
-                    setWarningAlert({
-                        open: true,
-                        title: "Out of Stock",
-                        description: `This item is out of stock and cannot be assigned by crew. Please ask a supervisor to assign it or update stock first.`,
+                    toast.error("Out of Stock", {
+                        description: "This item is out of stock and cannot be assigned by crew. Please ask a supervisor to assign it or update stock first.",
                     });
                     return;
                 } else {
-                    setWarningAlert({
-                        open: true,
-                        title: "Supervisor Override - Out of Stock",
-                        description: `This item is currently out of stock. As a supervisor you can still assign it, but machines may appear empty until stock is received.`,
+                    toast.warning("Supervisor Override - Out of Stock", {
+                        description: "This item is currently out of stock. Machines may appear empty until stock is received.",
                     });
                 }
             } else if (isLow) {
-                setWarningAlert({
-                    open: true,
-                    title: "Low Stock Warning",
-                    description: `This item is low on stock. Assigning it now may cause the machine to run out soon.`,
+                toast.warning("Low Stock Warning", {
+                    description: "This item is low on stock. Assigning it now may cause the machine to run out soon.",
                 });
             }
         }
 
         // Handle changing from Replacement -> Using
-        if (item.assignedStatus === "Assigned for Replacement" && status === "Assigned") {
+        if (item.assignedStatus === "Assigned for Replacement" && newStatus === "Assigned") {
             if (item.assignedMachineId) {
                 const currentActive = items.find(i =>
                     i.assignedMachineId === item.assignedMachineId &&
@@ -288,23 +325,191 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
         }
 
         // Changing from Using to Not Assigned or Replacement requires warning
-        if (item.assignedStatus === "Assigned" && (status === "Not Assigned" || status === "Assigned for Replacement")) {
-            if (status === "Assigned for Replacement") {
-                setWarningAlert({
-                    open: true,
-                    title: "Status Change Warning",
-                    description: `You are changing this item to "Replacement". It will remain assigned to ${item.assignedMachineName} but will no longer be the active item.`
+        if (item.assignedStatus === "Assigned" && (newStatus === "Not Assigned" || newStatus === "Assigned for Replacement")) {
+            if (newStatus === "Assigned for Replacement") {
+                toast.info("Status Change", {
+                    description: `Changing to "Replacement". Item will remain assigned to ${item.assignedMachineName} but will no longer be the active item.`
                 });
-                await processStatusChange(item, status);
+                await processStatusChange(item, newStatus);
                 return;
             }
 
-            setStatusConfirm({ item, status });
+            setStatusConfirm({ item, status: newStatus });
+            return;
+        }
+
+        // If changing to Assigned and no machine is assigned, open the assignment dialog
+        if (newStatus === "Assigned" && !item.assignedMachineId) {
+            setAssigningItem(item);
+            setAssignmentMode('primary');
+            setIsAssignMachineOpen(true);
+            return;
+        }
+
+        // If changing to Assigned for Replacement, open the assignment dialog
+        if (newStatus === "Assigned for Replacement") {
+            setAssigningItem(item);
+            setAssignmentMode('replacement');
+            setIsAssignMachineOpen(true);
             return;
         }
 
         // Normal path
-        await processStatusChange(item, status);
+        await processStatusChange(item, newStatus);
+    };
+
+    const handleAssignMachine = async (machineId: string, slotId: string) => {
+        if (!assigningItem) return;
+
+        try {
+            // Get current item state from context to have updated values
+            const currentItem = getItemById(assigningItem.id);
+            if (!currentItem) {
+                toast.error("Error", { description: "Item not found." });
+                return;
+            }
+
+            // Global stock checks when assigning via machine dialog
+            const totalQty = currentItem.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+            const isOut = totalQty === 0 || currentItem.stockStatus === "Out of Stock";
+            const isLow = !isOut && (totalQty <= currentItem.lowStockThreshold || currentItem.stockStatus === "Low Stock");
+
+            // Show warnings as toasts but don't block the flow (except for crew on out of stock)
+            if (isOut) {
+                if (!hasRole(["manager", "admin"])) {
+                    toast.error("Out of Stock", {
+                        description: "This item is out of stock and cannot be assigned by crew. Please ask a supervisor to assign it or update stock first.",
+                    });
+                    setIsAssignMachineOpen(false);
+                    setAssigningItem(null);
+                    return;
+                } else {
+                    toast.warning("Supervisor Override - Out of Stock", {
+                        description: "This item is currently out of stock. Machines may appear empty until stock is received.",
+                    });
+                }
+            } else if (isLow) {
+                toast.warning("Low Stock Warning", {
+                    description: "This item is low on stock. Assigning it now may cause the machine to run out soon.",
+                });
+            }
+
+            const machine = machines.find(m => m.id === machineId);
+            if (!machine) {
+                toast.error("Error", { description: "Machine not found." });
+                return;
+            }
+
+            // Determine the target status based on mode
+            const targetStatus = assignmentMode === 'replacement'
+                ? "Assigned for Replacement"
+                : "Assigned";
+
+            // Check if item is already assigned to this machine
+            const alreadyOnThisMachine = items.some(i =>
+                i.id === currentItem.id && i.assignedMachineId === machineId
+            );
+
+            if (alreadyOnThisMachine) {
+                const currentStatus = currentItem.assignedStatus || "Not Assigned";
+                toast.error("Already Assigned", {
+                    description: `This item is already "${currentStatus}" to ${machine.name}.`
+                });
+                return;
+            }
+
+            // USING Mode Logic
+            if (targetStatus === "Assigned") {
+                const currentActiveItem = items.find(i =>
+                    i.assignedMachineId === machineId &&
+                    i.assignedStatus === "Assigned"
+                );
+
+                if (currentActiveItem) {
+                    // Machine is occupied. Ask for confirmation to replace.
+                    setPendingAssignment({ machine, status: targetStatus, slotId });
+                    return;
+                }
+            }
+
+            // REPLACEMENT Mode Logic
+            if (targetStatus === "Assigned for Replacement") {
+                const replacementQueue = items.filter(i =>
+                    i.assignedMachineId === machineId &&
+                    i.assignedStatus === "Assigned for Replacement"
+                );
+
+                if (replacementQueue.length > 0) {
+                    toast.info("Adding to Queue", {
+                        description: `This machine already has ${replacementQueue.length} item(s) in the replacement queue. Adding this item.`
+                    });
+                }
+            }
+
+            // Update assigningItem to use current state before executing
+            setAssigningItem(currentItem);
+            await executeAssignment(machine, targetStatus, slotId);
+
+        } catch (error) {
+            console.error("Failed to assign machine:", error);
+            toast.error("Error", { description: "Failed to assign machine." });
+        }
+    };
+
+    const executeAssignment = async (machine: any, targetStatus: string, slotId?: string) => {
+        if (!assigningItem) return;
+
+        // If USING mode, unassign any existing active item
+        if (targetStatus === "Assigned") {
+            const currentActiveItem = items.find(i =>
+                i.assignedMachineId === machine.id &&
+                i.assignedStatus === "Assigned"
+            );
+
+            if (currentActiveItem) {
+                const unassignLog = createHistoryLog("UNASSIGN_MACHINE", {
+                    reason: "Replaced by new item",
+                    replacedBy: assigningItem.name,
+                    machine: machine.name,
+                    previousStatus: currentActiveItem.assignedStatus
+                }, currentActiveItem.id);
+                const updatedHistory = [...(currentActiveItem.history || []), unassignLog];
+
+                await stockService.update(currentActiveItem.id, {
+                    assignedMachineId: undefined,
+                    assignedMachineName: undefined,
+                    assignedStatus: "Not Assigned",
+                    history: updatedHistory,
+                    updatedAt: new Date()
+                });
+            }
+        }
+
+        // Update inventory item with machine assignment
+        const assignLog = createHistoryLog("ASSIGN_MACHINE", {
+            machine: machine.name,
+            machineId: machine.id,
+            slot: slotId || "Any",
+            status: targetStatus,
+            assignmentMode: assignmentMode
+        }, assigningItem.id);
+        const updatedAssignHistory = [...(assigningItem.history || []), assignLog];
+
+        await stockService.update(assigningItem.id, {
+            assignedMachineId: machine.id,
+            assignedMachineName: machine.name,
+            assignedSlotId: slotId,
+            assignedStatus: targetStatus,
+            history: updatedAssignHistory,
+            updatedAt: new Date()
+        });
+
+        // Reload machines to update slot status
+        await refreshMachines();
+
+        toast.success("Assigned to Machine", { description: `${assigningItem.name} assigned to ${machine.name} as "${targetStatus}"` });
+        setIsAssignMachineOpen(false);
+        setAssigningItem(null);
     };
 
     if (loading) {
@@ -876,6 +1081,460 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                             }
                         }}>
                             Confirm Swap
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Machine Assignment Dialog */}
+            <Dialog open={isAssignMachineOpen} onOpenChange={setIsAssignMachineOpen}>
+                <DialogContent className="max-w-2xl max-h-[80vh]">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {assignmentMode === 'primary' ? 'Assign to Machine (Using)' : 'Assign for Replacement'}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {assignmentMode === 'primary'
+                                ? 'Select a machine to assign this item as the active (Using) item.'
+                                : 'Select a machine to add this item to the replacement queue.'}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4">
+                        <Input
+                            placeholder="Search machines..."
+                            value={machineSearch}
+                            onChange={(e) => setMachineSearch(e.target.value)}
+                        />
+
+                        <ScrollArea className="h-[400px] pr-4">
+                            <div className="space-y-2">
+                                {machines
+                                    .filter(m => m.name.toLowerCase().includes(machineSearch.toLowerCase()))
+                                    .map(machine => {
+                                        const slotsToRender = (machine.slots && machine.slots.length > 0)
+                                            ? machine.slots
+                                            : [{ id: "slot-1", name: "Slot 1" }]; // Default slot if none
+
+                                        return (
+                                            <React.Fragment key={machine.id}>
+                                                {slotsToRender.map((slot: any) => {
+                                                    // Check if THIS slot is occupied
+                                                    const isOccupied = items.some(
+                                                        i =>
+                                                            i.assignedMachineId === machine.id &&
+                                                            i.assignedStatus === "Assigned" &&
+                                                            (!i.assignedSlotId || i.assignedSlotId === slot.id)
+                                                    );
+                                                    const replacementCount = items.filter(
+                                                        i =>
+                                                            i.assignedMachineId === machine.id &&
+                                                            i.assignedStatus === "Assigned for Replacement" &&
+                                                            (!i.assignedSlotId || i.assignedSlotId === slot.id)
+                                                    ).length;
+
+                                                    return (
+                                                        <Button
+                                                            key={`${machine.id}-${slot.id}`}
+                                                            variant="outline"
+                                                            className={cn(
+                                                                "w-full justify-start h-auto py-3 mb-2 transition-colors",
+                                                                isOccupied
+                                                                    ? "border-red-200 bg-red-50/50 hover:bg-red-50 hover:border-red-300"
+                                                                    : "border-green-200 bg-green-50/50 hover:bg-green-50 hover:border-green-300"
+                                                            )}
+                                                            onClick={() => handleAssignMachine(machine.id, slot.id)}
+                                                        >
+                                                            <div className="flex flex-col items-start gap-1 w-full text-left">
+                                                                <div className="flex items-center justify-between w-full">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <span className="font-medium flex items-center gap-1">
+                                                                            {machine.name}
+                                                                            {slot.name && (
+                                                                                <span className="text-xs text-muted-foreground font-normal bg-background/80 px-1.5 py-0.5 rounded border border-border/50">
+                                                                                    {slot.name}
+                                                                                </span>
+                                                                            )}
+                                                                        </span>
+                                                                        {isOccupied ? (
+                                                                            <Badge
+                                                                                variant="destructive"
+                                                                                className="text-[10px] h-5 px-1.5"
+                                                                            >
+                                                                                Occupied
+                                                                            </Badge>
+                                                                        ) : (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="text-[10px] h-5 px-1.5 border-green-500 text-green-600 bg-green-50"
+                                                                            >
+                                                                                Available
+                                                                            </Badge>
+                                                                        )}
+                                                                        {replacementCount > 0 && (
+                                                                            <Badge
+                                                                                variant="secondary"
+                                                                                className="text-[10px] h-5 px-1.5"
+                                                                            >
+                                                                                Queue: {replacementCount}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                    {machine.prizeSize && (
+                                                                        <Badge variant="secondary" className="text-xs shrink-0 ml-1">
+                                                                            {machine.prizeSize}
+                                                                        </Badge>
+                                                                    )}
+                                                                </div>
+                                                                <span className="text-xs text-muted-foreground truncate w-full">
+                                                                    Asset #{machine.assetTag} • {machine.location} •{" "}
+                                                                    {machine.type || "Unknown Type"}
+                                                                </span>
+                                                            </div>
+                                                        </Button>
+                                                    );
+                                                })}
+                                            </React.Fragment>
+                                        );
+                                    })}
+                            </div>
+                        </ScrollArea>
+                    </div>
+                </DialogContent>
+            </Dialog>
+
+            {/* Stock Level Change Dialog */}
+            <Dialog open={!!pendingStockChange} onOpenChange={(open) => {
+                if (!open) {
+                    setPendingStockChange(null);
+                    setRestockQuantity("0");
+                    setOutOfStockMode("set-zero");
+                }
+            }}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>
+                            {pendingStockChange?.newLevel === "Out of Stock"
+                                ? "Mark Item as Out of Stock"
+                                : "Update Stock Status"}
+                        </DialogTitle>
+                        <DialogDescription>
+                            {pendingStockChange?.newLevel === "Out of Stock"
+                                ? "Choose how you want to handle the existing quantity for this item."
+                                : `You're changing the stock status for ${pendingStockChange?.item.name}. Enter how many units are being restocked now.`}
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {pendingStockChange?.newLevel === "Out of Stock" ? (
+                        <div className="space-y-3">
+                            <div className="flex flex-col gap-2">
+                                <Label className="text-sm font-medium">Quantity behaviour</Label>
+                                <div className="space-y-2">
+                                    <label className="flex items-center gap-2 text-sm">
+                                        <input
+                                            type="radio"
+                                            className="h-4 w-4"
+                                            checked={outOfStockMode === "set-zero"}
+                                            onChange={() => setOutOfStockMode("set-zero")}
+                                        />
+                                        <span>Set all locations to 0 (recommended)</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 text-sm">
+                                        <input
+                                            type="radio"
+                                            className="h-4 w-4"
+                                            checked={outOfStockMode === "keep-quantity"}
+                                            onChange={() => setOutOfStockMode("keep-quantity")}
+                                        />
+                                        <span>Keep existing quantities, only change status</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            <Label htmlFor="restock-qty" className="text-sm font-medium">
+                                Update Quantity
+                            </Label>
+                            <div className="text-sm text-yellow-600 bg-yellow-50 p-2 rounded border border-yellow-200 mb-2">
+                                Current quantity ({pendingStockChange?.item.locations.reduce((s, l) => s + l.quantity, 0)}) does not match &quot;{pendingStockChange?.newLevel}&quot;.
+                                <br />
+                                Please confirm the new quantity:
+                            </div>
+                            <Input
+                                id="restock-qty"
+                                type="number"
+                                min={0}
+                                value={restockQuantity}
+                                onChange={(e) => setRestockQuantity(e.target.value)}
+                                placeholder="Enter quantity"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                This will set the quantity for the first location and set others to 0.
+                            </p>
+                        </div>
+                    )}
+
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setPendingStockChange(null);
+                                setRestockQuantity("0");
+                                setOutOfStockMode("set-zero");
+                            }}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={async () => {
+                                if (!pendingStockChange) return;
+                                const { item, newLevel } = pendingStockChange;
+                                try {
+                                    let updatedItem: StockItem = { ...item };
+
+                                    if (newLevel === "Out of Stock") {
+                                        if (outOfStockMode === "set-zero") {
+                                            updatedItem = {
+                                                ...updatedItem,
+                                                locations: updatedItem.locations.map(loc => ({
+                                                    ...loc,
+                                                    quantity: 0,
+                                                })),
+                                            };
+                                        }
+                                        updatedItem.stockStatus = "Out of Stock";
+                                    } else {
+                                        const qtyNum = Math.max(0, Number(restockQuantity) || 0);
+                                        let locations = [...(updatedItem.locations || [])];
+
+                                        if (locations.length === 0) {
+                                            locations = [{ name: "Warehouse", quantity: qtyNum }];
+                                        } else {
+                                            locations = locations.map((loc, index) => ({
+                                                ...loc,
+                                                quantity: index === 0 ? qtyNum : 0
+                                            }));
+                                        }
+
+                                        updatedItem = {
+                                            ...updatedItem,
+                                            locations,
+                                            stockStatus: newLevel,
+                                        };
+                                    }
+
+                                    const historyLog = createHistoryLog("STOCK_LEVEL_CHANGE", {
+                                        oldStatus: item.stockStatus || "Unknown",
+                                        newStatus: newLevel,
+                                        quantitySetTo: newLevel === "Out of Stock" && outOfStockMode === "set-zero" ? 0 : restockQuantity,
+                                        mode: outOfStockMode,
+                                        changedBy: userProfile?.displayName || userProfile?.email || "Unknown",
+                                        changedByRole: userProfile?.role || "Unknown"
+                                    }, item.id);
+                                    const updatedHistory = [...(updatedItem.history || []), historyLog];
+
+                                    await stockService.update(item.id, {
+                                        locations: updatedItem.locations,
+                                        stockStatus: updatedItem.stockStatus,
+                                        history: updatedHistory,
+                                        updatedAt: new Date(),
+                                    });
+
+                                    toast.success("Stock Level Updated", { description: "Stock level has been updated." });
+                                } catch (error) {
+                                    console.error("Failed to update stock level with quantity:", error);
+                                    toast.error("Error", { description: "Failed to update stock level." });
+                                } finally {
+                                    setPendingStockChange(null);
+                                    setRestockQuantity("0");
+                                    setOutOfStockMode("set-zero");
+                                }
+                            }}
+                        >
+                            Confirm
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* Out of Stock Confirmation Dialog */}
+            <AlertDialog open={isOutOfStockConfirmOpen} onOpenChange={setIsOutOfStockConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Mark as Out of Stock</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            This will set all location quantities to 0 and mark the item as Out of Stock.
+                            Are you sure you want to continue?
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                if (!itemToSetOutOfStock) return;
+                                const item = itemToSetOutOfStock;
+
+                                try {
+                                    const updatedItem: StockItem = {
+                                        ...item,
+                                        locations: item.locations.map(loc => ({
+                                            ...loc,
+                                            quantity: 0,
+                                        })),
+                                        stockStatus: "Out of Stock",
+                                    };
+
+                                    const historyLog = createHistoryLog("STOCK_LEVEL_CHANGE", {
+                                        oldStatus: item.stockStatus || "Unknown",
+                                        newStatus: "Out of Stock",
+                                        quantitySetTo: 0,
+                                        changedBy: userProfile?.displayName || userProfile?.email || "Unknown",
+                                        changedByRole: userProfile?.role || "Unknown"
+                                    }, item.id);
+                                    const updatedHistory = [...(updatedItem.history || []), historyLog];
+
+                                    await stockService.update(item.id, {
+                                        locations: updatedItem.locations,
+                                        stockStatus: updatedItem.stockStatus,
+                                        history: updatedHistory,
+                                        updatedAt: new Date(),
+                                    });
+
+                                    toast.success("Stock Level Updated", { description: "Item marked as Out of Stock with quantity set to 0." });
+                                } catch (error) {
+                                    console.error("Failed to update stock level:", error);
+                                    toast.error("Error", { description: "Failed to update stock level." });
+                                } finally {
+                                    setIsOutOfStockConfirmOpen(false);
+                                    setItemToSetOutOfStock(null);
+                                }
+                            }}
+                        >
+                            Confirm
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Pending Assignment Confirmation */}
+            <AlertDialog open={!!pendingAssignment} onOpenChange={(open) => {
+                if (!open) setPendingAssignment(null);
+            }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Confirm Assignment</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            {pendingAssignment && (
+                                <>
+                                    {pendingAssignment.status === "Assigned" ? (
+                                        <>
+                                            Machine <strong>{pendingAssignment.machine.name}</strong> already has an active item.
+                                            Continuing will replace it with this item.
+                                        </>
+                                    ) : (
+                                        <>
+                                            Machine <strong>{pendingAssignment.machine.name}</strong> already has items in the replacement queue.
+                                            This item will be added to the queue.
+                                        </>
+                                    )}
+                                    <br /><br />
+                                    Do you want to continue?
+                                </>
+                            )}
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                if (pendingAssignment) {
+                                    await executeAssignment(
+                                        pendingAssignment.machine,
+                                        pendingAssignment.status,
+                                        pendingAssignment.slotId
+                                    );
+                                    setPendingAssignment(null);
+                                }
+                            }}
+                        >
+                            Confirm
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Supervisor Override Dialog */}
+            <AlertDialog open={!!supervisorOverride} onOpenChange={(open) => {
+                if (!open) {
+                    setSupervisorOverride(null);
+                    setSupervisorPassword("");
+                    setSupervisorError("");
+                }
+            }}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Supervisor Override Required</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            A supervisor must enter their password to complete this action.
+                            <br />
+                            Please ask a supervisor to enter the override password below.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="space-y-2">
+                        <Label htmlFor="supervisor-password" className="text-sm font-medium">
+                            Supervisor password
+                        </Label>
+                        <Input
+                            id="supervisor-password"
+                            type="password"
+                            value={supervisorPassword}
+                            onChange={(e) => setSupervisorPassword(e.target.value)}
+                            placeholder="Enter supervisor password"
+                        />
+                        {supervisorError && (
+                            <p className="text-xs text-destructive">{supervisorError}</p>
+                        )}
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={async () => {
+                                if (!supervisorOverride) return;
+                                if (supervisorPassword.trim().length < 4) {
+                                    setSupervisorError("Password must be at least 4 characters.");
+                                    return;
+                                }
+
+                                const item = supervisorOverride.item;
+                                const action = supervisorOverride.action;
+
+                                try {
+                                    if (action === "downgrade-using-to-replacement") {
+                                        const updates: Partial<StockItem> = {
+                                            assignedStatus: "Not Assigned",
+                                            assignedMachineId: undefined,
+                                            assignedMachineName: undefined,
+                                            updatedAt: new Date(),
+                                        };
+                                        await stockService.update(item.id, updates);
+                                        toast.success("Status Updated", {
+                                            description: "Item removed from machine and set to Not Assigned.",
+                                        });
+                                    } else if (action === "unassign") {
+                                        await processStatusChange(item, "Not Assigned");
+                                    }
+
+                                    setSupervisorOverride(null);
+                                    setSupervisorPassword("");
+                                    setSupervisorError("");
+                                } catch (error) {
+                                    console.error("Supervisor override failed:", error);
+                                    toast.error("Error", { description: "Failed to complete supervisor action." });
+                                }
+                            }}
+                        >
+                            Confirm Override
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

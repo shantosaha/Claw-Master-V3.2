@@ -161,19 +161,16 @@ export function StockDetailHero({
 
                         {/* Status Badges Row */}
                         <div className="flex flex-wrap gap-2">
-                            {/* Stock Status - Editable */}
+                            {/* Stock Status - Editable - Match Inventory Page Style */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Badge
-                                        className={`${stockLevel.colorClass} text-white cursor-pointer hover:opacity-80`}
+                                        className={`whitespace-nowrap text-xs font-medium px-3 py-1 cursor-pointer ${stockLevel.colorClass}`}
                                     >
                                         {stockLevel.label}
                                     </Badge>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem onClick={() => onChangeStockStatus?.("")}>
-                                        Auto (Calculate)
-                                    </DropdownMenuItem>
+                                <DropdownMenuContent align="start">
                                     {stockStatusOptions.map(status => (
                                         <DropdownMenuItem
                                             key={status}
@@ -185,15 +182,15 @@ export function StockDetailHero({
                                 </DropdownMenuContent>
                             </DropdownMenu>
 
-                            {/* Assigned Status - Editable */}
+                            {/* Assigned Status - Editable - Match Inventory Page Style */}
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
                                     <Badge
-                                        className={`cursor-pointer hover:opacity-80 ${item.assignedStatus === "Assigned"
-                                                ? "bg-purple-500 text-white hover:bg-purple-600"
-                                                : item.assignedStatus === "Assigned for Replacement"
-                                                    ? "bg-blue-100 text-blue-700 hover:bg-blue-200"
-                                                    : "bg-slate-100 text-slate-700 hover:bg-slate-200"
+                                        className={`whitespace-nowrap text-xs font-medium px-3 py-1 cursor-pointer ${item.assignedStatus === "Assigned"
+                                            ? "bg-green-500 text-white hover:bg-green-600"
+                                            : item.assignedStatus === "Assigned for Replacement"
+                                                ? "bg-blue-500 text-white hover:bg-blue-600"
+                                                : "bg-gray-500 text-white hover:bg-gray-600"
                                             }`}
                                     >
                                         {item.assignedStatus === "Assigned"
@@ -209,10 +206,10 @@ export function StockDetailHero({
                                         Not Assigned
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onChangeAssignedStatus?.("Assigned")}>
-                                        Using (Assigned)
+                                        Using
                                     </DropdownMenuItem>
                                     <DropdownMenuItem onClick={() => onChangeAssignedStatus?.("Assigned for Replacement")}>
-                                        Replacement (Assigned for Replacement)
+                                        Replacement
                                     </DropdownMenuItem>
                                 </DropdownMenuContent>
                             </DropdownMenu>

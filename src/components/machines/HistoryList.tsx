@@ -35,7 +35,14 @@ export function HistoryList({ history }: HistoryListProps) {
                                 </span>
                             </div>
                             <p className="text-muted-foreground">
-                                {typeof log.details === 'string' ? log.details : (log.details?.reason || JSON.stringify(log.details) || "-")}
+                                {(() => {
+                                    if (!log.details) return "-";
+                                    if (typeof log.details === 'string') return log.details;
+                                    const d = log.details as Record<string, unknown>;
+                                    if (d.message) return String(d.message);
+                                    if (d.reason) return String(d.reason);
+                                    return JSON.stringify(d);
+                                })()}
                             </p>
                         </div>
                     </div>

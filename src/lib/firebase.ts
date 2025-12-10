@@ -1,7 +1,7 @@
-import { initializeApp, getApps, getApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getAuth, Auth } from "firebase/auth";
+import { getFirestore, Firestore } from "firebase/firestore";
+import { getStorage, FirebaseStorage } from "firebase/storage";
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,13 +12,15 @@ const firebaseConfig = {
     appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// Initialize Firebase
-let app: any;
-let auth: any;
-let db: any;
-let storage: any;
+// Mock object for when Firebase is not initialized
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+const mock = new Proxy({} as any, { get: () => () => { } });
 
-const mock = new Proxy({}, { get: () => () => { } });
+// Initialize Firebase
+let app: FirebaseApp | typeof mock;
+let auth: Auth | typeof mock;
+let db: Firestore | typeof mock;
+let storage: FirebaseStorage | typeof mock;
 
 try {
     // Only attempt to initialize if we have a config or are in browser
@@ -51,3 +53,4 @@ if (!storage) storage = mock;
 
 export { app, auth, db, storage };
 export const isFirebaseInitialized = app !== mock;
+

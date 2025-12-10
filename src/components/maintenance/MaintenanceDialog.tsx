@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { MaintenanceTask, ArcadeMachine } from "@/types";
+import { ArcadeMachine, MaintenanceTask } from "@/types";
 import { maintenanceService, machineService } from "@/services";
 import { logAction } from "@/services/auditLogger";
 import { useAuth } from "@/context/AuthContext";
@@ -14,7 +14,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
+// Removed unused import: Input
 import { Label } from "@/components/ui/label";
 import {
     Select,
@@ -44,9 +44,15 @@ export function MaintenanceDialog({ open, onOpenChange, onSuccess }: Maintenance
     useEffect(() => {
         let unsubscribeMachines: (() => void) | undefined;
 
+        // Type for service with optional subscribe method
+        type ServiceWithSubscribe<T> = {
+            subscribe?: (callback: (data: T[]) => void) => () => void;
+        };
+        const machineSvc = machineService as unknown as ServiceWithSubscribe<ArcadeMachine>;
+
         // Subscribe to real-time machine updates
-        if (typeof (machineService as any).subscribe === 'function') {
-            unsubscribeMachines = (machineService as any).subscribe((data: ArcadeMachine[]) => {
+        if (typeof machineSvc.subscribe === 'function') {
+            unsubscribeMachines = machineSvc.subscribe((data: ArcadeMachine[]) => {
                 setMachines(data);
             });
         }
@@ -77,12 +83,12 @@ export function MaintenanceDialog({ open, onOpenChange, onSuccess }: Maintenance
         try {
             const newId = await maintenanceService.add({
                 machineId: formData.machineId,
-                priority: formData.priority as any,
+                priority: formData.priority as MaintenanceTask['priority'],
                 description: formData.description,
                 status: "open",
                 createdBy: user.uid,
                 createdAt: new Date(),
-            } as any);
+            } as Omit<MaintenanceTask, 'id'>);
 
             await logAction(
                 user.uid,

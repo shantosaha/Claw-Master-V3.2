@@ -43,9 +43,18 @@ export function DataProvider({ children }: DataProviderProps) {
         let unsubscribeMachines: (() => void) | undefined;
 
         const initialize = async () => {
+            // Type for services with optional subscribe method
+            type ServiceWithSubscribe<T> = {
+                subscribe?: (callback: (data: T[]) => void) => () => void;
+                getAll: () => Promise<T[]>;
+            };
+
+            const stockSvc = stockService as unknown as ServiceWithSubscribe<StockItem>;
+            const machineSvc = machineService as unknown as ServiceWithSubscribe<ArcadeMachine>;
+
             // Subscribe to stock updates if available
-            if (typeof (stockService as any).subscribe === "function") {
-                unsubscribeStock = (stockService as any).subscribe((data: StockItem[]) => {
+            if (typeof stockSvc.subscribe === "function") {
+                unsubscribeStock = stockSvc.subscribe((data: StockItem[]) => {
                     setItems(data);
                     setItemsLoading(false);
                 });
@@ -57,8 +66,8 @@ export function DataProvider({ children }: DataProviderProps) {
             }
 
             // Subscribe to machine updates if available
-            if (typeof (machineService as any).subscribe === "function") {
-                unsubscribeMachines = (machineService as any).subscribe((data: ArcadeMachine[]) => {
+            if (typeof machineSvc.subscribe === "function") {
+                unsubscribeMachines = machineSvc.subscribe((data: ArcadeMachine[]) => {
                     setMachines(data);
                     setMachinesLoading(false);
                 });

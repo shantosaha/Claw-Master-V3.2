@@ -46,7 +46,7 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
         // Get document by ID
         getById: async (id: string): Promise<T | null> => {
             if (!isFirebaseInitialized) {
-                const data = getDemoData().find((item: any) => item.id === id);
+                const data = getDemoData().find((item) => (item as T & { id: string }).id === id);
                 return data || null;
             }
             const docRef = doc(db, collectionName, id);

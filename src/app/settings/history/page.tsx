@@ -40,14 +40,19 @@ export default function SettingsHistoryPage() {
         }
     };
 
-    const filteredLogs = logs.filter(log =>
-        log.action.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        log.entityType.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (typeof log.details === 'string' ? log.details.toLowerCase() : JSON.stringify(log.details)).includes(searchTerm.toLowerCase()) ||
-        log.userId.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const filteredLogs = logs.filter(log => {
+        const searchLower = searchTerm.toLowerCase();
+        const detailsStr = log.details ? JSON.stringify(log.details).toLowerCase() : '';
 
-    const getActionColor = (action: string) => {
+        return (
+            log.action.toLowerCase().includes(searchLower) ||
+            log.entityType.toLowerCase().includes(searchLower) ||
+            detailsStr.includes(searchLower) ||
+            log.userId.toLowerCase().includes(searchLower)
+        );
+    });
+
+    const getActionColor = (action: string): "destructive" | "default" | "secondary" | "outline" => {
         const lowerAction = action.toLowerCase();
         if (lowerAction.includes("create")) return "default";
         if (lowerAction.includes("update") || lowerAction.includes("edit")) return "secondary";
@@ -115,13 +120,18 @@ export default function SettingsHistoryPage() {
                                             </TableCell>
                                             <TableCell>{log.userId}</TableCell>
                                             <TableCell>
-                                                <Badge variant={getActionColor(log.action) as any}>
+                                                <Badge variant={getActionColor(log.action)}>
                                                     {log.action.toUpperCase()}
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="capitalize">{log.entityType}</TableCell>
-                                            <TableCell className="max-w-md truncate" title={typeof log.details === 'string' ? log.details : JSON.stringify(log.details)}>
-                                                {typeof log.details === 'string' ? log.details : (log.details?.reason || JSON.stringify(log.details) || "-")}
+                                            <TableCell className="max-w-md truncate" title={log.details ? JSON.stringify(log.details) : undefined}>
+                                                {log.details
+                                                    ? (typeof log.details.reason === 'string'
+                                                        ? log.details.reason
+                                                        : JSON.stringify(log.details))
+                                                    : "-"
+                                                }
                                             </TableCell>
                                         </TableRow>
                                     ))

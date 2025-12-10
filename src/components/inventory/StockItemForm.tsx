@@ -868,9 +868,10 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                                     form.setValue("assignedSlotId", undefined);
                                                                     setMachineComboboxOpen(false);
                                                                 }}
+                                                                className="py-3 cursor-pointer"
                                                             >
-                                                                <Check className={cn("mr-2 h-4 w-4", field.value === NO_MACHINE_ASSIGNED_VALUE || !field.value ? "opacity-100" : "opacity-0")} />
-                                                                [No Machine Assigned]
+                                                                <Check className={cn("mr-2 h-4 w-4 shrink-0", field.value === NO_MACHINE_ASSIGNED_VALUE || !field.value ? "opacity-100" : "opacity-0")} />
+                                                                <span className="text-muted-foreground font-medium">[No Machine Assigned]</span>
                                                             </CommandItem>
                                                             {machines.map((machine) => (
                                                                 <CommandItem
@@ -881,16 +882,29 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                                         form.setValue("assignedSlotId", undefined);
                                                                         setMachineComboboxOpen(false);
                                                                     }}
+                                                                    className="py-2 cursor-pointer"
                                                                 >
-                                                                    <Check className={cn("mr-2 h-4 w-4", machine.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                                    <div className="flex items-center gap-2">
-                                                                        {machine.imageUrl ?
-                                                                            <Image src={machine.imageUrl} alt={machine.name} width={24} height={24} className="rounded object-cover" />
-                                                                            : <Gamepad2 className="h-6 w-6 text-muted-foreground" />
-                                                                        }
-                                                                        <div>
-                                                                            <p className="text-sm font-medium">{machine.name}</p>
-                                                                            <p className="text-xs text-muted-foreground">Tag: {machine.assetTag}</p>
+                                                                    <Check className={cn("mr-2 h-4 w-4 shrink-0 text-primary", machine.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                                    <div className="flex items-center gap-3 w-full overflow-hidden">
+                                                                        <div className="shrink-0 relative h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/40 shadow-sm">
+                                                                            {machine.imageUrl ? (
+                                                                                <Image
+                                                                                    src={machine.imageUrl}
+                                                                                    alt={machine.name}
+                                                                                    fill
+                                                                                    className="object-cover"
+                                                                                />
+                                                                            ) : (
+                                                                                <div className="flex items-center justify-center w-full h-full bg-secondary text-muted-foreground">
+                                                                                    <Gamepad2 className="h-5 w-5 opacity-70" />
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex flex-col min-w-0 flex-1">
+                                                                            <p className="text-sm font-semibold text-foreground truncate">{machine.name}</p>
+                                                                            <p className="text-xs text-muted-foreground truncate">
+                                                                                Tag: {machine.assetTag}
+                                                                            </p>
                                                                         </div>
                                                                     </div>
                                                                 </CommandItem>

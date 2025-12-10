@@ -65,6 +65,12 @@ export function generateMockStockItems(count: number): StockItem[] {
         const imagePrompt = `${character} ${category} ${adjective} toy product view, white background`;
         const imageUrl = `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt)}?width=400&height=400&nologo=true`;
 
+        const imageUrls = [
+            imageUrl,
+            `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt + " side view")}?width=400&height=400&nologo=true`,
+            `https://image.pollinations.ai/prompt/${encodeURIComponent(imagePrompt + " back view")}?width=400&height=400&nologo=true`
+        ];
+
         const cost = Number((Math.random() * 20 + 1).toFixed(2));
         const value = Math.floor(cost * (Math.random() * 2 + 1.5)); // Value is 1.5x - 3.5x cost
 
@@ -95,7 +101,7 @@ export function generateMockStockItems(count: number): StockItem[] {
             stockStatus: STATUSES[Math.floor(Math.random() * STATUSES.length)],
             assignedStatus: ASSIGNED_STATUSES[Math.floor(Math.random() * ASSIGNED_STATUSES.length)],
             imageUrl,
-            imageUrls: [imageUrl],
+            imageUrls: imageUrls,
             totalQuantity: totalQty,
             quantity: totalQty,
             quantityText: totalQty > 20 ? "High Stock" : totalQty > 0 ? "Low Stock" : "Out of Stock",

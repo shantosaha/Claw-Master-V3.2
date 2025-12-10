@@ -53,7 +53,7 @@ export const apiService = {
                 group: item.Group,
                 subGroup: item.SubGroup,
                 tag: tagString,
-                status: (item.machine_status?.toLowerCase() as any) || 'active',
+                status: (item.machine_status?.toLowerCase() === 'active' ? 'Online' : 'Offline') as ArcadeMachine['status'],
                 playCount: item.StandardPlay || 0,
                 revenue: item.total_revenue || 0,
                 lastSyncedAt: new Date(),
@@ -67,11 +67,14 @@ export const apiService = {
                 // Create
                 await machineService.add({
                     ...machineData,
+                    name: machineData.name || "Unknown Machine",
                     assetTag: `TAG-${tagString}`, // Temporary asset tag
+                    physicalConfig: 'single' as const,
+                    status: machineData.status || 'Online',
                     slots: [], // Initialize empty slots
                     createdAt: new Date(),
                     updatedAt: new Date(),
-                } as any);
+                } as Omit<ArcadeMachine, 'id'>);
                 createdCount++;
             }
         }

@@ -42,7 +42,12 @@ export function ActivityLog({ logs = [] }: ActivityLogProps) {
                                 {log.action.replace(/_/g, " ")}
                             </TableCell>
                             <TableCell className="text-xs text-muted-foreground">
-                                {typeof log.details === 'string' ? log.details : (log.details?.reason || JSON.stringify(log.details) || "-")}
+                                {log.details
+                                    ? (typeof log.details.reason === 'string'
+                                        ? log.details.reason
+                                        : JSON.stringify(log.details))
+                                    : "-"
+                                }
                             </TableCell>
                             <TableCell className="text-xs">
                                 {log.userId}

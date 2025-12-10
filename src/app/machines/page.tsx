@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { machineService, apiService } from "@/services";
-import { ArcadeMachine, MachineDisplayItem } from "@/types";
+import { ArcadeMachine, ArcadeMachineSlot, MachineDisplayItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -48,9 +48,15 @@ export default function MachinesPage() {
     useEffect(() => {
         let unsubscribe: (() => void) | undefined;
 
+        // Type for service with optional subscribe method
+        type ServiceWithSubscribe<T> = {
+            subscribe?: (callback: (data: T[]) => void) => () => void;
+        };
+        const machineSvc = machineService as unknown as ServiceWithSubscribe<ArcadeMachine>;
+
         // Subscribe to real-time machine updates
-        if (typeof (machineService as any).subscribe === 'function') {
-            unsubscribe = (machineService as any).subscribe((data: ArcadeMachine[]) => {
+        if (typeof machineSvc.subscribe === 'function') {
+            unsubscribe = machineSvc.subscribe((data: ArcadeMachine[]) => {
                 setMachines(data);
                 setLoading(false);
             });
@@ -146,13 +152,13 @@ export default function MachinesPage() {
                 const originalMachine = machine.originalMachine;
                 const updatedSlots = originalMachine.slots.map(slot => {
                     if (slot.id === machine.slotId) {
-                        return { ...slot, status: status as any };
+                        return { ...slot, status: status as ArcadeMachineSlot['status'] };
                     }
                     return slot;
                 });
                 await machineService.update(originalMachine.id, { slots: updatedSlots });
             } else {
-                await machineService.update(machine.id, { status: status as any });
+                await machineService.update(machine.id, { status: status as ArcadeMachine['status'] });
             }
             toast.success(`Status updated to ${status}`);
             loadMachines();

@@ -8,10 +8,35 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, isFirebaseInitialized } from "@/lib/firebase";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { Plus, Mail, Shield, User } from "lucide-react";
 import { toast } from "sonner";
+
+// Demo users for when Firebase is not initialized
+const DEMO_USERS: UserProfile[] = [
+    {
+        uid: "demo-admin",
+        email: "admin@clawmaster.demo",
+        displayName: "Demo Admin",
+        role: "admin",
+        photoURL: "",
+    },
+    {
+        uid: "demo-manager",
+        email: "manager@clawmaster.demo",
+        displayName: "Demo Manager",
+        role: "manager",
+        photoURL: "",
+    },
+    {
+        uid: "demo-tech",
+        email: "tech@clawmaster.demo",
+        displayName: "Demo Technician",
+        role: "tech",
+        photoURL: "",
+    },
+];
 
 export default function TeamPage() {
     const { userProfile } = useAuth();
@@ -25,12 +50,23 @@ export default function TeamPage() {
     const loadUsers = async () => {
         setLoading(true);
         try {
-            // In a real app, this should be a proper service call
+            // Check if Firebase is properly initialized
+            if (!isFirebaseInitialized || !db) {
+                console.info("Firebase not initialized, using demo users");
+                setUsers(DEMO_USERS);
+                return;
+            }
+
             const snapshot = await getDocs(collection(db, "users"));
             const data = snapshot.docs.map(doc => doc.data() as UserProfile);
-            setUsers(data);
+            setUsers(data.length > 0 ? data : DEMO_USERS);
         } catch (error) {
             console.error("Failed to load users:", error);
+            // Fallback to demo users on error
+            setUsers(DEMO_USERS);
+            toast.error("Could not load team data", {
+                description: "Showing demo data instead.",
+            });
         } finally {
             setLoading(false);
         }

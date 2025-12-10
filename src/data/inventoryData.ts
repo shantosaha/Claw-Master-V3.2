@@ -87,7 +87,11 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_01_p2",
         "assignedMachineName": "Trend Catcher 1 P2",
         "imageUrl": "https://image.pollinations.ai/prompt/Kirby%20-%20Standard%20Pink%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Kirby%20-%20Standard%20Pink%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Kirby%20-%20Standard%20Pink%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Kirby%20-%20Standard%20Pink%20(12cm)%20Plush%20Toy%20Side%20View?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Kirby%20-%20Standard%20Pink%20(12cm)%20Plush%20Toy%20Back%20View?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 200,
         "quantityText": "High Stock",
         "stockLocations": [
@@ -120,7 +124,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_01_p2",
         "assignedMachineName": "Trend Catcher 1 P2",
         "imageUrl": "https://image.pollinations.ai/prompt/Kirby%20-%20Sleepy%20Blue%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Kirby%20-%20Sleepy%20Blue%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Kirby%20-%20Sleepy%20Blue%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Kirby%20-%20Sleepy%20Blue%20(12cm)%20Plush%20Toy%20Sleeping%20Pose?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 85,
         "quantityText": "Good",
         "stockLocations": [
@@ -153,7 +160,11 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_02_p1",
         "assignedMachineName": "Trend Catcher 2 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Sanrio%20-%20Hello%20Kitty%20Red%20Bow%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Sanrio%20-%20Hello%20Kitty%20Red%20Bow%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20Hello%20Kitty%20Red%20Bow%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20Hello%20Kitty%20Red%20Bow%20Plush%20Toy%20Side%20View?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20Hello%20Kitty%20Red%20Bow%20Plush%20Toy%20Close%20Up?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 300,
         "quantityText": "High Stock",
         "stockLocations": [
@@ -186,7 +197,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_02_p1",
         "assignedMachineName": "Trend Catcher 2 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Sanrio%20-%20My%20Melody%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Sanrio%20-%20My%20Melody%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20My%20Melody%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20My%20Melody%20Plush%20Toy%20Side%20View?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 150,
         "quantityText": "Good",
         "stockLocations": [
@@ -219,7 +233,11 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_02_p2",
         "assignedMachineName": "Trend Catcher 2 P2",
         "imageUrl": "https://image.pollinations.ai/prompt/Sanrio%20-%20Kuromi%20(Purple)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Sanrio%20-%20Kuromi%20(Purple)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20Kuromi%20(Purple)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20Kuromi%20(Purple)%20Plush%20Toy%20Back%20View?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20Kuromi%20(Purple)%20Plush%20Toy%20Detail?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 60,
         "quantityText": "Good",
         "stockLocations": [
@@ -252,7 +270,10 @@ export const sampleInventoryData = [
         "assignedMachineId": null,
         "assignedMachineName": null,
         "imageUrl": "https://image.pollinations.ai/prompt/Sanrio%20-%20Cinnamoroll%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Sanrio%20-%20Cinnamoroll%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20Cinnamoroll%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Sanrio%20-%20Cinnamoroll%20Plush%20Toy%20Flying?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 0,
         "quantityText": "Out of Stock",
         "stockLocations": [],
@@ -283,7 +304,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_03_p1",
         "assignedMachineName": "Trend Catcher 3 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Pink)%20Plush%20Toy%20Top%20View?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 500,
         "quantityText": "High Stock",
         "stockLocations": [
@@ -316,7 +340,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_03_p1",
         "assignedMachineName": "Trend Catcher 3 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Brown)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Brown)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Brown)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Brown)%20Plush%20Toy%20Straw%20Detail?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 450,
         "quantityText": "High Stock",
         "stockLocations": [
@@ -349,7 +376,11 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_04_p1",
         "assignedMachineName": "Trend Catcher 4 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Minecraft%20-%20Creeper%20(Small)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Minecraft%20-%20Creeper%20(Small)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Minecraft%20-%20Creeper%20(Small)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Minecraft%20-%20Creeper%20(Small)%20Plush%20Toy%20Face%20Close%20Up?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Minecraft%20-%20Creeper%20(Small)%20Plush%20Toy%20Side?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 90,
         "quantityText": "Good",
         "stockLocations": [
@@ -382,7 +413,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_04_p1",
         "assignedMachineName": "Trend Catcher 4 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Minecraft%20-%20TNT%20Block%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Minecraft%20-%20TNT%20Block%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Minecraft%20-%20TNT%20Block%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Minecraft%20-%20TNT%20Block%20Plush%20Toy%20Angle?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 95,
         "quantityText": "Good",
         "stockLocations": [
@@ -415,7 +449,11 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_05_p1",
         "assignedMachineName": "Trend Catcher 5 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Disney%20-%20Stitch%20(Blue)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Disney%20-%20Stitch%20(Blue)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Disney%20-%20Stitch%20(Blue)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Disney%20-%20Stitch%20(Blue)%20Plush%20Toy%20Back?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Disney%20-%20Stitch%20(Blue)%20Plush%20Toy%20Ears?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 40,
         "quantityText": "Good",
         "stockLocations": [
@@ -448,7 +486,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_05_p1",
         "assignedMachineName": "Trend Catcher 5 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Disney%20-%20Angel%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Disney%20-%20Angel%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Disney%20-%20Angel%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Disney%20-%20Angel%20(Pink)%20Plush%20Toy%20Side?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 35,
         "quantityText": "Good",
         "stockLocations": [
@@ -481,7 +522,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_06_p1",
         "assignedMachineName": "Trend Catcher 6 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Generic%20-%20Octupus%20Reversible%20(Red%2FBlue)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Generic%20-%20Octupus%20Reversible%20(Red%2FBlue)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Generic%20-%20Octupus%20Reversible%20(Red%2FBlue)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Generic%20-%20Octupus%20Reversible%20(Red%2FBlue)%20Plush%20Toy%20Flipped?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 600,
         "quantityText": "High Stock",
         "stockLocations": [
@@ -515,7 +559,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_tc_06_p1",
         "assignedMachineName": "Trend Catcher 6 P1",
         "imageUrl": "https://image.pollinations.ai/prompt/Generic%20-%20Avocado%20Cute%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Generic%20-%20Avocado%20Cute%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Generic%20-%20Avocado%20Cute%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Generic%20-%20Avocado%20Cute%20Plush%20Toy%20Back?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 120,
         "quantityText": "High Stock",
         "stockLocations": [
@@ -548,7 +595,11 @@ export const sampleInventoryData = [
         "assignedMachineId": null,
         "assignedMachineName": null,
         "imageUrl": "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Anya%20(Uniform)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Anya%20(Uniform)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Anya%20(Uniform)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Anya%20(Uniform)%20Plush%20Toy%20Face?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Anya%20(Uniform)%20Plush%20Toy%20Full%20Body?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 100,
         "quantityText": "High Stock",
         "stockLocations": [
@@ -581,7 +632,10 @@ export const sampleInventoryData = [
         "assignedMachineId": null,
         "assignedMachineName": null,
         "imageUrl": "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Bond%20(Dog)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Bond%20(Dog)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Bond%20(Dog)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Bond%20(Dog)%20Plush%20Toy%20Side?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 100,
         "quantityText": "High Stock",
         "stockLocations": [
@@ -614,7 +668,11 @@ export const sampleInventoryData = [
         "assignedMachineId": null,
         "assignedMachineName": null,
         "imageUrl": "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Pochita%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Pochita%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Pochita%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Pochita%20Plush%20Toy%20Saw?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Pochita%20Plush%20Toy%20Side?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 0,
         "quantityText": "Out of Stock",
         "stockLocations": [],
@@ -645,7 +703,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_miya_01",
         "assignedMachineName": "Crazy Toy Miya 1",
         "imageUrl": "https://image.pollinations.ai/prompt/Among%20Us%20-%20Red%20Crewmate%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Among%20Us%20-%20Red%20Crewmate%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Among%20Us%20-%20Red%20Crewmate%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Among%20Us%20-%20Red%20Crewmate%20Plush%20Toy%20Dead?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 20,
         "quantityText": "Low",
         "stockLocations": [
@@ -677,7 +738,11 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_dc_01",
         "assignedMachineName": "Doll Castle 1",
         "imageUrl": "https://image.pollinations.ai/prompt/Rilakkuma%20-%20Standard%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Rilakkuma%20-%20Standard%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Rilakkuma%20-%20Standard%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Rilakkuma%20-%20Standard%20Bear%20(30cm)%20Plush%20Toy%20Zipper?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Rilakkuma%20-%20Standard%20Bear%20(30cm)%20Plush%20Toy%20Back?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 30,
         "quantityText": "Good",
         "stockLocations": [
@@ -709,7 +774,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_dc_02",
         "assignedMachineName": "Doll Castle 2",
         "imageUrl": "https://image.pollinations.ai/prompt/Korilakkuma%20-%20White%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Korilakkuma%20-%20White%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Korilakkuma%20-%20White%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Korilakkuma%20-%20White%20Bear%20(30cm)%20Plush%20Toy%20Close?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 28,
         "quantityText": "Good",
         "stockLocations": [
@@ -741,7 +809,10 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_dc_03",
         "assignedMachineName": "Doll Castle 3",
         "imageUrl": "https://image.pollinations.ai/prompt/Kiiroitori%20-%20Yellow%20Bird%20(25cm)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Kiiroitori%20-%20Yellow%20Bird%20(25cm)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Kiiroitori%20-%20Yellow%20Bird%20(25cm)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Kiiroitori%20-%20Yellow%20Bird%20(25cm)%20Plush%20Toy%20Side?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 35,
         "quantityText": "Good",
         "stockLocations": [
@@ -773,7 +844,11 @@ export const sampleInventoryData = [
         "assignedMachineId": "mac_big_claw",
         "assignedMachineName": "The Big Claw",
         "imageUrl": "https://image.pollinations.ai/prompt/Giant%20Blue%20Shark%20(IKEA%20Style)%20Plush%20Toy?width=400&height=400&nologo=true",
-        "imageUrls": ["https://image.pollinations.ai/prompt/Giant%20Blue%20Shark%20(IKEA%20Style)%20Plush%20Toy?width=400&height=400&nologo=true"],
+        "imageUrls": [
+            "https://image.pollinations.ai/prompt/Giant%20Blue%20Shark%20(IKEA%20Style)%20Plush%20Toy?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Giant%20Blue%20Shark%20(IKEA%20Style)%20Plush%20Toy%20Mouth?width=400&height=400&nologo=true",
+            "https://image.pollinations.ai/prompt/Giant%20Blue%20Shark%20(IKEA%20Style)%20Plush%20Toy%20Fin?width=400&height=400&nologo=true"
+        ],
         "totalQuantity": 8,
         "quantityText": "Low",
         "stockLocations": [

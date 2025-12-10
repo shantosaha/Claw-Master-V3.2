@@ -37,9 +37,16 @@ export function MaintenanceDashboard() {
     useEffect(() => {
         let unsubscribeMachines: (() => void) | undefined;
 
+        // Type for service with optional subscribe method
+        type ServiceWithSubscribe<T> = {
+            subscribe?: (callback: (data: T[]) => void) => () => void;
+        };
+        interface MachineData { id: string; name: string }
+        const machineSvc = machineService as unknown as ServiceWithSubscribe<MachineData>;
+
         // Subscribe to real-time machine updates for enriching task data
-        if (typeof (machineService as any).subscribe === 'function') {
-            unsubscribeMachines = (machineService as any).subscribe((machines: any[]) => {
+        if (typeof machineSvc.subscribe === 'function') {
+            unsubscribeMachines = machineSvc.subscribe((machines: MachineData[]) => {
                 // Re-enrich tasks when machine data changes
                 setTasks(prev => prev.map(task => ({
                     ...task,

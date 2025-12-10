@@ -89,53 +89,62 @@ export function StockItemHistoryDialog({ isOpen, onOpenChange, item, historyLogs
                                             </div>
                                         </TableCell>
                                         <TableCell className="p-2 align-top text-xs font-body">
-                                            {/* Adjust Stock Details */}
-                                            {entry.details?.location && <p>Location: {entry.details.location}</p>}
-                                            {entry.details?.change !== undefined && <p>Change: {String(entry.details.change).startsWith('-') || entry.details.change === 'set' ? '' : '+'}{entry.details.change} units</p>}
-                                            {entry.details?.newQuantity !== undefined && <p>New Qty: {entry.details.newQuantity} units</p>}
+                                            {(() => {
+                                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                                const details = entry.details as Record<string, any> | undefined;
+                                                if (!details) return null;
 
-                                            {/* Status Change Details */}
-                                            {entry.action === "STOCK_LEVEL_CHANGE" ? (
-                                                <div className="space-y-0.5">
-                                                    {entry.details?.oldStatus && entry.details?.newStatus && (
-                                                        <p className="font-medium">Status: {entry.details.oldStatus} &rarr; {entry.details.newStatus}</p>
-                                                    )}
-                                                    {entry.details?.quantitySetTo !== undefined && (
-                                                        <p className="text-muted-foreground">Quantity set to: {entry.details.quantitySetTo}</p>
-                                                    )}
-                                                </div>
-                                            ) : (
-                                                entry.details?.oldStatus && entry.details?.newStatus && (
-                                                    <p>Status: {entry.details.oldStatus} &rarr; {entry.details.newStatus}</p>
-                                                )
-                                            )}
+                                                return (
+                                                    <>
+                                                        {/* Adjust Stock Details */}
+                                                        {details.location && <p>Location: {String(details.location)}</p>}
+                                                        {details.change !== undefined && <p>Change: {String(details.change).startsWith('-') || details.change === 'set' ? '' : '+'}{String(details.change)} units</p>}
+                                                        {details.newQuantity !== undefined && <p>New Qty: {String(details.newQuantity)} units</p>}
 
-                                            {/* Machine Assignment Details */}
-                                            {entry.details?.machine && entry.action.includes("ASSIGN") && (
-                                                <p>Machine: {entry.details.machine} {entry.details.slot ? `(Slot: ${entry.details.slot})` : ''}</p>
-                                            )}
-                                            {entry.details?.status && entry.action.includes("ASSIGN") && (
-                                                <p>Type: {entry.details.status}</p>
-                                            )}
-                                            {entry.details?.replacedBy && (
-                                                <p>Replaced By: {entry.details.replacedBy}</p>
-                                            )}
+                                                        {/* Status Change Details */}
+                                                        {entry.action === "STOCK_LEVEL_CHANGE" ? (
+                                                            <div className="space-y-0.5">
+                                                                {details.oldStatus && details.newStatus && (
+                                                                    <p className="font-medium">Status: {String(details.oldStatus)} &rarr; {String(details.newStatus)}</p>
+                                                                )}
+                                                                {details.quantitySetTo !== undefined && (
+                                                                    <p className="text-muted-foreground">Quantity set to: {String(details.quantitySetTo)}</p>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            details.oldStatus && details.newStatus && (
+                                                                <p>Status: {String(details.oldStatus)} &rarr; {String(details.newStatus)}</p>
+                                                            )
+                                                        )}
 
-                                            {/* Create/Update Details */}
-                                            {entry.action === "CREATE_ITEM" && entry.details?.name && <p>Name: {entry.details.name}</p>}
-                                            {entry.action === "CREATE_ITEM" && entry.details?.category && <p>Category: {entry.details.category}</p>}
+                                                        {/* Machine Assignment Details */}
+                                                        {details.machine && entry.action.includes("ASSIGN") && (
+                                                            <p>Machine: {String(details.machine)} {details.slot ? `(Slot: ${String(details.slot)})` : ''}</p>
+                                                        )}
+                                                        {details.status && entry.action.includes("ASSIGN") && (
+                                                            <p>Type: {String(details.status)}</p>
+                                                        )}
+                                                        {details.replacedBy && (
+                                                            <p>Replaced By: {String(details.replacedBy)}</p>
+                                                        )}
 
-                                            {entry.action === "UPDATE_ITEM" && (
-                                                <>
-                                                    {entry.details?.changes && <p className="font-medium">{entry.details.changes}</p>}
-                                                    {entry.details?.name && <p className="text-muted-foreground">{entry.details.name}</p>}
-                                                    {entry.details?.quantity && <p className="text-muted-foreground">{entry.details.quantity}</p>}
-                                                </>
-                                            )}
+                                                        {/* Create/Update Details */}
+                                                        {entry.action === "CREATE_ITEM" && details.name && <p>Name: {String(details.name)}</p>}
+                                                        {entry.action === "CREATE_ITEM" && details.category && <p>Category: {String(details.category)}</p>}
 
+                                                        {entry.action === "UPDATE_ITEM" && (
+                                                            <>
+                                                                {details.changes && <p className="font-medium">{String(details.changes)}</p>}
+                                                                {details.name && <p className="text-muted-foreground">{String(details.name)}</p>}
+                                                                {details.quantity && <p className="text-muted-foreground">{String(details.quantity)}</p>}
+                                                            </>
+                                                        )}
 
-                                            {/* Generic Reason */}
-                                            {entry.details?.reason && <p className="mt-1 text-muted-foreground italic">Reason: {entry.details.reason}</p>}
+                                                        {/* Generic Reason */}
+                                                        {details.reason && <p className="mt-1 text-muted-foreground italic">Reason: {String(details.reason)}</p>}
+                                                    </>
+                                                );
+                                            })()}
                                         </TableCell>
                                     </TableRow>
                                 ))}
