@@ -12,12 +12,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_01_p1",
                 "assignedMachineName": "Trend Catcher 1 P1",
-                "imageUrl": "/stock-images/inv_plu_001_front.png",
+                "imageUrl": "/stock-images/inv_plu_001_1.jpg",
                 "imageUrls": [
-                        "/stock-images/inv_plu_001_front.png",
-                        "/stock-images/inv_plu_001_side.png",
-                        "/stock-images/inv_plu_001_back.png"
-                ],
+                  "/stock-images/inv_plu_001_1.jpg",
+                  "/stock-images/inv_plu_001_2.png",
+                  "/stock-images/inv_plu_001_3.png",
+                  "/stock-images/inv_plu_001_4.jpg"
+        ],
                 "totalQuantity": 120,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -50,11 +51,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_01_p1",
                 "assignedMachineName": "Trend Catcher 1 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Pok%C3%A9mon%20-%20Snorlax%20Sleeping%20(15cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=1534558683",
+                "imageUrl": "/stock-images/inv_plu_002_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Pok%C3%A9mon%20-%20Snorlax%20Sleeping%20(15cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=2957804653",
-                        "https://image.pollinations.ai/prompt/Pok%C3%A9mon%20-%20Snorlax%20Sleeping%20(15cm)%20Plush%20Toy%20Close%20Up?width=400&height=400&nologo=true&seed=3380154128"
-                ],
+                  "/stock-images/inv_plu_002_1.jpg",
+                  "/stock-images/inv_plu_002_2.png",
+                  "/stock-images/inv_plu_002_3.jpg",
+                  "/stock-images/inv_plu_002_4.jpg"
+        ],
                 "totalQuantity": 45,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -86,12 +89,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_01_p2",
                 "assignedMachineName": "Trend Catcher 1 P2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Kirby%20-%20Standard%20Pink%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=1474380059",
+                "imageUrl": "/stock-images/inv_plu_003_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Kirby%20-%20Standard%20Pink%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=1410336941",
-                        "https://image.pollinations.ai/prompt/Kirby%20-%20Standard%20Pink%20(12cm)%20Plush%20Toy%20Side%20View?width=400&height=400&nologo=true&seed=1968585439",
-                        "https://image.pollinations.ai/prompt/Kirby%20-%20Standard%20Pink%20(12cm)%20Plush%20Toy%20Back%20View?width=400&height=400&nologo=true&seed=2205924701"
-                ],
+                  "/stock-images/inv_plu_003_1.jpg",
+                  "/stock-images/inv_plu_003_2.jpg",
+                  "/stock-images/inv_plu_003_3.jpg",
+                  "/stock-images/inv_plu_003_4.jpg"
+        ],
                 "totalQuantity": 200,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -123,11 +127,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_01_p2",
                 "assignedMachineName": "Trend Catcher 1 P2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Kirby%20-%20Sleepy%20Blue%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=741341113",
+                "imageUrl": "/stock-images/inv_plu_004_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Kirby%20-%20Sleepy%20Blue%20(12cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=2638754379",
-                        "https://image.pollinations.ai/prompt/Kirby%20-%20Sleepy%20Blue%20(12cm)%20Plush%20Toy%20Sleeping%20Pose?width=400&height=400&nologo=true&seed=2771991975"
-                ],
+                  "/stock-images/inv_plu_004_1.jpg",
+                  "/stock-images/inv_plu_004_2.jpg",
+                  "/stock-images/inv_plu_004_3.jpg",
+                  "/stock-images/inv_plu_004_4.jpg"
+        ],
                 "totalQuantity": 85,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -159,12 +165,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_02_p1",
                 "assignedMachineName": "Trend Catcher 2 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Sanrio%20-%20Hello%20Kitty%20Red%20Bow%20Plush%20Toy?width=400&height=400&nologo=true&seed=3364809478",
+                "imageUrl": "/stock-images/inv_plu_005_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20Hello%20Kitty%20Red%20Bow%20Plush%20Toy?width=400&height=400&nologo=true&seed=3655140120",
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20Hello%20Kitty%20Red%20Bow%20Plush%20Toy%20Side%20View?width=400&height=400&nologo=true&seed=3130727946",
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20Hello%20Kitty%20Red%20Bow%20Plush%20Toy%20Close%20Up?width=400&height=400&nologo=true&seed=3921798459"
-                ],
+                  "/stock-images/inv_plu_005_1.jpg",
+                  "/stock-images/inv_plu_005_2.jpg",
+                  "/stock-images/inv_plu_005_3.jpg",
+                  "/stock-images/inv_plu_005_4.jpg"
+        ],
                 "totalQuantity": 300,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -196,11 +203,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_02_p1",
                 "assignedMachineName": "Trend Catcher 2 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Sanrio%20-%20My%20Melody%20Plush%20Toy?width=400&height=400&nologo=true&seed=3788084477",
+                "imageUrl": "/stock-images/inv_plu_006_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20My%20Melody%20Plush%20Toy?width=400&height=400&nologo=true&seed=4131531535",
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20My%20Melody%20Plush%20Toy%20Side%20View?width=400&height=400&nologo=true&seed=2200596427"
-                ],
+                  "/stock-images/inv_plu_006_1.jpg",
+                  "/stock-images/inv_plu_006_2.jpg",
+                  "/stock-images/inv_plu_006_3.jpg",
+                  "/stock-images/inv_plu_006_4.jpg"
+        ],
                 "totalQuantity": 150,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -232,12 +241,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned for Replacement",
                 "assignedMachineId": "mac_tc_02_p2",
                 "assignedMachineName": "Trend Catcher 2 P2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Sanrio%20-%20Kuromi%20(Purple)%20Plush%20Toy?width=400&height=400&nologo=true&seed=2055651838",
+                "imageUrl": "/stock-images/inv_plu_007_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20Kuromi%20(Purple)%20Plush%20Toy?width=400&height=400&nologo=true&seed=2833185040",
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20Kuromi%20(Purple)%20Plush%20Toy%20Back%20View?width=400&height=400&nologo=true&seed=868283794",
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20Kuromi%20(Purple)%20Plush%20Toy%20Detail?width=400&height=400&nologo=true&seed=1388862878"
-                ],
+                  "/stock-images/inv_plu_007_1.jpg",
+                  "/stock-images/inv_plu_007_2.jpg",
+                  "/stock-images/inv_plu_007_3.jpg",
+                  "/stock-images/inv_plu_007_4.jpg"
+        ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -269,11 +279,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Sanrio%20-%20Cinnamoroll%20Plush%20Toy?width=400&height=400&nologo=true&seed=1646678152",
+                "imageUrl": "/stock-images/inv_plu_008_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20Cinnamoroll%20Plush%20Toy?width=400&height=400&nologo=true&seed=1514443674",
-                        "https://image.pollinations.ai/prompt/Sanrio%20-%20Cinnamoroll%20Plush%20Toy%20Flying?width=400&height=400&nologo=true&seed=3673585894"
-                ],
+                  "/stock-images/inv_plu_008_1.jpg",
+                  "/stock-images/inv_plu_008_2.jpg",
+                  "/stock-images/inv_plu_008_3.jpg",
+                  "/stock-images/inv_plu_008_4.jpg"
+        ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -303,11 +315,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_03_p1",
                 "assignedMachineName": "Trend Catcher 3 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true&seed=3245917822",
+                "imageUrl": "/stock-images/inv_plu_009_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true&seed=4028845996",
-                        "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Pink)%20Plush%20Toy%20Top%20View?width=400&height=400&nologo=true&seed=3434471388"
-                ],
+                  "/stock-images/inv_plu_009_1.jpg",
+                  "/stock-images/inv_plu_009_2.jpg",
+                  "/stock-images/inv_plu_009_3.jpg",
+                  "/stock-images/inv_plu_009_4.jpg"
+        ],
                 "totalQuantity": 500,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -339,11 +353,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_03_p1",
                 "assignedMachineName": "Trend Catcher 3 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Brown)%20Plush%20Toy?width=400&height=400&nologo=true&seed=1344664204",
+                "imageUrl": "/stock-images/inv_plu_010_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Brown)%20Plush%20Toy?width=400&height=400&nologo=true&seed=3596451358",
-                        "https://image.pollinations.ai/prompt/Generic%20-%20Bubble%20Tea%20Plush%20(Brown)%20Plush%20Toy%20Straw%20Detail?width=400&height=400&nologo=true&seed=684580456"
-                ],
+                  "/stock-images/inv_plu_010_1.jpg",
+                  "/stock-images/inv_plu_010_2.jpg",
+                  "/stock-images/inv_plu_010_3.jpg",
+                  "/stock-images/inv_plu_010_4.jpg"
+        ],
                 "totalQuantity": 450,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -375,12 +391,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_04_p1",
                 "assignedMachineName": "Trend Catcher 4 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Minecraft%20-%20Creeper%20(Small)%20Plush%20Toy?width=400&height=400&nologo=true&seed=149103316",
+                "imageUrl": "/stock-images/inv_plu_011_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Minecraft%20-%20Creeper%20(Small)%20Plush%20Toy?width=400&height=400&nologo=true&seed=291870722",
-                        "https://image.pollinations.ai/prompt/Minecraft%20-%20Creeper%20(Small)%20Plush%20Toy%20Face%20Close%20Up?width=400&height=400&nologo=true&seed=3359687001",
-                        "https://image.pollinations.ai/prompt/Minecraft%20-%20Creeper%20(Small)%20Plush%20Toy%20Side?width=400&height=400&nologo=true&seed=2992514326"
-                ],
+                  "/stock-images/inv_plu_011_1.jpg",
+                  "/stock-images/inv_plu_011_2.jpg",
+                  "/stock-images/inv_plu_011_3.jpg",
+                  "/stock-images/inv_plu_011_4.jpg"
+        ],
                 "totalQuantity": 90,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -412,11 +429,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_04_p1",
                 "assignedMachineName": "Trend Catcher 4 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Minecraft%20-%20TNT%20Block%20Plush%20Toy?width=400&height=400&nologo=true&seed=602831558",
+                "imageUrl": "/stock-images/inv_plu_012_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Minecraft%20-%20TNT%20Block%20Plush%20Toy?width=400&height=400&nologo=true&seed=3463676916",
-                        "https://image.pollinations.ai/prompt/Minecraft%20-%20TNT%20Block%20Plush%20Toy%20Angle?width=400&height=400&nologo=true&seed=469211048"
-                ],
+                  "/stock-images/inv_plu_012_1.jpg",
+                  "/stock-images/inv_plu_012_2.jpg",
+                  "/stock-images/inv_plu_012_3.jpg",
+                  "/stock-images/inv_plu_012_4.jpg"
+        ],
                 "totalQuantity": 95,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -448,12 +467,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_05_p1",
                 "assignedMachineName": "Trend Catcher 5 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Disney%20-%20Stitch%20(Blue)%20Plush%20Toy?width=400&height=400&nologo=true&seed=1974559539",
+                "imageUrl": "/stock-images/inv_plu_013_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Disney%20-%20Stitch%20(Blue)%20Plush%20Toy?width=400&height=400&nologo=true&seed=2740000325",
-                        "https://image.pollinations.ai/prompt/Disney%20-%20Stitch%20(Blue)%20Plush%20Toy%20Back?width=400&height=400&nologo=true&seed=1598958755",
-                        "https://image.pollinations.ai/prompt/Disney%20-%20Stitch%20(Blue)%20Plush%20Toy%20Ears?width=400&height=400&nologo=true&seed=486607391"
-                ],
+                  "/stock-images/inv_plu_013_1.jpg",
+                  "/stock-images/inv_plu_013_2.jpg",
+                  "/stock-images/inv_plu_013_3.jpg",
+                  "/stock-images/inv_plu_013_4.jpg"
+        ],
                 "totalQuantity": 40,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -485,11 +505,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_05_p1",
                 "assignedMachineName": "Trend Catcher 5 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Disney%20-%20Angel%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true&seed=254746094",
+                "imageUrl": "/stock-images/inv_plu_014_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Disney%20-%20Angel%20(Pink)%20Plush%20Toy?width=400&height=400&nologo=true&seed=1184061980",
-                        "https://image.pollinations.ai/prompt/Disney%20-%20Angel%20(Pink)%20Plush%20Toy%20Side?width=400&height=400&nologo=true&seed=1779723184"
-                ],
+                  "/stock-images/inv_plu_014_1.jpg",
+                  "/stock-images/inv_plu_014_2.jpg",
+                  "/stock-images/inv_plu_014_3.jpg",
+                  "/stock-images/inv_plu_014_4.jpg"
+        ],
                 "totalQuantity": 35,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -521,11 +543,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_06_p1",
                 "assignedMachineName": "Trend Catcher 6 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Generic%20-%20Octupus%20Reversible%20(Red%2FBlue)%20Plush%20Toy?width=400&height=400&nologo=true&seed=333511104",
+                "imageUrl": "/stock-images/inv_plu_015_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Generic%20-%20Octupus%20Reversible%20(Red%2FBlue)%20Plush%20Toy?width=400&height=400&nologo=true&seed=3551344878",
-                        "https://image.pollinations.ai/prompt/Generic%20-%20Octupus%20Reversible%20(Red%2FBlue)%20Plush%20Toy%20Flipped?width=400&height=400&nologo=true&seed=311513181"
-                ],
+                  "/stock-images/inv_plu_015_1.jpg",
+                  "/stock-images/inv_plu_015_2.jpg",
+                  "/stock-images/inv_plu_015_3.jpg",
+                  "/stock-images/inv_plu_015_4.jpg"
+        ],
                 "totalQuantity": 600,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -558,11 +582,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_06_p1",
                 "assignedMachineName": "Trend Catcher 6 P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Generic%20-%20Avocado%20Cute%20Plush%20Toy?width=400&height=400&nologo=true&seed=679157439",
+                "imageUrl": "/stock-images/inv_plu_016_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Generic%20-%20Avocado%20Cute%20Plush%20Toy?width=400&height=400&nologo=true&seed=3970274641",
-                        "https://image.pollinations.ai/prompt/Generic%20-%20Avocado%20Cute%20Plush%20Toy%20Back?width=400&height=400&nologo=true&seed=2668818101"
-                ],
+                  "/stock-images/inv_plu_016_1.jpg",
+                  "/stock-images/inv_plu_016_2.jpg",
+                  "/stock-images/inv_plu_016_3.jpg",
+                  "/stock-images/inv_plu_016_4.jpg"
+        ],
                 "totalQuantity": 120,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -594,12 +620,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Anya%20(Uniform)%20Plush%20Toy?width=400&height=400&nologo=true&seed=2027451441",
+                "imageUrl": "/stock-images/inv_plu_017_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Anya%20(Uniform)%20Plush%20Toy?width=400&height=400&nologo=true&seed=1145956319",
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Anya%20(Uniform)%20Plush%20Toy%20Face?width=400&height=400&nologo=true&seed=2826028179",
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Anya%20(Uniform)%20Plush%20Toy%20Full%20Body?width=400&height=400&nologo=true&seed=3740008064"
-                ],
+                  "/stock-images/inv_plu_017_1.jpg",
+                  "/stock-images/inv_plu_017_2.jpg",
+                  "/stock-images/inv_plu_017_3.jpg",
+                  "/stock-images/inv_plu_017_4.jpg"
+        ],
                 "totalQuantity": 100,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -631,11 +658,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Bond%20(Dog)%20Plush%20Toy?width=400&height=400&nologo=true&seed=4065711980",
+                "imageUrl": "/stock-images/inv_plu_018_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Bond%20(Dog)%20Plush%20Toy?width=400&height=400&nologo=true&seed=4093799322",
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Bond%20(Dog)%20Plush%20Toy%20Side?width=400&height=400&nologo=true&seed=1535370926"
-                ],
+                  "/stock-images/inv_plu_018_1.jpg",
+                  "/stock-images/inv_plu_018_2.jpg",
+                  "/stock-images/inv_plu_018_3.jpg",
+                  "/stock-images/inv_plu_018_4.jpg"
+        ],
                 "totalQuantity": 100,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -667,12 +696,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Pochita%20Plush%20Toy?width=400&height=400&nologo=true&seed=3531372137",
+                "imageUrl": "/stock-images/inv_plu_019_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Pochita%20Plush%20Toy?width=400&height=400&nologo=true&seed=758231163",
-                        "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Pochita%20Plush%20Toy%20Saw?width=400&height=400&nologo=true&seed=3674835317",
-                        "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Pochita%20Plush%20Toy%20Side?width=400&height=400&nologo=true&seed=1535786703"
-                ],
+                  "/stock-images/inv_plu_019_1.jpg",
+                  "/stock-images/inv_plu_019_2.jpg",
+                  "/stock-images/inv_plu_019_3.jpg",
+                  "/stock-images/inv_plu_019_4.jpg"
+        ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -702,11 +732,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_miya_01",
                 "assignedMachineName": "Crazy Toy Miya 1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Among%20Us%20-%20Red%20Crewmate%20Plush%20Toy?width=400&height=400&nologo=true&seed=2114264111",
+                "imageUrl": "/stock-images/inv_plu_020_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Among%20Us%20-%20Red%20Crewmate%20Plush%20Toy?width=400&height=400&nologo=true&seed=1647083997",
-                        "https://image.pollinations.ai/prompt/Among%20Us%20-%20Red%20Crewmate%20Plush%20Toy%20Dead?width=400&height=400&nologo=true&seed=3715766910"
-                ],
+                  "/stock-images/inv_plu_020_1.jpg",
+                  "/stock-images/inv_plu_020_2.jpg",
+                  "/stock-images/inv_plu_020_3.jpg",
+                  "/stock-images/inv_plu_020_4.jpg"
+        ],
                 "totalQuantity": 20,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -737,12 +769,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_dc_01",
                 "assignedMachineName": "Doll Castle 1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Rilakkuma%20-%20Standard%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=2924947371",
+                "imageUrl": "/stock-images/inv_plu_021_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Rilakkuma%20-%20Standard%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=3958512701",
-                        "https://image.pollinations.ai/prompt/Rilakkuma%20-%20Standard%20Bear%20(30cm)%20Plush%20Toy%20Zipper?width=400&height=400&nologo=true&seed=4040900566",
-                        "https://image.pollinations.ai/prompt/Rilakkuma%20-%20Standard%20Bear%20(30cm)%20Plush%20Toy%20Back?width=400&height=400&nologo=true&seed=1017222305"
-                ],
+                  "/stock-images/inv_plu_021_1.jpg",
+                  "/stock-images/inv_plu_021_2.jpg",
+                  "/stock-images/inv_plu_021_3.jpg",
+                  "/stock-images/inv_plu_021_4.jpg"
+        ],
                 "totalQuantity": 30,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -773,11 +806,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_dc_02",
                 "assignedMachineName": "Doll Castle 2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Korilakkuma%20-%20White%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=697606062",
+                "imageUrl": "/stock-images/inv_plu_022_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Korilakkuma%20-%20White%20Bear%20(30cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=229976668",
-                        "https://image.pollinations.ai/prompt/Korilakkuma%20-%20White%20Bear%20(30cm)%20Plush%20Toy%20Close?width=400&height=400&nologo=true&seed=847202341"
-                ],
+                  "/stock-images/inv_plu_022_1.jpg",
+                  "/stock-images/inv_plu_022_2.jpg",
+                  "/stock-images/inv_plu_022_3.jpg",
+                  "/stock-images/inv_plu_022_4.jpg"
+        ],
                 "totalQuantity": 28,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -808,11 +843,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_dc_03",
                 "assignedMachineName": "Doll Castle 3",
-                "imageUrl": "https://image.pollinations.ai/prompt/Kiiroitori%20-%20Yellow%20Bird%20(25cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=2337192297",
+                "imageUrl": "/stock-images/inv_plu_023_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Kiiroitori%20-%20Yellow%20Bird%20(25cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=398761367",
-                        "https://image.pollinations.ai/prompt/Kiiroitori%20-%20Yellow%20Bird%20(25cm)%20Plush%20Toy%20Side?width=400&height=400&nologo=true&seed=2124801771"
-                ],
+                  "/stock-images/inv_plu_023_1.jpg",
+                  "/stock-images/inv_plu_023_2.jpg",
+                  "/stock-images/inv_plu_023_3.jpg",
+                  "/stock-images/inv_plu_023_4.jpg"
+        ],
                 "totalQuantity": 35,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -843,12 +880,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_big_claw",
                 "assignedMachineName": "The Big Claw",
-                "imageUrl": "https://image.pollinations.ai/prompt/Giant%20Blue%20Shark%20(IKEA%20Style)%20Plush%20Toy?width=400&height=400&nologo=true&seed=3948288417",
+                "imageUrl": "/stock-images/inv_plu_024_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Giant%20Blue%20Shark%20(IKEA%20Style)%20Plush%20Toy?width=400&height=400&nologo=true&seed=1133570767",
-                        "https://image.pollinations.ai/prompt/Giant%20Blue%20Shark%20(IKEA%20Style)%20Plush%20Toy%20Mouth?width=400&height=400&nologo=true&seed=2965819627",
-                        "https://image.pollinations.ai/prompt/Giant%20Blue%20Shark%20(IKEA%20Style)%20Plush%20Toy%20Fin?width=400&height=400&nologo=true&seed=212667237"
-                ],
+                  "/stock-images/inv_plu_024_1.jpg",
+                  "/stock-images/inv_plu_024_2.jpg",
+                  "/stock-images/inv_plu_024_3.jpg",
+                  "/stock-images/inv_plu_024_4.jpg"
+        ],
                 "totalQuantity": 8,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -879,8 +917,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned for Replacement",
                 "assignedMachineId": "mac_big_claw",
                 "assignedMachineName": "The Big Claw",
-                "imageUrl": "https://image.pollinations.ai/prompt/Giant%20Teddy%20Bear%20(1m)%20Plush%20Toy?width=400&height=400&nologo=true&seed=2668580645",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Giant%20Teddy%20Bear%20(1m)%20Plush%20Toy?width=400&height=400&nologo=true&seed=665952856"],
+                "imageUrl": "/stock-images/inv_plu_025_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_025_1.jpg",
+                  "/stock-images/inv_plu_025_2.jpg",
+                  "/stock-images/inv_plu_025_3.jpg",
+                  "/stock-images/inv_plu_025_4.jpg"
+        ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -909,12 +952,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tb_p1",
                 "assignedMachineName": "Trend Box P1",
-                "imageUrl": "/stock-images/inv_bbox_001_front.png",
+                "imageUrl": "/stock-images/inv_bbox_001_1.jpg",
                 "imageUrls": [
-                        "/stock-images/inv_bbox_001_front.png",
-                        "/stock-images/inv_bbox_001_item.png",
-                        "/stock-images/inv_bbox_001_side.png"
-                ],
+                  "/stock-images/inv_bbox_001_1.jpg",
+                  "/stock-images/inv_bbox_001_2.jpg",
+                  "/stock-images/inv_bbox_001_3.jpg",
+                  "/stock-images/inv_bbox_001_4.jpg"
+        ],
                 "totalQuantity": 48,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -945,8 +989,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tb_p2",
                 "assignedMachineName": "Trend Box P2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Pop%20Mart%20-%20Dimoo%20Zodiac%20Plush%20Toy?width=400&height=400&nologo=true&seed=3996449059",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Pop%20Mart%20-%20Dimoo%20Zodiac%20Plush%20Toy?width=400&height=400&nologo=true&seed=969016794"],
+                "imageUrl": "/stock-images/inv_bbox_002_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_bbox_002_1.jpg",
+                  "/stock-images/inv_bbox_002_2.jpg",
+                  "/stock-images/inv_bbox_002_3.jpg",
+                  "/stock-images/inv_bbox_002_4.jpg"
+        ],
                 "totalQuantity": 36,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -977,8 +1026,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tb_p3",
                 "assignedMachineName": "Trend Box P3",
-                "imageUrl": "https://image.pollinations.ai/prompt/Sonny%20Angel%20-%20Animal%20Series%201%20Plush%20Toy?width=400&height=400&nologo=true&seed=747797534",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Sonny%20Angel%20-%20Animal%20Series%201%20Plush%20Toy?width=400&height=400&nologo=true&seed=1516856447"],
+                "imageUrl": "/stock-images/inv_bbox_003_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_bbox_003_1.jpg",
+                  "/stock-images/inv_bbox_003_2.jpg",
+                  "/stock-images/inv_bbox_003_3.jpg",
+                  "/stock-images/inv_bbox_003_4.jpg"
+        ],
                 "totalQuantity": 12,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1009,8 +1063,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/One%20Piece%20-%20WCF%20Figures%20Plush%20Toy?width=400&height=400&nologo=true&seed=2869341263",
-                "imageUrls": ["https://image.pollinations.ai/prompt/One%20Piece%20-%20WCF%20Figures%20Plush%20Toy?width=400&height=400&nologo=true&seed=2777120942"],
+                "imageUrl": "/stock-images/inv_bbox_004_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_bbox_004_1.jpg",
+                  "/stock-images/inv_bbox_004_2.jpg",
+                  "/stock-images/inv_bbox_004_3.jpg",
+                  "/stock-images/inv_bbox_004_4.jpg"
+        ],
                 "totalQuantity": 50,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1041,8 +1100,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_sk_p1",
                 "assignedMachineName": "SKWEB P1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Dragon%20Ball%20Z%20-%20Goku%20Super%20Saiyan%20Plush%20Toy?width=400&height=400&nologo=true&seed=806243128",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Dragon%20Ball%20Z%20-%20Goku%20Super%20Saiyan%20Plush%20Toy?width=400&height=400&nologo=true&seed=3628753509"],
+                "imageUrl": "/stock-images/inv_fig_001_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_fig_001_1.jpg",
+                  "/stock-images/inv_fig_001_2.jpg",
+                  "/stock-images/inv_fig_001_3.jpg",
+                  "/stock-images/inv_fig_001_4.jpg",
+                  "/stock-images/inv_fig_001_5.jpg"
+        ],
                 "totalQuantity": 15,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1073,8 +1138,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_sk_p2",
                 "assignedMachineName": "SKWEB P2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Demon%20Slayer%20-%20Tanjiro%20Plush%20Toy?width=400&height=400&nologo=true&seed=3279131138",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Demon%20Slayer%20-%20Tanjiro%20Plush%20Toy?width=400&height=400&nologo=true&seed=2049612631"],
+                "imageUrl": "/stock-images/inv_fig_002_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_fig_002_1.jpg",
+                  "/stock-images/inv_fig_002_2.jpg",
+                  "/stock-images/inv_fig_002_3.jpg",
+                  "/stock-images/inv_fig_002_4.jpg",
+                  "/stock-images/inv_fig_002_5.jpg"
+        ],
                 "totalQuantity": 18,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1105,8 +1176,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_sk_p3",
                 "assignedMachineName": "SKWEB P3",
-                "imageUrl": "https://image.pollinations.ai/prompt/Hatsune%20Miku%20-%20Seasonal%20Plush%20Toy?width=400&height=400&nologo=true&seed=322804633",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Hatsune%20Miku%20-%20Seasonal%20Plush%20Toy?width=400&height=400&nologo=true&seed=3745729188"],
+                "imageUrl": "/stock-images/inv_fig_003_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_fig_003_1.jpg",
+                  "/stock-images/inv_fig_003_2.jpg",
+                  "/stock-images/inv_fig_003_3.jpg",
+                  "/stock-images/inv_fig_003_4.jpg",
+                  "/stock-images/inv_fig_003_5.jpg"
+        ],
                 "totalQuantity": 25,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1137,8 +1214,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_sk_p4",
                 "assignedMachineName": "SKWEB P4",
-                "imageUrl": "https://image.pollinations.ai/prompt/Jujutsu%20Kaisen%20-%20Gojo%20Plush%20Toy?width=400&height=400&nologo=true&seed=3452109106",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Jujutsu%20Kaisen%20-%20Gojo%20Plush%20Toy?width=400&height=400&nologo=true&seed=4061295851"],
+                "imageUrl": "/stock-images/inv_fig_004_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_fig_004_1.jpg",
+                  "/stock-images/inv_fig_004_2.jpg",
+                  "/stock-images/inv_fig_004_3.jpg",
+                  "/stock-images/inv_fig_004_4.jpg",
+                  "/stock-images/inv_fig_004_5.jpg"
+        ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -1167,8 +1250,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_nano_01",
                 "assignedMachineName": "Crazy Toy Nano 1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Pokemon%20Acrylic%20Keychains%20Plush%20Toy?width=400&height=400&nologo=true&seed=1919542089",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Pokemon%20Acrylic%20Keychains%20Plush%20Toy?width=400&height=400&nologo=true&seed=3798565684"],
+                "imageUrl": "/stock-images/inv_key_001_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_key_001_1.jpg",
+                  "/stock-images/inv_key_001_2.jpg",
+                  "/stock-images/inv_key_001_3.jpg"
+        ],
                 "totalQuantity": 400,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1199,8 +1286,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_nano_02",
                 "assignedMachineName": "Crazy Toy Nano 2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Demon%20Slayer%20Sword%20Keychains%20Plush%20Toy?width=400&height=400&nologo=true&seed=495945923",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Demon%20Slayer%20Sword%20Keychains%20Plush%20Toy?width=400&height=400&nologo=true&seed=546245494"],
+                "imageUrl": "/stock-images/inv_key_002_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_key_002_1.jpg",
+                  "/stock-images/inv_key_002_2.jpg",
+                  "/stock-images/inv_key_002_3.jpg"
+        ],
                 "totalQuantity": 250,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1231,8 +1322,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Sticky%20Hands%20(Multi-Color)%20Plush%20Toy?width=400&height=400&nologo=true&seed=4284458110",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Sticky%20Hands%20(Multi-Color)%20Plush%20Toy?width=400&height=400&nologo=true&seed=735035291"],
+                "imageUrl": "/stock-images/inv_gat_001_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_gat_001_1.jpg",
+                  "/stock-images/inv_gat_001_2.jpg",
+                  "/stock-images/inv_gat_001_3.jpg"
+        ],
                 "totalQuantity": 1000,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1263,8 +1358,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Mini%20Dinosaurs%20Plush%20Toy?width=400&height=400&nologo=true&seed=163376688",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Mini%20Dinosaurs%20Plush%20Toy?width=400&height=400&nologo=true&seed=1439560809"],
+                "imageUrl": "/stock-images/inv_gat_002_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_gat_002_1.jpg",
+                  "/stock-images/inv_gat_002_2.jpg",
+                  "/stock-images/inv_gat_002_3.jpg"
+        ],
                 "totalQuantity": 800,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1296,8 +1395,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Capybara%20w%2F%20Orange%20Plush%20Toy?width=400&height=400&nologo=true&seed=4012025668",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Capybara%20w%2F%20Orange%20Plush%20Toy?width=400&height=400&nologo=true&seed=3548933013"],
+                "imageUrl": "/stock-images/inv_plu_026_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_026_1.jpg",
+                  "/stock-images/inv_plu_026_2.jpg",
+                  "/stock-images/inv_plu_026_3.jpg",
+                  "/stock-images/inv_plu_026_4.jpg"
+        ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -1327,8 +1431,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Capybara%20w%2F%20Backpack%20Plush%20Toy?width=400&height=400&nologo=true&seed=371515409",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Capybara%20w%2F%20Backpack%20Plush%20Toy?width=400&height=400&nologo=true&seed=3230083240"],
+                "imageUrl": "/stock-images/inv_plu_027_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_027_1.jpg",
+                  "/stock-images/inv_plu_027_2.jpg",
+                  "/stock-images/inv_plu_027_3.jpg",
+                  "/stock-images/inv_plu_027_4.jpg"
+        ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -1358,8 +1467,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_miya_02",
                 "assignedMachineName": "Crazy Toy Miya 2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Gengar%20-%20Grinning%20Plush%20Toy?width=400&height=400&nologo=true&seed=3253573966",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Gengar%20-%20Grinning%20Plush%20Toy?width=400&height=400&nologo=true&seed=17789839"],
+                "imageUrl": "/stock-images/inv_plu_028_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_028_1.jpg",
+                  "/stock-images/inv_plu_028_2.jpg",
+                  "/stock-images/inv_plu_028_3.jpg",
+                  "/stock-images/inv_plu_028_4.jpg"
+        ],
                 "totalQuantity": 55,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1391,8 +1505,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_miya_02",
                 "assignedMachineName": "Crazy Toy Miya 2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Eevee%20-%20Sitting%20Plush%20Toy?width=400&height=400&nologo=true&seed=3478532507",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Eevee%20-%20Sitting%20Plush%20Toy?width=400&height=400&nologo=true&seed=2946892194"],
+                "imageUrl": "/stock-images/inv_plu_029_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_029_1.jpg",
+                  "/stock-images/inv_plu_029_2.jpg",
+                  "/stock-images/inv_plu_029_3.jpg",
+                  "/stock-images/inv_plu_029_4.jpg"
+        ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1423,8 +1542,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_dh_01",
                 "assignedMachineName": "Doll House 1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Kuromi%20-%20Black%20Goth%20Plush%20Toy?width=400&height=400&nologo=true&seed=935859876",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Kuromi%20-%20Black%20Goth%20Plush%20Toy?width=400&height=400&nologo=true&seed=974627257"],
+                "imageUrl": "/stock-images/inv_plu_030_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_030_1.jpg",
+                  "/stock-images/inv_plu_030_2.jpg",
+                  "/stock-images/inv_plu_030_3.jpg",
+                  "/stock-images/inv_plu_030_4.jpg"
+        ],
                 "totalQuantity": 20,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1455,8 +1579,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_dh_02",
                 "assignedMachineName": "Doll House 2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Pompompurin%20-%20Pudding%20Dog%20Plush%20Toy?width=400&height=400&nologo=true&seed=2584978220",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Pompompurin%20-%20Pudding%20Dog%20Plush%20Toy?width=400&height=400&nologo=true&seed=722284785"],
+                "imageUrl": "/stock-images/inv_plu_031_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_031_1.jpg",
+                  "/stock-images/inv_plu_031_2.jpg",
+                  "/stock-images/inv_plu_031_3.jpg",
+                  "/stock-images/inv_plu_031_4.jpg"
+        ],
                 "totalQuantity": 25,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1487,8 +1616,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_dh_03",
                 "assignedMachineName": "Doll House 3",
-                "imageUrl": "https://image.pollinations.ai/prompt/Totoro%20-%20Grey%20Standard%20Plush%20Toy?width=400&height=400&nologo=true&seed=3386725167",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Totoro%20-%20Grey%20Standard%20Plush%20Toy?width=400&height=400&nologo=true&seed=2017940298"],
+                "imageUrl": "/stock-images/inv_plu_032_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_032_1.jpg",
+                  "/stock-images/inv_plu_032_2.jpg",
+                  "/stock-images/inv_plu_032_3.jpg",
+                  "/stock-images/inv_plu_032_4.jpg"
+        ],
                 "totalQuantity": 18,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1519,8 +1653,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_dh_04",
                 "assignedMachineName": "Doll House 4",
-                "imageUrl": "https://image.pollinations.ai/prompt/No%20Face%20-%20Spirited%20Away%20Plush%20Toy?width=400&height=400&nologo=true&seed=793846166",
-                "imageUrls": ["https://image.pollinations.ai/prompt/No%20Face%20-%20Spirited%20Away%20Plush%20Toy?width=400&height=400&nologo=true&seed=3420473415"],
+                "imageUrl": "/stock-images/inv_plu_033_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_033_1.jpg",
+                  "/stock-images/inv_plu_033_2.jpg",
+                  "/stock-images/inv_plu_033_3.jpg",
+                  "/stock-images/inv_plu_033_4.jpg"
+        ],
                 "totalQuantity": 22,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1552,8 +1691,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_miya_03",
                 "assignedMachineName": "Crazy Toy Miya 3",
-                "imageUrl": "https://image.pollinations.ai/prompt/Bluey%20-%20Standard%20Plush%20Toy?width=400&height=400&nologo=true&seed=3454507537",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Bluey%20-%20Standard%20Plush%20Toy?width=400&height=400&nologo=true&seed=53923368"],
+                "imageUrl": "/stock-images/inv_plu_034_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_034_1.jpg",
+                  "/stock-images/inv_plu_034_2.jpg",
+                  "/stock-images/inv_plu_034_3.jpg",
+                  "/stock-images/inv_plu_034_4.jpg"
+        ],
                 "totalQuantity": 80,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1585,8 +1729,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_miya_03",
                 "assignedMachineName": "Crazy Toy Miya 3",
-                "imageUrl": "https://image.pollinations.ai/prompt/Bingo%20-%20Standard%20Plush%20Toy?width=400&height=400&nologo=true&seed=547847616",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Bingo%20-%20Standard%20Plush%20Toy?width=400&height=400&nologo=true&seed=2476155929"],
+                "imageUrl": "/stock-images/inv_plu_035_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_035_1.jpg",
+                  "/stock-images/inv_plu_035_2.jpg",
+                  "/stock-images/inv_plu_035_3.jpg",
+                  "/stock-images/inv_plu_035_4.jpg"
+        ],
                 "totalQuantity": 75,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1617,8 +1766,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_star_01",
                 "assignedMachineName": "Crazy Star 1",
-                "imageUrl": "https://image.pollinations.ai/prompt/Long%20Cat%20Pillow%20(50cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=3341226748",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Long%20Cat%20Pillow%20(50cm)%20Plush%20Toy?width=400&height=400&nologo=true&seed=1413848093"],
+                "imageUrl": "/stock-images/inv_plu_036_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_036_1.jpg",
+                  "/stock-images/inv_plu_036_2.jpg",
+                  "/stock-images/inv_plu_036_3.jpg",
+                  "/stock-images/inv_plu_036_4.jpg"
+        ],
                 "totalQuantity": 40,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1649,8 +1803,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_star_02",
                 "assignedMachineName": "Crazy Star 2",
-                "imageUrl": "https://image.pollinations.ai/prompt/Goose%20-%20White%20w%2F%20Knife%20Plush%20Toy?width=400&height=400&nologo=true&seed=1748251207",
-                "imageUrls": ["https://image.pollinations.ai/prompt/Goose%20-%20White%20w%2F%20Knife%20Plush%20Toy?width=400&height=400&nologo=true&seed=710646514"],
+                "imageUrl": "/stock-images/inv_plu_037_1.jpg",
+                "imageUrls": [
+                  "/stock-images/inv_plu_037_1.jpg",
+                  "/stock-images/inv_plu_037_2.jpg",
+                  "/stock-images/inv_plu_037_3.jpg",
+                  "/stock-images/inv_plu_037_4.jpg"
+        ],
                 "totalQuantity": 35,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1684,12 +1843,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Penguin%20-%20Emperor%20Plushy%20Small%20front%20view?width=400&height=400&nologo=true&seed=187649484",
+                "imageUrl": "/stock-images/inv_plu_38_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Penguin%20-%20Emperor%20Plushy%20Small%20front%20view?width=400&height=400&nologo=true&seed=187649484",
-                        "https://image.pollinations.ai/prompt/Penguin%20-%20Emperor%20Plushy%20Small%20side%20view?width=400&height=400&nologo=true&seed=187649485",
-                        "https://image.pollinations.ai/prompt/Penguin%20-%20Emperor%20Plushy%20Small%20back%20view?width=400&height=400&nologo=true&seed=187649486"
-                ],
+                  "/stock-images/inv_plu_38_1.jpg",
+                  "/stock-images/inv_plu_38_2.jpg",
+                  "/stock-images/inv_plu_38_3.jpg",
+                  "/stock-images/inv_plu_38_4.jpg"
+        ],
                 "totalQuantity": 50,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1730,12 +1890,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Corgi%20-%20Sleeping%20Plushy%20Small%20front%20view?width=400&height=400&nologo=true&seed=694525424",
+                "imageUrl": "/stock-images/inv_plu_39_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Corgi%20-%20Sleeping%20Plushy%20Small%20front%20view?width=400&height=400&nologo=true&seed=694525424",
-                        "https://image.pollinations.ai/prompt/Corgi%20-%20Sleeping%20Plushy%20Small%20side%20view?width=400&height=400&nologo=true&seed=694525425",
-                        "https://image.pollinations.ai/prompt/Corgi%20-%20Sleeping%20Plushy%20Small%20back%20view?width=400&height=400&nologo=true&seed=694525426"
-                ],
+                  "/stock-images/inv_plu_39_1.jpg",
+                  "/stock-images/inv_plu_39_2.jpg",
+                  "/stock-images/inv_plu_39_3.jpg",
+                  "/stock-images/inv_plu_39_4.jpg"
+        ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1776,12 +1937,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Axolotl%20-%20Pink%20Plushy%20Small%20front%20view?width=400&height=400&nologo=true&seed=385635005",
+                "imageUrl": "/stock-images/inv_plu_40_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Axolotl%20-%20Pink%20Plushy%20Small%20front%20view?width=400&height=400&nologo=true&seed=385635005",
-                        "https://image.pollinations.ai/prompt/Axolotl%20-%20Pink%20Plushy%20Small%20side%20view?width=400&height=400&nologo=true&seed=385635006",
-                        "https://image.pollinations.ai/prompt/Axolotl%20-%20Pink%20Plushy%20Small%20back%20view?width=400&height=400&nologo=true&seed=385635007"
-                ],
+                  "/stock-images/inv_plu_40_1.jpg",
+                  "/stock-images/inv_plu_40_2.jpg",
+                  "/stock-images/inv_plu_40_3.jpg",
+                  "/stock-images/inv_plu_40_4.jpg"
+        ],
                 "totalQuantity": 70,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1823,12 +1985,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Naruto%20Kunai%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=635978036",
+                "imageUrl": "/stock-images/inv_key_3_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Naruto%20Kunai%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=635978036",
-                        "https://image.pollinations.ai/prompt/Naruto%20Kunai%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=635978037",
-                        "https://image.pollinations.ai/prompt/Naruto%20Kunai%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=635978038"
-                ],
+                  "/stock-images/inv_key_3_1.jpg",
+                  "/stock-images/inv_key_3_2.jpg",
+                  "/stock-images/inv_key_3_3.jpg"
+        ],
                 "totalQuantity": 100,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1870,12 +2032,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Attack%20on%20Titan%20Wings%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=989598779",
+                "imageUrl": "/stock-images/inv_key_4_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Attack%20on%20Titan%20Wings%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=989598779",
-                        "https://image.pollinations.ai/prompt/Attack%20on%20Titan%20Wings%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=989598780",
-                        "https://image.pollinations.ai/prompt/Attack%20on%20Titan%20Wings%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=989598781"
-                ],
+                  "/stock-images/inv_key_4_1.jpg",
+                  "/stock-images/inv_key_4_2.jpg",
+                  "/stock-images/inv_key_4_3.jpg"
+        ],
                 "totalQuantity": 120,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1917,12 +2079,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/One%20Piece%20Straw%20Hat%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=363062383",
+                "imageUrl": "/stock-images/inv_key_5_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/One%20Piece%20Straw%20Hat%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=363062383",
-                        "https://image.pollinations.ai/prompt/One%20Piece%20Straw%20Hat%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=363062384",
-                        "https://image.pollinations.ai/prompt/One%20Piece%20Straw%20Hat%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=363062385"
-                ],
+                  "/stock-images/inv_key_5_1.jpg",
+                  "/stock-images/inv_key_5_2.jpg",
+                  "/stock-images/inv_key_5_3.jpg"
+        ],
                 "totalQuantity": 140,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1964,12 +2126,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Genshin%20Vision%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=384428353",
+                "imageUrl": "/stock-images/inv_key_6_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Genshin%20Vision%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=384428353",
-                        "https://image.pollinations.ai/prompt/Genshin%20Vision%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=384428354",
-                        "https://image.pollinations.ai/prompt/Genshin%20Vision%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=384428355"
-                ],
+                  "/stock-images/inv_key_6_1.jpg",
+                  "/stock-images/inv_key_6_2.jpg",
+                  "/stock-images/inv_key_6_3.jpg"
+        ],
                 "totalQuantity": 160,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2011,12 +2173,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Sailor%20Moon%20Wand%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=602279024",
+                "imageUrl": "/stock-images/inv_key_7_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Sailor%20Moon%20Wand%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=602279024",
-                        "https://image.pollinations.ai/prompt/Sailor%20Moon%20Wand%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=602279025",
-                        "https://image.pollinations.ai/prompt/Sailor%20Moon%20Wand%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=602279026"
-                ],
+                  "/stock-images/inv_key_7_1.jpg",
+                  "/stock-images/inv_key_7_2.jpg",
+                  "/stock-images/inv_key_7_3.jpg"
+        ],
                 "totalQuantity": 180,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2058,12 +2220,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Dragon%20Ball%20Capsule%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=879099023",
+                "imageUrl": "/stock-images/inv_key_8_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Dragon%20Ball%20Capsule%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=879099023",
-                        "https://image.pollinations.ai/prompt/Dragon%20Ball%20Capsule%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=879099024",
-                        "https://image.pollinations.ai/prompt/Dragon%20Ball%20Capsule%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=879099025"
-                ],
+                  "/stock-images/inv_key_8_1.jpg",
+                  "/stock-images/inv_key_8_2.jpg",
+                  "/stock-images/inv_key_8_3.jpg"
+        ],
                 "totalQuantity": 200,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2105,12 +2267,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/My%20Hero%20Academia%20Symbol%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=821214873",
+                "imageUrl": "/stock-images/inv_key_9_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/My%20Hero%20Academia%20Symbol%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=821214873",
-                        "https://image.pollinations.ai/prompt/My%20Hero%20Academia%20Symbol%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=821214874",
-                        "https://image.pollinations.ai/prompt/My%20Hero%20Academia%20Symbol%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=821214875"
-                ],
+                  "/stock-images/inv_key_9_1.jpg",
+                  "/stock-images/inv_key_9_2.jpg",
+                  "/stock-images/inv_key_9_3.jpg"
+        ],
                 "totalQuantity": 220,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2152,12 +2314,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Chainsaw%20Man%20Logo%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=132347592",
+                "imageUrl": "/stock-images/inv_key_10_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Chainsaw%20Man%20Logo%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=132347592",
-                        "https://image.pollinations.ai/prompt/Chainsaw%20Man%20Logo%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=132347593",
-                        "https://image.pollinations.ai/prompt/Chainsaw%20Man%20Logo%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=132347594"
-                ],
+                  "/stock-images/inv_key_10_1.jpg",
+                  "/stock-images/inv_key_10_2.jpg",
+                  "/stock-images/inv_key_10_3.jpg"
+        ],
                 "totalQuantity": 240,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2199,12 +2361,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Spy%20x%20Family%20Peanut%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=860566995",
+                "imageUrl": "/stock-images/inv_key_11_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20Peanut%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=860566995",
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20Peanut%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=860566996",
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20Peanut%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=860566997"
-                ],
+                  "/stock-images/inv_key_11_1.jpg",
+                  "/stock-images/inv_key_11_2.jpg",
+                  "/stock-images/inv_key_11_3.jpg"
+        ],
                 "totalQuantity": 260,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2246,12 +2408,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Tokyo%20Revengers%20Emblem%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=42309876",
+                "imageUrl": "/stock-images/inv_key_12_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Tokyo%20Revengers%20Emblem%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=42309876",
-                        "https://image.pollinations.ai/prompt/Tokyo%20Revengers%20Emblem%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=42309877",
-                        "https://image.pollinations.ai/prompt/Tokyo%20Revengers%20Emblem%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=42309878"
-                ],
+                  "/stock-images/inv_key_12_1.jpg",
+                  "/stock-images/inv_key_12_2.jpg",
+                  "/stock-images/inv_key_12_3.jpg"
+        ],
                 "totalQuantity": 280,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2293,12 +2455,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Jujutsu%20Kaisen%20Finger%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=675364789",
+                "imageUrl": "/stock-images/inv_key_13_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Jujutsu%20Kaisen%20Finger%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=675364789",
-                        "https://image.pollinations.ai/prompt/Jujutsu%20Kaisen%20Finger%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=675364790",
-                        "https://image.pollinations.ai/prompt/Jujutsu%20Kaisen%20Finger%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=675364791"
-                ],
+                  "/stock-images/inv_key_13_1.jpg",
+                  "/stock-images/inv_key_13_2.jpg",
+                  "/stock-images/inv_key_13_3.jpg"
+        ],
                 "totalQuantity": 300,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2340,12 +2502,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Bleach%20Hollow%20Mask%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=405498714",
+                "imageUrl": "/stock-images/inv_key_14_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Bleach%20Hollow%20Mask%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=405498714",
-                        "https://image.pollinations.ai/prompt/Bleach%20Hollow%20Mask%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=405498715",
-                        "https://image.pollinations.ai/prompt/Bleach%20Hollow%20Mask%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=405498716"
-                ],
+                  "/stock-images/inv_key_14_1.jpg",
+                  "/stock-images/inv_key_14_2.jpg",
+                  "/stock-images/inv_key_14_3.jpg"
+        ],
                 "totalQuantity": 320,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2387,12 +2549,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Hunter%20x%20Hunter%20Card%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=130860437",
+                "imageUrl": "/stock-images/inv_key_15_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Hunter%20x%20Hunter%20Card%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=130860437",
-                        "https://image.pollinations.ai/prompt/Hunter%20x%20Hunter%20Card%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=130860438",
-                        "https://image.pollinations.ai/prompt/Hunter%20x%20Hunter%20Card%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=130860439"
-                ],
+                  "/stock-images/inv_key_15_1.jpg",
+                  "/stock-images/inv_key_15_2.jpg",
+                  "/stock-images/inv_key_15_3.jpg"
+        ],
                 "totalQuantity": 340,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2434,12 +2596,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Fullmetal%20Alchemist%20Symbol%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=577466706",
+                "imageUrl": "/stock-images/inv_key_16_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Fullmetal%20Alchemist%20Symbol%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=577466706",
-                        "https://image.pollinations.ai/prompt/Fullmetal%20Alchemist%20Symbol%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=577466707",
-                        "https://image.pollinations.ai/prompt/Fullmetal%20Alchemist%20Symbol%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=577466708"
-                ],
+                  "/stock-images/inv_key_16_1.jpg",
+                  "/stock-images/inv_key_16_2.jpg",
+                  "/stock-images/inv_key_16_3.jpg"
+        ],
                 "totalQuantity": 360,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2481,12 +2643,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Death%20Note%20Book%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=332141745",
+                "imageUrl": "/stock-images/inv_key_17_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Death%20Note%20Book%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=332141745",
-                        "https://image.pollinations.ai/prompt/Death%20Note%20Book%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=332141746",
-                        "https://image.pollinations.ai/prompt/Death%20Note%20Book%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=332141747"
-                ],
+                  "/stock-images/inv_key_17_1.jpg",
+                  "/stock-images/inv_key_17_2.jpg",
+                  "/stock-images/inv_key_17_3.jpg"
+        ],
                 "totalQuantity": 380,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2528,12 +2690,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Evangelion%20Unit%2001%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=510862382",
+                "imageUrl": "/stock-images/inv_key_18_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Evangelion%20Unit%2001%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=510862382",
-                        "https://image.pollinations.ai/prompt/Evangelion%20Unit%2001%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=510862383",
-                        "https://image.pollinations.ai/prompt/Evangelion%20Unit%2001%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=510862384"
-                ],
+                  "/stock-images/inv_key_18_1.jpg",
+                  "/stock-images/inv_key_18_2.jpg",
+                  "/stock-images/inv_key_18_3.jpg"
+        ],
                 "totalQuantity": 400,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2575,12 +2737,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Cowboy%20Bebop%20Ship%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=779123314",
+                "imageUrl": "/stock-images/inv_key_19_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Cowboy%20Bebop%20Ship%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=779123314",
-                        "https://image.pollinations.ai/prompt/Cowboy%20Bebop%20Ship%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=779123315",
-                        "https://image.pollinations.ai/prompt/Cowboy%20Bebop%20Ship%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=779123316"
-                ],
+                  "/stock-images/inv_key_19_1.jpg",
+                  "/stock-images/inv_key_19_2.jpg",
+                  "/stock-images/inv_key_19_3.jpg"
+        ],
                 "totalQuantity": 420,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2622,12 +2784,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Steins%20Gate%20Microwave%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=850411726",
+                "imageUrl": "/stock-images/inv_key_20_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Steins%20Gate%20Microwave%20Keychain%20Small%20front%20view?width=400&height=400&nologo=true&seed=850411726",
-                        "https://image.pollinations.ai/prompt/Steins%20Gate%20Microwave%20Keychain%20Small%20side%20view?width=400&height=400&nologo=true&seed=850411727",
-                        "https://image.pollinations.ai/prompt/Steins%20Gate%20Microwave%20Keychain%20Small%20back%20view?width=400&height=400&nologo=true&seed=850411728"
-                ],
+                  "/stock-images/inv_key_20_1.jpg",
+                  "/stock-images/inv_key_20_2.jpg",
+                  "/stock-images/inv_key_20_3.jpg"
+        ],
                 "totalQuantity": 440,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2669,12 +2831,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Molly%20Space%20Series%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=402894672",
+                "imageUrl": "/stock-images/inv_bbox_5_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Molly%20Space%20Series%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=402894672",
-                        "https://image.pollinations.ai/prompt/Molly%20Space%20Series%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=402894673",
-                        "https://image.pollinations.ai/prompt/Molly%20Space%20Series%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=402894674"
-                ],
+                  "/stock-images/inv_bbox_5_1.jpg",
+                  "/stock-images/inv_bbox_5_2.jpg",
+                  "/stock-images/inv_bbox_5_3.jpg",
+                  "/stock-images/inv_bbox_5_4.jpg"
+        ],
                 "totalQuantity": 24,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2716,12 +2879,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Labubu%20Forest%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=948209917",
+                "imageUrl": "/stock-images/inv_bbox_6_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Labubu%20Forest%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=948209917",
-                        "https://image.pollinations.ai/prompt/Labubu%20Forest%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=948209918",
-                        "https://image.pollinations.ai/prompt/Labubu%20Forest%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=948209919"
-                ],
+                  "/stock-images/inv_bbox_6_1.jpg",
+                  "/stock-images/inv_bbox_6_2.jpg",
+                  "/stock-images/inv_bbox_6_3.jpg",
+                  "/stock-images/inv_bbox_6_4.jpg"
+        ],
                 "totalQuantity": 30,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2763,12 +2927,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Hirono%20City%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=820766124",
+                "imageUrl": "/stock-images/inv_bbox_7_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Hirono%20City%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=820766124",
-                        "https://image.pollinations.ai/prompt/Hirono%20City%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=820766125",
-                        "https://image.pollinations.ai/prompt/Hirono%20City%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=820766126"
-                ],
+                  "/stock-images/inv_bbox_7_1.jpg",
+                  "/stock-images/inv_bbox_7_2.jpg",
+                  "/stock-images/inv_bbox_7_3.jpg",
+                  "/stock-images/inv_bbox_7_4.jpg"
+        ],
                 "totalQuantity": 36,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2810,12 +2975,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Pucky%20Sleeping%20Babies%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=769109355",
+                "imageUrl": "/stock-images/inv_bbox_8_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Pucky%20Sleeping%20Babies%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=769109355",
-                        "https://image.pollinations.ai/prompt/Pucky%20Sleeping%20Babies%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=769109356",
-                        "https://image.pollinations.ai/prompt/Pucky%20Sleeping%20Babies%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=769109357"
-                ],
+                  "/stock-images/inv_bbox_8_1.jpg",
+                  "/stock-images/inv_bbox_8_2.jpg",
+                  "/stock-images/inv_bbox_8_3.jpg",
+                  "/stock-images/inv_bbox_8_4.jpg"
+        ],
                 "totalQuantity": 42,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2857,12 +3023,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Dimoo%20World%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=67283157",
+                "imageUrl": "/stock-images/inv_bbox_9_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Dimoo%20World%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=67283157",
-                        "https://image.pollinations.ai/prompt/Dimoo%20World%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=67283158",
-                        "https://image.pollinations.ai/prompt/Dimoo%20World%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=67283159"
-                ],
+                  "/stock-images/inv_bbox_9_1.jpg",
+                  "/stock-images/inv_bbox_9_2.jpg",
+                  "/stock-images/inv_bbox_9_3.jpg",
+                  "/stock-images/inv_bbox_9_4.jpg"
+        ],
                 "totalQuantity": 48,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2904,12 +3071,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Zimomo%20Animals%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=628294880",
+                "imageUrl": "/stock-images/inv_bbox_10_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Zimomo%20Animals%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=628294880",
-                        "https://image.pollinations.ai/prompt/Zimomo%20Animals%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=628294881",
-                        "https://image.pollinations.ai/prompt/Zimomo%20Animals%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=628294882"
-                ],
+                  "/stock-images/inv_bbox_10_1.jpg",
+                  "/stock-images/inv_bbox_10_2.jpg",
+                  "/stock-images/inv_bbox_10_3.jpg",
+                  "/stock-images/inv_bbox_10_4.jpg"
+        ],
                 "totalQuantity": 54,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2951,12 +3119,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Crybaby%20Sad%20Club%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=983894859",
+                "imageUrl": "/stock-images/inv_bbox_11_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Crybaby%20Sad%20Club%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=983894859",
-                        "https://image.pollinations.ai/prompt/Crybaby%20Sad%20Club%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=983894860",
-                        "https://image.pollinations.ai/prompt/Crybaby%20Sad%20Club%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=983894861"
-                ],
+                  "/stock-images/inv_bbox_11_1.jpg",
+                  "/stock-images/inv_bbox_11_2.jpg",
+                  "/stock-images/inv_bbox_11_3.jpg",
+                  "/stock-images/inv_bbox_11_4.jpg"
+        ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2998,12 +3167,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Kenneth%20Fox%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=882008520",
+                "imageUrl": "/stock-images/inv_bbox_12_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Kenneth%20Fox%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=882008520",
-                        "https://image.pollinations.ai/prompt/Kenneth%20Fox%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=882008521",
-                        "https://image.pollinations.ai/prompt/Kenneth%20Fox%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=882008522"
-                ],
+                  "/stock-images/inv_bbox_12_1.jpg",
+                  "/stock-images/inv_bbox_12_2.jpg",
+                  "/stock-images/inv_bbox_12_3.jpg",
+                  "/stock-images/inv_bbox_12_4.jpg"
+        ],
                 "totalQuantity": 66,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3045,12 +3215,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Vita%20Little%20Monsters%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=19787922",
+                "imageUrl": "/stock-images/inv_bbox_13_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Vita%20Little%20Monsters%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=19787922",
-                        "https://image.pollinations.ai/prompt/Vita%20Little%20Monsters%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=19787923",
-                        "https://image.pollinations.ai/prompt/Vita%20Little%20Monsters%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=19787924"
-                ],
+                  "/stock-images/inv_bbox_13_1.jpg",
+                  "/stock-images/inv_bbox_13_2.jpg",
+                  "/stock-images/inv_bbox_13_3.jpg",
+                  "/stock-images/inv_bbox_13_4.jpg"
+        ],
                 "totalQuantity": 72,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3092,12 +3263,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Bunny%20Kingdom%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=614336070",
+                "imageUrl": "/stock-images/inv_bbox_14_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Bunny%20Kingdom%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=614336070",
-                        "https://image.pollinations.ai/prompt/Bunny%20Kingdom%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=614336071",
-                        "https://image.pollinations.ai/prompt/Bunny%20Kingdom%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=614336072"
-                ],
+                  "/stock-images/inv_bbox_14_1.jpg",
+                  "/stock-images/inv_bbox_14_2.jpg",
+                  "/stock-images/inv_bbox_14_3.jpg",
+                  "/stock-images/inv_bbox_14_4.jpg"
+        ],
                 "totalQuantity": 78,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3139,12 +3311,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Sweet%20Bean%20Cafe%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=487167226",
+                "imageUrl": "/stock-images/inv_bbox_15_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Sweet%20Bean%20Cafe%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=487167226",
-                        "https://image.pollinations.ai/prompt/Sweet%20Bean%20Cafe%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=487167227",
-                        "https://image.pollinations.ai/prompt/Sweet%20Bean%20Cafe%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=487167228"
-                ],
+                  "/stock-images/inv_bbox_15_1.jpg",
+                  "/stock-images/inv_bbox_15_2.jpg",
+                  "/stock-images/inv_bbox_15_3.jpg",
+                  "/stock-images/inv_bbox_15_4.jpg"
+        ],
                 "totalQuantity": 84,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3186,12 +3359,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Sank%20Feelings%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=241810424",
+                "imageUrl": "/stock-images/inv_bbox_16_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Sank%20Feelings%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=241810424",
-                        "https://image.pollinations.ai/prompt/Sank%20Feelings%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=241810425",
-                        "https://image.pollinations.ai/prompt/Sank%20Feelings%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=241810426"
-                ],
+                  "/stock-images/inv_bbox_16_1.jpg",
+                  "/stock-images/inv_bbox_16_2.jpg",
+                  "/stock-images/inv_bbox_16_3.jpg",
+                  "/stock-images/inv_bbox_16_4.jpg"
+        ],
                 "totalQuantity": 90,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3233,12 +3407,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Rico%20Happy%20Factory%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=800642913",
+                "imageUrl": "/stock-images/inv_bbox_17_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Rico%20Happy%20Factory%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=800642913",
-                        "https://image.pollinations.ai/prompt/Rico%20Happy%20Factory%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=800642914",
-                        "https://image.pollinations.ai/prompt/Rico%20Happy%20Factory%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=800642915"
-                ],
+                  "/stock-images/inv_bbox_17_1.jpg",
+                  "/stock-images/inv_bbox_17_2.jpg",
+                  "/stock-images/inv_bbox_17_3.jpg",
+                  "/stock-images/inv_bbox_17_4.jpg"
+        ],
                 "totalQuantity": 96,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3280,12 +3455,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Nori%20Family%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=807908683",
+                "imageUrl": "/stock-images/inv_bbox_18_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Nori%20Family%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=807908683",
-                        "https://image.pollinations.ai/prompt/Nori%20Family%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=807908684",
-                        "https://image.pollinations.ai/prompt/Nori%20Family%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=807908685"
-                ],
+                  "/stock-images/inv_bbox_18_1.jpg",
+                  "/stock-images/inv_bbox_18_2.jpg",
+                  "/stock-images/inv_bbox_18_3.jpg",
+                  "/stock-images/inv_bbox_18_4.jpg"
+        ],
                 "totalQuantity": 102,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3327,12 +3503,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Baby%20Three%20Ocean%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=885699853",
+                "imageUrl": "/stock-images/inv_bbox_19_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Baby%20Three%20Ocean%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=885699853",
-                        "https://image.pollinations.ai/prompt/Baby%20Three%20Ocean%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=885699854",
-                        "https://image.pollinations.ai/prompt/Baby%20Three%20Ocean%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=885699855"
-                ],
+                  "/stock-images/inv_bbox_19_1.jpg",
+                  "/stock-images/inv_bbox_19_2.jpg",
+                  "/stock-images/inv_bbox_19_3.jpg",
+                  "/stock-images/inv_bbox_19_4.jpg"
+        ],
                 "totalQuantity": 108,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3374,12 +3551,13 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Elephant%20Kingdom%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=722892234",
+                "imageUrl": "/stock-images/inv_bbox_20_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Elephant%20Kingdom%20Blind%20Box%20Figure%20Medium%20front%20view?width=400&height=400&nologo=true&seed=722892234",
-                        "https://image.pollinations.ai/prompt/Elephant%20Kingdom%20Blind%20Box%20Figure%20Medium%20side%20view?width=400&height=400&nologo=true&seed=722892235",
-                        "https://image.pollinations.ai/prompt/Elephant%20Kingdom%20Blind%20Box%20Figure%20Medium%20back%20view?width=400&height=400&nologo=true&seed=722892236"
-                ],
+                  "/stock-images/inv_bbox_20_1.jpg",
+                  "/stock-images/inv_bbox_20_2.jpg",
+                  "/stock-images/inv_bbox_20_3.jpg",
+                  "/stock-images/inv_bbox_20_4.jpg"
+        ],
                 "totalQuantity": 114,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3421,12 +3599,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Bouncy%20Balls%20Glitter%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=721874581",
+                "imageUrl": "/stock-images/inv_gat_3_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Bouncy%20Balls%20Glitter%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=721874581",
-                        "https://image.pollinations.ai/prompt/Bouncy%20Balls%20Glitter%20Gatcha%20Toy%20Small%20side%20view?width=400&height=400&nologo=true&seed=721874582",
-                        "https://image.pollinations.ai/prompt/Bouncy%20Balls%20Glitter%20Gatcha%20Toy%20Small%20back%20view?width=400&height=400&nologo=true&seed=721874583"
-                ],
+                  "/stock-images/inv_gat_3_1.jpg",
+                  "/stock-images/inv_gat_3_2.jpg",
+                  "/stock-images/inv_gat_3_3.jpg"
+        ],
                 "totalQuantity": 500,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3468,12 +3646,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Mini%20Erasers%20Food%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=86487185",
+                "imageUrl": "/stock-images/inv_gat_4_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Mini%20Erasers%20Food%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=86487185",
-                        "https://image.pollinations.ai/prompt/Mini%20Erasers%20Food%20Gatcha%20Toy%20Small%20side%20view?width=400&height=400&nologo=true&seed=86487186",
-                        "https://image.pollinations.ai/prompt/Mini%20Erasers%20Food%20Gatcha%20Toy%20Small%20back%20view?width=400&height=400&nologo=true&seed=86487187"
-                ],
+                  "/stock-images/inv_gat_4_1.jpg",
+                  "/stock-images/inv_gat_4_2.jpg",
+                  "/stock-images/inv_gat_4_3.jpg"
+        ],
                 "totalQuantity": 600,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3515,12 +3693,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Slime%20Capsules%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=958780331",
+                "imageUrl": "/stock-images/inv_gat_5_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Slime%20Capsules%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=958780331",
-                        "https://image.pollinations.ai/prompt/Slime%20Capsules%20Gatcha%20Toy%20Small%20side%20view?width=400&height=400&nologo=true&seed=958780332",
-                        "https://image.pollinations.ai/prompt/Slime%20Capsules%20Gatcha%20Toy%20Small%20back%20view?width=400&height=400&nologo=true&seed=958780333"
-                ],
+                  "/stock-images/inv_gat_5_1.jpg",
+                  "/stock-images/inv_gat_5_2.jpg",
+                  "/stock-images/inv_gat_5_3.jpg"
+        ],
                 "totalQuantity": 700,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3562,12 +3740,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Finger%20Monsters%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=652977021",
+                "imageUrl": "/stock-images/inv_gat_6_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Finger%20Monsters%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=652977021",
-                        "https://image.pollinations.ai/prompt/Finger%20Monsters%20Gatcha%20Toy%20Small%20side%20view?width=400&height=400&nologo=true&seed=652977022",
-                        "https://image.pollinations.ai/prompt/Finger%20Monsters%20Gatcha%20Toy%20Small%20back%20view?width=400&height=400&nologo=true&seed=652977023"
-                ],
+                  "/stock-images/inv_gat_6_1.jpg",
+                  "/stock-images/inv_gat_6_2.jpg",
+                  "/stock-images/inv_gat_6_3.jpg"
+        ],
                 "totalQuantity": 800,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3609,12 +3787,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Lucky%20Coins%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=388341211",
+                "imageUrl": "/stock-images/inv_gat_7_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Lucky%20Coins%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=388341211",
-                        "https://image.pollinations.ai/prompt/Lucky%20Coins%20Gatcha%20Toy%20Small%20side%20view?width=400&height=400&nologo=true&seed=388341212",
-                        "https://image.pollinations.ai/prompt/Lucky%20Coins%20Gatcha%20Toy%20Small%20back%20view?width=400&height=400&nologo=true&seed=388341213"
-                ],
+                  "/stock-images/inv_gat_7_1.jpg",
+                  "/stock-images/inv_gat_7_2.jpg",
+                  "/stock-images/inv_gat_7_3.jpg"
+        ],
                 "totalQuantity": 900,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3656,12 +3834,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Mini%20Puzzles%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=968692922",
+                "imageUrl": "/stock-images/inv_gat_8_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Mini%20Puzzles%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=968692922",
-                        "https://image.pollinations.ai/prompt/Mini%20Puzzles%20Gatcha%20Toy%20Small%20side%20view?width=400&height=400&nologo=true&seed=968692923",
-                        "https://image.pollinations.ai/prompt/Mini%20Puzzles%20Gatcha%20Toy%20Small%20back%20view?width=400&height=400&nologo=true&seed=968692924"
-                ],
+                  "/stock-images/inv_gat_8_1.jpg",
+                  "/stock-images/inv_gat_8_2.jpg",
+                  "/stock-images/inv_gat_8_3.jpg"
+        ],
                 "totalQuantity": 1000,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3703,12 +3881,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Glow%20Sticks%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=15787191",
+                "imageUrl": "/stock-images/inv_gat_9_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Glow%20Sticks%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=15787191",
-                        "https://image.pollinations.ai/prompt/Glow%20Sticks%20Gatcha%20Toy%20Small%20side%20view?width=400&height=400&nologo=true&seed=15787192",
-                        "https://image.pollinations.ai/prompt/Glow%20Sticks%20Gatcha%20Toy%20Small%20back%20view?width=400&height=400&nologo=true&seed=15787193"
-                ],
+                  "/stock-images/inv_gat_9_1.jpg",
+                  "/stock-images/inv_gat_9_2.jpg",
+                  "/stock-images/inv_gat_9_3.jpg"
+        ],
                 "totalQuantity": 1100,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3750,12 +3928,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Tattoo%20Stickers%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=804056673",
+                "imageUrl": "/stock-images/inv_gat_10_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Tattoo%20Stickers%20Gatcha%20Toy%20Small%20front%20view?width=400&height=400&nologo=true&seed=804056673",
-                        "https://image.pollinations.ai/prompt/Tattoo%20Stickers%20Gatcha%20Toy%20Small%20side%20view?width=400&height=400&nologo=true&seed=804056674",
-                        "https://image.pollinations.ai/prompt/Tattoo%20Stickers%20Gatcha%20Toy%20Small%20back%20view?width=400&height=400&nologo=true&seed=804056675"
-                ],
+                  "/stock-images/inv_gat_10_1.jpg",
+                  "/stock-images/inv_gat_10_2.jpg",
+                  "/stock-images/inv_gat_10_3.jpg"
+        ],
                 "totalQuantity": 1200,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3797,12 +3975,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Naruto%20-%20Sage%20Mode%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=250085298",
+                "imageUrl": "/stock-images/inv_fig_5_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Naruto%20-%20Sage%20Mode%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=250085298",
-                        "https://image.pollinations.ai/prompt/Naruto%20-%20Sage%20Mode%20Anime%20Figure%20Large%20side%20view?width=400&height=400&nologo=true&seed=250085299",
-                        "https://image.pollinations.ai/prompt/Naruto%20-%20Sage%20Mode%20Anime%20Figure%20Large%20back%20view?width=400&height=400&nologo=true&seed=250085300"
-                ],
+                  "/stock-images/inv_fig_5_1.jpg",
+                  "/stock-images/inv_fig_5_2.jpg",
+                  "/stock-images/inv_fig_5_3.jpg",
+                  "/stock-images/inv_fig_5_4.jpg",
+                  "/stock-images/inv_fig_5_5.jpg"
+        ],
                 "totalQuantity": 10,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -3844,12 +4024,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/One%20Piece%20-%20Luffy%20Gear%205%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=843397540",
+                "imageUrl": "/stock-images/inv_fig_6_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/One%20Piece%20-%20Luffy%20Gear%205%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=843397540",
-                        "https://image.pollinations.ai/prompt/One%20Piece%20-%20Luffy%20Gear%205%20Anime%20Figure%20Large%20side%20view?width=400&height=400&nologo=true&seed=843397541",
-                        "https://image.pollinations.ai/prompt/One%20Piece%20-%20Luffy%20Gear%205%20Anime%20Figure%20Large%20back%20view?width=400&height=400&nologo=true&seed=843397542"
-                ],
+                  "/stock-images/inv_fig_6_1.jpg",
+                  "/stock-images/inv_fig_6_2.jpg",
+                  "/stock-images/inv_fig_6_3.jpg",
+                  "/stock-images/inv_fig_6_4.jpg",
+                  "/stock-images/inv_fig_6_5.jpg"
+        ],
                 "totalQuantity": 13,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -3891,12 +4073,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/My%20Hero%20Academia%20-%20Deku%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=509210239",
+                "imageUrl": "/stock-images/inv_fig_7_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/My%20Hero%20Academia%20-%20Deku%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=509210239",
-                        "https://image.pollinations.ai/prompt/My%20Hero%20Academia%20-%20Deku%20Anime%20Figure%20Large%20side%20view?width=400&height=400&nologo=true&seed=509210240",
-                        "https://image.pollinations.ai/prompt/My%20Hero%20Academia%20-%20Deku%20Anime%20Figure%20Large%20back%20view?width=400&height=400&nologo=true&seed=509210241"
-                ],
+                  "/stock-images/inv_fig_7_1.jpg",
+                  "/stock-images/inv_fig_7_2.jpg",
+                  "/stock-images/inv_fig_7_3.jpg",
+                  "/stock-images/inv_fig_7_4.jpg",
+                  "/stock-images/inv_fig_7_5.jpg"
+        ],
                 "totalQuantity": 16,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -3938,12 +4122,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Yor%20Forger%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=711315380",
+                "imageUrl": "/stock-images/inv_fig_8_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Yor%20Forger%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=711315380",
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Yor%20Forger%20Anime%20Figure%20Large%20side%20view?width=400&height=400&nologo=true&seed=711315381",
-                        "https://image.pollinations.ai/prompt/Spy%20x%20Family%20-%20Yor%20Forger%20Anime%20Figure%20Large%20back%20view?width=400&height=400&nologo=true&seed=711315382"
-                ],
+                  "/stock-images/inv_fig_8_1.jpg",
+                  "/stock-images/inv_fig_8_2.jpg",
+                  "/stock-images/inv_fig_8_3.jpg",
+                  "/stock-images/inv_fig_8_4.jpg",
+                  "/stock-images/inv_fig_8_5.jpg"
+        ],
                 "totalQuantity": 19,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -3985,12 +4171,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Attack%20on%20Titan%20-%20Levi%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=50088312",
+                "imageUrl": "/stock-images/inv_fig_9_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Attack%20on%20Titan%20-%20Levi%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=50088312",
-                        "https://image.pollinations.ai/prompt/Attack%20on%20Titan%20-%20Levi%20Anime%20Figure%20Large%20side%20view?width=400&height=400&nologo=true&seed=50088313",
-                        "https://image.pollinations.ai/prompt/Attack%20on%20Titan%20-%20Levi%20Anime%20Figure%20Large%20back%20view?width=400&height=400&nologo=true&seed=50088314"
-                ],
+                  "/stock-images/inv_fig_9_1.jpg",
+                  "/stock-images/inv_fig_9_2.jpg",
+                  "/stock-images/inv_fig_9_3.jpg",
+                  "/stock-images/inv_fig_9_4.jpg",
+                  "/stock-images/inv_fig_9_5.jpg"
+        ],
                 "totalQuantity": 22,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -4032,12 +4220,14 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Denji%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=645827188",
+                "imageUrl": "/stock-images/inv_fig_10_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Denji%20Anime%20Figure%20Large%20front%20view?width=400&height=400&nologo=true&seed=645827188",
-                        "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Denji%20Anime%20Figure%20Large%20side%20view?width=400&height=400&nologo=true&seed=645827189",
-                        "https://image.pollinations.ai/prompt/Chainsaw%20Man%20-%20Denji%20Anime%20Figure%20Large%20back%20view?width=400&height=400&nologo=true&seed=645827190"
-                ],
+                  "/stock-images/inv_fig_10_1.jpg",
+                  "/stock-images/inv_fig_10_2.jpg",
+                  "/stock-images/inv_fig_10_3.jpg",
+                  "/stock-images/inv_fig_10_4.jpg",
+                  "/stock-images/inv_fig_10_5.jpg"
+        ],
                 "totalQuantity": 25,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -4079,12 +4269,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/RC%20Mini%20Car%20Red%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=175192537",
+                "imageUrl": "/stock-images/inv_toy_1_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/RC%20Mini%20Car%20Red%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=175192537",
-                        "https://image.pollinations.ai/prompt/RC%20Mini%20Car%20Red%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=175192538",
-                        "https://image.pollinations.ai/prompt/RC%20Mini%20Car%20Red%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=175192539"
-                ],
+                  "/stock-images/inv_toy_1_1.jpg",
+                  "/stock-images/inv_toy_1_2.jpg",
+                  "/stock-images/inv_toy_1_3.jpg"
+        ],
                 "totalQuantity": 30,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4126,12 +4316,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Foam%20Airplane%20Glider%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=435508001",
+                "imageUrl": "/stock-images/inv_toy_2_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Foam%20Airplane%20Glider%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=435508001",
-                        "https://image.pollinations.ai/prompt/Foam%20Airplane%20Glider%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=435508002",
-                        "https://image.pollinations.ai/prompt/Foam%20Airplane%20Glider%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=435508003"
-                ],
+                  "/stock-images/inv_toy_2_1.jpg",
+                  "/stock-images/inv_toy_2_2.jpg",
+                  "/stock-images/inv_toy_2_3.jpg"
+        ],
                 "totalQuantity": 35,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4173,12 +4363,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Wind-up%20Robot%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=898828583",
+                "imageUrl": "/stock-images/inv_toy_3_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Wind-up%20Robot%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=898828583",
-                        "https://image.pollinations.ai/prompt/Wind-up%20Robot%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=898828584",
-                        "https://image.pollinations.ai/prompt/Wind-up%20Robot%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=898828585"
-                ],
+                  "/stock-images/inv_toy_3_1.jpg",
+                  "/stock-images/inv_toy_3_2.jpg",
+                  "/stock-images/inv_toy_3_3.jpg"
+        ],
                 "totalQuantity": 40,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4220,12 +4410,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Spinning%20Top%20LED%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=37934005",
+                "imageUrl": "/stock-images/inv_toy_4_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Spinning%20Top%20LED%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=37934005",
-                        "https://image.pollinations.ai/prompt/Spinning%20Top%20LED%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=37934006",
-                        "https://image.pollinations.ai/prompt/Spinning%20Top%20LED%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=37934007"
-                ],
+                  "/stock-images/inv_toy_4_1.jpg",
+                  "/stock-images/inv_toy_4_2.jpg",
+                  "/stock-images/inv_toy_4_3.jpg"
+        ],
                 "totalQuantity": 45,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4267,12 +4457,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Magic%20Cube%203x3%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=871971033",
+                "imageUrl": "/stock-images/inv_toy_5_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Magic%20Cube%203x3%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=871971033",
-                        "https://image.pollinations.ai/prompt/Magic%20Cube%203x3%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=871971034",
-                        "https://image.pollinations.ai/prompt/Magic%20Cube%203x3%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=871971035"
-                ],
+                  "/stock-images/inv_toy_5_1.jpg",
+                  "/stock-images/inv_toy_5_2.jpg",
+                  "/stock-images/inv_toy_5_3.jpg"
+        ],
                 "totalQuantity": 50,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4314,12 +4504,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Building%20Blocks%20Set%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=346146292",
+                "imageUrl": "/stock-images/inv_toy_6_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Building%20Blocks%20Set%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=346146292",
-                        "https://image.pollinations.ai/prompt/Building%20Blocks%20Set%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=346146293",
-                        "https://image.pollinations.ai/prompt/Building%20Blocks%20Set%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=346146294"
-                ],
+                  "/stock-images/inv_toy_6_1.jpg",
+                  "/stock-images/inv_toy_6_2.jpg",
+                  "/stock-images/inv_toy_6_3.jpg"
+        ],
                 "totalQuantity": 55,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4361,12 +4551,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Yo-Yo%20Classic%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=207459413",
+                "imageUrl": "/stock-images/inv_toy_7_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Yo-Yo%20Classic%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=207459413",
-                        "https://image.pollinations.ai/prompt/Yo-Yo%20Classic%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=207459414",
-                        "https://image.pollinations.ai/prompt/Yo-Yo%20Classic%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=207459415"
-                ],
+                  "/stock-images/inv_toy_7_1.jpg",
+                  "/stock-images/inv_toy_7_2.jpg",
+                  "/stock-images/inv_toy_7_3.jpg"
+        ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4408,12 +4598,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Dart%20Gun%20Foam%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=220812956",
+                "imageUrl": "/stock-images/inv_toy_8_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Dart%20Gun%20Foam%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=220812956",
-                        "https://image.pollinations.ai/prompt/Dart%20Gun%20Foam%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=220812957",
-                        "https://image.pollinations.ai/prompt/Dart%20Gun%20Foam%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=220812958"
-                ],
+                  "/stock-images/inv_toy_8_1.jpg",
+                  "/stock-images/inv_toy_8_2.jpg",
+                  "/stock-images/inv_toy_8_3.jpg"
+        ],
                 "totalQuantity": 65,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4455,12 +4645,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Slinky%20Spring%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=844686965",
+                "imageUrl": "/stock-images/inv_toy_9_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Slinky%20Spring%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=844686965",
-                        "https://image.pollinations.ai/prompt/Slinky%20Spring%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=844686966",
-                        "https://image.pollinations.ai/prompt/Slinky%20Spring%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=844686967"
-                ],
+                  "/stock-images/inv_toy_9_1.jpg",
+                  "/stock-images/inv_toy_9_2.jpg",
+                  "/stock-images/inv_toy_9_3.jpg"
+        ],
                 "totalQuantity": 70,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4502,12 +4692,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Bubble%20Wand%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=218987446",
+                "imageUrl": "/stock-images/inv_toy_10_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Bubble%20Wand%20Toy%20Medium%20front%20view?width=400&height=400&nologo=true&seed=218987446",
-                        "https://image.pollinations.ai/prompt/Bubble%20Wand%20Toy%20Medium%20side%20view?width=400&height=400&nologo=true&seed=218987447",
-                        "https://image.pollinations.ai/prompt/Bubble%20Wand%20Toy%20Medium%20back%20view?width=400&height=400&nologo=true&seed=218987448"
-                ],
+                  "/stock-images/inv_toy_10_1.jpg",
+                  "/stock-images/inv_toy_10_2.jpg",
+                  "/stock-images/inv_toy_10_3.jpg"
+        ],
                 "totalQuantity": 75,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4549,12 +4739,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Marvel%20-%20Spider-Man%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=557805828",
+                "imageUrl": "/stock-images/inv_pop_1_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Marvel%20-%20Spider-Man%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=557805828",
-                        "https://image.pollinations.ai/prompt/Marvel%20-%20Spider-Man%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=557805829",
-                        "https://image.pollinations.ai/prompt/Marvel%20-%20Spider-Man%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=557805830"
-                ],
+                  "/stock-images/inv_pop_1_1.jpg",
+                  "/stock-images/inv_pop_1_2.jpg",
+                  "/stock-images/inv_pop_1_3.jpg"
+        ],
                 "totalQuantity": 15,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4596,12 +4786,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/DC%20-%20Batman%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=709089638",
+                "imageUrl": "/stock-images/inv_pop_2_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/DC%20-%20Batman%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=709089638",
-                        "https://image.pollinations.ai/prompt/DC%20-%20Batman%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=709089639",
-                        "https://image.pollinations.ai/prompt/DC%20-%20Batman%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=709089640"
-                ],
+                  "/stock-images/inv_pop_2_1.jpg",
+                  "/stock-images/inv_pop_2_2.jpg",
+                  "/stock-images/inv_pop_2_3.jpg"
+        ],
                 "totalQuantity": 18,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4643,12 +4833,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Star%20Wars%20-%20Grogu%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=899769170",
+                "imageUrl": "/stock-images/inv_pop_3_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Star%20Wars%20-%20Grogu%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=899769170",
-                        "https://image.pollinations.ai/prompt/Star%20Wars%20-%20Grogu%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=899769171",
-                        "https://image.pollinations.ai/prompt/Star%20Wars%20-%20Grogu%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=899769172"
-                ],
+                  "/stock-images/inv_pop_3_1.jpg",
+                  "/stock-images/inv_pop_3_2.jpg",
+                  "/stock-images/inv_pop_3_3.jpg"
+        ],
                 "totalQuantity": 21,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4690,12 +4880,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Harry%20Potter%20-%20Hedwig%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=643982319",
+                "imageUrl": "/stock-images/inv_pop_4_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Harry%20Potter%20-%20Hedwig%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=643982319",
-                        "https://image.pollinations.ai/prompt/Harry%20Potter%20-%20Hedwig%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=643982320",
-                        "https://image.pollinations.ai/prompt/Harry%20Potter%20-%20Hedwig%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=643982321"
-                ],
+                  "/stock-images/inv_pop_4_1.jpg",
+                  "/stock-images/inv_pop_4_2.jpg",
+                  "/stock-images/inv_pop_4_3.jpg"
+        ],
                 "totalQuantity": 24,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4737,12 +4927,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Disney%20-%20Mickey%20Mouse%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=464667553",
+                "imageUrl": "/stock-images/inv_pop_5_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Disney%20-%20Mickey%20Mouse%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=464667553",
-                        "https://image.pollinations.ai/prompt/Disney%20-%20Mickey%20Mouse%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=464667554",
-                        "https://image.pollinations.ai/prompt/Disney%20-%20Mickey%20Mouse%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=464667555"
-                ],
+                  "/stock-images/inv_pop_5_1.jpg",
+                  "/stock-images/inv_pop_5_2.jpg",
+                  "/stock-images/inv_pop_5_3.jpg"
+        ],
                 "totalQuantity": 27,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4784,12 +4974,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Stranger%20Things%20-%20Eleven%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=816671372",
+                "imageUrl": "/stock-images/inv_pop_6_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Stranger%20Things%20-%20Eleven%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=816671372",
-                        "https://image.pollinations.ai/prompt/Stranger%20Things%20-%20Eleven%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=816671373",
-                        "https://image.pollinations.ai/prompt/Stranger%20Things%20-%20Eleven%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=816671374"
-                ],
+                  "/stock-images/inv_pop_6_1.jpg",
+                  "/stock-images/inv_pop_6_2.jpg",
+                  "/stock-images/inv_pop_6_3.jpg"
+        ],
                 "totalQuantity": 30,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4831,12 +5021,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/The%20Office%20-%20Michael%20Scott%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=631527069",
+                "imageUrl": "/stock-images/inv_pop_7_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/The%20Office%20-%20Michael%20Scott%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=631527069",
-                        "https://image.pollinations.ai/prompt/The%20Office%20-%20Michael%20Scott%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=631527070",
-                        "https://image.pollinations.ai/prompt/The%20Office%20-%20Michael%20Scott%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=631527071"
-                ],
+                  "/stock-images/inv_pop_7_1.jpg",
+                  "/stock-images/inv_pop_7_2.jpg",
+                  "/stock-images/inv_pop_7_3.jpg"
+        ],
                 "totalQuantity": 33,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4878,12 +5068,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Friends%20-%20Chandler%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=790870872",
+                "imageUrl": "/stock-images/inv_pop_8_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Friends%20-%20Chandler%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=790870872",
-                        "https://image.pollinations.ai/prompt/Friends%20-%20Chandler%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=790870873",
-                        "https://image.pollinations.ai/prompt/Friends%20-%20Chandler%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=790870874"
-                ],
+                  "/stock-images/inv_pop_8_1.jpg",
+                  "/stock-images/inv_pop_8_2.jpg",
+                  "/stock-images/inv_pop_8_3.jpg"
+        ],
                 "totalQuantity": 36,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4925,12 +5115,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Game%20of%20Thrones%20-%20Daenerys%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=239964883",
+                "imageUrl": "/stock-images/inv_pop_9_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Game%20of%20Thrones%20-%20Daenerys%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=239964883",
-                        "https://image.pollinations.ai/prompt/Game%20of%20Thrones%20-%20Daenerys%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=239964884",
-                        "https://image.pollinations.ai/prompt/Game%20of%20Thrones%20-%20Daenerys%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=239964885"
-                ],
+                  "/stock-images/inv_pop_9_1.jpg",
+                  "/stock-images/inv_pop_9_2.jpg",
+                  "/stock-images/inv_pop_9_3.jpg"
+        ],
                 "totalQuantity": 39,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4972,12 +5162,12 @@ export const sampleInventoryData = [
                 "assignedStatus": "Not Assigned",
                 "assignedMachineId": null,
                 "assignedMachineName": null,
-                "imageUrl": "https://image.pollinations.ai/prompt/Pokemon%20-%20Pikachu%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=310120191",
+                "imageUrl": "/stock-images/inv_pop_10_1.jpg",
                 "imageUrls": [
-                        "https://image.pollinations.ai/prompt/Pokemon%20-%20Pikachu%20Funko%20Pop%20Pop%20Vinyl%20Medium%20front%20view?width=400&height=400&nologo=true&seed=310120191",
-                        "https://image.pollinations.ai/prompt/Pokemon%20-%20Pikachu%20Funko%20Pop%20Pop%20Vinyl%20Medium%20side%20view?width=400&height=400&nologo=true&seed=310120192",
-                        "https://image.pollinations.ai/prompt/Pokemon%20-%20Pikachu%20Funko%20Pop%20Pop%20Vinyl%20Medium%20back%20view?width=400&height=400&nologo=true&seed=310120193"
-                ],
+                  "/stock-images/inv_pop_10_1.jpg",
+                  "/stock-images/inv_pop_10_2.jpg",
+                  "/stock-images/inv_pop_10_3.jpg"
+        ],
                 "totalQuantity": 42,
                 "quantityText": "Good",
                 "stockLocations": [

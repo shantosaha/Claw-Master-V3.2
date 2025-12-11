@@ -8,32 +8,60 @@ if (!fs.existsSync(BACKUP_DIR)) {
     fs.mkdirSync(BACKUP_DIR, { recursive: true });
 }
 
-async function downloadImage(url: string, filepath: string): Promise<boolean> {
-    if (fs.existsSync(filepath)) {
-        return true; // Already exists, skip silently
+// Cache existing files at startup for FAST lookup
+const EXISTING_FILES = new Set(fs.readdirSync(BACKUP_DIR));
+console.log(`📂 Found ${EXISTING_FILES.size} existing backups\n`);
+
+async function downloadImage(url: string, filepath: string, retries: number = 3): Promise<boolean> {
+    const filename = path.basename(filepath);
+
+    // Fast lookup using cached Set
+    if (EXISTING_FILES.has(filename)) {
+        return true; // Already exists
     }
 
     if (url.startsWith('/')) {
         return false; // Local path, skip
     }
 
-    try {
-        const response = await fetch(url);
-        if (!response.ok) return false;
-        const buffer = await response.arrayBuffer();
-        fs.writeFileSync(filepath, Buffer.from(buffer));
-        console.log(`  ✅ ${path.basename(filepath)}`);
-        return true;
-    } catch (error) {
-        return false;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+        try {
+            const response = await fetch(url);
+
+            // Handle rate limit
+            if (response.status === 429) {
+                const waitTime = attempt * 2000;
+                console.log(`  ⏳ Rate limited, wait ${waitTime / 1000}s...`);
+                await new Promise(r => setTimeout(r, waitTime));
+                continue;
+            }
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const buffer = await response.arrayBuffer();
+            fs.writeFileSync(filepath, Buffer.from(buffer));
+            EXISTING_FILES.add(filename); // Add to cache
+            console.log(`  ✅ ${filename}`);
+            return true;
+        } catch (error) {
+            if (attempt === retries) {
+                console.log(`  ❌ ${filename} (failed after ${retries} tries)`);
+                return false;
+            }
+            console.log(`  ⚠️ Retry ${attempt}...`);
+            await new Promise(r => setTimeout(r, 2000));
+        }
     }
+    return false;
 }
 
 async function main() {
-    console.log('🚀 FAST BACKUP: Downloading 10 images at a time!\n');
+    console.log('🚀 FAST BACKUP with retry logic!\n');
 
-    // Collect all download tasks
-    const tasks: { url: string, path: string, id: string }[] = [];
+    // Collect all download tasks - using cached lookup
+    const tasks: { url: string, path: string }[] = [];
 
     for (const item of sampleInventoryData) {
         const itemAny = item as any;
@@ -52,24 +80,22 @@ async function main() {
 
         for (let i = 0; i < urls.length; i++) {
             const filename = `${itemAny.id}_${i + 1}.jpg`;
-            const filepath = path.join(BACKUP_DIR, filename);
-
-            // Skip if already exists
-            if (!fs.existsSync(filepath)) {
-                tasks.push({ url: urls[i], path: filepath, id: itemAny.id });
+            // Fast check using cached Set
+            if (!EXISTING_FILES.has(filename)) {
+                tasks.push({ url: urls[i], path: path.join(BACKUP_DIR, filename) });
             }
         }
     }
 
-    console.log(`📥 ${tasks.length} images to download (existing files skipped)\n`);
+    console.log(`📥 ${tasks.length} images to download\n`);
 
     if (tasks.length === 0) {
         console.log('✅ All images already backed up!');
         return;
     }
 
-    // Download in parallel batches of 10
-    const batchSize = 10;
+    // Download in parallel batches
+    const batchSize = 3;
     let downloaded = 0;
     let failed = 0;
 
@@ -81,9 +107,9 @@ async function main() {
         downloaded += results.filter(r => r).length;
         failed += results.filter(r => !r).length;
 
-        // Small delay between batches
+        // Short delay between batches
         if (i + batchSize < tasks.length) {
-            await new Promise(r => setTimeout(r, 500));
+            await new Promise(r => setTimeout(r, 5000));
         }
     }
 

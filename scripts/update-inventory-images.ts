@@ -94,9 +94,9 @@ function main() {
             let block = content.substring(blockStart, blockEnd);
 
             // Check if already using local images
-            if (block.includes('/stock-images/')) {
-                continue; // Already updated
-            }
+            // if (block.includes('/stock-images/')) {
+            //     continue; // Already updated
+            // }
 
             // Replace imageUrl
             const imageUrlRegex = /"imageUrl":\s*"[^"]+"/;
