@@ -63,6 +63,8 @@ const secondaryStorageLocations = [
     "Warehouse Bravo"
 ];
 
+export { primaryStorageLocations, secondaryStorageLocations };
+
 const sizeOptions = ["Extra-Small", "Small", "Medium", "Large", "Big"];
 
 const parseNumericInput = (input: any): number => {

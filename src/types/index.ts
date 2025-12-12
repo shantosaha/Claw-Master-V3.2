@@ -66,6 +66,7 @@ export interface StockItem {
     quantity?: number;
     description?: string;
     assignmentType?: 'Using' | 'Replacement';
+    replacementMachines?: { id: string; name: string }[];
 }
 
 export type MachineSlot = ArcadeMachineSlot;
@@ -167,7 +168,7 @@ export interface ReorderRequest {
     quantityRequested: number;
     quantityReceived?: number;
     requestedBy: string; // User ID
-    status: 'submitted' | 'approved' | 'ordered' | 'fulfilled' | 'received' | 'rejected';
+    status: 'submitted' | 'approved' | 'ordered' | 'fulfilled' | 'received' | 'organized' | 'rejected';
     notes?: string;
     createdAt: Date;
     updatedAt: Date;

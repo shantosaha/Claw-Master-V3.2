@@ -3,7 +3,7 @@
 import React, { useEffect, useState, use } from "react";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { machineService, stockService, auditService } from "@/services";
+import { machineService, stockService, auditService, orderService } from "@/services";
 import { useData } from "@/context/DataProvider";
 import { AuditLog, StockItem, ArcadeMachine } from "@/types";
 import { Switch } from "@/components/ui/switch";
@@ -27,6 +27,8 @@ import { formatDistanceToNow, format, subDays, isWithinInterval, startOfDay, end
 import { StockDetailHero } from "@/components/inventory/StockDetailHero";
 import { StockActivitySidebar } from "@/components/inventory/StockActivitySidebar";
 import { MachineAssignmentHistory } from "@/components/inventory/MachineAssignmentHistory";
+import { AdjustStockDialog } from "@/components/inventory/AdjustStockDialog";
+import { RequestReorderDialog } from "@/components/inventory/RequestReorderDialog";
 import { useAuth } from "@/context/AuthContext"; // Added auth context
 import {
     AlertDialog,
@@ -106,6 +108,7 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
     const [supervisorPassword, setSupervisorPassword] = useState("");
     const [supervisorError, setSupervisorError] = useState("");
     const [stockLevelWarning, setStockLevelWarning] = useState<{ item: StockItem, status: string, actionType: 'status_change' | 'assign_machine', machineId?: string, slotId?: string } | null>(null);
+    const [isRequestReorderOpen, setIsRequestReorderOpen] = useState(false);
 
     // Get item from context (auto-updates when data changes)
     const item = getItemById(id) || null;
@@ -962,7 +965,7 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                 onEdit={() => setIsEditOpen(true)}
                 onDelete={() => setIsDeleteConfirmOpen(true)}
                 onAdjustStock={() => setIsAdjustOpen(true)}
-                onRequestReorder={() => toast.info("Reorder feature coming soon")}
+                onRequestReorder={() => setIsRequestReorderOpen(true)}
                 onChangeStockStatus={handleChangeStockStatus}
                 onChangeAssignedStatus={handleChangeAssignedStatus}
             />
@@ -3077,6 +3080,129 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+            <AdjustStockDialog
+                isOpen={isAdjustOpen}
+                onOpenChange={setIsAdjustOpen}
+                item={item}
+                user={userProfile}
+                onSubmit={async (itemId, values) => {
+                    if (!item) return;
+
+                    try {
+                        const newLocations = [...item.locations];
+                        let locIndex = newLocations.findIndex(l => l.name === values.locationName);
+
+                        if (locIndex === -1) {
+                            if (values.adjustmentType === 'set' || values.adjustmentType === 'add') {
+                                newLocations.push({ name: values.locationName, quantity: 0 });
+                                locIndex = newLocations.length - 1;
+                            } else {
+                                return; // Cannot remove from non-existent location
+                            }
+                        }
+
+                        const currentQty = newLocations[locIndex].quantity;
+                        let newQty = currentQty;
+                        let changeAmount = 0;
+
+                        if (values.adjustmentType === 'add') {
+                            newQty += values.quantity;
+                            changeAmount = values.quantity;
+                        }
+                        if (values.adjustmentType === 'remove') {
+                            changeAmount = -values.quantity;
+                            newQty = Math.max(0, currentQty - values.quantity);
+                        }
+                        if (values.adjustmentType === 'set') {
+                            changeAmount = values.quantity - currentQty;
+                            newQty = values.quantity;
+                        }
+
+                        newLocations[locIndex].quantity = newQty;
+
+                        // Create comprehensive history log
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        const historyDetails: any = {
+                            location: values.locationName,
+                            change: values.adjustmentType === 'set' ? 'set' : changeAmount,
+                            previousQuantity: currentQty,
+                            newQuantity: newQty,
+                            reason: values.notes,
+                            user: userProfile?.displayName || userProfile?.email || 'System'
+                        };
+
+                        // If assigned to a machine, log it so it might appear in relevant logs if we enhance filters later
+                        if (item.assignedMachineId) {
+                            historyDetails.machineId = item.assignedMachineId;
+                            historyDetails.machineName = item.assignedMachineName;
+                        }
+
+                        const newHistoryEntry = createHistoryLog("ADJUST_STOCK", historyDetails, itemId);
+
+                        const updatedHistory = [...(item.history || []), newHistoryEntry];
+
+                        await stockService.update(itemId, {
+                            locations: newLocations,
+                            history: updatedHistory,
+                            updatedAt: new Date()
+                        });
+
+                        toast.success("Stock Adjusted", { description: `Stock for ${item.name} updated.` });
+                        setIsAdjustOpen(false);
+                    } catch (error) {
+                        console.error("Failed to adjust stock:", error);
+                        toast.error("Error", { description: "Failed to adjust stock." });
+                    }
+                }}
+            />
+
+            {item && (
+                <RequestReorderDialog
+                    isOpen={isRequestReorderOpen}
+                    onOpenChange={setIsRequestReorderOpen}
+                    item={item}
+                    onSubmit={async (data) => {
+                        try {
+                            const newRequest = {
+                                itemName: item.name,
+                                itemId: item.id,
+                                itemCategory: item.category,
+                                quantityRequested: data.quantity,
+                                status: 'submitted',
+                                requestedBy: userProfile?.uid || 'system',
+                                notes: data.notes,
+                                createdAt: new Date(),
+                                updatedAt: new Date()
+                            };
+
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                            await orderService.add(newRequest as any);
+
+                            // Calculate current stock and projected total
+                            const currentStock = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
+                            const projectedTotal = currentStock + data.quantity;
+
+                            // Log this action on the item as well
+                            const log = createHistoryLog("REQUEST_REORDER", {
+                                quantityRequested: data.quantity,
+                                currentStock: currentStock,
+                                projectedTotalAfterReceiving: projectedTotal,
+                                notes: data.notes
+                            }, item.id);
+
+                            await stockService.update(item.id, {
+                                history: [...(item.history || []), log]
+                            });
+
+                            toast.success("Reorder Requested", { description: `Request for ${data.quantity} units submitted.` });
+                            setIsRequestReorderOpen(false);
+                        } catch (error) {
+                            console.error("Failed to request reorder:", error);
+                            toast.error("Error", { description: "Failed to submit request." });
+                        }
+                    }}
+                />
+            )}
         </div >
     );
 }

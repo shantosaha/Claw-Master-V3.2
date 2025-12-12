@@ -57,10 +57,10 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
 
             // Update item status back to unassigned
             await stockService.update(queueItem.itemId, {
-                assignedMachineId: null,
-                assignedMachineName: null,
+                assignedMachineId: null as any,
+                assignedMachineName: null as any,
                 assignedStatus: 'Not Assigned',
-                assignedSlotId: null
+                assignedSlotId: null as any
             });
 
             toast.success("Removed from queue");
@@ -85,10 +85,10 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
             await machineService.update(machine.id, { slots: updatedSlots });
 
             await stockService.update(currentItem.id, {
-                assignedMachineId: null,
-                assignedMachineName: null,
+                assignedMachineId: null as any,
+                assignedMachineName: null as any,
                 assignedStatus: 'Not Assigned',
-                assignedSlotId: null
+                assignedSlotId: null as any
             });
 
             toast.success("Cleared current item");

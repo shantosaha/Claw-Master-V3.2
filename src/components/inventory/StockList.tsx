@@ -740,8 +740,6 @@ export function StockList() {
             const historyLog = createHistoryLog("STATUS_CHANGE", {
                 oldStatus: oldStatus || "Not Assigned",
                 newStatus: newStatus,
-                oldStatus: oldStatus || "Not Assigned",
-                newStatus: newStatus,
                 machine: item.assignedMachineName || "None",
                 machineId: item.assignedMachineId || undefined
             }, item.id);
@@ -1015,8 +1013,6 @@ export function StockList() {
 
             if (currentActiveItem) {
                 const unassignLog = createHistoryLog("UNASSIGN_MACHINE", {
-                    reason: "Replaced by new item",
-                    replacedBy: assigningItem.name,
                     reason: "Replaced by new item",
                     replacedBy: assigningItem.name,
                     machine: machine.name,

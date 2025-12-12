@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useForm, Controller } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Not directly used, but good to keep if needed
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel as ShadcnSelectLabel } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -22,104 +21,33 @@ import type { StockItem, AdjustStockFormValues, User, ReorderRequest } from "@/t
 import { PackagePlus, PackageMinus, PackageCheck, AlertTriangle } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
-import { toast } from "sonner"; // Changed from use-toast to sonner
-import { DEFAULT_STORAGE_LOCATION } from "./StockItemForm";
+import { toast } from "sonner";
+import { DEFAULT_STORAGE_LOCATION, primaryStorageLocations, secondaryStorageLocations } from "./StockItemForm";
 
-const SELECT_OTHER_VALUE = "__SELECT_OTHER__";
+// Combine all storage locations
+const allStorageLocations = [...primaryStorageLocations, ...secondaryStorageLocations];
 
-const criticalNumericOptionsForSelect = [
-    "5 units (Critical)",
-    "10 units (Critical)",
-    "15 units (Critical)",
-];
-
-const commonNumericOptionsForSelect = [
-    "1 unit",
-    "20 units",
-    "30 units (1 Bucket)",
-    "60 units (2 Buckets)",
-    "100 units (1 Week)",
-    "200 units (Full Stock)",
-    "Few pieces (Approx 3 Units)"
-];
-
-const groupedQuantityOptionsForSelect = [
-    { label: "Critical Values", options: criticalNumericOptionsForSelect },
-    { label: "Common Values", options: commonNumericOptionsForSelect }
-];
-
-const parseNumericInput = (input: any): number => {
-    if (typeof input === 'number') return input;
-    if (typeof input === 'string') {
-        const trimmed = input.trim().toLowerCase();
-        const firstNumericPart = trimmed.match(/\d+/);
-        if (firstNumericPart && firstNumericPart[0]) {
-            const num = parseInt(firstNumericPart[0], 10);
-            // Check if the string primarily represents this number
-            if (trimmed.startsWith(num.toString()) || trimmed.includes(`${num} unit`)) {
-                return num;
-            }
-        }
-        if (trimmed.includes("critical")) {
-            if (firstNumericPart && firstNumericPart[0]) return parseInt(firstNumericPart[0], 10);
-            return 1;
-        }
-        if (trimmed.includes("few pieces")) return 3;
-        if (trimmed.includes("full stock") || trimmed.includes("2 weeks") || trimmed.includes("two weeks")) return 200;
-        if (trimmed.includes("1 week") || trimmed.includes("one week")) return 100;
-        const bucketMatch = trimmed.match(/^(\d+)\s*bucket(s)?/);
-        if (bucketMatch && bucketMatch[1]) return parseInt(bucketMatch[1], 10) * 30;
-        if (trimmed.includes("one bucket") || trimmed.includes("1 bucket")) return 30;
-
-        if (firstNumericPart && firstNumericPart[0]) return parseInt(firstNumericPart[0], 10);
-        return 0;
-    }
-    return 0;
-};
-
-
-const adjustStockSchemaStep1 = z.object({
+const adjustStockSchema = z.object({
     locationName: z.string().min(1, "Location is required."),
     adjustmentType: z.enum(["add", "remove", "set"]),
-    selectedQuantity: z.string().min(1, { message: "Please select or specify the quantity." }),
-    customQuantity: z.string().optional(),
+    quantity: z.coerce.number().int().min(0, "Quantity must be a non-negative number."),
     notes: z.string().optional(),
 });
 
-
 const createAdjustStockSchema = (requestToReceive?: ReorderRequest | null) => {
-    return adjustStockSchemaStep1.superRefine((data, ctx) => {
-        if (data.selectedQuantity === SELECT_OTHER_VALUE && (!data.customQuantity || data.customQuantity.trim() === "")) {
-            ctx.addIssue({
-                code: z.ZodIssueCode.custom,
-                message: "Custom quantity is required if 'Other (Specify)' is selected.",
-                path: ["customQuantity"],
-            });
-        }
-    }).transform(data => {
-        const numericQuantity = parseNumericInput(
-            data.selectedQuantity === SELECT_OTHER_VALUE && data.customQuantity
-                ? data.customQuantity
-                : data.selectedQuantity
-        );
-        return {
-            ...data,
-            quantity: numericQuantity,
-        };
-    }).superRefine((data, ctx) => {
+    return adjustStockSchema.superRefine((data, ctx) => {
         if (requestToReceive) {
             const remainingToReceive = requestToReceive.quantityRequested - (requestToReceive.quantityReceived || 0);
             if (data.quantity > remainingToReceive) {
                 ctx.addIssue({
                     code: z.ZodIssueCode.custom,
-                    path: ["selectedQuantity"],
+                    path: ["quantity"],
                     message: `Cannot receive more than the ${remainingToReceive} units remaining for this order.`,
                 });
             }
         }
     });
 };
-
 
 interface AdjustStockDialogProps {
     isOpen: boolean;
@@ -131,13 +59,10 @@ interface AdjustStockDialogProps {
 }
 
 export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, requestToReceive }: AdjustStockDialogProps) {
-    // const { toast } = useToast(); // Removed hook
-
     // Use item's first location, or default to global DEFAULT_STORAGE_LOCATION
     const defaultLocation = item?.locations?.[0]?.name || DEFAULT_STORAGE_LOCATION;
-    const defaultQuantityOption = commonNumericOptionsForSelect[0] || "";
 
-    const form = useForm<z.infer<typeof adjustStockSchemaStep1>>({
+    const form = useForm<any>({
         resolver: async (data, context, options) => {
             const schema = createAdjustStockSchema(requestToReceive);
             return zodResolver(schema)(data, context, options);
@@ -145,14 +70,12 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
         defaultValues: {
             locationName: defaultLocation,
             adjustmentType: "add",
-            selectedQuantity: defaultQuantityOption,
-            customQuantity: "",
+            quantity: 0,
             notes: "",
         },
     });
 
-    const watchSelectedQuantity = form.watch("selectedQuantity");
-    const watchCustomQuantity = form.watch("customQuantity");
+    const watchQuantity = form.watch("quantity");
     const watchAdjustmentType = form.watch("adjustmentType");
     const watchLocationName = form.watch("locationName");
 
@@ -163,12 +86,8 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
     }, [item, watchLocationName]);
 
     const quantityToAdjust = React.useMemo(() => {
-        return parseNumericInput(
-            watchSelectedQuantity === SELECT_OTHER_VALUE && watchCustomQuantity
-                ? watchCustomQuantity
-                : watchSelectedQuantity
-        );
-    }, [watchSelectedQuantity, watchCustomQuantity]);
+        return typeof watchQuantity === 'number' ? watchQuantity : parseInt(watchQuantity as any) || 0;
+    }, [watchQuantity]);
 
     const [discrepancy, setDiscrepancy] = React.useState<number | null>(null);
 
@@ -201,12 +120,12 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
 
     React.useEffect(() => {
         if (item && isOpen) {
-            const currentUserName = user?.displayName || user?.email || "System"; // Changed from user.name
+            const currentUserName = user?.displayName || user?.email || "System";
             const currentTime = new Date().toLocaleString();
 
             const quantityFromRequest = requestToReceive
                 ? requestToReceive.quantityRequested - (requestToReceive.quantityReceived || 0)
-                : undefined;
+                : 0;
 
             const defaultNotes = requestToReceive
                 ? `Receiving order for request #${requestToReceive.id}.`
@@ -215,8 +134,7 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
             form.reset({
                 locationName: item.locations?.[0]?.name || DEFAULT_STORAGE_LOCATION,
                 adjustmentType: "add",
-                selectedQuantity: quantityFromRequest ? SELECT_OTHER_VALUE : (commonNumericOptionsForSelect[0] || ""),
-                customQuantity: quantityFromRequest ? String(quantityFromRequest) : "",
+                quantity: quantityFromRequest,
                 notes: defaultNotes,
             });
         }
@@ -224,7 +142,7 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
 
     if (!item) return null;
 
-    const handleSubmit = (data: z.infer<typeof adjustStockSchemaStep1>) => {
+    const handleSubmit = (data: z.infer<typeof adjustStockSchema>) => {
         const schema = createAdjustStockSchema(requestToReceive);
         const result = schema.safeParse(data);
 
@@ -247,7 +165,10 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
                 }
             }
 
-            onSubmit(item.id, processedData);
+            onSubmit(item.id, {
+                ...processedData,
+                selectedQuantity: String(processedData.quantity), // For backward compatibility
+            });
             onOpenChange(false);
         } else {
             toast.error("Validation Error", {
@@ -256,10 +177,26 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
         }
     };
 
-    const locationOptions = item.locations && item.locations.length > 0
-        ? item.locations
-        : [{ name: `${item.name} (Main Stock)`, quantity: 0 }];
+    // Build location options: item's current locations + all predefined locations (no duplicates)
+    const locationOptions = React.useMemo(() => {
+        const optionsSet = new Set<string>();
 
+        // Add item's existing locations first
+        if (item.locations && item.locations.length > 0) {
+            item.locations.forEach(loc => optionsSet.add(loc.name));
+        }
+
+        // Add all predefined storage locations
+        allStorageLocations.forEach(loc => optionsSet.add(loc));
+
+        return Array.from(optionsSet).map(name => {
+            const itemLoc = item.locations?.find(l => l.name === name);
+            return {
+                name,
+                quantity: itemLoc?.quantity || 0
+            };
+        });
+    }, [item]);
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>
@@ -285,11 +222,39 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
                                             </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                            {locationOptions.map((loc) => (
-                                                <SelectItem key={loc.name} value={loc.name} className="font-body">
-                                                    {loc.name} (Current: {item.locations?.find(l => l.name === loc.name)?.quantity || 0} units)
-                                                </SelectItem>
-                                            ))}
+                                            <SelectGroup>
+                                                <ShadcnSelectLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">Primary Locations</ShadcnSelectLabel>
+                                                {primaryStorageLocations.map((loc) => {
+                                                    const itemLoc = item.locations?.find(l => l.name === loc);
+                                                    return (
+                                                        <SelectItem key={loc} value={loc} className="font-body">
+                                                            {loc} (Current: {itemLoc?.quantity || 0} units)
+                                                        </SelectItem>
+                                                    );
+                                                })}
+                                            </SelectGroup>
+                                            <SelectGroup>
+                                                <ShadcnSelectLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">Secondary Locations</ShadcnSelectLabel>
+                                                {secondaryStorageLocations.map((loc) => {
+                                                    const itemLoc = item.locations?.find(l => l.name === loc);
+                                                    return (
+                                                        <SelectItem key={loc} value={loc} className="font-body">
+                                                            {loc} (Current: {itemLoc?.quantity || 0} units)
+                                                        </SelectItem>
+                                                    );
+                                                })}
+                                            </SelectGroup>
+                                            {/* Show any custom locations from the item that aren't in predefined list */}
+                                            {item.locations?.filter(l => !allStorageLocations.includes(l.name)).length > 0 && (
+                                                <SelectGroup>
+                                                    <ShadcnSelectLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">Custom Locations</ShadcnSelectLabel>
+                                                    {item.locations?.filter(l => !allStorageLocations.includes(l.name)).map((loc) => (
+                                                        <SelectItem key={loc.name} value={loc.name} className="font-body">
+                                                            {loc.name} (Current: {loc.quantity} units)
+                                                        </SelectItem>
+                                                    ))}
+                                                </SelectGroup>
+                                            )}
                                         </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -322,57 +287,45 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
 
                         <FormField
                             control={form.control}
-                            name="selectedQuantity"
+                            name="quantity"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Quantity to Adjust / Set</FormLabel>
-                                    <Select
-                                        onValueChange={(value) => {
-                                            field.onChange(value);
-                                            if (value !== SELECT_OTHER_VALUE) {
-                                                form.setValue("customQuantity", "");
-                                            }
-                                        }}
-                                        value={field.value}
-                                    >
-                                        <FormControl>
-                                            <SelectTrigger className="font-body">
-                                                <SelectValue placeholder="Select or specify quantity" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {groupedQuantityOptionsForSelect.map((group) => (
-                                                <SelectGroup key={group.label}>
-                                                    <ShadcnSelectLabel className="text-xs font-semibold text-muted-foreground px-2 py-1.5">{group.label}</ShadcnSelectLabel>
-                                                    {group.options.map(opt => (
-                                                        <SelectItem key={opt} value={opt} className="font-body">{opt}</SelectItem>
-                                                    ))}
-                                                </SelectGroup>
-                                            ))}
-                                            <SelectItem value={SELECT_OTHER_VALUE} className="font-body font-semibold text-primary">
-                                                -- Other (Specify) --
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <FormLabel>Quantity</FormLabel>
+                                    <FormControl>
+                                        <Input
+                                            type="number"
+                                            placeholder="Enter quantity..."
+                                            {...field}
+                                            onChange={(e) => field.onChange(parseInt(e.target.value) || 0)}
+                                            className="font-body"
+                                        />
+                                    </FormControl>
                                     <FormMessage />
                                 </FormItem>
                             )}
                         />
-                        {watchSelectedQuantity === SELECT_OTHER_VALUE && (
-                            <FormField
-                                control={form.control}
-                                name="customQuantity"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Custom Quantity</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="Enter number or description" {...field} className="font-body" />
-                                        </FormControl>
-                                        <p className="text-xs text-muted-foreground pt-1">Enter a number e.g., 7 or description '1 bucket'.</p>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
+
+                        {/* Warning: Removing from empty location */}
+                        {watchAdjustmentType === 'remove' && currentItemQuantityAtLocation === 0 && (
+                            <Alert variant="destructive">
+                                <AlertTriangle className="h-4 w-4" />
+                                <AlertTitle>No Stock at This Location</AlertTitle>
+                                <AlertDescription>
+                                    There is currently no stock at <strong>{watchLocationName}</strong>. You cannot remove items from an empty location.
+                                </AlertDescription>
+                            </Alert>
+                        )}
+
+                        {/* Warning: Removing more than available */}
+                        {watchAdjustmentType === 'remove' && currentItemQuantityAtLocation > 0 && quantityToAdjust > currentItemQuantityAtLocation && (
+                            <Alert variant="default" className="bg-yellow-50 border-yellow-200 text-yellow-800">
+                                <AlertTriangle className="h-4 w-4 text-yellow-600" />
+                                <AlertTitle>Insufficient Stock</AlertTitle>
+                                <AlertDescription>
+                                    You're trying to remove <strong>{quantityToAdjust}</strong> units, but only <strong>{currentItemQuantityAtLocation}</strong> units are available at this location.
+                                    The quantity will be set to 0.
+                                </AlertDescription>
+                            </Alert>
                         )}
 
                         {requestToReceive && discrepancy !== null && discrepancy !== 0 && (

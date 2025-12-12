@@ -20,6 +20,7 @@ import { InlineEditField } from "@/components/machines/InlineEditField";
 import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StockDetailsPanel } from "@/components/machines/StockDetailsPanel";
+import { StockAssignmentHistory } from "@/components/machines/StockAssignmentHistory";
 
 // Constants for select field options
 const STATUS_OPTIONS = [
@@ -529,6 +530,14 @@ export default function MachineDetailsPage() {
                         <SettingsPanel
                             machineId={enrichedMachine.id}
                             activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
+                        />
+                    </div>
+
+                    {/* Stock Assignment History */}
+                    <div className="rounded-lg border p-4">
+                        <StockAssignmentHistory
+                            machine={enrichedMachine}
+                            logs={activityLogs}
                         />
                     </div>
 

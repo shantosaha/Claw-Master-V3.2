@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Info, RotateCcw, AlertTriangle } from "lucide-react";
+import { Search, AlertTriangle } from "lucide-react";
 import { StockItem, ArcadeMachine } from "@/types";
 import { useData } from "@/context/DataProvider";
 import { machineService, stockService } from "@/services";
@@ -33,9 +33,11 @@ interface ManageStockModalProps {
     onOpenChange: (open: boolean) => void;
     machine: ArcadeMachine;
     slotId?: string;
+    // Optional callback for when stock is selected (used for new machines that don't exist in Firestore yet)
+    onStockSelected?: (slotId: string, item: StockItem, mode: 'current' | 'replace') => void;
 }
 
-export function ManageStockModal({ open, onOpenChange, machine, slotId }: ManageStockModalProps) {
+export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockSelected }: ManageStockModalProps) {
     const { items, refreshMachines, refreshItems } = useData();
     const { user } = useAuth();
 
@@ -67,6 +69,34 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId }: Manage
     const { compatibleItems, otherItems } = useMemo(() => {
         if (!targetSlot) return { compatibleItems: [], otherItems: [] };
 
+        // Helper to check if two sizes are compatible
+        const areSizesCompatible = (machineSize: string | undefined, itemSize: string | undefined): boolean => {
+            if (!machineSize || !itemSize) return true; // No size = compatible with all
+            if (machineSize === itemSize) return true; // Exact match
+
+            // Small and Extra-Small are interchangeable
+            const smallSizes = ['Small', 'Extra-Small'];
+            if (smallSizes.includes(machineSize) && smallSizes.includes(itemSize)) {
+                return true;
+            }
+
+            return false;
+        };
+
+        // Helper to get sort priority (lower = higher priority)
+        const getSizePriority = (machineSize: string | undefined, itemSize: string | undefined): number => {
+            if (!machineSize || !itemSize) return 1; // No size info
+            if (machineSize === itemSize) return 0; // Exact match = highest priority
+
+            // Small/Extra-Small compatibility - prefer exact match first
+            const smallSizes = ['Small', 'Extra-Small'];
+            if (smallSizes.includes(machineSize) && smallSizes.includes(itemSize)) {
+                return 1; // Compatible but not exact
+            }
+
+            return 2; // Not compatible
+        };
+
         let filtered = items.filter(item => {
             // Search Filter
             if (searchQuery) {
@@ -87,12 +117,18 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId }: Manage
         const other: StockItem[] = [];
 
         filtered.forEach(item => {
-            const isSizeMatch = !targetSize || !item.size || item.size === targetSize;
-            if (isSizeMatch) {
+            if (areSizesCompatible(targetSize, item.size)) {
                 compatible.push(item);
             } else {
                 other.push(item);
             }
+        });
+
+        // Sort compatible items: exact match first, then compatible sizes
+        compatible.sort((a, b) => {
+            const priorityA = getSizePriority(targetSize, a.size);
+            const priorityB = getSizePriority(targetSize, b.size);
+            return priorityA - priorityB;
         });
 
         return { compatibleItems: compatible, otherItems: other };
@@ -143,15 +179,26 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId }: Manage
         setIsSubmitting(true);
 
         try {
+            // If callback is provided, use it instead of Firestore operations (for new machines)
+            if (onStockSelected) {
+                onStockSelected(targetSlot.id, item, assignmentMode);
+                toast.success(assignmentMode === 'current'
+                    ? `Selected ${item.name} as current prize`
+                    : `Added ${item.name} to replacement queue`
+                );
+                onOpenChange(false); // Close the modal
+                return;
+            }
+
             if (assignmentMode === "current") {
                 // Logic: Set as Current Item
                 // 1. Clear old current if exists
                 if (targetSlot.currentItem) {
                     await stockService.update(targetSlot.currentItem.id, {
-                        assignedMachineId: null,
-                        assignedMachineName: null,
+                        assignedMachineId: null as any,
+                        assignedMachineName: null as any,
                         assignedStatus: 'Not Assigned',
-                        assignedSlotId: null
+                        assignedSlotId: null as any
                     });
                 }
 
@@ -204,6 +251,7 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId }: Manage
 
             refreshItems();
             refreshMachines();
+            onOpenChange(false); // Close the modal after successful assignment
         } catch (e) {
             console.error(e);
             toast.error("Assignment failed");
@@ -222,7 +270,7 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId }: Manage
                     <div className="p-6 border-b space-y-4">
                         <div className="flex items-center justify-between">
                             <DialogTitle className="text-xl">
-                                Assign to {machine.name} <span className="text-muted-foreground text-base font-normal">({items.length} items loaded)</span>
+                                Assign to {machine.name}{targetSlot && machine.slots.length > 1 ? ` ${targetSlot.name}` : ''} <span className="text-muted-foreground text-base font-normal">({items.length} items loaded)</span>
                             </DialogTitle>
                             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)} className="h-8 w-8 rounded-full">
                                 <span className="sr-only">Close</span>
@@ -482,8 +530,6 @@ function StockItemRow({
                     ${isAssignedToThis ? 'invisible' : ''}
                 `}
                 onClick={onAssign}
-                disabled={isOutOfStock && !isAssignedToThis} // Optionally disable assigning out of stock? User said "let user decide", so maybe not disabled.
-            // User said "show warning and let user decide", so I will NOT disable it, just rely on the confirm dialog.
             >
                 {activeMode === 'current' ? "Set Current" : "Add to Queue"}
             </Button>

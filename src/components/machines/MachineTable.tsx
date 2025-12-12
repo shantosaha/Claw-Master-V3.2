@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArcadeMachine, MachineDisplayItem } from "@/types";
+import { ArcadeMachine, MachineDisplayItem, StockItem } from "@/types";
 import {
     Table,
     TableBody,
@@ -30,14 +30,21 @@ interface MachineTableProps {
     onEdit: (machine: MachineDisplayItem) => void;
     onDelete: (machine: MachineDisplayItem) => void;
     onStatusUpdate: (machine: MachineDisplayItem, status: string) => void;
-    onStockUpdate: (machine: MachineDisplayItem, stockLevel: any) => void;
     onAssignStock: (machine: ArcadeMachine, slotId?: string) => void;
+    onStockLevelChange: (item: StockItem, newLevel: string) => void;
 }
 
-type SortField = 'assetTag' | 'name' | 'location' | 'prizeSize' | 'status' | 'playCount' | 'revenue';
+type SortField = 'assetTag' | 'name' | 'location' | 'prizeSize' | 'status' | 'playCount' | 'revenue' | 'currentItemName' | 'stockLevel' | 'queueLength';
 type SortDirection = 'asc' | 'desc' | null;
 
-export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onStockUpdate, onAssignStock }: MachineTableProps) {
+export function MachineTable({
+    machines,
+    onEdit,
+    onDelete,
+    onStatusUpdate,
+    onAssignStock,
+    onStockLevelChange
+}: MachineTableProps) {
     const router = useRouter();
     const [sortField, setSortField] = useState<SortField | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -99,8 +106,28 @@ export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onSto
     const sortedMachines = [...machines].sort((a, b) => {
         if (!sortField || !sortDirection) return 0;
 
-        let aValue: any = a[sortField];
-        let bValue: any = b[sortField];
+        const getValue = (item: MachineDisplayItem, field: SortField) => {
+            let currentSlot = null;
+            if (item.isSlot && item.slotId) {
+                currentSlot = item.slots.find(s => s.id === item.slotId);
+            } else if (item.slots && item.slots.length > 0) {
+                currentSlot = item.slots[0];
+            }
+
+            switch (field) {
+                case 'currentItemName':
+                    return currentSlot?.currentItem?.name || '';
+                case 'stockLevel':
+                    return currentSlot?.stockLevel || '';
+                case 'queueLength':
+                    return currentSlot?.upcomingQueue?.length || 0;
+                default:
+                    return (item as any)[field];
+            }
+        };
+
+        let aValue = getValue(a, sortField);
+        let bValue = getValue(b, sortField);
 
         // Handle null/undefined values
         if (aValue == null) aValue = '';
@@ -158,9 +185,33 @@ export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onSto
                                 {getSortIcon('prizeSize')}
                             </div>
                         </TableHead>
-                        <TableHead className="px-2 h-10">Current Item</TableHead>
-                        <TableHead className="px-2 h-10">Stock Level</TableHead>
-                        <TableHead className="px-2 h-10 hidden md:table-cell">Upcoming</TableHead>
+                        <TableHead className="px-2 h-10">
+                            <div
+                                onClick={() => handleSort('currentItemName')}
+                                className="flex items-center cursor-pointer hover:text-foreground"
+                            >
+                                Current Item
+                                {getSortIcon('currentItemName')}
+                            </div>
+                        </TableHead>
+                        <TableHead className="px-2 h-10">
+                            <div
+                                onClick={() => handleSort('stockLevel')}
+                                className="flex items-center cursor-pointer hover:text-foreground"
+                            >
+                                Stock Level
+                                {getSortIcon('stockLevel')}
+                            </div>
+                        </TableHead>
+                        <TableHead className="px-2 h-10 hidden md:table-cell">
+                            <div
+                                onClick={() => handleSort('queueLength')}
+                                className="flex items-center cursor-pointer hover:text-foreground"
+                            >
+                                Upcoming
+                                {getSortIcon('queueLength')}
+                            </div>
+                        </TableHead>
                         <TableHead className="px-2 h-10 hidden xl:table-cell">
                             <div
                                 onClick={() => handleSort('revenue')}
@@ -274,27 +325,40 @@ export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onSto
                                         )}
                                     </TableCell>
                                     <TableCell className="px-2 py-1">
-                                        {currentSlot ? (
-                                            <DropdownMenu>
-                                                <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-6 px-1 hover:bg-transparent">
-                                                        <Badge
-                                                            className={cn("cursor-pointer border select-none whitespace-nowrap text-[10px] px-1 py-0 h-5", getStockLevelColorClass(currentSlot.stockLevel))}
-                                                            variant="outline"
-                                                        >
-                                                            {currentSlot.stockLevel || "Unknown"}
-                                                        </Badge>
-                                                    </Button>
-                                                </DropdownMenuTrigger>
-                                                <DropdownMenuContent align="start">
-                                                    <DropdownMenuLabel>Update Stock Level</DropdownMenuLabel>
-                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'In Stock')}>In Stock</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Limited Stock')}>Limited Stock</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Low Stock')}>Low Stock</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Out of Stock')}>Out of Stock</DropdownMenuItem>
-                                                </DropdownMenuContent>
-                                            </DropdownMenu>
-                                        ) : (
+                                        {currentSlot ? (() => {
+                                            // Calculate quantity for display
+                                            const locationsSum = currentSlot.currentItem?.locations?.reduce((sum, loc) => sum + loc.quantity, 0);
+                                            const stockQty = locationsSum !== undefined ? locationsSum : 0;
+
+                                            return currentSlot.currentItem ? (
+                                                <DropdownMenu>
+                                                    <DropdownMenuTrigger asChild>
+                                                        <Button variant="ghost" className="h-6 px-1 hover:bg-transparent">
+                                                            <Badge
+                                                                className={cn("cursor-pointer border select-none whitespace-nowrap text-[10px] px-1.5 py-0 h-5", getStockLevelColorClass(currentSlot.stockLevel))}
+                                                                variant="outline"
+                                                            >
+                                                                {currentSlot.stockLevel || "Unknown"} <sup className="ml-0.5 font-bold">{stockQty}</sup>
+                                                            </Badge>
+                                                        </Button>
+                                                    </DropdownMenuTrigger>
+                                                    <DropdownMenuContent align="start">
+                                                        <DropdownMenuLabel>Update Stock Level</DropdownMenuLabel>
+                                                        <DropdownMenuItem onClick={() => onStockLevelChange(currentSlot!.currentItem!, 'In Stock')}>In Stock</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => onStockLevelChange(currentSlot!.currentItem!, 'Limited Stock')}>Limited Stock</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => onStockLevelChange(currentSlot!.currentItem!, 'Low Stock')}>Low Stock</DropdownMenuItem>
+                                                        <DropdownMenuItem onClick={() => onStockLevelChange(currentSlot!.currentItem!, 'Out of Stock')}>Out of Stock</DropdownMenuItem>
+                                                    </DropdownMenuContent>
+                                                </DropdownMenu>
+                                            ) : (
+                                                <Badge
+                                                    className={cn("border select-none whitespace-nowrap text-[10px] px-1.5 py-0 h-5", getStockLevelColorClass(currentSlot.stockLevel))}
+                                                    variant="outline"
+                                                >
+                                                    {currentSlot.stockLevel || "No Item"}
+                                                </Badge>
+                                            );
+                                        })() : (
                                             <span className="text-muted-foreground">-</span>
                                         )}
                                     </TableCell>
@@ -380,7 +444,7 @@ export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onSto
                                                     className="text-destructive"
                                                     onClick={() => onDelete(item)}
                                                 >
-                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Machine
+                                                    <Trash2 className="mr-2 h-4 w-4" /> {item.isSlot && item.slotId ? "Delete Slot" : "Delete Machine"}
                                                 </DropdownMenuItem>
                                             </DropdownMenuContent>
                                         </DropdownMenu>

@@ -53,9 +53,10 @@ export function SlotsList({ machine, onUpdate }: SlotsListProps) {
         }
     };
 
-    const handleRemoveSlot = async (slotId: string) => {
+    const handleRemoveSlot = async (index: number) => {
         try {
-            const updatedSlots = machine.slots.filter(s => s.id !== slotId);
+            const updatedSlots = [...(machine.slots || [])];
+            updatedSlots.splice(index, 1);
             await machineService.update(machine.id, { slots: updatedSlots });
             onUpdate();
         } catch (error) {
@@ -94,8 +95,8 @@ export function SlotsList({ machine, onUpdate }: SlotsListProps) {
                             </TableCell>
                         </TableRow>
                     ) : (
-                        machine.slots.map((slot) => (
-                            <TableRow key={slot.id}>
+                        machine.slots.map((slot, index) => (
+                            <TableRow key={slot.id || index}>
                                 <TableCell className="font-medium">{slot.name}</TableCell>
                                 <TableCell>
                                     {slot.currentItem ? (
@@ -148,7 +149,7 @@ export function SlotsList({ machine, onUpdate }: SlotsListProps) {
                                             variant="ghost"
                                             size="icon"
                                             className="text-destructive"
-                                            onClick={() => handleRemoveSlot(slot.id)}
+                                            onClick={() => handleRemoveSlot(index)}
                                         >
                                             <Trash2 className="h-4 w-4" />
                                         </Button>

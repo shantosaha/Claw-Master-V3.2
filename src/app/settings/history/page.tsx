@@ -30,7 +30,7 @@ export default function SettingsHistoryPage() {
     useEffect(() => {
         if (!authLoading) {
             // Check roles: admin, manager, or supervisor
-            if (!userProfile || !hasRole(["admin", "manager", "supervisor"])) {
+            if (!userProfile || !hasRole(["admin", "manager"])) {
                 toast.error("Unauthorized", { description: "You do not have permission to view activity logs." });
                 router.push("/dashboard");
                 return;

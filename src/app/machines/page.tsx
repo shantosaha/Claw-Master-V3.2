@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { machineService, apiService } from "@/services";
-import { ArcadeMachine, ArcadeMachineSlot, MachineDisplayItem } from "@/types";
+import { ArcadeMachine, ArcadeMachineSlot, MachineDisplayItem, StockItem } from "@/types";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +20,8 @@ import { MachineCard } from "@/components/machines/MachineCard";
 import { MachineTable } from "@/components/machines/MachineTable";
 import { ViewSwitcher, ViewMode } from "@/components/machines/ViewSwitcher";
 import { AddMachineDialog } from "@/components/machines/AddMachineDialog";
-import { MachineDialog } from "@/components/machines/MachineDialog";
 import { ManageStockModal } from "@/components/machines/ManageStockModal";
+import { StockLevelChangeDialog } from "@/components/machines/StockLevelChangeDialog";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { toast } from "sonner";
 import { usePageState } from "@/hooks/usePageState";
@@ -34,6 +34,9 @@ interface MachinesPageState {
     statusFilter: string;
     typeFilter: string;
     locationFilter: string;
+    prizeSizeFilter: string;
+    stockLevelFilter: string;
+    assignmentFilter: string;
 }
 
 export default function MachinesPage() {
@@ -52,6 +55,9 @@ export default function MachinesPage() {
             statusFilter: 'all',
             typeFilter: 'all',
             locationFilter: 'all',
+            prizeSizeFilter: 'all',
+            stockLevelFilter: 'all',
+            assignmentFilter: 'all',
         },
         persistScroll: true,
         isReady: !loading,
@@ -59,7 +65,7 @@ export default function MachinesPage() {
     });
 
     // Destructure for easier access
-    const { viewMode, searchTerm, statusFilter, typeFilter, locationFilter } = pageState;
+    const { viewMode, searchTerm, statusFilter, typeFilter, locationFilter, prizeSizeFilter, stockLevelFilter, assignmentFilter } = pageState;
 
     // State update helpers
     const setViewMode = (value: ViewMode) => updateState('viewMode', value);
@@ -67,6 +73,9 @@ export default function MachinesPage() {
     const setStatusFilter = (value: string) => updateState('statusFilter', value);
     const setTypeFilter = (value: string) => updateState('typeFilter', value);
     const setLocationFilter = (value: string) => updateState('locationFilter', value);
+    const setPrizeSizeFilter = (value: string) => updateState('prizeSizeFilter', value);
+    const setStockLevelFilter = (value: string) => updateState('stockLevelFilter', value);
+    const setAssignmentFilter = (value: string) => updateState('assignmentFilter', value);
 
     // Dialog State
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -76,6 +85,11 @@ export default function MachinesPage() {
     const [machineToDelete, setMachineToDelete] = useState<MachineDisplayItem | null>(null);
     const [machineToEdit, setMachineToEdit] = useState<MachineDisplayItem | null>(null);
     const [assignTarget, setAssignTarget] = useState<{ machine: ArcadeMachine, slotId?: string } | null>(null);
+
+    // Stock Level Change Dialog State
+    const [stockLevelDialogOpen, setStockLevelDialogOpen] = useState(false);
+    const [pendingStockItem, setPendingStockItem] = useState<StockItem | null>(null);
+    const [pendingStockLevel, setPendingStockLevel] = useState("");
 
     const handleSync = async () => {
         setSyncing(true);
@@ -95,13 +109,21 @@ export default function MachinesPage() {
     const handleDelete = async () => {
         if (!machineToDelete) return;
         try {
-            // Always delete the original machine
-            await machineService.remove(machineToDelete.originalMachine.id);
-            toast.success("Machine deleted");
+            if (machineToDelete.isSlot && machineToDelete.slotId) {
+                // Delete specific slot
+                const originalMachine = machineToDelete.originalMachine;
+                const updatedSlots = originalMachine.slots.filter(s => s.id !== machineToDelete.slotId);
+                await machineService.update(originalMachine.id, { slots: updatedSlots });
+                toast.success("Slot deleted successfully");
+            } else {
+                // Always delete the original machine
+                await machineService.remove(machineToDelete.originalMachine.id);
+                toast.success("Machine deleted");
+            }
             refreshMachines();
         } catch (error) {
-            console.error("Failed to delete machine:", error);
-            toast.error("Failed to delete machine");
+            console.error("Failed to delete item:", error);
+            toast.error("Failed to delete item");
         } finally {
             setIsDeleteDialogOpen(false);
             setMachineToDelete(null);
@@ -116,6 +138,12 @@ export default function MachinesPage() {
     const handleAssignStock = (machine: ArcadeMachine, slotId?: string) => {
         setAssignTarget({ machine, slotId });
         setIsAssignModalOpen(true);
+    };
+
+    const handleStockLevelChange = (item: StockItem, newLevel: string) => {
+        setPendingStockItem(item);
+        setPendingStockLevel(newLevel);
+        setStockLevelDialogOpen(true);
     };
 
     // Note: This function handles manual stock updates. 
@@ -196,7 +224,8 @@ export default function MachinesPage() {
                     // Calculate Stock Level
                     let derivedStockLevel: ArcadeMachineSlot['stockLevel'] = 'Out of Stock';
                     if (assignedItem) {
-                        const totalQty = assignedItem.locations?.reduce((sum, loc) => sum + loc.quantity, 0) || assignedItem.totalQuantity || 0;
+                        const locationsSum = assignedItem.locations?.reduce((sum, loc) => sum + loc.quantity, 0);
+                        const totalQty = locationsSum !== undefined ? locationsSum : (assignedItem.totalQuantity ?? 0);
                         derivedStockLevel = calculateStockLevel(totalQty, assignedItem.stockStatus).status as ArcadeMachineSlot['stockLevel'];
                     } else if (slot.stockLevel) {
                         // Fallback to manual level if no item assigned, preserving legacy behavior or defaulting
@@ -261,7 +290,8 @@ export default function MachinesPage() {
                 // Calculate Stock Level (Fallback)
                 let derivedStockLevel: ArcadeMachineSlot['stockLevel'] = 'Out of Stock';
                 if (assignedItem) {
-                    const totalQty = assignedItem.locations?.reduce((sum, loc) => sum + loc.quantity, 0) || assignedItem.totalQuantity || 0;
+                    const locationsSum = assignedItem.locations?.reduce((sum, loc) => sum + loc.quantity, 0);
+                    const totalQty = locationsSum !== undefined ? locationsSum : (assignedItem.totalQuantity ?? 0);
                     derivedStockLevel = calculateStockLevel(totalQty, assignedItem.stockStatus).status as ArcadeMachineSlot['stockLevel'];
                 }
 
@@ -289,6 +319,39 @@ export default function MachinesPage() {
     const uniqueTypes = Array.from(new Set(machines.map(m => m.type).filter(Boolean)));
     const uniqueLocations = Array.from(new Set(machines.map(m => m.location).filter(Boolean)));
 
+    // Normalize prize sizes to eliminate duplicates (e.g., "Extra Small" vs "Extra-Small" vs "extra small")
+    const normalizePrizeSize = (size: string): string => {
+        return size.trim().toLowerCase().replace(/-/g, ' ').split(' ').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    };
+    const uniquePrizeSizes = Array.from(new Set(
+        machines.map(m => m.prizeSize).filter(Boolean).map(size => normalizePrizeSize(size as string))
+    ));
+
+    // Helper to get machine's stock level from its slots
+    const getMachineStockLevel = (machine: ArcadeMachine): string | null => {
+        const machineItems = items.filter(item => item.assignedMachineId === machine.id);
+        if (machine.slots?.length > 0) {
+            const slot = machine.slots[0];
+            const assignedItem = machineItems.find(item =>
+                (item.assignedSlotId === slot.id || !item.assignedSlotId) && item.assignedStatus === 'Assigned'
+            );
+            if (assignedItem) {
+                const locationsSum = assignedItem.locations?.reduce((sum, loc) => sum + loc.quantity, 0);
+                const totalQty = locationsSum !== undefined ? locationsSum : (assignedItem.totalQuantity ?? 0);
+                return calculateStockLevel(totalQty, assignedItem.stockStatus).status;
+            }
+        }
+        return null;
+    };
+
+    // Helper to check if machine has stock assigned
+    const machineHasAssignment = (machine: ArcadeMachine): boolean => {
+        const machineItems = items.filter(item => item.assignedMachineId === machine.id && item.assignedStatus === 'Assigned');
+        return machineItems.length > 0;
+    };
+
     const filteredMachines = machines.filter(machine => {
         const matchesSearch =
             machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -297,8 +360,24 @@ export default function MachinesPage() {
         const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
         const matchesType = typeFilter === "all" || machine.type === typeFilter;
         const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
+        const matchesPrizeSize = prizeSizeFilter === "all" || (machine.prizeSize && normalizePrizeSize(machine.prizeSize) === prizeSizeFilter);
 
-        return matchesSearch && matchesStatus && matchesType && matchesLocation;
+        // Stock level filter
+        let matchesStockLevel = true;
+        if (stockLevelFilter !== "all") {
+            const machineStockLevel = getMachineStockLevel(machine);
+            matchesStockLevel = machineStockLevel === stockLevelFilter;
+        }
+
+        // Assignment filter
+        let matchesAssignment = true;
+        if (assignmentFilter === "assigned") {
+            matchesAssignment = machineHasAssignment(machine);
+        } else if (assignmentFilter === "unassigned") {
+            matchesAssignment = !machineHasAssignment(machine);
+        }
+
+        return matchesSearch && matchesStatus && matchesType && matchesLocation && matchesPrizeSize && matchesStockLevel && matchesAssignment;
     });
 
     const flattenedFilteredMachines = flattenMachinesToSlots(filteredMachines);
@@ -327,74 +406,125 @@ export default function MachinesPage() {
                 </div>
             </div>
 
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col md:flex-row gap-4 justify-between">
-                    <div className="relative flex-1 max-w-sm">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-                        <Input
-                            placeholder="Search by name or asset tag..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-8"
-                        />
-                    </div>
-                    <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
+            {/* Single-row filters */}
+            <div className="flex flex-wrap items-center gap-2">
+                {/* Search */}
+                <div className="relative">
+                    <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                    <Input
+                        placeholder="Search..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-8 w-[160px]"
+                    />
                 </div>
 
-                <div className="flex flex-wrap gap-2">
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-[150px]">
-                            <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Status</SelectItem>
-                            <SelectItem value="Online">Online</SelectItem>
-                            <SelectItem value="Offline">Offline</SelectItem>
-                            <SelectItem value="Maintenance">Maintenance</SelectItem>
-                            <SelectItem value="Error">Error</SelectItem>
-                        </SelectContent>
-                    </Select>
+                {/* Status Filter */}
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="Online">Online</SelectItem>
+                        <SelectItem value="Offline">Offline</SelectItem>
+                        <SelectItem value="Maintenance">Maintenance</SelectItem>
+                        <SelectItem value="Error">Error</SelectItem>
+                    </SelectContent>
+                </Select>
 
-                    <Select value={typeFilter} onValueChange={setTypeFilter}>
-                        <SelectTrigger className="w-[150px]">
-                            <SelectValue placeholder="Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Types</SelectItem>
-                            {uniqueTypes.map(type => (
-                                <SelectItem key={type} value={type as string}>{type}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                {/* Type Filter */}
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Types</SelectItem>
+                        {uniqueTypes.map(type => (
+                            <SelectItem key={type} value={type as string}>{type}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
-                    <Select value={locationFilter} onValueChange={setLocationFilter}>
-                        <SelectTrigger className="w-[150px]">
-                            <SelectValue placeholder="Location" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Locations</SelectItem>
-                            {uniqueLocations.map(loc => (
-                                <SelectItem key={loc} value={loc as string}>{loc}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
+                {/* Location Filter */}
+                <Select value={locationFilter} onValueChange={setLocationFilter}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Location" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Locations</SelectItem>
+                        {uniqueLocations.map(loc => (
+                            <SelectItem key={loc} value={loc as string}>{loc}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
-                    {(statusFilter !== "all" || typeFilter !== "all" || locationFilter !== "all" || searchTerm) && (
-                        <Button
-                            variant="ghost"
-                            onClick={() => {
-                                updateMultiple({
-                                    statusFilter: "all",
-                                    typeFilter: "all",
-                                    locationFilter: "all",
-                                    searchTerm: ""
-                                });
-                            }}
-                        >
-                            Reset Filters
-                        </Button>
-                    )}
-                </div>
+                {/* Prize Size Filter */}
+                <Select value={prizeSizeFilter} onValueChange={setPrizeSizeFilter}>
+                    <SelectTrigger className="w-[110px]">
+                        <SelectValue placeholder="Size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Sizes</SelectItem>
+                        {uniquePrizeSizes.map(size => (
+                            <SelectItem key={size} value={size as string}>{size}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+
+                {/* Stock Level Filter */}
+                <Select value={stockLevelFilter} onValueChange={setStockLevelFilter}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Stock" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Stock</SelectItem>
+                        <SelectItem value="In Stock">In Stock</SelectItem>
+                        <SelectItem value="Limited Stock">Limited</SelectItem>
+                        <SelectItem value="Low Stock">Low Stock</SelectItem>
+                        <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                {/* Assignment Filter */}
+                <Select value={assignmentFilter} onValueChange={setAssignmentFilter}>
+                    <SelectTrigger className="w-[120px]">
+                        <SelectValue placeholder="Assigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All</SelectItem>
+                        <SelectItem value="assigned">Assigned</SelectItem>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                    </SelectContent>
+                </Select>
+
+                {/* Reset Button */}
+                {(statusFilter !== "all" || typeFilter !== "all" || locationFilter !== "all" || prizeSizeFilter !== "all" || stockLevelFilter !== "all" || assignmentFilter !== "all" || searchTerm) && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-9"
+                        onClick={() => {
+                            updateMultiple({
+                                statusFilter: "all",
+                                typeFilter: "all",
+                                locationFilter: "all",
+                                prizeSizeFilter: "all",
+                                stockLevelFilter: "all",
+                                assignmentFilter: "all",
+                                searchTerm: ""
+                            });
+                        }}
+                    >
+                        Reset
+                    </Button>
+                )}
+
+                {/* Spacer */}
+                <div className="flex-1" />
+
+                {/* View Switcher */}
+                <ViewSwitcher currentView={viewMode} onViewChange={setViewMode} />
             </div>
 
             {viewMode === 'list' ? (
@@ -406,11 +536,11 @@ export default function MachinesPage() {
                         setIsDeleteDialogOpen(true);
                     }}
                     onStatusUpdate={handleStatusChange}
-                    onStockUpdate={handleStockChange}
                     onAssignStock={handleAssignStock}
+                    onStockLevelChange={handleStockLevelChange}
                 />
             ) : (
-                <div className={`grid gap-6 ${viewMode === 'compact' ? 'grid-cols-2 md:grid-cols-4 lg:grid-cols-6' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3'}`}>
+                <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
                     {/* For card view, we need to inject the items into the machines similar to flattened view logic but preserving machine structure */}
                     {filteredMachines.map(machine => {
                         // Enrich machine slots with items for the card view
@@ -434,7 +564,8 @@ export default function MachinesPage() {
                             // Calculate Stock Level for Card View
                             let derivedStockLevel: ArcadeMachineSlot['stockLevel'] = 'Out of Stock';
                             if (assignedItem) {
-                                const totalQty = assignedItem.locations?.reduce((sum, loc) => sum + loc.quantity, 0) || assignedItem.totalQuantity || 0;
+                                const locationsSum = assignedItem.locations?.reduce((sum, loc) => sum + loc.quantity, 0);
+                                const totalQty = locationsSum !== undefined ? locationsSum : (assignedItem.totalQuantity ?? 0);
                                 derivedStockLevel = calculateStockLevel(totalQty, assignedItem.stockStatus).status as ArcadeMachineSlot['stockLevel'];
                             }
 
@@ -465,9 +596,16 @@ export default function MachinesPage() {
                         return (
                             <MachineCard
                                 key={machine.id}
-                                machine={enrichedMachine} // Pass enriched machine
+                                machine={enrichedMachine}
                                 onManageStock={(m) => router.push(`/machines/${m.id}`)}
                                 onStatusChange={(m, s) => handleStatusChange(m as any, s)}
+                                onEdit={(m) => handleEdit({ ...m, originalMachine: m } as any)}
+                                onDelete={(m) => {
+                                    setMachineToDelete({ ...m, originalMachine: m } as any);
+                                    setIsDeleteDialogOpen(true);
+                                }}
+                                onAssignStock={handleAssignStock}
+                                onStockLevelChange={handleStockLevelChange}
                             />
                         );
                     })}
@@ -485,10 +623,10 @@ export default function MachinesPage() {
             />
 
             {/* Dialog for Editing existing machines/slots */}
-            <MachineDialog
+            <AddMachineDialog
                 open={isEditDialogOpen}
                 onOpenChange={setIsEditDialogOpen}
-                itemToEdit={machineToEdit}
+                machineToEdit={machineToEdit?.originalMachine || null}
                 onSuccess={() => {
                     refreshMachines();
                     toast.success("Machine updated");
@@ -498,8 +636,12 @@ export default function MachinesPage() {
             <ConfirmDialog
                 open={isDeleteDialogOpen}
                 onOpenChange={setIsDeleteDialogOpen}
-                title="Delete Machine"
-                description={`Are you sure you want to delete "${machineToDelete?.name}"? This will delete the entire machine and all its slots.`}
+                title={machineToDelete?.isSlot && machineToDelete.slotId ? "Delete Slot" : "Delete Machine"}
+                description={
+                    machineToDelete?.isSlot && machineToDelete.slotId
+                        ? `Are you sure you want to delete slot "${machineToDelete.slotName || machineToDelete.name}"? This will only remove this specific slot.`
+                        : `Are you sure you want to delete "${machineToDelete?.name}"? This will delete the entire machine and all its slots.`
+                }
                 onConfirm={handleDelete}
                 destructive
             />
@@ -513,6 +655,14 @@ export default function MachinesPage() {
                     slotId={assignTarget.slotId}
                 />
             )}
+
+            {/* Stock Level Change Dialog */}
+            <StockLevelChangeDialog
+                open={stockLevelDialogOpen}
+                onOpenChange={setStockLevelDialogOpen}
+                item={pendingStockItem}
+                newLevel={pendingStockLevel}
+            />
         </div>
     );
 }

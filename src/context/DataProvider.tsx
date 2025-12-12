@@ -96,17 +96,15 @@ export function DataProvider({ children }: DataProviderProps) {
     }, [machines]);
 
     const refreshItems = useCallback(async () => {
-        setItemsLoading(true);
+        // Don't set loading=true to avoid UI flicker during refresh
         const data = await stockService.getAll();
         setItems(data);
-        setItemsLoading(false);
     }, []);
 
     const refreshMachines = useCallback(async () => {
-        setMachinesLoading(true);
+        // Don't set loading=true to avoid UI flicker during refresh
         const data = await machineService.getAll();
         setMachines(data);
-        setMachinesLoading(false);
     }, []);
 
     const value: DataContextType = {

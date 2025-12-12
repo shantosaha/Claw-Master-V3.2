@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatDate } from "@/lib/utils/date";
 import { format } from "date-fns";
-import { MachineDialog } from "./MachineDialog";
+import { AddMachineDialog } from "./AddMachineDialog";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 
 
@@ -262,10 +262,10 @@ export function MachineList() {
                 </Table>
             </div>
 
-            <MachineDialog
+            <AddMachineDialog
                 open={isDialogOpen}
                 onOpenChange={setIsDialogOpen}
-                itemToEdit={itemToEdit}
+                machineToEdit={itemToEdit?.originalMachine || null}
                 onSuccess={handleSuccess}
             />
 
