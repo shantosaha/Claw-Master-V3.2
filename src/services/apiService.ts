@@ -24,11 +24,20 @@ interface GameReportItem {
 export const apiService = {
     fetchGameReport: async (startDate: string, endDate: string): Promise<GameReportItem[]> => {
         try {
-            const response = await fetch(`${API_BASE_URL}/game_report?startdate=${startDate}&enddate=${endDate}`);
-            if (!response.ok) throw new Error("Failed to fetch game report");
+            // Check if we are in a browser environment to avoid SSR issues with fetch if applicable
+            if (typeof window === 'undefined' && typeof fetch === 'undefined') return [];
+
+            const url = `${API_BASE_URL}/game_report?startdate=${startDate}&enddate=${endDate}`;
+            const response = await fetch(url);
+
+            if (!response.ok) {
+                console.warn(`API Error: ${response.status} ${response.statusText}`);
+                return [];
+            }
             return await response.json();
         } catch (error) {
-            console.error("Error fetching game report:", error);
+            // Log as warning to avoid cluttering console with "Failed to fetch" stack traces during dev/offline
+            console.warn("Could not fetch game report (Sync skipped):", error instanceof Error ? error.message : String(error));
             return [];
         }
     },

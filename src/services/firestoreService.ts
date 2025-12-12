@@ -25,13 +25,16 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
         return collection(db, collectionName);
     };
 
+    // persistent storage for non-hardcoded collections (like settings, audit logs)
+    const localStore: T[] = [];
+
     const getDemoData = (): T[] => {
         switch (collectionName) {
             case "machines": return DEMO_MACHINES as unknown as T[];
             case "stockItems": return DEMO_STOCK as unknown as T[];
             case "reorderRequests": return DEMO_ORDERS as unknown as T[];
             case "maintenanceTasks": return DEMO_MAINTENANCE as unknown as T[];
-            default: return [];
+            default: return localStore;
         }
     };
 
@@ -124,7 +127,11 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
 
         // Query documents
         query: async (...constraints: QueryConstraint[]): Promise<T[]> => {
-            if (!isFirebaseInitialized) return getDemoData(); // Simplified query for demo
+            if (!isFirebaseInitialized) {
+                // Return reversed list to simulate orderBy('timestamp', 'desc') which is common
+                // This ensures 'latest' is first
+                return [...getDemoData()].reverse();
+            }
             const q = query(getCollectionRef(), ...constraints);
             const snapshot = await getDocs(q);
             return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as unknown as T));

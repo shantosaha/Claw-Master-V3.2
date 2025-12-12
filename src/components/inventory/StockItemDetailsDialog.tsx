@@ -224,7 +224,7 @@ export function StockItemDetailsDialog({
                                 <Badge className={cn(stockLevel.colorClass)}>{stockLevel.label}</Badge>
                             </DetailRow>
                             <DetailRow label="Low Stock Threshold" value={`${item.lowStockThreshold} units`} icon={Info} />
-                            <DetailRow label="Cost Price" value={item.cost ? `$${item.cost.toFixed(2)}` : "N/A"} icon={DollarSign} />
+                            <DetailRow label="Cost Price" value={item.supplyChain?.costPerUnit ? `$${item.supplyChain.costPerUnit.toFixed(2)}` : "N/A"} icon={DollarSign} />
                             <DetailRow label="Ticket Value" value={item.value ? `${item.value} tickets` : "N/A"} icon={Ticket} />
                             {(item.assignedMachineName || item.assignedMachineId) && (
                                 <DetailRow label="Assigned Machine" icon={Gamepad2}>

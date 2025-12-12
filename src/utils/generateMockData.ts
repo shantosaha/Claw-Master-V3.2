@@ -1,7 +1,7 @@
 import { StockItem } from "@/types";
 
 const CATEGORIES = ["Plushy", "Key Chain", "Blind Box", "Gatcha", "Figurine", "Toy", "Pop Vinyl"];
-const SIZES = ["Small", "Medium", "Large", "Big"];
+const SIZES = ["Extra-Small", "Small", "Medium", "Large", "Big"];
 
 const ADJECTIVES = [
     "Cute", "Fluffy", "Soft", "Giant", "Tiny", "Collectible", "Rare", "Limited Edition",
@@ -21,7 +21,7 @@ const BRANDS = [
 ];
 
 const LOCATIONS = [
-    "B-Plushy Room", "G-Storage Room", "B-Capsule Room", "L-Storage Room",
+    "B-Plushy Room Storage", "G-Storage Room", "B-Capsule Room", "L-Storage Room",
     "Warehouse Alpha", "Warehouse Bravo"
 ];
 
@@ -153,7 +153,6 @@ export function generateMockStockItems(count: number): StockItem[] {
             stockLocations: itemLocations,
             locations: itemLocations.map(l => ({ name: l.locationName, quantity: l.quantity })),
             lowStockThreshold,
-            cost,
             value,
             technicalSpecs: {
                 weightGrams: Math.floor(Math.random() * 500 + 50),

@@ -43,8 +43,11 @@ const ADD_NEW_LOCATION_VALUE = "ADD_NEW_LOCATION";
 const NO_MACHINE_ASSIGNED_VALUE = "NO_MACHINE";
 const ANY_SLOT_VALUE = "ANY_SLOT";
 
+// Global default storage location - used when user doesn't choose a location
+export const DEFAULT_STORAGE_LOCATION = "B-Plushy Room Storage";
+
 const primaryStorageLocations = [
-    "B-Plushy Room",
+    "B-Plushy Room Storage",
     "B-Capsule Room",
     "G-Storage Room",
     "L-Storage Room"
@@ -60,7 +63,7 @@ const secondaryStorageLocations = [
     "Warehouse Bravo"
 ];
 
-const sizeOptions = ["Small", "Medium", "Large", "Big"];
+const sizeOptions = ["Extra-Small", "Small", "Medium", "Large", "Big"];
 
 const parseNumericInput = (input: any): number => {
     if (typeof input === 'number') return input;
@@ -81,6 +84,7 @@ const addStockItemSchemaStep1 = z.object({
 
     overallQuantity: z.preprocess(
         (val) => {
+            if (val === undefined || val === null || val === '') return undefined;
             const str = String(val).trim();
             return str === '' ? undefined : val;
         },
@@ -119,15 +123,16 @@ const addStockItemSchemaStep1 = z.object({
     ),
 
     lowStockThreshold: z.preprocess(
-        (val) => (String(val).trim() === '' ? undefined : val),
+        (val) => {
+            if (val === undefined || val === null || val === '') return undefined;
+            const str = String(val).trim();
+            return str === '' ? undefined : val;
+        },
         z.coerce.number().int().nonnegative({ message: "Low stock threshold must be a non-negative integer." }).optional()
     ),
 
     description: z.string().optional(),
-    cost: z.preprocess(
-        (val) => (String(val).trim() === '' ? undefined : val),
-        z.coerce.number().nonnegative({ message: "Cost must be a non-negative number." }).optional()
-    ),
+
     value: z.preprocess(
         (val) => (String(val).trim() === '' ? undefined : val),
         z.coerce.number().int().nonnegative({ message: "Value must be a non-negative integer." }).optional()
@@ -139,14 +144,18 @@ const addStockItemSchemaStep1 = z.object({
             isNewLocation: z.boolean().optional(),
             customLocationName: z.string().optional(),
             quantity: z.preprocess(
-                (val) => (String(val).trim() === '' ? 0 : val),
-                z.coerce.number().int().nonnegative({ message: "Quantity must be a non-negative integer." })
+                (val) => {
+                    if (val === undefined || val === null || val === '') return undefined;
+                    const str = String(val).trim();
+                    return str === '' ? undefined : val;
+                },
+                z.coerce.number().int().nonnegative({ message: "Quantity must be a non-negative integer." }).optional()
             ),
         })
     ).min(1, { message: "At least one location with quantity must be specified." }),
 
     assignedMachineId: z.string().optional(),
-    assignedSlotId: z.string().optional(),
+    assignmentStatus: z.enum(['Not Assigned', 'Assigned', 'Assigned for Replacement']).optional(),
 
     payouts: z.array(
         z.object({
@@ -161,10 +170,11 @@ const addStockItemSchemaStep1 = z.object({
         })
     ).optional(),
 }).superRefine((data, ctx) => {
-    if (data.assignedSlotId && data.assignedSlotId !== ANY_SLOT_VALUE && (!data.assignedMachineId || data.assignedMachineId === NO_MACHINE_ASSIGNED_VALUE)) {
+    // Validate assignment status when machine is selected
+    if (data.assignedMachineId && data.assignedMachineId !== NO_MACHINE_ASSIGNED_VALUE && !data.assignmentStatus) {
         ctx.addIssue({
-            path: ["assignedMachineId"],
-            message: "A machine must be selected if a specific slot is chosen.",
+            path: ["assignmentStatus"],
+            message: "Please select an assignment type (Using or Replacement).",
             code: z.ZodIssueCode.custom
         });
     }
@@ -196,8 +206,8 @@ const addStockItemSchemaIntermediate = addStockItemSchemaStep1.transform(data =>
 
         return {
             name: finalLocationName,
-            quantity: loc.quantity,
-            _parsedNumericQuantity: loc.quantity
+            quantity: loc.quantity || 0,
+            _parsedNumericQuantity: loc.quantity || 0
         };
     });
 
@@ -235,11 +245,11 @@ const stockItemFormSchema = addStockItemSchemaIntermediate.superRefine((data, ct
         const unallocated = overallQty - allocatedQty;
 
         if (unallocated > 0) {
-            const bPlushyIndex = finalLocations.findIndex(loc => loc.name === "B-Plushy Room");
-            if (bPlushyIndex >= 0) {
-                finalLocations[bPlushyIndex].quantity += unallocated;
+            const defaultLocationIndex = finalLocations.findIndex(loc => loc.name === DEFAULT_STORAGE_LOCATION);
+            if (defaultLocationIndex >= 0) {
+                finalLocations[defaultLocationIndex].quantity += unallocated;
             } else {
-                finalLocations.push({ name: "B-Plushy Room", quantity: unallocated });
+                finalLocations.push({ name: DEFAULT_STORAGE_LOCATION, quantity: unallocated });
             }
         }
 
@@ -270,12 +280,12 @@ const stockItemFormSchema = addStockItemSchemaIntermediate.superRefine((data, ct
                 costPerUnit: data.costPerUnit || 0,
                 reorderPoint: data.reorderPoint || 0,
             } : undefined,
-            cost: data.cost,
+
             value: data.value,
             locations: finalLocations,
             payouts: transformedPayouts.length > 0 ? transformedPayouts : undefined,
             assignedMachineId: data.assignedMachineId === NO_MACHINE_ASSIGNED_VALUE ? undefined : data.assignedMachineId,
-            assignedSlotId: data.assignedSlotId,
+            assignmentStatus: data.assignmentStatus,
             _parsedOverallNumericQuantity: data._parsedOverallNumericQuantity,
             _sumOfLocationQuantities: data._sumOfLocationQuantities,
         };
@@ -289,15 +299,15 @@ interface StockItemFormProps {
     categories: string[];
     initialData?: StockItem;
     machines: ArcadeMachine[];
+    stockItems?: StockItem[];
 }
 
-export function StockItemForm({ onSubmit, onCancel, categories, initialData, machines }: StockItemFormProps) {
+export function StockItemForm({ onSubmit, onCancel, categories, initialData, machines, stockItems = [] }: StockItemFormProps) {
     const [previewImages, setPreviewImages] = React.useState<string[]>(initialData?.imageUrls || (initialData?.imageUrl ? [initialData.imageUrl] : []));
     const [isGeneratingNote, setIsGeneratingNote] = React.useState(false);
     const [isAdvancedOpen, setIsAdvancedOpen] = React.useState(false);
     const { toast } = useToast();
     const [machineComboboxOpen, setMachineComboboxOpen] = React.useState(false);
-    const [slotComboboxOpen, setSlotComboboxOpen] = React.useState(false);
     const [isValidationErrorDialogOpen, setIsValidationErrorDialogOpen] = React.useState(false);
     const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -353,7 +363,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                 newCategoryName: "",
                 size: "",
                 imageUrl: undefined,
-                overallQuantity: 1,
+                overallQuantity: undefined,
                 lowStockThreshold: undefined,
                 tags: "",
                 brand: "",
@@ -366,16 +376,19 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                 costPerUnit: undefined,
                 reorderPoint: undefined,
                 description: "",
-                cost: '',
+
                 value: '',
-                locations: [{ name: primaryStorageLocations[0] || "", quantity: 0, isNewLocation: false, customLocationName: "" }],
+                locations: [{ name: primaryStorageLocations[0] || "", quantity: undefined as unknown as number, isNewLocation: false, customLocationName: "" }],
                 assignedMachineId: NO_MACHINE_ASSIGNED_VALUE,
-                assignedSlotId: undefined,
+                assignmentStatus: undefined,
                 payouts: [{ playCost: '', playsRequired: '' }],
             };
         }
 
-        const qtyValue = parseNumericInput(item.quantityDescription || item.quantity?.toString() || "0");
+        // Calculate overall quantity from the sum of all location quantities
+        const calculatedTotalQty = item.locations && item.locations.length > 0
+            ? item.locations.reduce((sum, loc) => sum + (loc.quantity || 0), 0)
+            : parseNumericInput(item.quantityDescription || item.quantity?.toString() || "0");
 
         return {
             name: item.name,
@@ -384,7 +397,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
             size: item.size || "",
             imageUrl: item.imageUrl || undefined,
             imageUrls: item.imageUrls || (item.imageUrl ? [item.imageUrl] : []),
-            overallQuantity: qtyValue || 1,
+            overallQuantity: calculatedTotalQty,
             lowStockThreshold: item.lowStockThreshold !== undefined ? item.lowStockThreshold : undefined,
             description: item.description || "",
             tags: item.tags?.join(', ') || "",
@@ -397,7 +410,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
             vendor: item.supplyChain?.vendor || "",
             costPerUnit: item.supplyChain?.costPerUnit,
             reorderPoint: item.supplyChain?.reorderPoint,
-            cost: item.cost !== undefined ? String(item.cost) : '',
+
             value: item.value !== undefined ? String(item.value) : '',
             locations: item.locations && item.locations.length > 0
                 ? item.locations.map(loc => ({
@@ -406,9 +419,11 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                     isNewLocation: false,
                     customLocationName: ""
                 }))
-                : [{ name: primaryStorageLocations[0] || "", quantity: 0, isNewLocation: false, customLocationName: "" }],
+                : [{ name: primaryStorageLocations[0] || "", quantity: undefined as unknown as number, isNewLocation: false, customLocationName: "" }],
             assignedMachineId: item.assignedMachineId || NO_MACHINE_ASSIGNED_VALUE,
-            assignedSlotId: item.assignedSlotId,
+            assignmentStatus: item.assignedStatus === 'Assigned' ? 'Assigned'
+                : item.assignedStatus === 'Assigned for Replacement' ? 'Assigned for Replacement'
+                    : item.assignedMachineId ? 'Assigned' : undefined,
             payouts: item.payouts && item.payouts.length > 0
                 ? item.payouts.map(p => {
                     if (typeof p === 'number') {
@@ -493,11 +508,52 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
         defaultValue: []
     });
 
-    const availableSlots = React.useMemo(() => {
-        if (!watchAssignedMachineId || watchAssignedMachineId === NO_MACHINE_ASSIGNED_VALUE) return [];
-        const machine = machines.find(m => m.id === watchAssignedMachineId);
-        return machine?.slots || [];
+    // Get selected machine and its info
+    const selectedMachine = React.useMemo(() => {
+        if (!watchAssignedMachineId || watchAssignedMachineId === NO_MACHINE_ASSIGNED_VALUE) return null;
+        return machines.find(m => m.id === watchAssignedMachineId) || null;
     }, [watchAssignedMachineId, machines]);
+
+    // Check if machine already has an item assigned (Using)
+    const occupyingItem = React.useMemo(() => {
+        if (!selectedMachine) return null;
+        return stockItems.find(item =>
+            item.id !== initialData?.id &&
+            item.assignedMachineId === selectedMachine.id &&
+            item.assignedStatus === 'Assigned'
+        ) || null;
+    }, [selectedMachine, stockItems, initialData?.id]);
+
+    const isMachineOccupied = !!occupyingItem;
+
+    // Check size compatibility
+    const currentItemSize = form.watch("size");
+    const isSizeCompatible = React.useMemo(() => {
+        if (!selectedMachine || !currentItemSize) return true; // No size set = compatible
+        const machineSize = selectedMachine.prizeSize?.toLowerCase().trim();
+        const itemSize = currentItemSize.toLowerCase().trim();
+
+        if (!machineSize) return true; // Machine has no size restriction
+
+        // Direct match
+        if (machineSize === itemSize) return true;
+
+        // Small and Extra-Small are compatible
+        const smallSizes = ['small', 'extra-small', 'extra small'];
+        if (smallSizes.includes(machineSize) && smallSizes.includes(itemSize)) return true;
+
+        return false;
+    }, [selectedMachine, currentItemSize]);
+
+    // Get replacement queue count for the machine
+    const replacementQueueCount = React.useMemo(() => {
+        if (!selectedMachine) return 0;
+        return stockItems.filter(item =>
+            item.id !== initialData?.id &&
+            item.assignedMachineId === selectedMachine.id &&
+            item.assignedStatus === 'Assigned for Replacement'
+        ).length;
+    }, [selectedMachine, stockItems, initialData?.id]);
 
     const overallTargetQuantity = React.useMemo(() => {
         const qty = Number(watchedOverallQuantity);
@@ -592,19 +648,19 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
         const remaining = overallQty - allocatedQty;
 
         if (remaining > 0) {
-            // Find B-Plushy Room
-            const bPlushyIndex = data.locations?.findIndex((loc: any) => loc.name === "B-Plushy Room");
+            // Find default storage location
+            const defaultLocationIndex = data.locations?.findIndex((loc: any) => loc.name === DEFAULT_STORAGE_LOCATION);
 
-            if (bPlushyIndex !== undefined && bPlushyIndex >= 0) {
+            if (defaultLocationIndex !== undefined && defaultLocationIndex >= 0) {
                 // Update existing
-                const currentQty = data.locations![bPlushyIndex].quantity || 0;
+                const currentQty = data.locations![defaultLocationIndex].quantity || 0;
                 const newQty = (typeof currentQty === 'number' ? currentQty : parseFloat(currentQty as any) || 0) + remaining;
-                data.locations![bPlushyIndex].quantity = newQty;
+                data.locations![defaultLocationIndex].quantity = newQty;
             } else {
                 // Add new
                 if (!data.locations) data.locations = [];
                 data.locations.push({
-                    name: "B-Plushy Room",
+                    name: DEFAULT_STORAGE_LOCATION,
                     quantity: remaining,
                     isNewLocation: false,
                     customLocationName: ""
@@ -613,7 +669,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
 
             toast({
                 title: "Auto-Allocation",
-                description: `${remaining} unallocated items were assigned to B-Plushy Room.`,
+                description: `${remaining} unallocated items were assigned to ${DEFAULT_STORAGE_LOCATION}.`,
             });
         }
 
@@ -847,7 +903,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                     </Button>
                                                 </FormControl>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[9999] max-h-[300px]">
+                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[9999] max-h-[400px] overflow-hidden">
                                                 <Command
                                                     filter={(value, search) => {
                                                         const machine = machines.find((m) => m.id === value);
@@ -858,14 +914,14 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                     }}
                                                 >
                                                     <CommandInput placeholder="Search machines..." />
-                                                    <CommandList className="max-h-[300px] overflow-y-auto">
+                                                    <CommandList className="max-h-[350px] overflow-y-auto">
                                                         <CommandEmpty>No machine found.</CommandEmpty>
                                                         <CommandGroup>
                                                             <CommandItem
                                                                 value={NO_MACHINE_ASSIGNED_VALUE}
                                                                 onSelect={() => {
                                                                     form.setValue("assignedMachineId", NO_MACHINE_ASSIGNED_VALUE);
-                                                                    form.setValue("assignedSlotId", undefined);
+                                                                    form.setValue("assignmentStatus", undefined);
                                                                     setMachineComboboxOpen(false);
                                                                 }}
                                                                 className="py-3 cursor-pointer"
@@ -873,42 +929,75 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                                                 <Check className={cn("mr-2 h-4 w-4 shrink-0", field.value === NO_MACHINE_ASSIGNED_VALUE || !field.value ? "opacity-100" : "opacity-0")} />
                                                                 <span className="text-muted-foreground font-medium">[No Machine Assigned]</span>
                                                             </CommandItem>
-                                                            {machines.map((machine) => (
-                                                                <CommandItem
-                                                                    value={machine.id}
-                                                                    key={machine.id}
-                                                                    onSelect={() => {
-                                                                        form.setValue("assignedMachineId", machine.id);
-                                                                        form.setValue("assignedSlotId", undefined);
-                                                                        setMachineComboboxOpen(false);
-                                                                    }}
-                                                                    className="py-2 cursor-pointer"
-                                                                >
-                                                                    <Check className={cn("mr-2 h-4 w-4 shrink-0 text-primary", machine.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                                    <div className="flex items-center gap-3 w-full overflow-hidden">
-                                                                        <div className="shrink-0 relative h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/40 shadow-sm">
-                                                                            {machine.imageUrl ? (
-                                                                                <Image
-                                                                                    src={machine.imageUrl}
-                                                                                    alt={machine.name}
-                                                                                    fill
-                                                                                    className="object-cover"
-                                                                                />
-                                                                            ) : (
-                                                                                <div className="flex items-center justify-center w-full h-full bg-secondary text-muted-foreground">
-                                                                                    <Gamepad2 className="h-5 w-5 opacity-70" />
+                                                            {machines.map((machine) => {
+                                                                // Check if this machine has an occupying item
+                                                                const hasOccupyingItem = stockItems.some(item =>
+                                                                    item.id !== initialData?.id &&
+                                                                    item.assignedMachineId === machine.id &&
+                                                                    item.assignedStatus === 'Assigned'
+                                                                );
+                                                                // Check size compatibility
+                                                                const itemSize = form.getValues("size");
+                                                                const machineSize = machine.prizeSize?.toLowerCase().trim();
+                                                                const iSize = itemSize?.toLowerCase().trim();
+                                                                const smallSizes = ['small', 'extra-small', 'extra small'];
+                                                                const sizeCompatible = !itemSize || !machineSize ||
+                                                                    machineSize === iSize ||
+                                                                    (smallSizes.includes(machineSize) && smallSizes.includes(iSize || ''));
+
+                                                                return (
+                                                                    <CommandItem
+                                                                        value={machine.id}
+                                                                        key={machine.id}
+                                                                        onSelect={() => {
+                                                                            form.setValue("assignedMachineId", machine.id);
+                                                                            // Auto-suggest assignment status based on machine state
+                                                                            if (hasOccupyingItem) {
+                                                                                form.setValue("assignmentStatus", "Assigned for Replacement");
+                                                                            } else {
+                                                                                form.setValue("assignmentStatus", "Assigned");
+                                                                            }
+                                                                            setMachineComboboxOpen(false);
+                                                                        }}
+                                                                        className={cn(
+                                                                            "py-2 cursor-pointer",
+                                                                            !sizeCompatible && "opacity-60"
+                                                                        )}
+                                                                    >
+                                                                        <Check className={cn("mr-2 h-4 w-4 shrink-0 text-primary", machine.id === field.value ? "opacity-100" : "opacity-0")} />
+                                                                        <div className="flex items-center gap-3 w-full overflow-hidden">
+                                                                            <div className="shrink-0 relative h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/40 shadow-sm">
+                                                                                {machine.imageUrl ? (
+                                                                                    <Image
+                                                                                        src={machine.imageUrl}
+                                                                                        alt={machine.name}
+                                                                                        fill
+                                                                                        className="object-cover"
+                                                                                    />
+                                                                                ) : (
+                                                                                    <div className="flex items-center justify-center w-full h-full bg-secondary text-muted-foreground">
+                                                                                        <Gamepad2 className="h-5 w-5 opacity-70" />
+                                                                                    </div>
+                                                                                )}
+                                                                            </div>
+                                                                            <div className="flex flex-col min-w-0 flex-1">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <p className="text-sm font-semibold text-foreground truncate">{machine.name}</p>
+                                                                                    {hasOccupyingItem && (
+                                                                                        <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">Occupied</span>
+                                                                                    )}
+                                                                                    {!sizeCompatible && (
+                                                                                        <span className="text-[10px] bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">Size Mismatch</span>
+                                                                                    )}
                                                                                 </div>
-                                                                            )}
+                                                                                <p className="text-xs text-muted-foreground truncate">
+                                                                                    Tag: {machine.assetTag} {machine.prizeSize ? `• ${machine.prizeSize}` : ''}
+                                                                                </p>
+                                                                            </div>
                                                                         </div>
-                                                                        <div className="flex flex-col min-w-0 flex-1">
-                                                                            <p className="text-sm font-semibold text-foreground truncate">{machine.name}</p>
-                                                                            <p className="text-xs text-muted-foreground truncate">
-                                                                                Tag: {machine.assetTag}
-                                                                            </p>
-                                                                        </div>
-                                                                    </div>
-                                                                </CommandItem>
-                                                            ))}
+                                                                    </CommandItem>
+                                                                );
+                                                            })}
                                                         </CommandGroup>
                                                     </CommandList>
                                                 </Command>
@@ -920,70 +1009,83 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                             />
                             <FormField
                                 control={form.control}
-                                name="assignedSlotId"
+                                name="assignmentStatus"
                                 render={({ field }) => (
                                     <FormItem className="flex flex-col">
-                                        <FormLabel>Slot</FormLabel>
-                                        <Popover open={slotComboboxOpen} onOpenChange={setSlotComboboxOpen}>
-                                            <PopoverTrigger asChild>
-                                                <FormControl>
-                                                    <Button
-                                                        variant="outline"
-                                                        role="combobox"
-                                                        disabled={!watchAssignedMachineId || watchAssignedMachineId === NO_MACHINE_ASSIGNED_VALUE}
-                                                        className={cn("w-full justify-between", !field.value && "text-muted-foreground")}
-                                                    >
-                                                        <span className="truncate">
-                                                            {field.value
-                                                                ? field.value === ANY_SLOT_VALUE
-                                                                    ? "Any Slot / General"
-                                                                    : availableSlots.find(s => s.id === field.value)?.name || "Select slot..."
-                                                                : "Select slot..."}
-                                                        </span>
-                                                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                                    </Button>
-                                                </FormControl>
-                                            </PopoverTrigger>
-                                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0 z-[9999] max-h-[300px]">
-                                                <Command>
-                                                    <CommandInput placeholder="Search slots..." />
-                                                    <CommandList className="max-h-[300px] overflow-y-auto">
-                                                        <CommandEmpty>No slots found.</CommandEmpty>
-                                                        <CommandGroup>
-                                                            <CommandItem
-                                                                value={ANY_SLOT_VALUE}
-                                                                onSelect={() => {
-                                                                    form.setValue("assignedSlotId", ANY_SLOT_VALUE);
-                                                                    setSlotComboboxOpen(false);
-                                                                }}
-                                                            >
-                                                                <Check className={cn("mr-2 h-4 w-4", field.value === ANY_SLOT_VALUE ? "opacity-100" : "opacity-0")} />
-                                                                Any Slot / General
-                                                            </CommandItem>
-                                                            {availableSlots.map((slot) => (
-                                                                <CommandItem
-                                                                    value={slot.id}
-                                                                    key={slot.id}
-                                                                    onSelect={() => {
-                                                                        form.setValue("assignedSlotId", slot.id);
-                                                                        setSlotComboboxOpen(false);
-                                                                    }}
-                                                                >
-                                                                    <Check className={cn("mr-2 h-4 w-4", slot.id === field.value ? "opacity-100" : "opacity-0")} />
-                                                                    {slot.name}
-                                                                </CommandItem>
-                                                            ))}
-                                                        </CommandGroup>
-                                                    </CommandList>
-                                                </Command>
-                                            </PopoverContent>
-
-                                        </Popover>
+                                        <FormLabel>Assignment Type</FormLabel>
+                                        <Select
+                                            value={field.value || ""}
+                                            onValueChange={(value) => field.onChange(value as any)}
+                                            disabled={!watchAssignedMachineId || watchAssignedMachineId === NO_MACHINE_ASSIGNED_VALUE}
+                                        >
+                                            <FormControl>
+                                                <SelectTrigger className={cn(!field.value && "text-muted-foreground")}>
+                                                    <SelectValue placeholder="Select type..." />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                <SelectItem
+                                                    value="Assigned"
+                                                    disabled={isMachineOccupied}
+                                                    className={isMachineOccupied ? "opacity-50" : ""}
+                                                >
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                                                        Using (Primary)
+                                                        {isMachineOccupied && <span className="text-xs text-muted-foreground ml-1">(Machine occupied)</span>}
+                                                    </div>
+                                                </SelectItem>
+                                                <SelectItem value="Assigned for Replacement">
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+                                                        Replacement (Queue)
+                                                        {replacementQueueCount > 0 && (
+                                                            <span className="text-xs text-muted-foreground ml-1">({replacementQueueCount} in queue)</span>
+                                                        )}
+                                                    </div>
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                         <FormMessage />
                                     </FormItem>
                                 )}
                             />
                         </div>
+
+                        {/* Machine Info & Warnings */}
+                        {selectedMachine && (
+                            <div className="space-y-2 pt-2">
+                                {/* Size Compatibility Warning */}
+                                {!isSizeCompatible && (
+                                    <div className="flex items-center gap-2 p-2 bg-yellow-50 border border-yellow-200 rounded-md text-sm">
+                                        <AlertTriangle className="h-4 w-4 text-yellow-600 shrink-0" />
+                                        <span className="text-yellow-800">
+                                            Size mismatch: Item is <strong>{currentItemSize}</strong>, machine accepts <strong>{selectedMachine.prizeSize}</strong>
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Occupied Warning */}
+                                {isMachineOccupied && occupyingItem && (
+                                    <div className="flex items-center gap-2 p-2 bg-red-50 border border-red-200 rounded-md text-sm">
+                                        <AlertTriangle className="h-4 w-4 text-red-600 shrink-0" />
+                                        <span className="text-red-800">
+                                            Machine is currently using: <strong>{occupyingItem.name}</strong>.
+                                            You can assign this item as Replacement.
+                                        </span>
+                                    </div>
+                                )}
+
+                                {/* Machine Info */}
+                                <div className="flex items-center gap-4 p-2 bg-muted/50 rounded-md text-xs text-muted-foreground">
+                                    <span>Machine: <strong className="text-foreground">{selectedMachine.name}</strong></span>
+                                    {selectedMachine.prizeSize && (
+                                        <span>Size: <strong className="text-foreground">{selectedMachine.prizeSize}</strong></span>
+                                    )}
+                                    <span>Status: <strong className="text-foreground">{selectedMachine.status}</strong></span>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1162,7 +1264,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                         ) : overallRemainingToAllocate > 0 ? (
                                             <span className="text-amber-600 font-medium flex items-center gap-1">
                                                 <AlertTriangle className="h-3 w-3" />
-                                                {overallRemainingToAllocate} unallocated units will go to B-Plushy Room
+                                                {overallRemainingToAllocate} unallocated units will go to {DEFAULT_STORAGE_LOCATION}
                                             </span>
                                         ) : (
                                             <span className="text-green-600 font-medium flex items-center gap-1">
@@ -1173,7 +1275,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                                     </p>
                                 </div>
                             ))}
-                            <Button type="button" variant="outline" onClick={() => appendLocation({ name: primaryStorageLocations[0] || "", quantity: 0, isNewLocation: false, customLocationName: "" })} className="font-body w-full">
+                            <Button type="button" variant="outline" onClick={() => appendLocation({ name: primaryStorageLocations[0] || "", quantity: undefined as unknown as number, isNewLocation: false, customLocationName: "" })} className="font-body w-full">
                                 <PlusCircle className="mr-2 h-4 w-4" />
                                 Add Another Location
                             </Button>
@@ -1494,23 +1596,7 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                             <div className="border-t pt-4 mt-4">
                                 <h4 className="text-sm font-semibold mb-3">Pricing</h4>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    <FormField
-                                        control={form.control}
-                                        name="cost"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel>Cost (Unit Price)</FormLabel>
-                                                <FormControl>
-                                                    <Input type="number" step="0.01" placeholder="0.00" className="font-body"
-                                                        {...field}
-                                                        onChange={e => field.onChange(e.target.value === '' ? undefined : e.target.value)}
-                                                        value={field.value as string | number | undefined ?? ''}
-                                                    />
-                                                </FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
+
 
                                     <FormField
                                         control={form.control}

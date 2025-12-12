@@ -2,7 +2,8 @@
 // Force rebuild
 
 import React, { useEffect, useState, useMemo } from "react";
-import { stockService, orderService, machineService } from "@/services";
+import { stockService, orderService, machineService, auditService } from "@/services";
+
 import { StockItem, ReorderRequest, ArcadeMachine, AuditLog } from "@/types";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
 import { useAuth } from "@/context/AuthContext";
@@ -45,7 +46,7 @@ import {
 
 import { StockFilters, ViewStyle, SortOption, StockStatusFilter } from "./StockFilters";
 import { StockItemCard } from "./StockItemCard";
-import { StockItemForm } from "./StockItemForm";
+import { StockItemForm, DEFAULT_STORAGE_LOCATION } from "./StockItemForm";
 import { AdjustStockDialog } from "./AdjustStockDialog";
 import { ReceiveOrderDialog } from "./ReceiveOrderDialog";
 import { StockItemDetailsDialog } from "./StockItemDetailsDialog";
@@ -67,6 +68,23 @@ import {
 import { MoreHorizontal, Edit, Trash2, Settings2, History, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { usePageState } from "@/hooks/usePageState";
+
+// Define state shape for persistence
+interface InventoryPageState {
+    searchTerm: string;
+    selectedCategory: string;
+    sortOrder: SortOption;
+    stockStatus: StockStatusFilter;
+    viewStyle: ViewStyle;
+    sortColumn: string | null;
+    sortDirection: 'asc' | 'desc';
+    selectedSize: string;
+    selectedBrand: string;
+    assignedStatusFilter: string;
+}
+
+
 
 export function StockList() {
     const { userProfile, hasRole } = useAuth();
@@ -74,26 +92,46 @@ export function StockList() {
     const [reorderRequests, setReorderRequests] = useState<ReorderRequest[]>([]);
     const [loading, setLoading] = useState(true);
 
-    // Filter & Sort State
-    const [searchTerm, setSearchTerm] = useState("");
-    const [selectedCategory, setSelectedCategory] = useState("All");
-    const [sortOrder, setSortOrder] = useState<SortOption>("date-new");
-    const [stockStatus, setStockStatus] = useState<StockStatusFilter>("all");
-    const [viewStyle, setViewStyle] = useState<ViewStyle>(() => {
-        // Load saved view preference from localStorage, default to "list" if not set
-        if (typeof window !== 'undefined') {
-            const savedView = localStorage.getItem('inventory-view-style');
-            return (savedView as ViewStyle) || "list";
-        }
-        return "list";
+    // Persistent page state (view mode, filters, sort, scroll position)
+    const { state: pageState, updateState, updateMultiple, resetState: resetPageState } = usePageState<InventoryPageState>({
+        key: 'inventory-page',
+        initialState: {
+            searchTerm: '',
+            selectedCategory: 'All',
+            sortOrder: 'date-new' as SortOption,
+            stockStatus: 'all' as StockStatusFilter,
+            viewStyle: (typeof window !== 'undefined' ? (localStorage.getItem('inventory-view-style') as ViewStyle || 'list') : 'list'),
+            sortColumn: null,
+            sortDirection: 'asc' as 'asc' | 'desc',
+            selectedSize: 'All',
+            selectedBrand: 'All',
+            assignedStatusFilter: 'all',
+        },
+        persistScroll: true,
+        isReady: !loading,
+        scrollSelector: '#main-content'
     });
-    const [sortColumn, setSortColumn] = useState<string | null>(null);
-    const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-    // Filter states
-    const [selectedSize, setSelectedSize] = useState("All");
-    const [selectedBrand, setSelectedBrand] = useState("All");
-    const [assignedStatusFilter, setAssignedStatusFilter] = useState<string>("all");
+    // Destructure for easier access
+    const {
+        searchTerm, selectedCategory, sortOrder, stockStatus, viewStyle,
+        sortColumn, sortDirection, selectedSize, selectedBrand, assignedStatusFilter
+    } = pageState;
+
+    // State update helpers
+    const setSearchTerm = (value: string) => updateState('searchTerm', value);
+    const setSelectedCategory = (value: string) => updateState('selectedCategory', value);
+    const setSortOrder = (value: SortOption) => updateState('sortOrder', value);
+    const setStockStatus = (value: StockStatusFilter) => updateState('stockStatus', value);
+    const setViewStyle = (value: ViewStyle) => {
+        updateState('viewStyle', value);
+        if (typeof window !== 'undefined') localStorage.setItem('inventory-view-style', value);
+    };
+    const setSortColumn = (value: string | null) => updateState('sortColumn', value);
+    const setSortDirection = (value: 'asc' | 'desc') => updateState('sortDirection', value);
+    const setSelectedSize = (value: string) => updateState('selectedSize', value);
+    const setSelectedBrand = (value: string) => updateState('selectedBrand', value);
+    const setAssignedStatusFilter = (value: string) => updateState('assignedStatusFilter', value);
 
     const categories = useMemo(() => {
         const cats = new Set(items.map(i => i.category).filter(Boolean));
@@ -180,13 +218,15 @@ export function StockList() {
     }, []);
 
     const handleResetFilters = () => {
-        setSearchTerm("");
-        setSelectedCategory("All");
-        setSortOrder("date-new");
-        setStockStatus("all");
-        setSelectedSize("All");
-        setSelectedBrand("All");
-        setAssignedStatusFilter("all");
+        updateMultiple({
+            searchTerm: "",
+            selectedCategory: "All",
+            sortOrder: "date-new",
+            stockStatus: "all",
+            selectedSize: "All",
+            selectedBrand: "All",
+            assignedStatusFilter: "all"
+        });
     };
 
     // Filter Logic
@@ -239,7 +279,7 @@ export function StockList() {
                     case 'size':
                         // Define size order for proper sorting
                         const sizeOrder: Record<string, number> = {
-                            'XS': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6,
+                            'XS': 1, 'EXTRA-SMALL': 1, 'S': 2, 'M': 3, 'L': 4, 'XL': 5, 'XXL': 6,
                             'SMALL': 2, 'MEDIUM': 3, 'LARGE': 4, 'BIG': 5
                         };
                         aVal = sizeOrder[a.size?.toUpperCase() || ''] || 99;
@@ -295,16 +335,25 @@ export function StockList() {
 
 
 
-    const createHistoryLog = (action: string, details: Record<string, unknown>, entityId: string = "temp"): AuditLog => ({
-        id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        action,
-        entityType: "StockItem",
-        entityId,
-        userId: userProfile?.uid || "system",
-        userRole: userProfile?.role || "system",
-        timestamp: new Date(),
-        details
-    });
+    const createHistoryLog = (action: string, details: Record<string, unknown>, entityId: string = "temp", skipGlobal: boolean = false): AuditLog => {
+        const log: AuditLog = {
+            id: `log_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+            action,
+            entityType: "StockItem",
+            entityId,
+            userId: userProfile?.uid || "system",
+            userRole: userProfile?.role || "system",
+            timestamp: new Date(),
+            details
+        };
+
+        if (!skipGlobal) {
+            const { id, ...logData } = log;
+            auditService.add(logData).catch(err => console.error("Global audit log failed", err));
+        }
+
+        return log;
+    };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleSaveItem = async (data: any) => {
@@ -424,14 +473,30 @@ export function StockList() {
                     name: itemData.name,
                     category: itemData.category,
                     initialQuantity: itemData.quantity
-                });
+                }, "temp", true); // Skip global log initially
 
-                await stockService.add({
+                const newId = await stockService.add({
                     ...itemData,
                     history: [historyLog],
                     createdAt: new Date(),
                     updatedAt: new Date()
                 });
+
+                // Now dispatch global log with correct ID
+                auditService.add({
+                    action: "CREATE_ITEM",
+                    entityType: "StockItem",
+                    entityId: newId,
+                    userId: userProfile?.uid || "system",
+                    userRole: userProfile?.role || "system",
+                    timestamp: new Date(),
+                    details: {
+                        name: itemData.name,
+                        category: itemData.category,
+                        initialQuantity: itemData.quantity
+                    }
+                }).catch(console.error);
+
                 // State is updated via subscription - no need to manually add here
                 toast.success("Item Created", { description: `${itemData.name} has been added.` });
             }
@@ -446,6 +511,20 @@ export function StockList() {
     const handleDelete = async () => {
         if (!itemToDelete) return;
         try {
+            // Log deletion before removing
+            await auditService.add({
+                action: "DELETE_ITEM",
+                entityType: "StockItem",
+                entityId: itemToDelete.id,
+                userId: userProfile?.uid || "system",
+                userRole: userProfile?.role || "system",
+                timestamp: new Date(),
+                details: {
+                    name: itemToDelete.name,
+                    sku: itemToDelete.sku
+                }
+            });
+
             await stockService.remove(itemToDelete.id);
             // Update state directly
             setItems(prevItems => prevItems.filter(item => item.id !== itemToDelete.id));
@@ -517,7 +596,7 @@ export function StockList() {
                 const item = items.find(i => i.id === itemId);
                 if (item) {
                     // Add to default location or first location
-                    const locationName = item.locations[0]?.name || "Warehouse";
+                    const locationName = item.locations[0]?.name || DEFAULT_STORAGE_LOCATION;
                     await handleAdjustStock(itemId, {
                         adjustmentType: 'add',
                         quantity: request.quantityRequested,
@@ -531,7 +610,7 @@ export function StockList() {
                     name: request.itemName,
                     category: request.itemCategory || "Plush",
                     sku: "",
-                    locations: [{ name: "Warehouse", quantity: request.quantityRequested }],
+                    locations: [{ name: DEFAULT_STORAGE_LOCATION, quantity: request.quantityRequested }],
                     lowStockThreshold: 10,
                     createdAt: new Date(),
                     updatedAt: new Date(),
@@ -661,7 +740,10 @@ export function StockList() {
             const historyLog = createHistoryLog("STATUS_CHANGE", {
                 oldStatus: oldStatus || "Not Assigned",
                 newStatus: newStatus,
-                machine: item.assignedMachineName || "None"
+                oldStatus: oldStatus || "Not Assigned",
+                newStatus: newStatus,
+                machine: item.assignedMachineName || "None",
+                machineId: item.assignedMachineId || undefined
             }, item.id);
             const updatedHistory = [...(item.history || []), historyLog];
 
@@ -935,7 +1017,10 @@ export function StockList() {
                 const unassignLog = createHistoryLog("UNASSIGN_MACHINE", {
                     reason: "Replaced by new item",
                     replacedBy: assigningItem.name,
-                    machine: machine.name
+                    reason: "Replaced by new item",
+                    replacedBy: assigningItem.name,
+                    machine: machine.name,
+                    machineId: machine.id
                 }, currentActiveItem.id);
                 const updatedHistory = [...(currentActiveItem.history || []), unassignLog];
 
@@ -959,6 +1044,7 @@ export function StockList() {
         // Update inventory item with machine assignment
         const assignLog = createHistoryLog("ASSIGN_MACHINE", {
             machine: machine.name,
+            machineId: machine.id,
             slot: slotId || "Any",
             status: targetStatus
         }, assigningItem.id);
@@ -1371,6 +1457,7 @@ export function StockList() {
                         onCancel={() => setIsFormOpen(false)}
                         categories={categories}
                         machines={machines}
+                        stockItems={items}
                     />
                 </DialogContent>
             </Dialog>
@@ -1624,20 +1711,30 @@ export function StockList() {
                                 // Filter Logic based on Mode
                                 const isPrimary = assignmentMode === 'primary';
 
+                                // Helper function to check size compatibility
+                                // Small and Extra-Small are compatible with each other
+                                const areSizesCompatible = (machineSize?: string, itemSize?: string): boolean => {
+                                    if (!machineSize || !itemSize) return false;
+                                    const mSize = machineSize.trim().toLowerCase();
+                                    const iSize = itemSize.trim().toLowerCase();
+
+                                    // Direct match
+                                    if (mSize === iSize) return true;
+
+                                    // Small and Extra-Small are compatible with each other
+                                    const smallSizes = ['small', 'extra-small', 'extra small'];
+                                    if (smallSizes.includes(mSize) && smallSizes.includes(iSize)) return true;
+
+                                    return false;
+                                };
+
                                 if (assigningItem?.size) {
                                     compatibleMachines = baseFiltered.filter(m => {
-                                        const machineSize = m.prizeSize?.trim().toLowerCase();
-                                        const itemSize = assigningItem.size?.trim().toLowerCase();
-                                        const sizeMatch = machineSize === itemSize;
-                                        // For both modes, we prioritize size match.
-                                        return sizeMatch;
+                                        return areSizesCompatible(m.prizeSize, assigningItem.size);
                                     });
 
                                     otherMachines = baseFiltered.filter(m => {
-                                        const machineSize = m.prizeSize?.trim().toLowerCase();
-                                        const itemSize = assigningItem.size?.trim().toLowerCase();
-                                        const sizeMatch = machineSize === itemSize;
-                                        return !sizeMatch;
+                                        return !areSizesCompatible(m.prizeSize, assigningItem.size);
                                     });
                                 } else {
                                     // No item size, treat all as compatible

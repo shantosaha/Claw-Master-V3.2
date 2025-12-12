@@ -1,19 +1,32 @@
 "use client";
 
+import React from "react";
+import Link from "next/link";
 import { StockItem } from "@/types";
-import { Card, CardContent } from "@/components/ui/card";
+import { calculateStockLevel } from "@/utils/inventoryUtils";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
-    DropdownMenuTrigger,
     DropdownMenuSeparator,
+    DropdownMenuTrigger,
+    DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu";
-import { calculateStockLevel } from "@/utils/inventoryUtils";
-import { Edit, Trash2, MoreHorizontal, Package, ShoppingCart, ChevronLeft, ChevronRight } from "lucide-react";
-import { useState } from "react";
+import {
+    Package,
+    Pencil,
+    Trash2,
+    MoreVertical,
+    ShoppingCart,
+    ArrowUpDown,
+    Tag,
+    Layers,
+    MapPin,
+    Gamepad2,
+    ChevronDown,
+} from "lucide-react";
 
 interface StockDetailHeroProps {
     item: StockItem;
@@ -21,12 +34,22 @@ interface StockDetailHeroProps {
     onDelete: () => void;
     onAdjustStock: () => void;
     onRequestReorder: () => void;
-    onChangeStockStatus?: (status: string) => void;
-    onChangeAssignedStatus?: (status: string) => void;
+    onChangeStockStatus: (newStatus: string) => void;
+    onChangeAssignedStatus: (newStatus: string) => void;
 }
 
-const stockStatusOptions = ["In Stock", "Limited Stock", "Low Stock", "Out of Stock"];
-const assignedStatusOptions = ["Not Assigned", "Assigned", "Assigned for Replacement"];
+const STOCK_STATUS_OPTIONS = [
+    { value: "In Stock", label: "In Stock", color: "bg-green-500/10 text-green-600 border-green-500/20" },
+    { value: "Limited Stock", label: "Limited Stock", color: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20" },
+    { value: "Low Stock", label: "Low Stock", color: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
+    { value: "Out of Stock", label: "Out of Stock", color: "bg-red-500/10 text-red-600 border-red-500/20" },
+];
+
+const ASSIGNED_STATUS_OPTIONS = [
+    { value: "Not Assigned", label: "Not Assigned", color: "bg-gray-500/10 text-gray-600 border-gray-500/20" },
+    { value: "Assigned", label: "Assigned (Using)", color: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
+    { value: "Assigned for Replacement", label: "Assigned for Replacement", color: "bg-purple-500/10 text-purple-600 border-purple-500/20" },
+];
 
 export function StockDetailHero({
     item,
@@ -37,228 +60,204 @@ export function StockDetailHero({
     onChangeStockStatus,
     onChangeAssignedStatus,
 }: StockDetailHeroProps) {
-    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+    // Calculate stock level from quantities
     const totalQty = item.locations?.reduce((sum, loc) => sum + loc.quantity, 0) || 0;
     const stockLevel = calculateStockLevel(totalQty, item.stockStatus);
 
-    const images = item.imageUrls && item.imageUrls.length > 0
-        ? item.imageUrls
-        : item.imageUrl
-            ? [item.imageUrl]
-            : [];
+    // Get current status badges
+    const currentStockStatus = STOCK_STATUS_OPTIONS.find(s => s.value === stockLevel.label) || STOCK_STATUS_OPTIONS[0];
+    const currentAssignedStatus = ASSIGNED_STATUS_OPTIONS.find(s => s.value === item.assignedStatus) || ASSIGNED_STATUS_OPTIONS[0];
 
-    const handlePrevImage = () => {
-        setSelectedImageIndex(prev => (prev > 0 ? prev - 1 : images.length - 1));
-    };
-
-    const handleNextImage = () => {
-        setSelectedImageIndex(prev => (prev < images.length - 1 ? prev + 1 : 0));
-    };
+    // Image display
+    const imageUrl = item.imageUrls?.[0] || item.imageUrl;
 
     return (
-        <Card className="overflow-hidden">
-            <CardContent className="p-6">
-                <div className="flex flex-col md:flex-row gap-6">
-                    {/* Image Gallery */}
-                    <div className="md:w-1/3">
-                        <div className="relative aspect-square rounded-lg overflow-hidden bg-muted/40 border">
-                            {images.length > 0 ? (
-                                <>
-                                    <img
-                                        src={images[selectedImageIndex]}
-                                        alt={item.name}
-                                        className="absolute inset-0 w-full h-full object-contain p-2"
-                                        onError={(e) => {
-                                            const target = e.target as HTMLImageElement;
-                                            target.src = "https://placehold.co/400x400?text=No+Image";
-                                        }}
-                                    />
-                                    {images.length > 1 && (
-                                        <>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="absolute left-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white h-8 w-8"
-                                                onClick={handlePrevImage}
-                                            >
-                                                <ChevronLeft className="h-4 w-4" />
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="absolute right-1 top-1/2 -translate-y-1/2 bg-black/50 hover:bg-black/70 text-white h-8 w-8"
-                                                onClick={handleNextImage}
-                                            >
-                                                <ChevronRight className="h-4 w-4" />
-                                            </Button>
-                                            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-                                                {selectedImageIndex + 1} / {images.length}
-                                            </div>
-                                        </>
-                                    )}
-                                </>
-                            ) : (
-                                <div className="flex items-center justify-center w-full h-full text-muted-foreground">
-                                    <Package className="h-16 w-16 opacity-30" />
-                                </div>
-                            )}
+        <div className="rounded-xl border bg-card overflow-hidden">
+            <div className="flex flex-col md:flex-row">
+                {/* Image Section */}
+                <div className="md:w-64 lg:w-80 bg-muted/50 flex items-center justify-center p-6 border-b md:border-b-0 md:border-r">
+                    {imageUrl ? (
+                        <img
+                            src={imageUrl}
+                            alt={item.name}
+                            className="w-full max-w-[200px] h-auto object-contain rounded-lg"
+                        />
+                    ) : (
+                        <div className="w-full aspect-square max-w-[200px] rounded-lg bg-muted flex items-center justify-center">
+                            <Package className="h-16 w-16 text-muted-foreground/30" />
                         </div>
-                        {/* Thumbnail Strip */}
-                        {images.length > 1 && (
-                            <div className="flex gap-2 mt-3 overflow-x-auto pb-1">
-                                {images.map((url, index) => (
-                                    <button
-                                        key={index}
-                                        onClick={() => setSelectedImageIndex(index)}
-                                        className={`relative w-14 h-14 shrink-0 rounded-md overflow-hidden border-2 transition-all ${selectedImageIndex === index
-                                            ? "border-primary ring-2 ring-primary/20"
-                                            : "border-transparent opacity-60 hover:opacity-100"
-                                            }`}
-                                    >
-                                        <img src={url} alt={`Thumbnail ${index + 1}`} className="object-cover w-full h-full" />
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
+                    )}
+                </div>
 
-                    {/* Item Details */}
-                    <div className="md:w-2/3 space-y-4">
-                        {/* Title and Actions Row */}
-                        <div className="flex justify-between items-start">
-                            <div>
-                                <h1 className="text-2xl font-bold">{item.name}</h1>
-                                <p className="text-muted-foreground mt-1">
-                                    SKU: <span className="font-mono">{item.sku}</span>
-                                    {item.brand && <> • {item.brand}</>}
-                                </p>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <Button variant="outline" onClick={onEdit}>
-                                    <Edit className="h-4 w-4 mr-2" /> Edit
-                                </Button>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" size="icon">
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem onClick={onAdjustStock}>
-                                            <Package className="h-4 w-4 mr-2" /> Adjust Stock
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={onRequestReorder}>
-                                            <ShoppingCart className="h-4 w-4 mr-2" /> Request Reorder
-                                        </DropdownMenuItem>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={onDelete} className="text-destructive">
-                                            <Trash2 className="h-4 w-4 mr-2" /> Delete Item
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                {/* Details Section */}
+                <div className="flex-1 p-6">
+                    <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                        {/* Title & Basic Info */}
+                        <div className="space-y-2">
+                            <h1 className="text-2xl font-bold">{item.name}</h1>
+                            <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                                {item.sku && (
+                                    <div className="flex items-center gap-1">
+                                        <Tag className="h-3.5 w-3.5" />
+                                        <span>{item.sku}</span>
+                                    </div>
+                                )}
+                                {item.category && (
+                                    <div className="flex items-center gap-1">
+                                        <Layers className="h-3.5 w-3.5" />
+                                        <span>{item.category}</span>
+                                    </div>
+                                )}
+                                {item.size && (
+                                    <div className="flex items-center gap-1">
+                                        <span className="text-xs bg-muted px-2 py-0.5 rounded-full font-medium">
+                                            {item.size}
+                                        </span>
+                                    </div>
+                                )}
                             </div>
                         </div>
 
-                        {/* Status Badges Row */}
-                        <div className="flex flex-wrap gap-2">
-                            {/* Stock Status - Editable - Match Inventory Page Style */}
+                        {/* Action Buttons */}
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Button variant="outline" size="sm" onClick={onEdit}>
+                                <Pencil className="h-4 w-4 mr-1.5" />
+                                Edit
+                            </Button>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Badge
-                                        className={`whitespace-nowrap text-xs font-medium px-3 py-1 cursor-pointer ${stockLevel.colorClass}`}
+                                    <Button variant="outline" size="icon">
+                                        <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={onAdjustStock}>
+                                        <ArrowUpDown className="h-4 w-4 mr-2" />
+                                        Adjust Stock
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={onRequestReorder}>
+                                        <ShoppingCart className="h-4 w-4 mr-2" />
+                                        Request Reorder
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                                        <Trash2 className="h-4 w-4 mr-2" />
+                                        Delete Item
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    </div>
+
+                    {/* Stats & Quick Info */}
+                    <div className="mt-6 grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        {/* Total Quantity */}
+                        <div className="bg-muted/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Total Quantity</p>
+                            <p className="text-2xl font-bold">{totalQty}</p>
+                        </div>
+
+                        {/* Low Stock Threshold */}
+                        <div className="bg-muted/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Low Stock Threshold</p>
+                            <p className="text-2xl font-bold">{item.lowStockThreshold}</p>
+                        </div>
+
+                        {/* Stock Status (Dropdown) */}
+                        <div className="bg-muted/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Stock Status</p>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`h-auto py-1 px-2 ${currentStockStatus.color} border hover:opacity-80 w-full justify-between`}
                                     >
-                                        {stockLevel.label}
-                                    </Badge>
+                                        <span className="font-medium">{stockLevel.label}</span>
+                                        <ChevronDown className="h-3.5 w-3.5 ml-1" />
+                                    </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="start">
-                                    {stockStatusOptions.map(status => (
+                                    <DropdownMenuLabel>Change Stock Status</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {STOCK_STATUS_OPTIONS.map((status) => (
                                         <DropdownMenuItem
-                                            key={status}
-                                            onClick={() => onChangeStockStatus?.(status)}
+                                            key={status.value}
+                                            onClick={() => onChangeStockStatus(status.value)}
+                                            className={status.value === stockLevel.label ? "bg-accent" : ""}
                                         >
-                                            {status}
+                                            <Badge variant="outline" className={`${status.color} mr-2`}>
+                                                {status.label}
+                                            </Badge>
                                         </DropdownMenuItem>
                                     ))}
                                 </DropdownMenuContent>
                             </DropdownMenu>
+                        </div>
 
-                            {/* Assigned Status - Editable - Match Inventory Page Style */}
+                        {/* Assigned Status (Dropdown) */}
+                        <div className="bg-muted/50 rounded-lg p-3">
+                            <p className="text-xs text-muted-foreground mb-1">Assigned Status</p>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Badge
-                                        className={`whitespace-nowrap text-xs font-medium px-3 py-1 cursor-pointer ${item.assignedStatus === "Assigned"
-                                            ? "bg-green-500 text-white hover:bg-green-600"
-                                            : item.assignedStatus === "Assigned for Replacement"
-                                                ? "bg-blue-500 text-white hover:bg-blue-600"
-                                                : "bg-gray-500 text-white hover:bg-gray-600"
-                                            }`}
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className={`h-auto py-1 px-2 ${currentAssignedStatus.color} border hover:opacity-80 w-full justify-between`}
                                     >
-                                        {item.assignedStatus === "Assigned"
-                                            ? "Using"
-                                            : item.assignedStatus === "Assigned for Replacement"
-                                                ? "Replacement"
-                                                : "Not Assigned"
-                                        }
-                                    </Badge>
+                                        <span className="font-medium truncate">
+                                            {item.assignedStatus || "Not Assigned"}
+                                        </span>
+                                        <ChevronDown className="h-3.5 w-3.5 ml-1 shrink-0" />
+                                    </Button>
                                 </DropdownMenuTrigger>
-                                <DropdownMenuContent>
-                                    <DropdownMenuItem onClick={() => onChangeAssignedStatus?.("Not Assigned")}>
-                                        Not Assigned
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onChangeAssignedStatus?.("Assigned")}>
-                                        Using
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => onChangeAssignedStatus?.("Assigned for Replacement")}>
-                                        Replacement
-                                    </DropdownMenuItem>
+                                <DropdownMenuContent align="start">
+                                    <DropdownMenuLabel>Change Assignment</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {ASSIGNED_STATUS_OPTIONS.map((status) => (
+                                        <DropdownMenuItem
+                                            key={status.value}
+                                            onClick={() => onChangeAssignedStatus(status.value)}
+                                            className={status.value === item.assignedStatus ? "bg-accent" : ""}
+                                        >
+                                            <Badge variant="outline" className={`${status.color} mr-2`}>
+                                                {status.label}
+                                            </Badge>
+                                        </DropdownMenuItem>
+                                    ))}
                                 </DropdownMenuContent>
                             </DropdownMenu>
-
-                            {/* Category & Size */}
-                            <Badge variant="outline">{item.category}</Badge>
-                            {item.size && <Badge variant="outline">{item.size}</Badge>}
-                            {item.type && <Badge variant="outline">{item.type}</Badge>}
                         </div>
-
-                        {/* Quick Stats Row */}
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-                            <div className="p-3 bg-muted/50 rounded-lg">
-                                <div className="text-xs text-muted-foreground">Total Quantity</div>
-                                <div className="text-xl font-bold">{totalQty}</div>
-                            </div>
-                            <div className="p-3 bg-muted/50 rounded-lg">
-                                <div className="text-xs text-muted-foreground">Inventory Value</div>
-                                <div className="text-xl font-bold">
-                                    ${((item.value || item.supplyChain?.costPerUnit || 0) * totalQty).toFixed(2)}
-                                </div>
-                            </div>
-                            <div className="p-3 bg-muted/50 rounded-lg">
-                                <div className="text-xs text-muted-foreground">Cost Per Unit</div>
-                                <div className="text-xl font-bold">
-                                    ${item.supplyChain?.costPerUnit?.toFixed(2) || "0.00"}
-                                </div>
-                            </div>
-                            <div className="p-3 bg-muted/50 rounded-lg">
-                                <div className="text-xs text-muted-foreground">Reorder Point</div>
-                                <div className="text-xl font-bold">
-                                    {item.supplyChain?.reorderPoint || item.lowStockThreshold || "N/A"}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Tags */}
-                        {item.tags && item.tags.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5 pt-2">
-                                {item.tags.map(tag => (
-                                    <Badge key={tag} variant="secondary" className="text-xs">
-                                        {tag}
-                                    </Badge>
-                                ))}
-                            </div>
-                        )}
                     </div>
+
+                    {/* Machine Assignment Info */}
+                    {item.assignedMachineName && (
+                        <div className="mt-4 p-3 bg-blue-500/5 rounded-lg border border-blue-500/20">
+                            <div className="flex items-center gap-2 text-sm">
+                                <Gamepad2 className="h-4 w-4 text-blue-500" />
+                                <span className="text-muted-foreground">Assigned to:</span>
+                                {item.assignedMachineId ? (
+                                    <Link
+                                        href={`/machines/${item.assignedMachineId}`}
+                                        className="font-medium text-blue-600 hover:underline hover:text-blue-800"
+                                    >
+                                        {item.assignedMachineName}
+                                    </Link>
+                                ) : (
+                                    <span className="font-medium text-blue-600">{item.assignedMachineName}</span>
+                                )}
+                                {item.assignedStatus && (
+                                    <Badge variant="outline" className={currentAssignedStatus.color}>
+                                        {item.assignedStatus}
+                                    </Badge>
+                                )}
+                            </div>
+                        </div>
+                    )}
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     );
 }

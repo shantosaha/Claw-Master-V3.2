@@ -11,7 +11,6 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import Image from "next/image";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
@@ -36,9 +35,15 @@ export function MachineCard({ machine, onManageStock, onStatusChange }: MachineC
 
     const getStockStatusColor = (level: ArcadeMachineSlot['stockLevel']) => {
         switch (level) {
-            case 'Full': return "bg-green-500";
+            case 'In Stock': return "bg-emerald-500";
+            case 'Limited Stock': return "bg-amber-500";
+            case 'Low Stock': return "bg-orange-500";
+            case 'Out of Stock': return "bg-red-500";
+
+            // Legacy/Fallback
+            case 'Full': return "bg-emerald-500";
             case 'Good': return "bg-blue-500";
-            case 'Low': return "bg-yellow-500";
+            case 'Low': return "bg-orange-500";
             case 'Empty': return "bg-red-500";
             default: return "bg-gray-200";
         }
@@ -60,11 +65,10 @@ export function MachineCard({ machine, onManageStock, onStatusChange }: MachineC
             <CardHeader className="p-0">
                 <div className="relative h-48 w-full bg-muted">
                     {machine.imageUrl ? (
-                        <Image
+                        <img
                             src={machine.imageUrl}
                             alt={machine.name}
-                            fill
-                            className="object-cover"
+                            className="absolute inset-0 w-full h-full object-cover"
                         />
                     ) : (
                         <div className="flex h-full items-center justify-center text-muted-foreground">

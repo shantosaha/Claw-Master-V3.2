@@ -10,8 +10,8 @@ export const sampleInventoryData = [
                 "tags": ["Anime", "Yellow", "Licensed"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_01_p1",
-                "assignedMachineName": "Trend Catcher 1 P1",
+                "assignedMachineId": "mac_tc_02_p1_top",
+                "assignedMachineName": "Trend Catcher 2 P1 - Top",
                 "imageUrl": "/stock-images/inv_plu_001_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_001_1.jpg",
@@ -49,8 +49,8 @@ export const sampleInventoryData = [
                 "tags": ["Anime", "Blue", "Licensed"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_01_p1",
-                "assignedMachineName": "Trend Catcher 1 P1",
+                "assignedMachineId": "mac_tc_02_p2_btm",
+                "assignedMachineName": "Trend Catcher 2 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_002_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_002_1.jpg",
@@ -87,8 +87,8 @@ export const sampleInventoryData = [
                 "tags": ["Gaming", "Pink", "Round"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_01_p2",
-                "assignedMachineName": "Trend Catcher 1 P2",
+                "assignedMachineId": "mac_tc_03_p2_top",
+                "assignedMachineName": "Trend Catcher 3 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_003_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_003_1.jpg",
@@ -125,8 +125,8 @@ export const sampleInventoryData = [
                 "tags": ["Gaming", "Blue", "Round"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_01_p2",
-                "assignedMachineName": "Trend Catcher 1 P2",
+                "assignedMachineId": "mac_tc_04_p1_btm",
+                "assignedMachineName": "Trend Catcher 4 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_004_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_004_1.jpg",
@@ -163,8 +163,8 @@ export const sampleInventoryData = [
                 "tags": ["Cute", "Cat", "White"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_02_p1",
-                "assignedMachineName": "Trend Catcher 2 P1",
+                "assignedMachineId": "mac_tc_01_p1_top",
+                "assignedMachineName": "Trend Catcher 1 P1 - Top",
                 "imageUrl": "/stock-images/inv_plu_005_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_005_1.jpg",
@@ -201,8 +201,8 @@ export const sampleInventoryData = [
                 "tags": ["Cute", "Rabbit", "Pink"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_02_p1",
-                "assignedMachineName": "Trend Catcher 2 P1",
+                "assignedMachineId": "mac_tc_01_p2_btm",
+                "assignedMachineName": "Trend Catcher 1 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_006_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_006_1.jpg",
@@ -238,9 +238,9 @@ export const sampleInventoryData = [
                 "brand": "Sanrio",
                 "tags": ["Cute", "Goth", "Purple"],
                 "stockStatus": "Arrived",
-                "assignedStatus": "Assigned for Replacement",
-                "assignedMachineId": "mac_tc_02_p2",
-                "assignedMachineName": "Trend Catcher 2 P2",
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tc_01_p2_top",
+                "assignedMachineName": "Trend Catcher 1 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_007_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_007_1.jpg",
@@ -276,9 +276,9 @@ export const sampleInventoryData = [
                 "brand": "Sanrio",
                 "tags": ["Cute", "Dog", "White"],
                 "stockStatus": "Ordered",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tc_02_p1_btm",
+                "assignedMachineName": "Trend Catcher 2 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_008_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_008_1.jpg",
@@ -313,8 +313,8 @@ export const sampleInventoryData = [
                 "tags": ["Food", "Trending", "Pink"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_03_p1",
-                "assignedMachineName": "Trend Catcher 3 P1",
+                "assignedMachineId": "mac_miya_01",
+                "assignedMachineName": "Crazy Toy Miya 1",
                 "imageUrl": "/stock-images/inv_plu_009_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_009_1.jpg",
@@ -351,8 +351,8 @@ export const sampleInventoryData = [
                 "tags": ["Food", "Trending", "Brown"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_03_p1",
-                "assignedMachineName": "Trend Catcher 3 P1",
+                "assignedMachineId": "mac_miya_10",
+                "assignedMachineName": "Crazy Toy Miya 10",
                 "imageUrl": "/stock-images/inv_plu_010_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_010_1.jpg",
@@ -389,8 +389,8 @@ export const sampleInventoryData = [
                 "tags": ["Gaming", "Green", "Square"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_04_p1",
-                "assignedMachineName": "Trend Catcher 4 P1",
+                "assignedMachineId": "mac_tc_04_p1_top",
+                "assignedMachineName": "Trend Catcher 4 P1 - Top",
                 "imageUrl": "/stock-images/inv_plu_011_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_011_1.jpg",
@@ -427,8 +427,8 @@ export const sampleInventoryData = [
                 "tags": ["Gaming", "Red", "Square"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_04_p1",
-                "assignedMachineName": "Trend Catcher 4 P1",
+                "assignedMachineId": "mac_tc_04_p2_btm",
+                "assignedMachineName": "Trend Catcher 4 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_012_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_012_1.jpg",
@@ -465,8 +465,8 @@ export const sampleInventoryData = [
                 "tags": ["Movie", "Blue", "Alien"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_05_p1",
-                "assignedMachineName": "Trend Catcher 5 P1",
+                "assignedMachineId": "mac_tc_04_p2_top",
+                "assignedMachineName": "Trend Catcher 4 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_013_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_013_1.jpg",
@@ -503,8 +503,8 @@ export const sampleInventoryData = [
                 "tags": ["Movie", "Pink", "Alien"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_05_p1",
-                "assignedMachineName": "Trend Catcher 5 P1",
+                "assignedMachineId": "mac_tc_05_p1_btm",
+                "assignedMachineName": "Trend Catcher 5 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_014_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_014_1.jpg",
@@ -541,8 +541,8 @@ export const sampleInventoryData = [
                 "tags": ["TikTok", "Reversible", "Ocean"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_06_p1",
-                "assignedMachineName": "Trend Catcher 6 P1",
+                "assignedMachineId": "mac_miya_11",
+                "assignedMachineName": "Crazy Toy Miya 11",
                 "imageUrl": "/stock-images/inv_plu_015_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_015_1.jpg",
@@ -580,8 +580,8 @@ export const sampleInventoryData = [
                 "tags": ["Food", "Green", "Cute"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tc_06_p1",
-                "assignedMachineName": "Trend Catcher 6 P1",
+                "assignedMachineId": "mac_miya_12",
+                "assignedMachineName": "Crazy Toy Miya 12",
                 "imageUrl": "/stock-images/inv_plu_016_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_016_1.jpg",
@@ -617,9 +617,9 @@ export const sampleInventoryData = [
                 "brand": "Sega",
                 "tags": ["Anime", "Pink Hair", "New"],
                 "stockStatus": "Arrived",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tc_03_p1_top",
+                "assignedMachineName": "Trend Catcher 3 P1 - Top",
                 "imageUrl": "/stock-images/inv_plu_017_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_017_1.jpg",
@@ -655,9 +655,9 @@ export const sampleInventoryData = [
                 "brand": "Sega",
                 "tags": ["Anime", "Dog", "White"],
                 "stockStatus": "Arrived",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tc_03_p2_btm",
+                "assignedMachineName": "Trend Catcher 3 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_018_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_018_1.jpg",
@@ -693,9 +693,9 @@ export const sampleInventoryData = [
                 "brand": "Furyu",
                 "tags": ["Anime", "Orange", "Trending"],
                 "stockStatus": "Requested",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tc_05_p2_top",
+                "assignedMachineName": "Trend Catcher 5 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_019_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_019_1.jpg",
@@ -730,8 +730,8 @@ export const sampleInventoryData = [
                 "tags": ["Gaming", "Red", "Meme"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_miya_01",
-                "assignedMachineName": "Crazy Toy Miya 1",
+                "assignedMachineId": "mac_tc_06_p1_btm",
+                "assignedMachineName": "Trend Catcher 6 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_020_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_020_1.jpg",
@@ -766,9 +766,9 @@ export const sampleInventoryData = [
                 "brand": "San-X",
                 "tags": ["Bear", "Cute", "Brown"],
                 "stockStatus": "Organized",
-                "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_dc_01",
-                "assignedMachineName": "Doll Castle 1",
+                "assignedStatus": "Not Assigned",
+                "assignedMachineId": null,
+                "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_021_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_021_1.jpg",
@@ -803,9 +803,9 @@ export const sampleInventoryData = [
                 "brand": "San-X",
                 "tags": ["Bear", "Cute", "White"],
                 "stockStatus": "Organized",
-                "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_dc_02",
-                "assignedMachineName": "Doll Castle 2",
+                "assignedStatus": "Not Assigned",
+                "assignedMachineId": null,
+                "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_022_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_022_1.jpg",
@@ -840,9 +840,9 @@ export const sampleInventoryData = [
                 "brand": "San-X",
                 "tags": ["Bird", "Cute", "Yellow"],
                 "stockStatus": "Organized",
-                "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_dc_03",
-                "assignedMachineName": "Doll Castle 3",
+                "assignedStatus": "Not Assigned",
+                "assignedMachineId": null,
+                "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_023_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_023_1.jpg",
@@ -950,8 +950,8 @@ export const sampleInventoryData = [
                 "tags": ["Designer", "Goth", "Collectible"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tb_p1",
-                "assignedMachineName": "Trend Box P1",
+                "assignedMachineId": "mac_nano_04",
+                "assignedMachineName": "Crazy Toy Nano 4",
                 "imageUrl": "/stock-images/inv_bbox_001_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_001_1.jpg",
@@ -987,8 +987,8 @@ export const sampleInventoryData = [
                 "tags": ["Designer", "Cute", "Collectible"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tb_p2",
-                "assignedMachineName": "Trend Box P2",
+                "assignedMachineId": "mac_hm_01",
+                "assignedMachineName": "Handsome Man",
                 "imageUrl": "/stock-images/inv_bbox_002_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_002_1.jpg",
@@ -1024,8 +1024,8 @@ export const sampleInventoryData = [
                 "tags": ["Trending", "Cute", "Baby"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_tb_p3",
-                "assignedMachineName": "Trend Box P3",
+                "assignedMachineId": "mac_tc_06_p1_top",
+                "assignedMachineName": "Trend Catcher 6 P1 - Top",
                 "imageUrl": "/stock-images/inv_bbox_003_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_003_1.jpg",
@@ -1098,8 +1098,8 @@ export const sampleInventoryData = [
                 "tags": ["Anime", "Action", "Boxed"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_sk_p1",
-                "assignedMachineName": "SKWEB P1",
+                "assignedMachineId": "mac_dc_01",
+                "assignedMachineName": "Doll Castle 1",
                 "imageUrl": "/stock-images/inv_fig_001_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_001_1.jpg",
@@ -1136,8 +1136,8 @@ export const sampleInventoryData = [
                 "tags": ["Anime", "Action", "Boxed"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_sk_p2",
-                "assignedMachineName": "SKWEB P2",
+                "assignedMachineId": "mac_dh_02",
+                "assignedMachineName": "Doll House 2",
                 "imageUrl": "/stock-images/inv_fig_002_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_002_1.jpg",
@@ -1174,8 +1174,8 @@ export const sampleInventoryData = [
                 "tags": ["Anime", "Music", "Boxed"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_sk_p3",
-                "assignedMachineName": "SKWEB P3",
+                "assignedMachineId": "mac_dh_03",
+                "assignedMachineName": "Doll House 3",
                 "imageUrl": "/stock-images/inv_fig_003_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_003_1.jpg",
@@ -1212,8 +1212,8 @@ export const sampleInventoryData = [
                 "tags": ["Anime", "Action", "Boxed"],
                 "stockStatus": "Error",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_sk_p4",
-                "assignedMachineName": "SKWEB P4",
+                "assignedMachineId": "mac_dh_04",
+                "assignedMachineName": "Doll House 4",
                 "imageUrl": "/stock-images/inv_fig_004_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_004_1.jpg",
@@ -1243,13 +1243,13 @@ export const sampleInventoryData = [
                 "name": "Pokemon Acrylic Keychains",
                 "sku": "KEY-S-PK-001",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": ["Anime", "Cheap", "Filler"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_nano_01",
-                "assignedMachineName": "Crazy Toy Nano 1",
+                "assignedMachineId": "mac_miya_03",
+                "assignedMachineName": "Crazy Toy Miya 3",
                 "imageUrl": "/stock-images/inv_key_001_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_001_1.jpg",
@@ -1279,13 +1279,13 @@ export const sampleInventoryData = [
                 "name": "Demon Slayer Sword Keychains",
                 "sku": "KEY-S-DS-001",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": ["Anime", "Metal", "Weapon"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_nano_02",
-                "assignedMachineName": "Crazy Toy Nano 2",
+                "assignedMachineId": "mac_miya_04",
+                "assignedMachineName": "Crazy Toy Miya 4",
                 "imageUrl": "/stock-images/inv_key_002_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_002_1.jpg",
@@ -1319,9 +1319,9 @@ export const sampleInventoryData = [
                 "brand": "Generic",
                 "tags": ["Toy", "Sticky", "Cheap"],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_13",
+                "assignedMachineName": "Crazy Toy Miya 13",
                 "imageUrl": "/stock-images/inv_gat_001_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_001_1.jpg",
@@ -1355,9 +1355,9 @@ export const sampleInventoryData = [
                 "brand": "Generic",
                 "tags": ["Toy", "Animal", "Plastic"],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_14",
+                "assignedMachineName": "Crazy Toy Miya 14",
                 "imageUrl": "/stock-images/inv_gat_002_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_002_1.jpg",
@@ -1392,9 +1392,9 @@ export const sampleInventoryData = [
                 "brand": "Generic",
                 "tags": ["Animal", "Trending", "Brown"],
                 "stockStatus": "Ordered",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_15",
+                "assignedMachineName": "Crazy Toy Miya 15",
                 "imageUrl": "/stock-images/inv_plu_026_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_026_1.jpg",
@@ -1428,9 +1428,9 @@ export const sampleInventoryData = [
                 "brand": "Generic",
                 "tags": ["Animal", "Trending", "Turtle Bag"],
                 "stockStatus": "Ordered",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_16",
+                "assignedMachineName": "Crazy Toy Miya 16",
                 "imageUrl": "/stock-images/inv_plu_027_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_027_1.jpg",
@@ -1465,8 +1465,8 @@ export const sampleInventoryData = [
                 "tags": ["Anime", "Ghost", "Purple"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_miya_02",
-                "assignedMachineName": "Crazy Toy Miya 2",
+                "assignedMachineId": "mac_tc_02_p2_top",
+                "assignedMachineName": "Trend Catcher 2 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_028_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_028_1.jpg",
@@ -1503,8 +1503,8 @@ export const sampleInventoryData = [
                 "tags": ["Anime", "Brown", "Cute"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_miya_02",
-                "assignedMachineName": "Crazy Toy Miya 2",
+                "assignedMachineId": "mac_tc_03_p1_btm",
+                "assignedMachineName": "Trend Catcher 3 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_029_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_029_1.jpg",
@@ -1539,9 +1539,9 @@ export const sampleInventoryData = [
                 "brand": "Sanrio",
                 "tags": ["Goth", "Black", "Cute"],
                 "stockStatus": "Organized",
-                "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_dh_01",
-                "assignedMachineName": "Doll House 1",
+                "assignedStatus": "Not Assigned",
+                "assignedMachineId": null,
+                "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_030_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_030_1.jpg",
@@ -1576,9 +1576,9 @@ export const sampleInventoryData = [
                 "brand": "Sanrio",
                 "tags": ["Yellow", "Dog", "Cute"],
                 "stockStatus": "Organized",
-                "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_dh_02",
-                "assignedMachineName": "Doll House 2",
+                "assignedStatus": "Not Assigned",
+                "assignedMachineId": null,
+                "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_031_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_031_1.jpg",
@@ -1613,9 +1613,9 @@ export const sampleInventoryData = [
                 "brand": "Ghibli",
                 "tags": ["Anime", "Grey", "Classic"],
                 "stockStatus": "Organized",
-                "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_dh_03",
-                "assignedMachineName": "Doll House 3",
+                "assignedStatus": "Not Assigned",
+                "assignedMachineId": null,
+                "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_032_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_032_1.jpg",
@@ -1650,9 +1650,9 @@ export const sampleInventoryData = [
                 "brand": "Ghibli",
                 "tags": ["Anime", "Black", "Classic"],
                 "stockStatus": "Organized",
-                "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_dh_04",
-                "assignedMachineName": "Doll House 4",
+                "assignedStatus": "Not Assigned",
+                "assignedMachineId": null,
+                "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_033_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_033_1.jpg",
@@ -1689,8 +1689,8 @@ export const sampleInventoryData = [
                 "tags": ["TV", "Blue", "Kids"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_miya_03",
-                "assignedMachineName": "Crazy Toy Miya 3",
+                "assignedMachineId": "mac_tc_05_p1_top",
+                "assignedMachineName": "Trend Catcher 5 P1 - Top",
                 "imageUrl": "/stock-images/inv_plu_034_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_034_1.jpg",
@@ -1727,8 +1727,8 @@ export const sampleInventoryData = [
                 "tags": ["TV", "Orange", "Kids"],
                 "stockStatus": "Organized",
                 "assignedStatus": "Assigned",
-                "assignedMachineId": "mac_miya_03",
-                "assignedMachineName": "Crazy Toy Miya 3",
+                "assignedMachineId": "mac_tc_05_p2_btm",
+                "assignedMachineName": "Trend Catcher 5 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_035_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_035_1.jpg",
@@ -1840,9 +1840,9 @@ export const sampleInventoryData = [
                         "Animal"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_17",
+                "assignedMachineName": "Crazy Toy Miya 17",
                 "imageUrl": "/stock-images/inv_plu_38_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_38_1.jpg",
@@ -1887,9 +1887,9 @@ export const sampleInventoryData = [
                         "Animal"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_18",
+                "assignedMachineName": "Crazy Toy Miya 18",
                 "imageUrl": "/stock-images/inv_plu_39_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_39_1.jpg",
@@ -1934,9 +1934,9 @@ export const sampleInventoryData = [
                         "Animal"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_19",
+                "assignedMachineName": "Crazy Toy Miya 19",
                 "imageUrl": "/stock-images/inv_plu_40_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_plu_40_1.jpg",
@@ -1974,7 +1974,7 @@ export const sampleInventoryData = [
                 "name": "Naruto Kunai Keychain",
                 "sku": "KEY-S-AN-001",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -1982,9 +1982,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_05",
+                "assignedMachineName": "Crazy Toy Miya 5",
                 "imageUrl": "/stock-images/inv_key_3_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_3_1.jpg",
@@ -2021,7 +2021,7 @@ export const sampleInventoryData = [
                 "name": "Attack on Titan Wings Keychain",
                 "sku": "KEY-S-AN-002",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2029,9 +2029,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_06",
+                "assignedMachineName": "Crazy Toy Miya 6",
                 "imageUrl": "/stock-images/inv_key_4_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_4_1.jpg",
@@ -2068,7 +2068,7 @@ export const sampleInventoryData = [
                 "name": "One Piece Straw Hat Keychain",
                 "sku": "KEY-S-AN-003",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2076,9 +2076,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_07",
+                "assignedMachineName": "Crazy Toy Miya 7",
                 "imageUrl": "/stock-images/inv_key_5_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_5_1.jpg",
@@ -2115,7 +2115,7 @@ export const sampleInventoryData = [
                 "name": "Genshin Vision Keychain",
                 "sku": "KEY-S-AN-004",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2123,9 +2123,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_08",
+                "assignedMachineName": "Crazy Toy Miya 8",
                 "imageUrl": "/stock-images/inv_key_6_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_6_1.jpg",
@@ -2162,7 +2162,7 @@ export const sampleInventoryData = [
                 "name": "Sailor Moon Wand Keychain",
                 "sku": "KEY-S-AN-005",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2170,9 +2170,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_09",
+                "assignedMachineName": "Crazy Toy Miya 9",
                 "imageUrl": "/stock-images/inv_key_7_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_7_1.jpg",
@@ -2209,7 +2209,7 @@ export const sampleInventoryData = [
                 "name": "Dragon Ball Capsule Keychain",
                 "sku": "KEY-S-AN-006",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2217,9 +2217,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_in_01_p1",
+                "assignedMachineName": "INNIS P1",
                 "imageUrl": "/stock-images/inv_key_8_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_8_1.jpg",
@@ -2256,7 +2256,7 @@ export const sampleInventoryData = [
                 "name": "My Hero Academia Symbol Keychain",
                 "sku": "KEY-S-AN-007",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2264,9 +2264,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_in_01_p2",
+                "assignedMachineName": "INNIS P2",
                 "imageUrl": "/stock-images/inv_key_9_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_9_1.jpg",
@@ -2303,7 +2303,7 @@ export const sampleInventoryData = [
                 "name": "Chainsaw Man Logo Keychain",
                 "sku": "KEY-S-AN-008",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2311,9 +2311,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_in_01_p3",
+                "assignedMachineName": "INNIS P3",
                 "imageUrl": "/stock-images/inv_key_10_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_10_1.jpg",
@@ -2350,7 +2350,7 @@ export const sampleInventoryData = [
                 "name": "Spy x Family Peanut Keychain",
                 "sku": "KEY-S-AN-009",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2358,9 +2358,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_in_01_p4",
+                "assignedMachineName": "INNIS P4",
                 "imageUrl": "/stock-images/inv_key_11_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_11_1.jpg",
@@ -2397,7 +2397,7 @@ export const sampleInventoryData = [
                 "name": "Tokyo Revengers Emblem Keychain",
                 "sku": "KEY-S-AN-010",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2405,9 +2405,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_sk_01_p1",
+                "assignedMachineName": "SKWEB P1",
                 "imageUrl": "/stock-images/inv_key_12_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_12_1.jpg",
@@ -2444,7 +2444,7 @@ export const sampleInventoryData = [
                 "name": "Jujutsu Kaisen Finger Keychain",
                 "sku": "KEY-S-AN-011",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2452,9 +2452,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_sk_01_p2",
+                "assignedMachineName": "SKWEB P2",
                 "imageUrl": "/stock-images/inv_key_13_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_13_1.jpg",
@@ -2491,7 +2491,7 @@ export const sampleInventoryData = [
                 "name": "Bleach Hollow Mask Keychain",
                 "sku": "KEY-S-AN-012",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2499,9 +2499,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_sk_01_p3",
+                "assignedMachineName": "SKWEB P3",
                 "imageUrl": "/stock-images/inv_key_14_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_14_1.jpg",
@@ -2538,7 +2538,7 @@ export const sampleInventoryData = [
                 "name": "Hunter x Hunter Card Keychain",
                 "sku": "KEY-S-AN-013",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2546,9 +2546,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_sk_01_p4",
+                "assignedMachineName": "SKWEB P4",
                 "imageUrl": "/stock-images/inv_key_15_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_15_1.jpg",
@@ -2585,7 +2585,7 @@ export const sampleInventoryData = [
                 "name": "Fullmetal Alchemist Symbol Keychain",
                 "sku": "KEY-S-AN-014",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2593,9 +2593,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tb_01_p1",
+                "assignedMachineName": "Trend Box P1",
                 "imageUrl": "/stock-images/inv_key_16_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_16_1.jpg",
@@ -2632,7 +2632,7 @@ export const sampleInventoryData = [
                 "name": "Death Note Book Keychain",
                 "sku": "KEY-S-AN-015",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2640,9 +2640,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tb_01_p2",
+                "assignedMachineName": "Trend Box P2",
                 "imageUrl": "/stock-images/inv_key_17_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_17_1.jpg",
@@ -2679,7 +2679,7 @@ export const sampleInventoryData = [
                 "name": "Evangelion Unit 01 Keychain",
                 "sku": "KEY-S-AN-016",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2687,9 +2687,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tb_01_p3",
+                "assignedMachineName": "Trend Box P3",
                 "imageUrl": "/stock-images/inv_key_18_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_18_1.jpg",
@@ -2726,7 +2726,7 @@ export const sampleInventoryData = [
                 "name": "Cowboy Bebop Ship Keychain",
                 "sku": "KEY-S-AN-017",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2734,9 +2734,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tb_01_p4",
+                "assignedMachineName": "Trend Box P4",
                 "imageUrl": "/stock-images/inv_key_19_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_19_1.jpg",
@@ -2773,7 +2773,7 @@ export const sampleInventoryData = [
                 "name": "Steins Gate Microwave Keychain",
                 "sku": "KEY-S-AN-018",
                 "type": "Key Chain",
-                "size": "Small",
+                "size": "Extra-Small",
                 "brand": "Unlicensed",
                 "tags": [
                         "Anime",
@@ -2781,9 +2781,9 @@ export const sampleInventoryData = [
                         "Collectible"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_tc_01_p1_btm",
+                "assignedMachineName": "Trend Catcher 1 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_key_20_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_key_20_1.jpg",
@@ -2828,9 +2828,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hex_01_p1",
+                "assignedMachineName": "Hex Claw P1",
                 "imageUrl": "/stock-images/inv_bbox_5_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_5_1.jpg",
@@ -2876,9 +2876,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hex_01_p2",
+                "assignedMachineName": "Hex Claw P2",
                 "imageUrl": "/stock-images/inv_bbox_6_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_6_1.jpg",
@@ -2924,9 +2924,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hex_01_p3",
+                "assignedMachineName": "Hex Claw P3",
                 "imageUrl": "/stock-images/inv_bbox_7_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_7_1.jpg",
@@ -2972,9 +2972,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hex_01_p4",
+                "assignedMachineName": "Hex Claw P4",
                 "imageUrl": "/stock-images/inv_bbox_8_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_8_1.jpg",
@@ -3020,9 +3020,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hex_01_p5",
+                "assignedMachineName": "Hex Claw P5",
                 "imageUrl": "/stock-images/inv_bbox_9_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_9_1.jpg",
@@ -3068,9 +3068,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hex_01_p6",
+                "assignedMachineName": "Hex Claw P6",
                 "imageUrl": "/stock-images/inv_bbox_10_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_10_1.jpg",
@@ -3116,9 +3116,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_star_01",
+                "assignedMachineName": "Crazy Star 1",
                 "imageUrl": "/stock-images/inv_bbox_11_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_11_1.jpg",
@@ -3164,9 +3164,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_star_02",
+                "assignedMachineName": "Crazy Star 2",
                 "imageUrl": "/stock-images/inv_bbox_12_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_12_1.jpg",
@@ -3212,9 +3212,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_star_03",
+                "assignedMachineName": "Crazy Star 3",
                 "imageUrl": "/stock-images/inv_bbox_13_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_13_1.jpg",
@@ -3260,9 +3260,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_star_04",
+                "assignedMachineName": "Crazy Star 4",
                 "imageUrl": "/stock-images/inv_bbox_14_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_14_1.jpg",
@@ -3308,9 +3308,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hhe_01",
+                "assignedMachineName": "Crazy Toy Hip-Hop Elf 1",
                 "imageUrl": "/stock-images/inv_bbox_15_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_15_1.jpg",
@@ -3356,9 +3356,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hhe_02",
+                "assignedMachineName": "Crazy Toy Hip-Hop Elf 2",
                 "imageUrl": "/stock-images/inv_bbox_16_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_16_1.jpg",
@@ -3404,9 +3404,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hhe_03",
+                "assignedMachineName": "Crazy Toy Hip-Hop Elf 3",
                 "imageUrl": "/stock-images/inv_bbox_17_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_17_1.jpg",
@@ -3452,9 +3452,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hhe_04",
+                "assignedMachineName": "Crazy Toy Hip-Hop Elf 4",
                 "imageUrl": "/stock-images/inv_bbox_18_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_18_1.jpg",
@@ -3500,9 +3500,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_ctl1_01",
+                "assignedMachineName": "Crazy Toy L-1",
                 "imageUrl": "/stock-images/inv_bbox_19_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_19_1.jpg",
@@ -3548,9 +3548,9 @@ export const sampleInventoryData = [
                         "Cute"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_nano_01",
+                "assignedMachineName": "Crazy Toy Nano 1",
                 "imageUrl": "/stock-images/inv_bbox_20_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_bbox_20_1.jpg",
@@ -3596,9 +3596,9 @@ export const sampleInventoryData = [
                         "Kids"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_02",
+                "assignedMachineName": "Crazy Toy Miya 2",
                 "imageUrl": "/stock-images/inv_gat_3_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_3_1.jpg",
@@ -3643,9 +3643,9 @@ export const sampleInventoryData = [
                         "Kids"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_20",
+                "assignedMachineName": "Crazy Toy Miya 20",
                 "imageUrl": "/stock-images/inv_gat_4_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_4_1.jpg",
@@ -3690,9 +3690,9 @@ export const sampleInventoryData = [
                         "Kids"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_21",
+                "assignedMachineName": "Crazy Toy Miya 21",
                 "imageUrl": "/stock-images/inv_gat_5_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_5_1.jpg",
@@ -3737,9 +3737,9 @@ export const sampleInventoryData = [
                         "Kids"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_22",
+                "assignedMachineName": "Crazy Toy Miya 22",
                 "imageUrl": "/stock-images/inv_gat_6_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_6_1.jpg",
@@ -3784,9 +3784,9 @@ export const sampleInventoryData = [
                         "Kids"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_23",
+                "assignedMachineName": "Crazy Toy Miya 23",
                 "imageUrl": "/stock-images/inv_gat_7_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_7_1.jpg",
@@ -3831,9 +3831,9 @@ export const sampleInventoryData = [
                         "Kids"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_24",
+                "assignedMachineName": "Crazy Toy Miya 24",
                 "imageUrl": "/stock-images/inv_gat_8_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_8_1.jpg",
@@ -3878,9 +3878,9 @@ export const sampleInventoryData = [
                         "Kids"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_25",
+                "assignedMachineName": "Crazy Toy Miya 25",
                 "imageUrl": "/stock-images/inv_gat_9_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_9_1.jpg",
@@ -3925,9 +3925,9 @@ export const sampleInventoryData = [
                         "Kids"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_miya_26",
+                "assignedMachineName": "Crazy Toy Miya 26",
                 "imageUrl": "/stock-images/inv_gat_10_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_gat_10_1.jpg",
@@ -3972,9 +3972,9 @@ export const sampleInventoryData = [
                         "Boxed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_dc_02",
+                "assignedMachineName": "Doll Castle 2",
                 "imageUrl": "/stock-images/inv_fig_5_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_5_1.jpg",
@@ -4021,9 +4021,9 @@ export const sampleInventoryData = [
                         "Boxed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_dc_03",
+                "assignedMachineName": "Doll Castle 3",
                 "imageUrl": "/stock-images/inv_fig_6_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_6_1.jpg",
@@ -4070,9 +4070,9 @@ export const sampleInventoryData = [
                         "Boxed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_dc_04",
+                "assignedMachineName": "Doll Castle 4",
                 "imageUrl": "/stock-images/inv_fig_7_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_7_1.jpg",
@@ -4119,9 +4119,9 @@ export const sampleInventoryData = [
                         "Boxed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_dc_05",
+                "assignedMachineName": "Doll Castle 5",
                 "imageUrl": "/stock-images/inv_fig_8_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_8_1.jpg",
@@ -4168,9 +4168,9 @@ export const sampleInventoryData = [
                         "Boxed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_dc_06",
+                "assignedMachineName": "Doll Castle 6",
                 "imageUrl": "/stock-images/inv_fig_9_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_9_1.jpg",
@@ -4217,9 +4217,9 @@ export const sampleInventoryData = [
                         "Boxed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_dh_01",
+                "assignedMachineName": "Doll House 1",
                 "imageUrl": "/stock-images/inv_fig_10_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_fig_10_1.jpg",
@@ -4266,9 +4266,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_star_03",
+                "assignedMachineName": "Crazy Star 3",
                 "imageUrl": "/stock-images/inv_toy_1_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_1_1.jpg",
@@ -4313,9 +4313,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_star_04",
+                "assignedMachineName": "Crazy Star 4",
                 "imageUrl": "/stock-images/inv_toy_2_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_2_1.jpg",
@@ -4360,9 +4360,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hhe_01",
+                "assignedMachineName": "Crazy Toy Hip-Hop Elf 1",
                 "imageUrl": "/stock-images/inv_toy_3_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_3_1.jpg",
@@ -4407,9 +4407,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hhe_02",
+                "assignedMachineName": "Crazy Toy Hip-Hop Elf 2",
                 "imageUrl": "/stock-images/inv_toy_4_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_4_1.jpg",
@@ -4454,9 +4454,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hhe_03",
+                "assignedMachineName": "Crazy Toy Hip-Hop Elf 3",
                 "imageUrl": "/stock-images/inv_toy_5_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_5_1.jpg",
@@ -4501,9 +4501,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_hhe_04",
+                "assignedMachineName": "Crazy Toy Hip-Hop Elf 4",
                 "imageUrl": "/stock-images/inv_toy_6_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_6_1.jpg",
@@ -4548,9 +4548,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_ctl1_01",
+                "assignedMachineName": "Crazy Toy L-1",
                 "imageUrl": "/stock-images/inv_toy_7_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_7_1.jpg",
@@ -4595,9 +4595,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_nano_01",
+                "assignedMachineName": "Crazy Toy Nano 1",
                 "imageUrl": "/stock-images/inv_toy_8_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_8_1.jpg",
@@ -4642,9 +4642,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_nano_02",
+                "assignedMachineName": "Crazy Toy Nano 2",
                 "imageUrl": "/stock-images/inv_toy_9_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_9_1.jpg",
@@ -4689,9 +4689,9 @@ export const sampleInventoryData = [
                         "Fun"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned",
+                "assignedMachineId": "mac_nano_03",
+                "assignedMachineName": "Crazy Toy Nano 3",
                 "imageUrl": "/stock-images/inv_toy_10_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_toy_10_1.jpg",
@@ -4736,9 +4736,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_nano_02",
+                "assignedMachineName": "Crazy Toy Nano 2",
                 "imageUrl": "/stock-images/inv_pop_1_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_1_1.jpg",
@@ -4783,9 +4783,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_nano_03",
+                "assignedMachineName": "Crazy Toy Nano 3",
                 "imageUrl": "/stock-images/inv_pop_2_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_2_1.jpg",
@@ -4830,9 +4830,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_nano_04",
+                "assignedMachineName": "Crazy Toy Nano 4",
                 "imageUrl": "/stock-images/inv_pop_3_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_3_1.jpg",
@@ -4877,9 +4877,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hm_01",
+                "assignedMachineName": "Handsome Man",
                 "imageUrl": "/stock-images/inv_pop_4_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_4_1.jpg",
@@ -4924,9 +4924,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hex_01_p1",
+                "assignedMachineName": "Hex Claw P1",
                 "imageUrl": "/stock-images/inv_pop_5_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_5_1.jpg",
@@ -4971,9 +4971,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hex_01_p2",
+                "assignedMachineName": "Hex Claw P2",
                 "imageUrl": "/stock-images/inv_pop_6_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_6_1.jpg",
@@ -5018,9 +5018,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hex_01_p3",
+                "assignedMachineName": "Hex Claw P3",
                 "imageUrl": "/stock-images/inv_pop_7_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_7_1.jpg",
@@ -5065,9 +5065,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hex_01_p4",
+                "assignedMachineName": "Hex Claw P4",
                 "imageUrl": "/stock-images/inv_pop_8_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_8_1.jpg",
@@ -5112,9 +5112,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hex_01_p5",
+                "assignedMachineName": "Hex Claw P5",
                 "imageUrl": "/stock-images/inv_pop_9_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_9_1.jpg",
@@ -5159,9 +5159,9 @@ export const sampleInventoryData = [
                         "Licensed"
                 ],
                 "stockStatus": "Organized",
-                "assignedStatus": "Not Assigned",
-                "assignedMachineId": null,
-                "assignedMachineName": null,
+                "assignedStatus": "Assigned for Replacement",
+                "assignedMachineId": "mac_hex_01_p6",
+                "assignedMachineName": "Hex Claw P6",
                 "imageUrl": "/stock-images/inv_pop_10_1.jpg",
                 "imageUrls": [
                   "/stock-images/inv_pop_10_1.jpg",

@@ -38,7 +38,7 @@ const generateMachinePerformanceData = (machines: ArcadeMachine[]) => {
 const generateStockPerformanceData = (items: StockItem[]) => {
     return items.map(item => {
         const totalQty = item.locations?.reduce((sum, loc) => sum + loc.quantity, 0) || item.totalQuantity || 0;
-        const cost = item.supplyChain?.costPerUnit || item.cost || 0;
+        const cost = item.supplyChain?.costPerUnit || 0;
         return {
             id: item.id,
             name: item.name,
@@ -180,7 +180,7 @@ export const analyticsService = {
         let lowStockCount = 0;
         stock.forEach(item => {
             const qty = item.locations?.reduce((sum, loc) => sum + loc.quantity, 0) || item.totalQuantity || 0;
-            const cost = item.supplyChain?.costPerUnit || item.cost || 0;
+            const cost = item.supplyChain?.costPerUnit || 0;
             totalStockValue += qty * cost;
             if (qty <= (item.supplyChain?.reorderPoint || item.lowStockThreshold || 10)) {
                 lowStockCount++;

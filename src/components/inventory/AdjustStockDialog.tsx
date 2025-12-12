@@ -23,6 +23,7 @@ import { PackagePlus, PackageMinus, PackageCheck, AlertTriangle } from "lucide-r
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner"; // Changed from use-toast to sonner
+import { DEFAULT_STORAGE_LOCATION } from "./StockItemForm";
 
 const SELECT_OTHER_VALUE = "__SELECT_OTHER__";
 
@@ -132,7 +133,8 @@ interface AdjustStockDialogProps {
 export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, requestToReceive }: AdjustStockDialogProps) {
     // const { toast } = useToast(); // Removed hook
 
-    const defaultLocation = item?.locations?.[0]?.name || (item ? `${item.name} (Main Stock)` : "");
+    // Use item's first location, or default to global DEFAULT_STORAGE_LOCATION
+    const defaultLocation = item?.locations?.[0]?.name || DEFAULT_STORAGE_LOCATION;
     const defaultQuantityOption = commonNumericOptionsForSelect[0] || "";
 
     const form = useForm<z.infer<typeof adjustStockSchemaStep1>>({
@@ -211,7 +213,7 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
                 : `Stock adjusted by ${currentUserName} on ${currentTime}. Reason: `;
 
             form.reset({
-                locationName: item.locations?.[0]?.name || `${item.name} (Main Stock)`,
+                locationName: item.locations?.[0]?.name || DEFAULT_STORAGE_LOCATION,
                 adjustmentType: "add",
                 selectedQuantity: quantityFromRequest ? SELECT_OTHER_VALUE : (commonNumericOptionsForSelect[0] || ""),
                 customQuantity: quantityFromRequest ? String(quantityFromRequest) : "",

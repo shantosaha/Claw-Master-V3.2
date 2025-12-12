@@ -23,19 +23,21 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { formatDate } from "@/lib/utils/date";
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 interface MachineTableProps {
     machines: MachineDisplayItem[];
     onEdit: (machine: MachineDisplayItem) => void;
     onDelete: (machine: MachineDisplayItem) => void;
     onStatusUpdate: (machine: MachineDisplayItem, status: string) => void;
-    onStockUpdate: (machine: MachineDisplayItem, stockLevel: 'Full' | 'Good' | 'Low' | 'Empty') => void;
+    onStockUpdate: (machine: MachineDisplayItem, stockLevel: any) => void;
+    onAssignStock: (machine: ArcadeMachine, slotId?: string) => void;
 }
 
-type SortField = 'assetTag' | 'name' | 'prizeSize' | 'status' | 'playCount' | 'revenue';
+type SortField = 'assetTag' | 'name' | 'location' | 'prizeSize' | 'status' | 'playCount' | 'revenue';
 type SortDirection = 'asc' | 'desc' | null;
 
-export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onStockUpdate }: MachineTableProps) {
+export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onStockUpdate, onAssignStock }: MachineTableProps) {
     const router = useRouter();
     const [sortField, setSortField] = useState<SortField | null>(null);
     const [sortDirection, setSortDirection] = useState<SortDirection>(null);
@@ -48,6 +50,25 @@ export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onSto
             case 'error': return "destructive";
             case 'offline': return "outline";
             default: return "secondary";
+        }
+    };
+
+    const getStockLevelColorClass = (level: string) => {
+        switch (level) {
+            case "In Stock":
+                return "bg-emerald-50 text-emerald-600 border-emerald-200 hover:bg-emerald-50";
+            case "Limited Stock":
+                return "bg-amber-50 text-amber-600 border-amber-200 hover:bg-amber-50";
+            case "Low Stock":
+                return "bg-orange-50 text-orange-600 border-orange-200 hover:bg-orange-50";
+            case "Out of Stock":
+                return "bg-red-50 text-red-600 border-red-200 hover:bg-red-50";
+            // Legacy fallbacks
+            case 'Full': return "bg-emerald-50 text-emerald-600 border-emerald-200";
+            case 'Good': return "bg-blue-50 text-blue-600 border-blue-200";
+            case 'Low': return "bg-orange-50 text-orange-600 border-orange-200";
+            case 'Empty': return "bg-red-50 text-red-600 border-red-200";
+            default: return "bg-gray-100 text-gray-800 border-gray-200";
         }
     };
 
@@ -96,73 +117,69 @@ export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onSto
         }
     });
 
-    const handleRowClick = (machineId: string, e: React.MouseEvent) => {
-        // Don't navigate if clicking on action buttons
-        if ((e.target as HTMLElement).closest('button') || (e.target as HTMLElement).closest('[role="menuitem"]')) {
-            return;
-        }
-        router.push(`/machines/${machineId}`);
-    };
-
     return (
         <div className="rounded-md border">
             <Table>
                 <TableHeader>
-                    <TableRow>
-                        <TableHead>
-                            <Button
-                                variant="ghost"
+                    <TableRow className="h-10 text-xs">
+                        <TableHead className="w-[70px] px-2 h-10">
+                            <div
                                 onClick={() => handleSort('assetTag')}
-                                className="h-8 px-2"
+                                className="flex items-center cursor-pointer hover:text-foreground"
                             >
-                                Asset Tag
+                                Tag
                                 {getSortIcon('assetTag')}
-                            </Button>
+                            </div>
                         </TableHead>
-                        <TableHead>
-                            <Button
-                                variant="ghost"
+                        <TableHead className="px-2 h-10">
+                            <div
                                 onClick={() => handleSort('name')}
-                                className="h-8 px-2"
+                                className="flex items-center cursor-pointer hover:text-foreground"
                             >
-                                Name
+                                Machine
                                 {getSortIcon('name')}
-                            </Button>
+                            </div>
                         </TableHead>
-                        <TableHead>
-                            <Button
-                                variant="ghost"
+                        <TableHead className="px-2 h-10 hidden md:table-cell">
+                            <div
+                                onClick={() => handleSort('location')}
+                                className="flex items-center cursor-pointer hover:text-foreground"
+                            >
+                                Location
+                                {getSortIcon('location')}
+                            </div>
+                        </TableHead>
+                        <TableHead className="px-2 h-10 hidden lg:table-cell">
+                            <div
                                 onClick={() => handleSort('prizeSize')}
-                                className="h-8 px-2"
+                                className="flex items-center cursor-pointer hover:text-foreground"
                             >
-                                Prize Size
+                                Size
                                 {getSortIcon('prizeSize')}
-                            </Button>
+                            </div>
                         </TableHead>
-                        <TableHead>Current Item</TableHead>
-                        <TableHead>Stock Level</TableHead>
-                        <TableHead>Upcoming</TableHead>
-                        <TableHead>
-                            <Button
-                                variant="ghost"
+                        <TableHead className="px-2 h-10">Current Item</TableHead>
+                        <TableHead className="px-2 h-10">Stock Level</TableHead>
+                        <TableHead className="px-2 h-10 hidden md:table-cell">Upcoming</TableHead>
+                        <TableHead className="px-2 h-10 hidden xl:table-cell">
+                            <div
                                 onClick={() => handleSort('revenue')}
-                                className="h-8 px-2"
+                                className="flex items-center cursor-pointer hover:text-foreground"
                             >
-                                Revenue
+                                Rev
                                 {getSortIcon('revenue')}
-                            </Button>
+                            </div>
                         </TableHead>
-                        <TableHead>
-                            <Button
-                                variant="ghost"
+                        <TableHead className="px-2 h-10">
+                            <div
                                 onClick={() => handleSort('status')}
-                                className="h-8 px-2"
+                                className="flex items-center cursor-pointer hover:text-foreground"
                             >
                                 Status
                                 {getSortIcon('status')}
-                            </Button>
+                            </div>
                         </TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
+                        <TableHead className="text-right px-2 h-10">Action</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -174,16 +191,10 @@ export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onSto
                         </TableRow>
                     ) : (
                         sortedMachines.map((item) => {
-                            // If it's a slot, we use the slot data. If it's a machine (no slots), we use the first slot if available or the machine itself
-                            // But since we flattened it, 'item' is the display unit.
-                            // However, we need to access stock info which is in the slot object.
-
-                            // Find the specific slot object if this is a slot row
                             let currentSlot = null;
                             if (item.isSlot && item.slotId) {
                                 currentSlot = item.slots.find(s => s.id === item.slotId);
                             } else if (item.slots && item.slots.length > 0) {
-                                // Fallback for machine row if any (though we shouldn't have mixed rows if flattened correctly)
                                 currentSlot = item.slots[0];
                             }
 
@@ -192,90 +203,153 @@ export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onSto
                             return (
                                 <TableRow
                                     key={item.slotId || item.id}
-                                    className="hover:bg-muted/50"
+                                    className="hover:bg-muted/50 text-sm h-12"
                                 >
-                                    <TableCell className="font-medium">
+                                    <TableCell className="font-medium w-[70px] px-2 py-1">
                                         <Link
                                             href={item.isSlot && item.slotId ? `/machines/${item.id}?slotId=${item.slotId}` : `/machines/${item.id}`}
-                                            className="hover:underline block w-full h-full"
+                                            className="hover:underline block truncate"
+                                            title={item.assetTag}
                                         >
                                             {item.assetTag}
                                         </Link>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="px-2 py-1 max-w-[180px]">
                                         <Link
                                             href={item.isSlot && item.slotId ? `/machines/${item.id}?slotId=${item.slotId}` : `/machines/${item.id}`}
-                                            className="hover:underline block w-full h-full"
+                                            className="hover:underline flex items-center gap-2"
                                         >
-                                            {item.name}
+                                            {item.imageUrl ? (
+                                                <img
+                                                    src={item.imageUrl}
+                                                    alt={item.name}
+                                                    className="w-8 h-8 rounded object-cover flex-shrink-0 hidden sm:block"
+                                                />
+                                            ) : (
+                                                <div className="w-8 h-8 rounded bg-muted flex items-center justify-center text-muted-foreground text-[10px] flex-shrink-0 hidden sm:flex">
+                                                    N/A
+                                                </div>
+                                            )}
+                                            <span className="truncate" title={item.name}>{item.name}</span>
                                         </Link>
                                     </TableCell>
-                                    <TableCell>{item.prizeSize || "-"}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="px-2 py-1 hidden md:table-cell max-w-[100px] truncate" title={item.location}>
+                                        {item.location || "-"}
+                                    </TableCell>
+                                    <TableCell className="px-2 py-1 hidden lg:table-cell">{item.prizeSize || "-"}</TableCell>
+                                    <TableCell className="px-2 py-1 max-w-[160px]">
                                         {currentSlot?.currentItem ? (
                                             <Link
                                                 href={`/inventory/${currentSlot.currentItem.id}`}
-                                                className="text-blue-600 hover:underline flex items-center gap-1"
+                                                className="flex items-center gap-2 hover:underline group"
                                             >
-                                                <Package className="h-3 w-3" />
-                                                {currentSlot.currentItem.name}
+                                                {currentSlot.currentItem.imageUrl ? (
+                                                    <img
+                                                        src={currentSlot.currentItem.imageUrl}
+                                                        alt={currentSlot.currentItem.name}
+                                                        className="w-6 h-6 rounded object-cover flex-shrink-0 bg-muted group-hover:ring-1 group-hover:ring-primary/20 transition-all hidden sm:block"
+                                                    />
+                                                ) : (
+                                                    <div className="w-6 h-6 rounded bg-muted flex items-center justify-center text-muted-foreground flex-shrink-0 hidden sm:flex">
+                                                        <Package className="h-3 w-3" />
+                                                    </div>
+                                                )}
+                                                <span className="text-blue-600 font-medium truncate" title={currentSlot.currentItem.name}>
+                                                    {currentSlot.currentItem.name}
+                                                </span>
                                             </Link>
                                         ) : (
-                                            <span className="text-muted-foreground">
-                                                Empty
-                                            </span>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 px-2 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-50 -ml-2"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    if (currentSlot) onAssignStock(item.originalMachine, currentSlot.id);
+                                                }}
+                                            >
+                                                + Assign
+                                            </Button>
                                         )}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="px-2 py-1">
                                         {currentSlot ? (
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
+                                                    <Button variant="ghost" className="h-6 px-1 hover:bg-transparent">
                                                         <Badge
-                                                            variant={
-                                                                currentSlot.stockLevel === 'Full' ? 'default' :
-                                                                    currentSlot.stockLevel === 'Good' ? 'secondary' :
-                                                                        currentSlot.stockLevel === 'Low' ? 'outline' :
-                                                                            'destructive'
-                                                            }
-                                                            className="cursor-pointer"
+                                                            className={cn("cursor-pointer border select-none whitespace-nowrap text-[10px] px-1 py-0 h-5", getStockLevelColorClass(currentSlot.stockLevel))}
+                                                            variant="outline"
                                                         >
-                                                            {currentSlot.stockLevel}
+                                                            {currentSlot.stockLevel || "Unknown"}
                                                         </Badge>
                                                     </Button>
                                                 </DropdownMenuTrigger>
-                                                <DropdownMenuContent>
+                                                <DropdownMenuContent align="start">
                                                     <DropdownMenuLabel>Update Stock Level</DropdownMenuLabel>
-                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Full')}>Full</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Good')}>Good</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Low')}>Low</DropdownMenuItem>
-                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Empty')}>Empty</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'In Stock')}>In Stock</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Limited Stock')}>Limited Stock</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Low Stock')}>Low Stock</DropdownMenuItem>
+                                                    <DropdownMenuItem onClick={() => onStockUpdate(item, 'Out of Stock')}>Out of Stock</DropdownMenuItem>
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         ) : (
                                             <span className="text-muted-foreground">-</span>
                                         )}
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="px-2 py-1 hidden md:table-cell max-w-[140px]">
                                         {currentSlot?.upcomingQueue && currentSlot.upcomingQueue.length > 0 ? (
-                                            <Link
-                                                href={`/inventory/${currentSlot.upcomingQueue[0].itemId}`}
-                                                className="text-blue-600 hover:underline text-sm"
-                                            >
-                                                {currentSlot.upcomingQueue.length} queued
-                                            </Link>
+                                            (() => {
+                                                const queueItem = currentSlot.upcomingQueue[0];
+                                                return (
+                                                    <Link
+                                                        href={`/inventory/${queueItem.itemId}`}
+                                                        className="flex items-center gap-2 hover:underline"
+                                                    >
+                                                        {queueItem.imageUrl ? (
+                                                            <img
+                                                                src={queueItem.imageUrl}
+                                                                alt={queueItem.name}
+                                                                className="w-6 h-6 rounded object-cover flex-shrink-0 bg-muted hidden sm:block"
+                                                            />
+                                                        ) : (
+                                                            <div className="w-6 h-6 rounded bg-muted flex items-center justify-center text-[10px] text-muted-foreground flex-shrink-0 hidden sm:flex">
+                                                                IMG
+                                                            </div>
+                                                        )}
+                                                        <span className="text-xs truncate" title={queueItem.name}>
+                                                            {queueItem.name}
+                                                        </span>
+                                                        {currentSlot.upcomingQueue.length > 1 && (
+                                                            <span className="text-[10px] text-muted-foreground ml-1">
+                                                                (+{currentSlot.upcomingQueue.length - 1})
+                                                            </span>
+                                                        )}
+                                                    </Link>
+                                                );
+                                            })()
                                         ) : (
-                                            <span className="text-muted-foreground">-</span>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="h-6 px-2 text-xs text-muted-foreground hover:text-blue-600 hover:bg-muted -ml-2"
+                                                onClick={(e) => {
+                                                    e.preventDefault();
+                                                    e.stopPropagation();
+                                                    if (currentSlot) onAssignStock(item.originalMachine, currentSlot.id);
+                                                }}
+                                            >
+                                                + Queue
+                                            </Button>
                                         )}
                                     </TableCell>
-                                    <TableCell>{item.revenue ? `$${item.revenue.toFixed(2)}` : "-"}</TableCell>
-                                    <TableCell>{item.playCount ?? '-'}</TableCell>
-                                    <TableCell>{item.lastSyncedAt ? formatDate(item.lastSyncedAt) : '-'}</TableCell>
-                                    <TableCell>
+                                    <TableCell className="px-2 py-1 hidden xl:table-cell">{item.revenue ? `$${item.revenue.toFixed(2)}` : "-"}</TableCell>
+                                    <TableCell className="px-2 py-1">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-auto p-0 hover:bg-transparent">
-                                                    <Badge variant={getStatusColor(displayStatus) as any} className="cursor-pointer">
+                                                <Button variant="ghost" className="h-6 px-1 hover:bg-transparent">
+                                                    <Badge variant={getStatusColor(displayStatus) as any} className="cursor-pointer text-[10px] px-1 py-0 h-5 whitespace-nowrap">
                                                         {displayStatus}
                                                     </Badge>
                                                 </Button>
@@ -289,7 +363,7 @@ export function MachineTable({ machines, onEdit, onDelete, onStatusUpdate, onSto
                                             </DropdownMenuContent>
                                         </DropdownMenu>
                                     </TableCell>
-                                    <TableCell className="text-right">
+                                    <TableCell className="text-right px-2 py-1">
                                         <DropdownMenu>
                                             <DropdownMenuTrigger asChild>
                                                 <Button variant="ghost" className="h-8 w-8 p-0">

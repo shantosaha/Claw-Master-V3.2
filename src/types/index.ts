@@ -57,7 +57,6 @@ export interface StockItem {
     // Existing fields
     quantityDescription?: string;
     lowStockThreshold: number; // Was required
-    cost?: number;
     value?: number;
     payouts?: { playCost: number; playsRequired: number }[] | number[]; // Updated to support object structure
     assignedSlotId?: string;
@@ -83,12 +82,15 @@ export interface UpcomingStockItem {
 export interface ArcadeMachineSlot {
     id: string; // Sub-unit ID
     name: string; // e.g., "Claw 1"
+    assetTag?: string; // Optional unique asset tag for this slot
     gameType: string;
     status: 'online' | 'offline' | 'error';
+    size?: string; // e.g., "Extra-Small", "Small", "Medium", "Large", "Big"
+    compatibleSizes?: string[]; // Array of sizes this slot can accept e.g., ["Extra-Small", "Small"]
     // Stock Management
     currentItem: StockItem | null; // Changed from assignedStockItemId to full object or null for better access
     upcomingQueue: UpcomingStockItem[];
-    stockLevel: 'Full' | 'Good' | 'Low' | 'Empty';
+    stockLevel: 'Full' | 'Good' | 'Low' | 'Empty' | 'In Stock' | 'Limited Stock' | 'Low Stock' | 'Out of Stock';
 }
 
 export interface ArcadeMachine {
@@ -112,7 +114,7 @@ export interface ArcadeMachine {
     createdAt: Date;
     updatedAt: Date;
     imageUrl?: string;
-    prizeSize?: string; // e.g. "Small", "Medium", "Large"
+    prizeSize?: string; // e.g. "Extra-Small", "Small", "Medium", "Large", "Big"
     notes?: string;
     type?: string; // e.g. "Trend Catcher"
 
@@ -123,9 +125,23 @@ export interface PlayfieldSetting {
     id: string;
     machineId: string;
     slotId?: string; // If specific to a slot
-    strengthSetting: number;
-    voltage: number;
-    payoutPercentage: number;
+
+    // New Fields
+    c1?: number; // Weak grip / Catch (First stage)
+    c2?: number; // Strong grip / Pickup (Second stage)
+    c3?: number; // Retention / Carry to chute (Third stage)
+    c4?: number; // Max strength when paying out
+    payoutRate?: number; // Plays per prize
+
+    // Legacy fields (optional)
+    strengthSetting?: number;
+    voltage?: number;
+    payoutPercentage?: number;
+
+    // Context
+    stockItemId?: string;
+    stockItemName?: string;
+
     timestamp: Date;
     setBy: string; // User ID
 }
@@ -191,12 +207,11 @@ export interface StockItemFormSubmitValues {
     quantityDescription: string;
     lowStockThreshold: number;
     description?: string;
-    cost?: number;
     value?: number;
     locations: { name: string; quantity: number }[];
     payouts?: { playCost: number; playsRequired: number }[];
     assignedMachineId?: string;
-    assignedSlotId?: string;
+    assignmentStatus?: 'Not Assigned' | 'Assigned' | 'Assigned for Replacement';
     _parsedOverallNumericQuantity?: number;
     _sumOfLocationQuantities?: number;
 }

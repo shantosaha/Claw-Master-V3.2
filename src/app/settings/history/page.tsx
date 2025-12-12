@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { auditService } from "@/services";
 import { AuditLog } from "@/types";
+import { useAuth } from "@/context/AuthContext";
+import { useRouter } from "next/navigation";
 import {
     Table,
     TableBody,
@@ -15,16 +17,27 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { formatDate } from "@/lib/utils/date";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Search, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function SettingsHistoryPage() {
+    const { userProfile, hasRole, loading: authLoading } = useAuth();
+    const router = useRouter();
     const [logs, setLogs] = useState<AuditLog[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState("");
 
     useEffect(() => {
-        loadLogs();
-    }, []);
+        if (!authLoading) {
+            // Check roles: admin, manager, or supervisor
+            if (!userProfile || !hasRole(["admin", "manager", "supervisor"])) {
+                toast.error("Unauthorized", { description: "You do not have permission to view activity logs." });
+                router.push("/dashboard");
+                return;
+            }
+            loadLogs();
+        }
+    }, [userProfile, authLoading, hasRole, router]);
 
     const loadLogs = async () => {
         setLoading(true);
@@ -35,6 +48,7 @@ export default function SettingsHistoryPage() {
             setLogs(data);
         } catch (error) {
             console.error("Failed to load audit logs:", error);
+            toast.error("Failed to load logs");
         } finally {
             setLoading(false);
         }
@@ -59,6 +73,54 @@ export default function SettingsHistoryPage() {
         if (lowerAction.includes("delete") || lowerAction.includes("remove")) return "destructive";
         return "outline";
     };
+
+    const formatDetails = (details: any) => {
+        if (!details) return "-";
+
+        // Handle nicely formatted specific fields
+        if (details.changes && Array.isArray(details.changes)) {
+            return (
+                <div className="flex flex-col gap-1 text-xs">
+                    {details.changes.map((change: string, idx: number) => (
+                        <span key={idx} className="block">• {change}</span>
+                    ))}
+                </div>
+            );
+        }
+
+        // Handle name/category create/update
+        if (details.name) {
+            return (
+                <div className="text-xs">
+                    <span className="font-semibold">{details.name}</span>
+                    {details.category && <span className="text-muted-foreground"> ({details.category})</span>}
+                    {details.reason && <div className="text-muted-foreground mt-1">{details.reason}</div>}
+                </div>
+            );
+        }
+
+        // Fallback to simpler view or JSON
+        if (typeof details === 'object') {
+            // Try to show meaningful fields
+            const entries = Object.entries(details).filter(([k]) => k !== 'changes');
+            if (entries.length > 0) {
+                return (
+                    <div className="text-xs grid gap-1">
+                        {entries.map(([key, value]) => (
+                            <div key={key} className="flex gap-1">
+                                <span className="font-medium capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}:</span>
+                                <span className="text-muted-foreground">{String(value)}</span>
+                            </div>
+                        ))}
+                    </div>
+                );
+            }
+        }
+
+        return JSON.stringify(details);
+    };
+
+    if (authLoading) return <div className="flex items-center justify-center p-8"><Loader2 className="h-8 w-8 animate-spin" /></div>;
 
     return (
         <div className="space-y-6">
@@ -125,13 +187,8 @@ export default function SettingsHistoryPage() {
                                                 </Badge>
                                             </TableCell>
                                             <TableCell className="capitalize">{log.entityType}</TableCell>
-                                            <TableCell className="max-w-md truncate" title={log.details ? JSON.stringify(log.details) : undefined}>
-                                                {log.details
-                                                    ? (typeof log.details.reason === 'string'
-                                                        ? log.details.reason
-                                                        : JSON.stringify(log.details))
-                                                    : "-"
-                                                }
+                                            <TableCell className="max-w-md" title={log.details ? JSON.stringify(log.details) : undefined}>
+                                                {formatDetails(log.details)}
                                             </TableCell>
                                         </TableRow>
                                     ))
