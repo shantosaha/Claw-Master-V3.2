@@ -6,10 +6,11 @@ import { stockService, orderService, machineService, auditService } from "@/serv
 
 import { StockItem, ReorderRequest, ArcadeMachine, AuditLog } from "@/types";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
+import { getComputedAssignedStatus, getAssignmentDisplayText, getAssignmentCount, getMachineStockItems, migrateToMachineAssignments, removeMachineAssignment, syncLegacyFieldsFromAssignments } from "@/utils/machineAssignmentUtils";
 import { useAuth } from "@/context/AuthContext";
 import { StockItemHistoryDialog } from "@/components/inventory/StockItemHistoryDialog";
 import { Button } from "@/components/ui/button";
-import { Plus, Inbox, Loader2, ArrowUpDown, ArrowUp, ArrowDown, WandSparkles, AlertTriangle } from "lucide-react";
+import { Plus, Inbox, Loader2, ArrowUpDown, ArrowUp, ArrowDown, WandSparkles, AlertTriangle, Gamepad2, Package } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
@@ -46,10 +47,11 @@ import {
 
 import { StockFilters, ViewStyle, SortOption, StockStatusFilter } from "./StockFilters";
 import { StockItemCard } from "./StockItemCard";
-import { StockItemForm, DEFAULT_STORAGE_LOCATION } from "./StockItemForm";
+import { StockItemForm, DEFAULT_STORAGE_LOCATION, generateStockItemId } from "./StockItemForm";
 import { AdjustStockDialog } from "./AdjustStockDialog";
 import { ReceiveOrderDialog } from "./ReceiveOrderDialog";
 import { StockItemDetailsDialog } from "./StockItemDetailsDialog";
+import { MachineAssignmentBadge } from "./MachineAssignmentBadge";
 import {
     Table,
     TableBody,
@@ -173,7 +175,9 @@ export function StockList() {
     const [statusConfirm, setStatusConfirm] = useState<{ item: StockItem, status: string } | null>(null);
     const [showAllMachines, setShowAllMachines] = useState(false);
     const [warningAlert, setWarningAlert] = useState<{ title: string, description: string, open: boolean }>({ title: "", description: "", open: false });
-    const [pendingAssignment, setPendingAssignment] = useState<{ machine: ArcadeMachine, status: string, slotId?: string } | null>(null);
+    const [replacementConfirm, setReplacementConfirm] = useState<{ item: StockItem } | null>(null);
+    const [unassignReplacementConfirm, setUnassignReplacementConfirm] = useState<{ item: StockItem } | null>(null);
+    const [pendingAssignment, setPendingAssignment] = useState<{ machine: ArcadeMachine, status: string, slotId?: string, warnings?: string[], queueItems?: StockItem[] } | null>(null);
     const [supervisorOverride, setSupervisorOverride] = useState<{ item: StockItem, action: "unassign" | "downgrade-using-to-replacement" } | null>(null);
     const [supervisorPassword, setSupervisorPassword] = useState("");
     const [supervisorError, setSupervisorError] = useState("");
@@ -247,7 +251,7 @@ export function StockList() {
             if (stockStatus === "limited") matchesStatus = stockLevel.status === "Limited Stock";
             if (stockStatus === "in-stock-not-low") matchesStatus = stockLevel.status === "In Stock";
 
-            const itemAssignedStatus = item.assignedStatus || "Not Assigned";
+            const itemAssignedStatus = getComputedAssignedStatus(item);
             const matchesAssignedStatus =
                 assignedStatusFilter === "all" ||
                 (assignedStatusFilter === "not-assigned" && itemAssignedStatus === "Not Assigned") ||
@@ -297,14 +301,16 @@ export function StockList() {
                         break;
                     }
                     case 'assignedStatus':
-                        // Sort by assignment status: Not Assigned -> Assigned for Replacement (Replacement) -> Assigned (Using)
                         const statusOrder: Record<string, number> = { 'Not Assigned': 1, 'Assigned for Replacement': 2, 'Assigned': 3 };
-                        aVal = statusOrder[a.assignedStatus || 'Not Assigned'] || 99;
-                        bVal = statusOrder[b.assignedStatus || 'Not Assigned'] || 99;
+                        aVal = statusOrder[getComputedAssignedStatus(a)] || 99;
+                        bVal = statusOrder[getComputedAssignedStatus(b)] || 99;
                         break;
                     case 'assignedTo':
-                        aVal = (a.assignedMachineName || '').toLowerCase();
-                        bVal = (b.assignedMachineName || '').toLowerCase();
+                        // Sort by primary machine name, then by count
+                        const aDisplay = getAssignmentDisplayText(a);
+                        const bDisplay = getAssignmentDisplayText(b);
+                        aVal = aDisplay.text.toLowerCase();
+                        bVal = bDisplay.text.toLowerCase();
                         break;
                     default:
                         return 0;
@@ -469,13 +475,17 @@ export function StockList() {
                 ));
                 toast.success("Item Updated", { description: `${itemData.name} has been updated.` });
             } else {
+                // Generate structured ID for the new stock item
+                const newId = generateStockItemId(itemData.category, items);
+
                 const historyLog = createHistoryLog("CREATE_ITEM", {
                     name: itemData.name,
                     category: itemData.category,
                     initialQuantity: itemData.quantity
-                }, "temp", true); // Skip global log initially
+                }, newId, true); // Skip global log initially
 
-                const newId = await stockService.add({
+                // Use set with structured ID instead of add with auto-generated ID
+                await stockService.set(newId, {
                     ...itemData,
                     history: [historyLog],
                     createdAt: new Date(),
@@ -873,16 +883,18 @@ export function StockList() {
         // Changing from Using ("Assigned") to Not Assigned or Replacement requires supervisor override
         if (item.assignedStatus === "Assigned" && (newStatus === "Not Assigned" || newStatus === "Assigned for Replacement")) {
             if (newStatus === "Assigned for Replacement") {
-                setWarningAlert({
-                    open: true,
-                    title: "Status Change Warning",
-                    description: `You are changing this item to "Replacement".It will remain assigned to ${item.assignedMachineName} but will no longer be the active item.`
-                });
-                await processStatusChange(item, newStatus);
+                // Show confirmation dialog instead of just a warning
+                setReplacementConfirm({ item });
                 return;
             }
 
             setStatusConfirm({ item, status: newStatus });
+            return;
+        }
+
+        // Changing from Replacement ("Assigned for Replacement") to Not Assigned requires confirmation
+        if (item.assignedStatus === "Assigned for Replacement" && newStatus === "Not Assigned") {
+            setUnassignReplacementConfirm({ item });
             return;
         }
 
@@ -945,6 +957,23 @@ export function StockList() {
                 ? "Assigned for Replacement"
                 : "Assigned";
 
+            // Collect warnings
+            const warnings: string[] = [];
+
+            // Check size compatibility
+            const machineSize = machine.prizeSize;
+            const itemSize = assigningItem.size;
+            if (machineSize && itemSize) {
+                const mSize = machineSize.trim().toLowerCase();
+                const iSize = itemSize.trim().toLowerCase();
+                const smallSizes = ['small', 'extra-small', 'extra small'];
+                const isCompatible = mSize === iSize || (smallSizes.includes(mSize) && smallSizes.includes(iSize));
+
+                if (!isCompatible) {
+                    warnings.push(`🚫 Size Mismatch: Machine expects "${machineSize}" prizes, but this item is "${itemSize}".`);
+                }
+            }
+
             // Check if item is already assigned to this machine
             const alreadyOnThisMachine = items.some(i =>
                 i.id === assigningItem.id && i.assignedMachineId === machineId
@@ -952,15 +981,10 @@ export function StockList() {
 
             if (alreadyOnThisMachine) {
                 const currentStatus = assigningItem.assignedStatus || "Not Assigned";
-                setWarningAlert({
-                    open: true,
-                    title: "Already Assigned",
-                    description: `This item is already "${currentStatus}" to ${machine.name}.`
-                });
-                return;
+                warnings.push(`ℹ️ This item is already "${currentStatus}" to ${machine.name}.`);
             }
 
-            // USING Mode Logic
+            // USING Mode Logic - check if machine is occupied
             if (targetStatus === "Assigned") {
                 const currentActiveItem = items.find(i =>
                     i.assignedMachineId === machineId &&
@@ -968,32 +992,25 @@ export function StockList() {
                 );
 
                 if (currentActiveItem) {
-                    // Machine is occupied. Ask for confirmation to replace.
-                    setPendingAssignment({ machine, status: targetStatus, slotId });
-                    return;
+                    warnings.push(`⚠️ This will replace the current item on this machine.`);
                 }
             }
 
             // REPLACEMENT Mode Logic
+            let queueItems: StockItem[] = [];
             if (targetStatus === "Assigned for Replacement") {
-                const replacementQueue = items.filter(i =>
+                queueItems = items.filter(i =>
                     i.assignedMachineId === machineId &&
                     i.assignedStatus === "Assigned for Replacement"
                 );
 
-                if (replacementQueue.length > 0) {
-                    // Show warning about existing queue
-                    setPendingAssignment({ machine, status: targetStatus, slotId });
-                    return;
+                if (queueItems.length > 0) {
+                    warnings.push(`ℹ️ Adding to existing queue (${queueItems.length} item(s) already queued).`);
                 }
             }
 
-            // ... (rest of the logic)
-
-            // Wait, I need to implement the confirmation logic properly. 
-            // Let's create a `confirmAction` state that can hold a function to execute.
-
-            await executeAssignment(machine, targetStatus, slotId);
+            // ALWAYS show confirmation dialog with all warnings
+            setPendingAssignment({ machine, status: targetStatus, slotId, warnings, queueItems });
 
         } catch (error) {
             console.error("Failed to assign machine:", error);
@@ -1006,10 +1023,9 @@ export function StockList() {
 
         // If USING mode, unassign any existing active item
         if (targetStatus === "Assigned") {
-            const currentActiveItem = items.find(i =>
-                i.assignedMachineId === machine.id &&
-                i.assignedStatus === "Assigned"
-            );
+            // Use getMachineStockItems (source of truth) to find existing active item
+            const { currentItems } = getMachineStockItems(machine.id, items, slotId);
+            const currentActiveItem = currentItems.find(i => i.id !== assigningItem.id);
 
             if (currentActiveItem) {
                 const unassignLog = createHistoryLog("UNASSIGN_MACHINE", {
@@ -1020,10 +1036,13 @@ export function StockList() {
                 }, currentActiveItem.id);
                 const updatedHistory = [...(currentActiveItem.history || []), unassignLog];
 
+                // Remove assignment from machineAssignments array
+                const currentAssignments = migrateToMachineAssignments(currentActiveItem);
+                const updatedOldAssignments = removeMachineAssignment(currentAssignments, machine.id);
+
                 await stockService.update(currentActiveItem.id, {
-                    assignedMachineId: undefined,
-                    assignedMachineName: undefined,
-                    assignedStatus: "Not Assigned",
+                    machineAssignments: updatedOldAssignments,
+                    ...syncLegacyFieldsFromAssignments({ ...currentActiveItem, machineAssignments: updatedOldAssignments }),
                     history: updatedHistory,
                     updatedAt: new Date()
                 });
@@ -1031,7 +1050,7 @@ export function StockList() {
                 // Update local state for the unassigned item
                 setItems(prevItems => prevItems.map(item =>
                     item.id === currentActiveItem.id
-                        ? { ...item, assignedMachineId: undefined, assignedMachineName: undefined, assignedStatus: "Not Assigned", history: updatedHistory, updatedAt: new Date() }
+                        ? { ...item, machineAssignments: updatedOldAssignments, assignedMachineId: undefined, assignedMachineName: undefined, assignedStatus: "Not Assigned", history: updatedHistory, updatedAt: new Date() }
                         : item
                 ));
             }
@@ -1049,7 +1068,6 @@ export function StockList() {
         await stockService.update(assigningItem.id, {
             assignedMachineId: machine.id,
             assignedMachineName: machine.name,
-            assignedSlotId: slotId,
             assignedStatus: targetStatus,
             history: updatedAssignHistory,
             updatedAt: new Date()
@@ -1062,13 +1080,53 @@ export function StockList() {
                     ...item,
                     assignedMachineId: machine.id,
                     assignedMachineName: machine.name,
-                    assignedSlotId: slotId,
                     assignedStatus: targetStatus,
                     history: updatedAssignHistory,
                     updatedAt: new Date()
                 }
                 : item
         ));
+
+        // Also update machine slot to sync currentItem / upcomingQueue
+        const targetSlot = slotId
+            ? machine.slots.find(s => s.id === slotId)
+            : machine.slots[0];
+
+        if (targetSlot) {
+            const updatedSlots = machine.slots.map(slot => {
+                if (slot.id === targetSlot.id) {
+                    if (targetStatus === "Assigned") {
+                        // Set as currentItem, remove from queue if present
+                        return {
+                            ...slot,
+                            currentItem: assigningItem,
+                            upcomingQueue: (slot.upcomingQueue || []).filter(q => q.itemId !== assigningItem.id)
+                        };
+                    } else {
+                        // Replacement: add to queue
+                        const alreadyInQueue = (slot.upcomingQueue || []).some(q => q.itemId === assigningItem.id);
+                        if (!alreadyInQueue) {
+                            return {
+                                ...slot,
+                                upcomingQueue: [
+                                    ...(slot.upcomingQueue || []),
+                                    {
+                                        itemId: assigningItem.id,
+                                        name: assigningItem.name,
+                                        imageUrl: assigningItem.imageUrl,
+                                        addedBy: 'system',
+                                        addedAt: new Date()
+                                    }
+                                ]
+                            };
+                        }
+                        return slot;
+                    }
+                }
+                return slot;
+            });
+            await machineService.update(machine.id, { slots: updatedSlots });
+        }
 
         // Reload machines to update slot status
         const updatedMachines = await machineService.getAll();
@@ -1345,37 +1403,46 @@ export function StockList() {
                                                 </DropdownMenu>
                                             </TableCell>
                                             <TableCell onClick={(e) => e.stopPropagation()}>
-                                                <Select
-                                                    value={item.assignedStatus || "Not Assigned"}
-                                                    onValueChange={(value) => handleQuickStatusChange(item.id, value)}
-                                                >
-                                                    <SelectTrigger className={`h - 8 w - [140px] ${item.assignedStatus === "Assigned"
-                                                        ? "bg-green-100 text-green-700 border-green-200"
-                                                        : item.assignedStatus === "Assigned for Replacement"
-                                                            ? "bg-blue-100 text-blue-700 border-blue-200"
-                                                            : "bg-gray-100 text-gray-700 border-gray-200"
-                                                        } `}>
-                                                        <SelectValue />
-                                                    </SelectTrigger>
-                                                    <SelectContent>
-                                                        <SelectItem value="Not Assigned">Not Assigned</SelectItem>
-                                                        <SelectItem value="Assigned">Using</SelectItem>
-                                                        <SelectItem value="Assigned for Replacement">Replacement</SelectItem>
-                                                    </SelectContent>
-                                                </Select>
-                                            </TableCell>
-                                            <TableCell>
-                                                {item.assignedMachineName ? (
-                                                    <Link
-                                                        href={`/machines/${item.assignedMachineId || ''}`}
-                                                        onClick={(e) => e.stopPropagation()}
-                                                        className="text-primary hover:underline"
-                                                    >
-                                                        {item.assignedMachineName}
-                                                    </Link>
+                                                {getAssignmentCount(item) > 1 ? (
+                                                    // Multi-machine: Read-only badge with info text
+                                                    <div className="flex flex-col gap-0.5">
+                                                        <div
+                                                            className={`h-8 px-2 py-1 rounded-md text-sm font-medium flex items-center cursor-default ${getComputedAssignedStatus(item) === "Assigned"
+                                                                ? "bg-green-100 text-green-700 border border-green-200"
+                                                                : getComputedAssignedStatus(item) === "Assigned for Replacement"
+                                                                    ? "bg-blue-100 text-blue-700 border border-blue-200"
+                                                                    : "bg-gray-100 text-gray-700 border border-gray-200"
+                                                                }`}
+                                                        >
+                                                            {getComputedAssignedStatus(item) === "Assigned" ? "Using" : getComputedAssignedStatus(item) === "Assigned for Replacement" ? "Replacement" : "Not Assigned"}
+                                                            <span className="text-xs opacity-60 ml-1">({getAssignmentCount(item)})</span>
+                                                        </div>
+                                                        <span className="text-[10px] text-muted-foreground">Use sidebar in details page</span>
+                                                    </div>
                                                 ) : (
-                                                    <span className="text-muted-foreground text-sm">-</span>
+                                                    // Single or no machine: Dropdown
+                                                    <Select
+                                                        value={getComputedAssignedStatus(item)}
+                                                        onValueChange={(value) => handleQuickStatusChange(item.id, value)}
+                                                    >
+                                                        <SelectTrigger className={`h-8 w-[140px] ${getComputedAssignedStatus(item) === "Assigned"
+                                                            ? "bg-green-100 text-green-700 border-green-200"
+                                                            : getComputedAssignedStatus(item) === "Assigned for Replacement"
+                                                                ? "bg-blue-100 text-blue-700 border-blue-200"
+                                                                : "bg-gray-100 text-gray-700 border-gray-200"
+                                                            }`}>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                        <SelectContent>
+                                                            <SelectItem value="Not Assigned">Not Assigned</SelectItem>
+                                                            <SelectItem value="Assigned">Using</SelectItem>
+                                                            <SelectItem value="Assigned for Replacement">Replacement</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
                                                 )}
+                                            </TableCell>
+                                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                                <MachineAssignmentBadge item={item} variant="compact" />
                                             </TableCell>
 
 
@@ -1763,24 +1830,20 @@ export function StockList() {
                                 otherMachines = sortMachines(otherMachines);
 
                                 const renderMachineButton = (machine: ArcadeMachine) => {
+                                    // Find current item on this machine
+                                    const currentItem = items.find(
+                                        i => i.assignedMachineId === machine.id && i.assignedStatus === "Assigned"
+                                    );
+
                                     return (
                                         <React.Fragment key={machine.id}>
                                             {machine.slots.map((slot) => {
-                                                // Treat a slot as occupied if:
-                                                // - item is Assigned to this machine AND
-                                                //   - assignedSlotId matches this slot, OR
-                                                //   - assignedSlotId is missing (legacy data before per-slot support)
-                                                const isOccupied = items.some(
-                                                    i =>
-                                                        i.assignedMachineId === machine.id &&
-                                                        i.assignedStatus === "Assigned" &&
-                                                        (!i.assignedSlotId || i.assignedSlotId === slot.id)
-                                                );
+                                                // A slot is occupied if item is Assigned to this machine
+                                                const isOccupied = !!currentItem;
                                                 const replacementCount = items.filter(
                                                     i =>
                                                         i.assignedMachineId === machine.id &&
-                                                        i.assignedStatus === "Assigned for Replacement" &&
-                                                        (!i.assignedSlotId || i.assignedSlotId === slot.id)
+                                                        i.assignedStatus === "Assigned for Replacement"
                                                 ).length;
 
                                                 return (
@@ -1795,51 +1858,98 @@ export function StockList() {
                                                         )}
                                                         onClick={() => handleAssignMachine(machine.id, slot.id)}
                                                     >
-                                                        <div className="flex flex-col items-start gap-1 w-full text-left">
-                                                            <div className="flex items-center justify-between w-full">
-                                                                <div className="flex items-center gap-2 flex-wrap">
-                                                                    <span className="font-medium flex items-center gap-1">
-                                                                        {machine.name}
-                                                                        {slot.name && (
-                                                                            <span className="text-xs text-muted-foreground font-normal bg-background/80 px-1.5 py-0.5 rounded border border-border/50">
-                                                                                {slot.name}
-                                                                            </span>
+                                                        <div className="flex items-start gap-3 w-full">
+                                                            {/* Machine Image */}
+                                                            <div className="h-12 w-12 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                                {machine.imageUrl ? (
+                                                                    <img
+                                                                        src={machine.imageUrl}
+                                                                        alt={machine.name}
+                                                                        className="h-full w-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <div className="h-full w-full flex items-center justify-center">
+                                                                        <Gamepad2 className="h-5 w-5 text-muted-foreground" />
+                                                                    </div>
+                                                                )}
+                                                            </div>
+
+                                                            <div className="flex flex-col items-start gap-1 flex-1 min-w-0 text-left">
+                                                                <div className="flex items-center justify-between w-full">
+                                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                                        <Link
+                                                                            href={`/machines/${machine.id}`}
+                                                                            className="font-medium flex items-center gap-1 hover:text-primary hover:underline transition-colors"
+                                                                            onClick={(e) => e.stopPropagation()}
+                                                                        >
+                                                                            {machine.name}
+                                                                            {slot.name && (
+                                                                                <span className="text-xs text-muted-foreground font-normal bg-background/80 px-1.5 py-0.5 rounded border border-border/50">
+                                                                                    {slot.name}
+                                                                                </span>
+                                                                            )}
+                                                                        </Link>
+                                                                        {isOccupied ? (
+                                                                            <Badge
+                                                                                variant="destructive"
+                                                                                className="text-[10px] h-5 px-1.5"
+                                                                            >
+                                                                                Occupied
+                                                                            </Badge>
+                                                                        ) : (
+                                                                            <Badge
+                                                                                variant="outline"
+                                                                                className="text-[10px] h-5 px-1.5 border-green-500 text-green-600 bg-green-50"
+                                                                            >
+                                                                                Available
+                                                                            </Badge>
                                                                         )}
-                                                                    </span>
-                                                                    {isOccupied ? (
-                                                                        <Badge
-                                                                            variant="destructive"
-                                                                            className="text-[10px] h-5 px-1.5"
-                                                                        >
-                                                                            Occupied
-                                                                        </Badge>
-                                                                    ) : (
-                                                                        <Badge
-                                                                            variant="outline"
-                                                                            className="text-[10px] h-5 px-1.5 border-green-500 text-green-600 bg-green-50"
-                                                                        >
-                                                                            Available
-                                                                        </Badge>
-                                                                    )}
-                                                                    {replacementCount > 0 && (
-                                                                        <Badge
-                                                                            variant="secondary"
-                                                                            className="text-[10px] h-5 px-1.5"
-                                                                        >
-                                                                            Queue: {replacementCount}
+                                                                        {replacementCount > 0 && (
+                                                                            <Badge
+                                                                                variant="secondary"
+                                                                                className="text-[10px] h-5 px-1.5"
+                                                                            >
+                                                                                Queue: {replacementCount}
+                                                                            </Badge>
+                                                                        )}
+                                                                    </div>
+                                                                    {machine.prizeSize && (
+                                                                        <Badge variant="secondary" className="text-xs shrink-0 ml-1">
+                                                                            {machine.prizeSize}
                                                                         </Badge>
                                                                     )}
                                                                 </div>
-                                                                {machine.prizeSize && (
-                                                                    <Badge variant="secondary" className="text-xs shrink-0 ml-1">
-                                                                        {machine.prizeSize}
-                                                                    </Badge>
+                                                                <span className="text-xs text-muted-foreground truncate w-full">
+                                                                    Asset #{machine.assetTag} • {machine.location} •{" "}
+                                                                    {machine.type || "Unknown Type"}
+                                                                </span>
+
+                                                                {/* Current Item Info */}
+                                                                {currentItem && (
+                                                                    <Link
+                                                                        href={`/inventory/${currentItem.id}`}
+                                                                        className="flex items-center gap-2 mt-1 pt-1 border-t border-border/50 w-full group/item hover:bg-muted/30 transition-colors"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    >
+                                                                        <div className="h-6 w-6 rounded overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                                            {currentItem.imageUrl ? (
+                                                                                <img
+                                                                                    src={currentItem.imageUrl}
+                                                                                    alt={currentItem.name}
+                                                                                    className="h-full w-full object-cover"
+                                                                                />
+                                                                            ) : (
+                                                                                <div className="h-full w-full flex items-center justify-center text-[8px] text-muted-foreground">
+                                                                                    ?
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                        <span className="text-xs text-muted-foreground truncate group-hover/item:text-primary group-hover/item:underline">
+                                                                            Current: {currentItem.name}
+                                                                        </span>
+                                                                    </Link>
                                                                 )}
                                                             </div>
-                                                            <span className="text-xs text-muted-foreground truncate w-full">
-                                                                Asset #{machine.assetTag} • {machine.location} •{" "}
-                                                                {machine.type || "Unknown Type"}
-                                                            </span>
                                                         </div>
                                                     </Button>
                                                 );
@@ -1896,26 +2006,96 @@ export function StockList() {
                                 ? "Change Using to Replacement?"
                                 : "Unassign Item?"}
                         </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {statusConfirm?.status === "Assigned for Replacement" ? (
-                                <>
-                                    This item is currently <strong>Using</strong> on{" "}
-                                    <strong>{statusConfirm.item.assignedMachineName || "a machine"}</strong>.
-                                    <br /><br />
-                                    Changing to <strong>Replacement</strong> will remove it from the machine and leave the
-                                    machine empty (item will become <strong>Not Assigned</strong>).
-                                    <br /><br />
-                                    This action requires a supervisor override.
-                                </>
-                            ) : (
-                                <>
-                                    This item is currently assigned to{" "}
-                                    <strong>{statusConfirm?.item.assignedMachineName || "a machine"}</strong>.
-                                    <br /><br />
-                                    Changing to <strong>Not Assigned</strong> will remove it from that machine and requires
-                                    a supervisor override.
-                                </>
-                            )}
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3 pt-2">
+                                {/* Item being unassigned */}
+                                {statusConfirm && (
+                                    <div className="border rounded-lg p-3 bg-blue-50/50 dark:bg-blue-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            Item:
+                                        </p>
+                                        <Link
+                                            href={`/inventory/${statusConfirm.item.id}`}
+                                            className="flex items-center gap-3 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                {statusConfirm.item.imageUrl ? (
+                                                    <img
+                                                        src={statusConfirm.item.imageUrl}
+                                                        alt={statusConfirm.item.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center">
+                                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                    {statusConfirm.item.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Currently: <strong>{statusConfirm.item.assignedStatus === "Assigned" ? "Using" : statusConfirm.item.assignedStatus}</strong>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {/* Machine it's assigned to */}
+                                {statusConfirm?.item.assignedMachineId && (
+                                    <div className="border rounded-lg p-3 bg-purple-50/50 dark:bg-purple-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            Currently on machine:
+                                        </p>
+                                        {(() => {
+                                            const machine = machines.find(m => m.id === statusConfirm.item.assignedMachineId);
+                                            return (
+                                                <Link
+                                                    href={`/machines/${statusConfirm.item.assignedMachineId}`}
+                                                    className="flex items-center gap-3 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div className="h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                        {machine?.imageUrl ? (
+                                                            <img
+                                                                src={machine.imageUrl}
+                                                                alt={machine.name}
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-full w-full flex items-center justify-center">
+                                                                <Gamepad2 className="h-4 w-4 text-muted-foreground" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                            {statusConfirm.item.assignedMachineName || "Unknown Machine"}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+
+                                {statusConfirm?.status === "Not Assigned" ? (
+                                    <div className="text-sm text-foreground">
+                                        Changing to <strong>Not Assigned</strong> will remove this item from the machine. This action requires supervisor approval.
+                                    </div>
+                                ) : (
+                                    <div className="text-sm text-foreground">
+                                        Changing to <strong>Replacement</strong> will remove it from the machine and leave the machine empty. This action requires supervisor approval.
+                                    </div>
+                                )}
+
+                                <div className="pt-2 text-xs text-muted-foreground border-t">
+                                    Do you want to proceed?
+                                </div>
+                            </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
@@ -1989,6 +2169,228 @@ export function StockList() {
                     <AlertDialogFooter>
                         <AlertDialogAction onClick={() => setWarningAlert(prev => ({ ...prev, open: false }))}>
                             Understood
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Replacement Confirmation Dialog - Enhanced with images */}
+            <AlertDialog open={!!replacementConfirm} onOpenChange={(open) => !open && setReplacementConfirm(null)}>
+                <AlertDialogContent className="max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-amber-600 flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5" />
+                            Change to Replacement?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3 pt-2">
+                                {/* Item being changed */}
+                                {replacementConfirm && (
+                                    <div className="border rounded-lg p-3 bg-blue-50/50 dark:bg-blue-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            Item to change:
+                                        </p>
+                                        <Link
+                                            href={`/inventory/${replacementConfirm.item.id}`}
+                                            className="flex items-center gap-3 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                {replacementConfirm.item.imageUrl ? (
+                                                    <img
+                                                        src={replacementConfirm.item.imageUrl}
+                                                        alt={replacementConfirm.item.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center">
+                                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                    {replacementConfirm.item.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Currently: <strong>Using</strong>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {/* Machine it's assigned to */}
+                                {replacementConfirm?.item.assignedMachineId && (
+                                    <div className="border rounded-lg p-3 bg-purple-50/50 dark:bg-purple-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            On machine:
+                                        </p>
+                                        {(() => {
+                                            const machine = machines.find(m => m.id === replacementConfirm.item.assignedMachineId);
+                                            return (
+                                                <Link
+                                                    href={`/machines/${replacementConfirm.item.assignedMachineId}`}
+                                                    className="flex items-center gap-3 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div className="h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                        {machine?.imageUrl ? (
+                                                            <img
+                                                                src={machine.imageUrl}
+                                                                alt={machine.name}
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-full w-full flex items-center justify-center">
+                                                                <Gamepad2 className="h-4 w-4 text-muted-foreground" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                            {replacementConfirm.item.assignedMachineName || "Unknown Machine"}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+
+                                <div className="text-sm text-foreground">
+                                    Changing to <strong>Replacement</strong> will keep the item assigned to this machine but it will no longer be the active item. The machine will be left empty.
+                                </div>
+
+                                <div className="pt-2 text-xs text-muted-foreground border-t">
+                                    Do you want to proceed?
+                                </div>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-amber-600 hover:bg-amber-700"
+                            onClick={async () => {
+                                if (replacementConfirm) {
+                                    await processStatusChange(replacementConfirm.item, "Assigned for Replacement");
+                                    setReplacementConfirm(null);
+                                }
+                            }}
+                        >
+                            Confirm
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Unassign Replacement Confirmation Dialog - Enhanced with images */}
+            <AlertDialog open={!!unassignReplacementConfirm} onOpenChange={(open) => !open && setUnassignReplacementConfirm(null)}>
+                <AlertDialogContent className="max-w-md">
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="text-amber-600 flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5" />
+                            Remove from Replacement Queue?
+                        </AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3 pt-2">
+                                {/* Item being unassigned */}
+                                {unassignReplacementConfirm && (
+                                    <div className="border rounded-lg p-3 bg-blue-50/50 dark:bg-blue-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            Item to remove:
+                                        </p>
+                                        <Link
+                                            href={`/inventory/${unassignReplacementConfirm.item.id}`}
+                                            className="flex items-center gap-3 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                {unassignReplacementConfirm.item.imageUrl ? (
+                                                    <img
+                                                        src={unassignReplacementConfirm.item.imageUrl}
+                                                        alt={unassignReplacementConfirm.item.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center">
+                                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                    {unassignReplacementConfirm.item.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Currently: <strong>Replacement</strong>
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {/* Machine it's assigned to */}
+                                {unassignReplacementConfirm?.item.assignedMachineId && (
+                                    <div className="border rounded-lg p-3 bg-purple-50/50 dark:bg-purple-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            In replacement queue for:
+                                        </p>
+                                        {(() => {
+                                            const machine = machines.find(m => m.id === unassignReplacementConfirm.item.assignedMachineId);
+                                            return (
+                                                <Link
+                                                    href={`/machines/${unassignReplacementConfirm.item.assignedMachineId}`}
+                                                    className="flex items-center gap-3 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div className="h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                        {machine?.imageUrl ? (
+                                                            <img
+                                                                src={machine.imageUrl}
+                                                                alt={machine.name}
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-full w-full flex items-center justify-center">
+                                                                <Gamepad2 className="h-4 w-4 text-muted-foreground" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                            {unassignReplacementConfirm.item.assignedMachineName || "Unknown Machine"}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+
+                                <div className="text-sm text-foreground">
+                                    This will remove the item from the replacement queue and set it to <strong>Not Assigned</strong>. It will no longer be scheduled for this machine.
+                                </div>
+
+                                <div className="pt-2 text-xs text-muted-foreground border-t">
+                                    Do you want to proceed?
+                                </div>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            className="bg-amber-600 hover:bg-amber-700"
+                            onClick={async () => {
+                                if (unassignReplacementConfirm) {
+                                    await processStatusChange(unassignReplacementConfirm.item, "Not Assigned");
+                                    setUnassignReplacementConfirm(null);
+                                }
+                            }}
+                        >
+                            Confirm
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -2096,41 +2498,207 @@ export function StockList() {
 
             {/* Pending Assignment Confirmation Dialog */}
             <AlertDialog open={!!pendingAssignment} onOpenChange={(open) => !open && setPendingAssignment(null)}>
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-md">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>
-                            {pendingAssignment?.status === "Assigned" ? "Machine Occupied" : "Existing Replacement Queue"}
-                        </AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {pendingAssignment?.status === "Assigned" ? (
-                                <>
-                                    This machine is already using an item. Continuing will <strong>remove the current item</strong> and assign this one.
-                                </>
-                            ) : (
-                                <>
-                                    This machine already has items in the replacement queue.
-                                    <br /><br />
-                                    Do you want to add this item to the queue?
-                                </>
-                            )}
+                        {(() => {
+                            if (!pendingAssignment) return null;
+                            const hasWarnings = (pendingAssignment.warnings?.length ?? 0) > 0;
+                            const hasSizeMismatch = pendingAssignment.warnings?.some(w => w.includes('Size Mismatch'));
+
+                            return (
+                                <AlertDialogTitle className={`flex items-center gap-2 ${hasWarnings ? (hasSizeMismatch ? 'text-red-600' : 'text-amber-600') : 'text-green-600'}`}>
+                                    {hasWarnings ? (
+                                        <>
+                                            <AlertTriangle className="h-5 w-5" />
+                                            {hasSizeMismatch ? 'Size Incompatibility Warning' : 'Review Assignment'}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Gamepad2 className="h-5 w-5" />
+                                            Confirm Assignment
+                                        </>
+                                    )}
+                                </AlertDialogTitle>
+                            );
+                        })()}
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3 pt-2">
+                                {/* Show the item being assigned */}
+                                {assigningItem && (
+                                    <div className="border rounded-lg p-3 bg-green-50/50 dark:bg-green-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            {pendingAssignment?.status === "Assigned" ? 'Assigning as current item:' : 'Adding to replacement queue:'}
+                                        </p>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-12 w-12 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                {assigningItem.imageUrl ? (
+                                                    <img
+                                                        src={assigningItem.imageUrl}
+                                                        alt={assigningItem.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
+                                                        No Img
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-foreground truncate">
+                                                    {assigningItem.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Size: {assigningItem.size || 'Unknown'} • Stock: {assigningItem.locations?.reduce((acc, loc) => acc + loc.quantity, 0) ?? 0}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Show current item being replaced */}
+                                {(() => {
+                                    if (!pendingAssignment || pendingAssignment.status !== "Assigned") return null;
+
+                                    const { currentItems } = getMachineStockItems(pendingAssignment.machine.id, items, pendingAssignment.slotId);
+                                    const currentActiveItem = currentItems[0];
+
+                                    if (currentActiveItem) {
+                                        return (
+                                            <div className="space-y-3">
+                                                <div className="border rounded-lg p-3 bg-red-50/50 dark:bg-red-900/10">
+                                                    <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                                        This will replace the current item:
+                                                    </p>
+                                                    <Link
+                                                        href={`/inventory/${currentActiveItem.id}`}
+                                                        className="flex items-center gap-3 group hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+                                                        <div className="h-12 w-12 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                            {currentActiveItem.imageUrl ? (
+                                                                <img
+                                                                    src={currentActiveItem.imageUrl}
+                                                                    alt={currentActiveItem.name}
+                                                                    className="h-full w-full object-cover"
+                                                                />
+                                                            ) : (
+                                                                <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
+                                                                    No Img
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                                {currentActiveItem.name}
+                                                            </div>
+                                                            <div className="text-xs text-muted-foreground">
+                                                                Click to view details →
+                                                            </div>
+                                                        </div>
+                                                    </Link>
+                                                </div>
+                                                <p className="text-sm text-amber-600">
+                                                    ⚠️ Proceeding will <strong>remove the current item</strong> and assign this one as active.
+                                                </p>
+                                            </div>
+                                        );
+                                    }
+                                    return null;
+                                })()}
+
+                                {/* Show existing queue items when adding to replacement queue */}
+                                {pendingAssignment?.queueItems && pendingAssignment.queueItems.length > 0 && (
+                                    <div className="border rounded-lg p-3 bg-amber-50/50 dark:bg-amber-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            Currently in replacement queue ({pendingAssignment.queueItems.length}):
+                                        </p>
+                                        <div className="space-y-2">
+                                            {pendingAssignment.queueItems.slice(0, 3).map((queueItem) => (
+                                                <Link
+                                                    key={queueItem.id}
+                                                    href={`/inventory/${queueItem.id}`}
+                                                    className="flex items-center gap-2 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div className="h-8 w-8 rounded overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                        {queueItem.imageUrl ? (
+                                                            <img
+                                                                src={queueItem.imageUrl}
+                                                                alt={queueItem.name}
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-full w-full flex items-center justify-center text-[8px] text-muted-foreground">
+                                                                No Img
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium text-sm text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                            {queueItem.name}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            ))}
+                                            {pendingAssignment.queueItems.length > 3 && (
+                                                <div className="text-xs text-muted-foreground pl-10">
+                                                    +{pendingAssignment.queueItems.length - 3} more...
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Show all warnings from state */}
+                                {pendingAssignment?.warnings && pendingAssignment.warnings.length > 0 && (
+                                    <div className="space-y-1">
+                                        {pendingAssignment.warnings.map((warning, index) => (
+                                            <div key={index} className="text-sm text-foreground">
+                                                {warning}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="pt-2 text-xs text-muted-foreground border-t">
+                                    {(() => {
+                                        if (!pendingAssignment) return "Confirm assignment?";
+                                        const hasWarnings = (pendingAssignment.warnings?.length ?? 0) > 0;
+
+                                        if (hasWarnings) {
+                                            return "Do you want to proceed despite the warnings above?";
+                                        }
+                                        return `Assign to ${pendingAssignment.machine.name}?`;
+                                    })()}
+                                </div>
+                            </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={() => {
-                                if (pendingAssignment) {
-                                    executeAssignment(
-                                        pendingAssignment.machine,
-                                        pendingAssignment.status,
-                                        pendingAssignment.slotId
-                                    );
-                                    setPendingAssignment(null);
-                                }
-                            }}
-                        >
-                            Confirm
-                        </AlertDialogAction>
+                        {(() => {
+                            if (!pendingAssignment) return null;
+                            const hasWarnings = (pendingAssignment.warnings?.length ?? 0) > 0;
+                            const hasSizeMismatch = pendingAssignment.warnings?.some(w => w.includes('Size Mismatch'));
+
+                            return (
+                                <AlertDialogAction
+                                    className={hasWarnings ? (hasSizeMismatch ? 'bg-red-600 hover:bg-red-700' : 'bg-amber-600 hover:bg-amber-700') : 'bg-green-600 hover:bg-green-700'}
+                                    onClick={() => {
+                                        if (pendingAssignment) {
+                                            executeAssignment(
+                                                pendingAssignment.machine,
+                                                pendingAssignment.status,
+                                                pendingAssignment.slotId
+                                            );
+                                            setPendingAssignment(null);
+                                        }
+                                    }}
+                                >
+                                    {hasWarnings ? 'Proceed Anyway' : 'Confirm'}
+                                </AlertDialogAction>
+                            );
+                        })()}
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
@@ -2389,27 +2957,128 @@ export function StockList() {
                     if (!open) setAssignmentConflict(null);
                 }}
             >
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-md">
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Machine Already Has a Using Item</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            {assignmentConflict && (
-                                <>
-                                    Machine{" "}
-                                    <strong>{assignmentConflict.item.assignedMachineName || "Unknown Machine"}</strong>{" "}
-                                    is currently <strong>Using</strong>{" "}
-                                    <strong>{assignmentConflict.currentUsingItem.name}</strong>.
-                                    <br />
-                                    <br />
-                                    Continuing will remove that item from Using (set it to{" "}
-                                    <strong>Not Assigned</strong>) and set{" "}
-                                    <strong>{assignmentConflict.item.name}</strong> as the new{" "}
-                                    <strong>Using</strong> item on that machine.
-                                    <br />
-                                    <br />
-                                    Do you want to continue?
-                                </>
-                            )}
+                        <AlertDialogTitle className="text-amber-600 flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5" />
+                            Machine Already Has a Using Item
+                        </AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-3 pt-2">
+                                {/* Machine involved */}
+                                {assignmentConflict && (
+                                    <div className="border rounded-lg p-3 bg-purple-50/50 dark:bg-purple-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            Machine:
+                                        </p>
+                                        {(() => {
+                                            const machine = machines.find(m => m.id === assignmentConflict.item.assignedMachineId);
+                                            return (
+                                                <Link
+                                                    href={`/machines/${assignmentConflict.item.assignedMachineId}`}
+                                                    className="flex items-center gap-3 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                                    onClick={(e) => e.stopPropagation()}
+                                                >
+                                                    <div className="h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                        {machine?.imageUrl ? (
+                                                            <img
+                                                                src={machine.imageUrl}
+                                                                alt={machine.name}
+                                                                className="h-full w-full object-cover"
+                                                            />
+                                                        ) : (
+                                                            <div className="h-full w-full flex items-center justify-center">
+                                                                <Gamepad2 className="h-4 w-4 text-muted-foreground" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                            {assignmentConflict.item.assignedMachineName || "Unknown Machine"}
+                                                        </div>
+                                                    </div>
+                                                </Link>
+                                            );
+                                        })()}
+                                    </div>
+                                )}
+
+                                {/* Current Using Item (will be removed) */}
+                                {assignmentConflict?.currentUsingItem && (
+                                    <div className="border rounded-lg p-3 bg-red-50/50 dark:bg-red-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            Currently Using (will be removed):
+                                        </p>
+                                        <Link
+                                            href={`/inventory/${assignmentConflict.currentUsingItem.id}`}
+                                            className="flex items-center gap-3 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                {assignmentConflict.currentUsingItem.imageUrl ? (
+                                                    <img
+                                                        src={assignmentConflict.currentUsingItem.imageUrl}
+                                                        alt={assignmentConflict.currentUsingItem.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center">
+                                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                    {assignmentConflict.currentUsingItem.name}
+                                                </div>
+                                                <div className="text-xs text-red-600">
+                                                    → Will be set to Not Assigned
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {/* New Item (will become Using) */}
+                                {assignmentConflict && (
+                                    <div className="border rounded-lg p-3 bg-green-50/50 dark:bg-green-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            New Using Item:
+                                        </p>
+                                        <Link
+                                            href={`/inventory/${assignmentConflict.item.id}`}
+                                            className="flex items-center gap-3 group hover:bg-muted/50 rounded p-1 -m-1 transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="h-10 w-10 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                {assignmentConflict.item.imageUrl ? (
+                                                    <img
+                                                        src={assignmentConflict.item.imageUrl}
+                                                        alt={assignmentConflict.item.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center">
+                                                        <Package className="h-4 w-4 text-muted-foreground" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                    {assignmentConflict.item.name}
+                                                </div>
+                                                <div className="text-xs text-green-600">
+                                                    → Will become the active item
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                )}
+
+                                <div className="pt-2 text-xs text-muted-foreground border-t">
+                                    Do you want to proceed?
+                                </div>
+                            </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>

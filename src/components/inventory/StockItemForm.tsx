@@ -28,9 +28,11 @@ import { cn } from "@/lib/utils";
 import { generateStockItemNote } from "@/ai/flows/generate-stock-item-note-flow";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
+import { areSizesCompatible } from "@/utils/normalizeUtils";
 import {
     AlertDialog,
     AlertDialogAction,
+    AlertDialogCancel,
     AlertDialogContent,
     AlertDialogDescription,
     AlertDialogFooter,
@@ -66,6 +68,57 @@ const secondaryStorageLocations = [
 export { primaryStorageLocations, secondaryStorageLocations };
 
 const sizeOptions = ["Extra-Small", "Small", "Medium", "Large", "Big"];
+
+// Category code mappings for inventory item ID generation
+const INVENTORY_CATEGORY_CODES: Record<string, string> = {
+    "Plushy": "plu",
+    "Plush": "plu",
+    "Keychain": "key",
+    "Electronics": "ele",
+    "Gadget": "gad",
+    "Mystery Box": "mys",
+    "Figurine": "fig",
+    "Trading Card": "crd",
+    "Capsule": "cap",
+    "Redemption": "red",
+    "Snack": "snk",
+    "Stationery": "stn",
+    "Lifestyle": "lfs",
+    "Special": "spc",
+};
+
+/**
+ * Generate a structured, human-readable inventory item ID
+ * Format: inv_{category}_{number}
+ * Example: inv_plu_001 (Plushy category, Item #01)
+ */
+export const generateStockItemId = (
+    category: string,
+    existingItems: { id: string }[] = []
+): string => {
+    // Get category code (default to first 3 chars lowercase if not mapped)
+    const catCode = INVENTORY_CATEGORY_CODES[category] || category.substring(0, 3).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // Find the next available number for this category
+    const prefix = `inv_${catCode}_`;
+
+    // Find existing items with similar IDs to determine next number
+    const existingNumbers = existingItems
+        .map(i => i.id)
+        .filter(id => id.startsWith(prefix))
+        .map(id => {
+            // Extract number from ID like inv_plu_019
+            const parts = id.split('_');
+            const numPart = parts[parts.length - 1];
+            return parseInt(numPart, 10);
+        })
+        .filter(n => !isNaN(n));
+
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const paddedNumber = String(nextNumber).padStart(3, '0');
+
+    return `inv_${catCode}_${paddedNumber}`;
+};
 
 const parseNumericInput = (input: any): number => {
     if (typeof input === 'number') return input;
@@ -312,6 +365,9 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
     const [machineComboboxOpen, setMachineComboboxOpen] = React.useState(false);
     const [isValidationErrorDialogOpen, setIsValidationErrorDialogOpen] = React.useState(false);
     const [validationErrors, setValidationErrors] = React.useState<string[]>([]);
+    const [pendingSubmitData, setPendingSubmitData] = React.useState<RawFormValues | null>(null);
+    const [assignmentWarnings, setAssignmentWarnings] = React.useState<string[]>([]);
+    const [isAssignmentConfirmOpen, setIsAssignmentConfirmOpen] = React.useState(false);
     const fileInputRef = React.useRef<HTMLInputElement>(null);
     const cameraInputRef = React.useRef<HTMLInputElement>(null);
 
@@ -528,23 +584,12 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
 
     const isMachineOccupied = !!occupyingItem;
 
-    // Check size compatibility
+    // Check size compatibility using normalized utility
     const currentItemSize = form.watch("size");
     const isSizeCompatible = React.useMemo(() => {
         if (!selectedMachine || !currentItemSize) return true; // No size set = compatible
-        const machineSize = selectedMachine.prizeSize?.toLowerCase().trim();
-        const itemSize = currentItemSize.toLowerCase().trim();
-
-        if (!machineSize) return true; // Machine has no size restriction
-
-        // Direct match
-        if (machineSize === itemSize) return true;
-
-        // Small and Extra-Small are compatible
-        const smallSizes = ['small', 'extra-small', 'extra small'];
-        if (smallSizes.includes(machineSize) && smallSizes.includes(itemSize)) return true;
-
-        return false;
+        if (!selectedMachine.prizeSize) return true; // Machine has no size restriction
+        return areSizesCompatible(selectedMachine.prizeSize, currentItemSize);
     }, [selectedMachine, currentItemSize]);
 
     // Get replacement queue count for the machine
@@ -640,6 +685,54 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
     };
 
     const handleValidSubmit = (data: RawFormValues) => {
+        // Check for assignment warnings before submitting
+        const warnings: string[] = [];
+        const machineId = data.assignedMachineId;
+        const machine = machineId && machineId !== NO_MACHINE_ASSIGNED_VALUE
+            ? machines.find(m => m.id === machineId)
+            : null;
+
+        if (machine && data.assignmentStatus) {
+            // Check size compatibility
+            const itemSize = data.size;
+            if (itemSize && machine.prizeSize && !areSizesCompatible(machine.prizeSize, itemSize)) {
+                warnings.push(`Size mismatch: Item is "${itemSize}", but machine "${machine.name}" accepts "${machine.prizeSize}".`);
+            }
+
+            // Check if machine is occupied (only matters for "Assigned" status)
+            if (data.assignmentStatus === 'Assigned') {
+                const occupyingItem = stockItems.find(item =>
+                    item.id !== initialData?.id &&
+                    item.assignedMachineId === machine.id &&
+                    item.assignedStatus === 'Assigned'
+                );
+                if (occupyingItem) {
+                    warnings.push(`Machine "${machine.name}" is already active with "${occupyingItem.name}". This will replace it.`);
+                }
+            }
+
+            // Check stock levels
+            const overallQty = typeof data.overallQuantity === 'number' ? data.overallQuantity : 0;
+            if (overallQty === 0) {
+                warnings.push(`Warning: Item has no stock. Consider adding stock before assigning to a machine.`);
+            } else if (data.lowStockThreshold && overallQty <= (data.lowStockThreshold as number)) {
+                warnings.push(`Low stock: Only ${overallQty} units available (threshold: ${data.lowStockThreshold}).`);
+            }
+        }
+
+        // If there are warnings, show confirmation dialog
+        if (warnings.length > 0) {
+            setAssignmentWarnings(warnings);
+            setPendingSubmitData(data);
+            setIsAssignmentConfirmOpen(true);
+            return;
+        }
+
+        // No warnings, proceed with submit
+        proceedWithSubmit(data);
+    };
+
+    const proceedWithSubmit = (data: RawFormValues) => {
         // Auto-allocate remaining quantity to B-Plushy Room
         const overallQty = typeof data.overallQuantity === 'number' ? data.overallQuantity : 0;
         const allocatedQty = (data.locations || []).reduce((sum: number, loc: any) => {
@@ -701,6 +794,53 @@ export function StockItemForm({ onSubmit, onCancel, categories, initialData, mac
                     <AlertDialogFooter>
                         <AlertDialogAction onClick={() => setIsValidationErrorDialogOpen(false)} className="font-body">
                             OK
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Assignment Confirmation Dialog */}
+            <AlertDialog open={isAssignmentConfirmOpen} onOpenChange={setIsAssignmentConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="font-headline flex items-center">
+                            <AlertTriangle className="text-amber-500 mr-2 h-6 w-6" />
+                            Confirm Assignment
+                        </AlertDialogTitle>
+                        <AlertDialogDescription className="font-body pt-2 text-left" asChild>
+                            <div>
+                                <p className="mb-2">Please review the following warnings before proceeding:</p>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <div className="max-h-60 overflow-y-auto pr-2">
+                        <ul className="list-disc list-inside space-y-1.5 text-sm text-amber-700 font-body">
+                            {assignmentWarnings.map((warning, index) => (
+                                <li key={index}>{warning}</li>
+                            ))}
+                        </ul>
+                    </div>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel
+                            onClick={() => {
+                                setIsAssignmentConfirmOpen(false);
+                                setPendingSubmitData(null);
+                            }}
+                            className="font-body"
+                        >
+                            Cancel
+                        </AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (pendingSubmitData) {
+                                    proceedWithSubmit(pendingSubmitData);
+                                    setPendingSubmitData(null);
+                                }
+                                setIsAssignmentConfirmOpen(false);
+                            }}
+                            className="font-body bg-amber-600 hover:bg-amber-700"
+                        >
+                            Proceed Anyway
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

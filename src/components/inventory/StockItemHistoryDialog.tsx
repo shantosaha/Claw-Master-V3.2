@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import {
     Dialog,
     DialogContent,
@@ -161,7 +162,7 @@ export function StockItemHistoryDialog({ isOpen, onOpenChange, item, historyLogs
                 <DialogFooter className="pt-4 mt-auto border-t flex justify-between sm:justify-between">
                     <Button variant="outline" onClick={() => onOpenChange(false)} className="font-body">Close</Button>
                     <Button asChild variant="default" className="font-body">
-                        <a href={`/inventory/${item.id}`}>View Full History</a>
+                        <Link href={`/inventory/${item.id}`}>View Full History</Link>
                     </Button>
                 </DialogFooter>
             </DialogContent>

@@ -74,25 +74,14 @@ export default function MachineDetailsPage() {
         const machineItems = items.filter(item => item.assignedMachineId === machine.id);
 
         const enrichedSlots = machine.slots.map(slot => {
-            // 1. Find Active Item
-            // Strategy 1: Exact Slot ID Match
-            let assignedItem = machineItems.find(item =>
-                item.assignedSlotId === slot.id && item.assignedStatus === 'Assigned'
+            // Since each machine now has only one slot, just find items by machine assignment status
+            const assignedItem = machineItems.find(item =>
+                item.assignedStatus === 'Assigned'
             );
 
-            // Strategy 2: Fallback - if no item found, check for items with no slot ID
-            // Logic: If there is an item assigned to the machine but with no slot ID, assume it's for this slot 
-            // if it's the only slot or the first slot.
-            if (!assignedItem) {
-                assignedItem = machineItems.find(item =>
-                    !item.assignedSlotId && item.assignedStatus === 'Assigned'
-                );
-            }
-
-            // 2. Find Upcoming Queue
+            // Find Upcoming Queue - replacement items for this machine
             const replacementItems = machineItems.filter(item =>
-                item.assignedStatus === 'Assigned for Replacement' &&
-                (item.assignedSlotId === slot.id || (!item.assignedSlotId && slot.id === machine.slots[0].id))
+                item.assignedStatus === 'Assigned for Replacement'
             );
 
             const upcomingQueue: UpcomingStockItem[] = replacementItems.map(item => ({
@@ -114,20 +103,13 @@ export default function MachineDetailsPage() {
         return { ...machine, slots: enrichedSlots };
     }, [machine, items]);
 
-    // Calculate assigned stock based on context items (for legacy reasons or specific sidebar list)
-    // We can just use the machineItems logic again or rely on enrichedMachine
+    // Calculate assigned stock based on context items
+    // Since each machine has only one slot, just filter by machine ID
     const assignedStock = machine ? items.filter(item => {
         const isAssignedToMachine = item.assignedMachineId === machine.id;
+        if (isAssignedToMachine) return true;
 
-        if (isAssignedToMachine) {
-            // If viewing a specific slot, allow match if slot ID is exact OR if item has no slot ID
-            if (slotId) {
-                return item.assignedSlotId === slotId || !item.assignedSlotId;
-            }
-            return true;
-        }
-
-        // Otherwise show all items for the machine (by name match or assignedMachineId)
+        // Otherwise show all items for the machine (by name match)
         return item.locations?.some(loc => loc.name && machine.name && loc.name.toLowerCase().includes(machine.name.toLowerCase()));
     }) : [];
 
@@ -302,7 +284,11 @@ export default function MachineDetailsPage() {
                     </Button>
                     <div>
                         <h1 className="text-2xl font-bold">{displayTitle}</h1>
-                        <div className="flex items-center gap-2 text-muted-foreground mt-1">
+                        <div className="flex items-center flex-wrap gap-2 text-muted-foreground mt-1">
+                            <span className="font-mono text-[10px] bg-muted px-2 py-0.5 rounded-sm border border-border/50 select-all" title="Machine ID">
+                                ID: {enrichedMachine.id}
+                            </span>
+                            <span>•</span>
                             <Badge variant="outline" className="text-xs">
                                 {enrichedMachine.assetTag}
                             </Badge>
@@ -362,6 +348,10 @@ export default function MachineDetailsPage() {
                                 disabled={!isEditMode}
                                 onSave={(val) => handleFieldUpdate("assetTag", "Asset Tag", val, enrichedMachine.assetTag)}
                             />
+                            <div className="flex flex-col gap-1.5 p-2 rounded-md bg-muted/30 border border-transparent">
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Machine ID</span>
+                                <span className="text-sm font-mono break-all select-all">{enrichedMachine.id}</span>
+                            </div>
                             <InlineEditField
                                 type="text"
                                 label="API Tag"

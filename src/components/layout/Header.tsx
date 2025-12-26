@@ -19,11 +19,9 @@ import { ModeToggle } from "@/components/mode-toggle";
 import { isFirebaseInitialized } from "@/lib/firebase";
 import Link from "next/link";
 
-interface HeaderProps {
-    onMenuClick?: () => void;
-}
+interface HeaderProps { }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ }: HeaderProps) {
 
     const { user, logout, signInWithGoogle } = useAuth();
 
@@ -40,22 +38,23 @@ export function Header({ onMenuClick }: HeaderProps) {
             )}
 
 
-            <Sheet>
-                <SheetTrigger asChild>
-                    <Button
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0 md:hidden"
-                    >
-                        <Menu className="h-5 w-5" />
-                        <span className="sr-only">Toggle navigation menu</span>
-                    </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="flex flex-col p-0 w-64">
-                    {/* We can reuse the Sidebar content here or create a MobileNav component */}
-                    <div className="p-4">Mobile Nav Placeholder</div>
-                </SheetContent>
-            </Sheet>
+            <div className="flex items-center gap-2">
+                <Sheet>
+                    <SheetTrigger asChild>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="shrink-0 md:hidden"
+                        >
+                            <Menu className="h-5 w-5" />
+                            <span className="sr-only">Toggle navigation menu</span>
+                        </Button>
+                    </SheetTrigger>
+                    <SheetContent side="left" className="flex flex-col p-0 w-64">
+                        <Sidebar open={true} collapsed={false} />
+                    </SheetContent>
+                </Sheet>
+            </div>
             <div className="w-full flex-1">
                 <form>
                     <div className="relative">

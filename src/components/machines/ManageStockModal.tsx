@@ -5,13 +5,24 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, AlertTriangle } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, AlertTriangle, Gamepad2 } from "lucide-react";
+import Link from "next/link";
 import { StockItem, ArcadeMachine } from "@/types";
 import { useData } from "@/context/DataProvider";
 import { machineService, stockService } from "@/services";
 import { logAction } from "@/services/auditLogger";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
+import {
+    migrateToMachineAssignments,
+    addMachineAssignment,
+    removeMachineAssignment,
+    isAssignedToMachine,
+    syncLegacyFieldsFromAssignments
+} from "@/utils/machineAssignmentUtils";
+import { MachineAssignment } from "@/types";
+import { areSizesCompatible, getSizeMatchPriority, sizesAreEqual } from "@/utils/normalizeUtils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -69,34 +80,6 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
     const { compatibleItems, otherItems } = useMemo(() => {
         if (!targetSlot) return { compatibleItems: [], otherItems: [] };
 
-        // Helper to check if two sizes are compatible
-        const areSizesCompatible = (machineSize: string | undefined, itemSize: string | undefined): boolean => {
-            if (!machineSize || !itemSize) return true; // No size = compatible with all
-            if (machineSize === itemSize) return true; // Exact match
-
-            // Small and Extra-Small are interchangeable
-            const smallSizes = ['Small', 'Extra-Small'];
-            if (smallSizes.includes(machineSize) && smallSizes.includes(itemSize)) {
-                return true;
-            }
-
-            return false;
-        };
-
-        // Helper to get sort priority (lower = higher priority)
-        const getSizePriority = (machineSize: string | undefined, itemSize: string | undefined): number => {
-            if (!machineSize || !itemSize) return 1; // No size info
-            if (machineSize === itemSize) return 0; // Exact match = highest priority
-
-            // Small/Extra-Small compatibility - prefer exact match first
-            const smallSizes = ['Small', 'Extra-Small'];
-            if (smallSizes.includes(machineSize) && smallSizes.includes(itemSize)) {
-                return 1; // Compatible but not exact
-            }
-
-            return 2; // Not compatible
-        };
-
         let filtered = items.filter(item => {
             // Search Filter
             if (searchQuery) {
@@ -124,16 +107,16 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
             }
         });
 
-        // Sort compatible items: exact match first, then compatible sizes
+        // Sort compatible items: exact size match first, then by name
         compatible.sort((a, b) => {
-            const priorityA = getSizePriority(targetSize, a.size);
-            const priorityB = getSizePriority(targetSize, b.size);
-            return priorityA - priorityB;
+            const aPriority = getSizeMatchPriority(targetSize, a.size);
+            const bPriority = getSizeMatchPriority(targetSize, b.size);
+            if (aPriority !== bPriority) return aPriority - bPriority;
+            return a.name.localeCompare(b.name);
         });
 
         return { compatibleItems: compatible, otherItems: other };
     }, [items, searchQuery, selectedCategory, targetSize, targetSlot]);
-
     // Handlers
     const checkAndConfirmAssign = (item: StockItem) => {
         const warnings: string[] = [];
@@ -142,28 +125,43 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
 
         // 1. Check Stock Level
         if (totalQty === 0) {
-            warnings.push("Use caution: This item is currently OUT OF STOCK.");
+            warnings.push("⚠️ This item is currently OUT OF STOCK.");
         } else if (totalQty <= threshold) {
-            warnings.push(`Low Stock Warning: Only ${totalQty} units remaining.`);
+            warnings.push(`⚠️ Low Stock: Only ${totalQty} units remaining.`);
         }
 
-        // 2. Check In Use Status
-        if (item.assignedMachineId && item.assignedMachineId !== machine.id) {
-            warnings.push(`This item is currently assigned to another machine: "${item.assignedMachineName || 'Unknown Machine'}". Reassigning it will update its location tracking.`);
+        // 2. Check if already assigned to THIS machine
+        if (isAssignedToMachine(item, machine.id)) {
+            warnings.push(`ℹ️ This item is already assigned to this machine.`);
         }
 
-        // 3. Check Size Compatibility
-        if (targetSize && item.size && item.size !== targetSize) {
-            warnings.push(`Size Mismatch: Machine expects "${targetSize}" prizes, but this item is "${item.size}".`);
+        // 3. Check if assigned to OTHER machines
+        const assignments = migrateToMachineAssignments(item);
+        const otherMachines = assignments.filter(a => a.machineId !== machine.id);
+        if (otherMachines.length > 0) {
+            const machineNames = otherMachines.map(a => a.machineName).join(', ');
+            warnings.push(`ℹ️ Also assigned to: ${machineNames}`);
         }
 
-        if (warnings.length > 0) {
-            setPendingItem(item);
-            setConfirmationWarnings(warnings);
-            setIsConfirmOpen(true);
-        } else {
-            executeAssign(item);
+        // 4. Check Size Compatibility - ALWAYS check, even with supervisor override ON
+        // Use the same areSizesCompatible function used for filtering the list
+        // This ensures consistency between what's shown as "incompatible" and what triggers a warning
+        const isCompatible = areSizesCompatible(targetSize, item.size);
+        if (!isCompatible) {
+            const machineExpectedSize = targetSize || machine.prizeSize || 'Unknown';
+            const itemActualSize = item.size || 'Unknown';
+            warnings.push(`🚫 Size Mismatch: Machine expects "${machineExpectedSize}" prizes, but this item is "${itemActualSize}".`);
         }
+
+        // 5. Check if machine slot is occupied (for current mode)
+        if (assignmentMode === 'current' && targetSlot?.currentItem && targetSlot.currentItem.id !== item.id) {
+            warnings.push(`⚠️ This will replace the current item on this machine.`);
+        }
+
+        // ALWAYS show confirmation dialog - even when no warnings
+        setPendingItem(item);
+        setConfirmationWarnings(warnings);
+        setIsConfirmOpen(true);
     };
 
     const confirmAssignment = () => {
@@ -190,25 +188,38 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
                 return;
             }
 
+            // Get current assignments for this item
+            const currentAssignments = migrateToMachineAssignments(item);
+            const assignmentStatus: 'Using' | 'Replacement' = assignmentMode === 'current' ? 'Using' : 'Replacement';
+
             if (assignmentMode === "current") {
                 // Logic: Set as Current Item
                 // 1. Clear old current if exists
                 if (targetSlot.currentItem) {
-                    await stockService.update(targetSlot.currentItem.id, {
-                        assignedMachineId: null as any,
-                        assignedMachineName: null as any,
-                        assignedStatus: 'Not Assigned',
-                        assignedSlotId: null as any
-                    });
+                    const oldItemAssignments = migrateToMachineAssignments(targetSlot.currentItem);
+                    const updatedOldAssignments = removeMachineAssignment(oldItemAssignments, machine.id);
+                    const oldItemUpdate = {
+                        machineAssignments: updatedOldAssignments,
+                        ...syncLegacyFieldsFromAssignments({
+                            ...targetSlot.currentItem,
+                            machineAssignments: updatedOldAssignments
+                        })
+                    };
+                    await stockService.update(targetSlot.currentItem.id, oldItemUpdate);
                 }
 
-                // 2. Assign new
-                await stockService.update(item.id, {
-                    assignedMachineId: machine.id,
-                    assignedMachineName: machine.name,
-                    assignedStatus: 'Assigned',
-                    assignedSlotId: targetSlot.id
-                });
+                // 2. Add new assignment
+                const newAssignment: Omit<MachineAssignment, 'assignedAt'> = {
+                    machineId: machine.id,
+                    machineName: machine.name,
+                    status: 'Using',
+                };
+                const updatedAssignments = addMachineAssignment(currentAssignments, newAssignment);
+                const itemUpdate = {
+                    machineAssignments: updatedAssignments,
+                    ...syncLegacyFieldsFromAssignments({ ...item, machineAssignments: updatedAssignments })
+                };
+                await stockService.update(item.id, itemUpdate);
 
                 // 3. Update Machine
                 const updatedSlots = machine.slots.map(s => {
@@ -222,13 +233,18 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
 
             } else {
                 // Logic: Add to Queue (Replacement)
-                // 1. Update status
-                await stockService.update(item.id, {
-                    assignedMachineId: machine.id,
-                    assignedMachineName: machine.name,
-                    assignedStatus: 'Assigned for Replacement',
-                    assignedSlotId: targetSlot.id
-                });
+                // 1. Add assignment
+                const newAssignment: Omit<MachineAssignment, 'assignedAt'> = {
+                    machineId: machine.id,
+                    machineName: machine.name,
+                    status: 'Replacement',
+                };
+                const updatedAssignments = addMachineAssignment(currentAssignments, newAssignment);
+                const itemUpdate = {
+                    machineAssignments: updatedAssignments,
+                    ...syncLegacyFieldsFromAssignments({ ...item, machineAssignments: updatedAssignments })
+                };
+                await stockService.update(item.id, itemUpdate);
 
                 // 2. Add to machine queue
                 const newQueueItem = {
@@ -415,25 +431,118 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
 
             {/* Confirmation Dialog */}
             <AlertDialog open={isConfirmOpen} onOpenChange={setIsConfirmOpen}>
-                <AlertDialogContent>
+                <AlertDialogContent className="max-w-md">
                     <AlertDialogHeader>
-                        <AlertDialogTitle className="flex items-center gap-2 text-amber-600">
-                            <AlertTriangle className="h-5 w-5" />
-                            Warning: Check Details
+                        <AlertDialogTitle className={`flex items-center gap-2 ${confirmationWarnings.length > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                            {confirmationWarnings.length > 0 ? (
+                                <>
+                                    <AlertTriangle className="h-5 w-5" />
+                                    Review Before Assigning
+                                </>
+                            ) : (
+                                <>
+                                    <Gamepad2 className="h-5 w-5" />
+                                    Confirm Assignment
+                                </>
+                            )}
                         </AlertDialogTitle>
-                        <AlertDialogDescription className="space-y-2 pt-2" asChild>
+                        <AlertDialogDescription className="space-y-3 pt-2" asChild>
                             <div>
-                                {confirmationWarnings.map((warning, index) => (
-                                    <div key={index} className="text-foreground">{warning}</div>
-                                ))}
-                                <div className="pt-2 text-xs text-muted-foreground">Do you want to proceed with this assignment?</div>
+                                {/* Show the item being assigned */}
+                                {pendingItem && (
+                                    <div className="border rounded-lg p-3 bg-green-50/50 dark:bg-green-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            {assignmentMode === 'current' ? 'Assigning as current item:' : 'Adding to replacement queue:'}
+                                        </p>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-12 w-12 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                {pendingItem.imageUrl ? (
+                                                    <img
+                                                        src={pendingItem.imageUrl}
+                                                        alt={pendingItem.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
+                                                        No Img
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-foreground truncate">
+                                                    {pendingItem.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Size: {pendingItem.size || 'Unknown'} • Stock: {pendingItem.locations?.reduce((acc, loc) => acc + loc.quantity, 0) ?? 0}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Show current item being replaced */}
+                                {assignmentMode === 'current' && targetSlot?.currentItem && pendingItem && targetSlot.currentItem.id !== pendingItem.id && (
+                                    <div className="border rounded-lg p-3 bg-red-50/50 dark:bg-red-900/10">
+                                        <p className="text-xs text-muted-foreground mb-2 font-medium">
+                                            This will replace the current item:
+                                        </p>
+                                        <Link
+                                            href={`/inventory/${targetSlot.currentItem.id}`}
+                                            className="flex items-center gap-3 group hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
+                                            onClick={(e) => e.stopPropagation()}
+                                        >
+                                            <div className="h-12 w-12 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
+                                                {targetSlot.currentItem.imageUrl ? (
+                                                    <img
+                                                        src={targetSlot.currentItem.imageUrl}
+                                                        alt={targetSlot.currentItem.name}
+                                                        className="h-full w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">
+                                                        No Img
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className="font-medium text-foreground group-hover:text-primary group-hover:underline truncate">
+                                                    {targetSlot.currentItem.name}
+                                                </div>
+                                                <div className="text-xs text-muted-foreground">
+                                                    Click to view details →
+                                                </div>
+                                            </div>
+                                        </Link>
+                                    </div>
+                                )}
+
+                                {/* Warnings List - only if there are warnings */}
+                                {confirmationWarnings.length > 0 && (
+                                    <div className="space-y-1">
+                                        {confirmationWarnings.map((warning, index) => (
+                                            <div key={index} className="text-sm text-foreground">
+                                                {warning}
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="pt-2 text-xs text-muted-foreground border-t">
+                                    {confirmationWarnings.length > 0
+                                        ? 'Do you want to proceed despite the warnings above?'
+                                        : `Assign to ${machine.name}?`
+                                    }
+                                </div>
                             </div>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmAssignment} className="bg-amber-600 hover:bg-amber-700">
-                            Proceed Anyway
+                        <AlertDialogAction
+                            onClick={confirmAssignment}
+                            className={confirmationWarnings.length > 0 ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'}
+                        >
+                            {confirmationWarnings.length > 0 ? 'Proceed Anyway' : 'Confirm'}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -456,22 +565,94 @@ function StockItemRow({
     currentMachineId: string,
     targetSize?: string
 }) {
-    const isAssignedToThis = item.assignedMachineId === currentMachineId;
-    const isAssignedElsewhere = !!item.assignedMachineId && !isAssignedToThis;
-
-    // Badge Logic
-    let statusBadge = <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Available</Badge>;
-    if (isAssignedToThis) {
-        if (item.assignedStatus === 'Assigned') statusBadge = <Badge className="bg-purple-600 hover:bg-purple-700">Currently Active</Badge>;
-        else if (item.assignedStatus === 'Assigned for Replacement') statusBadge = <Badge variant="secondary" className="bg-blue-100 text-blue-700">In Queue</Badge>;
-    } else if (isAssignedElsewhere) {
-        statusBadge = <Badge variant="outline" className="text-amber-600 border-amber-200 bg-amber-50">At {item.assignedMachineName}</Badge>;
-    }
-
     const totalQty = item.locations?.reduce((acc, loc) => acc + loc.quantity, 0) ?? 0;
     const isLowStock = totalQty <= (item.lowStockThreshold || 5);
     const isOutOfStock = totalQty === 0;
-    const isSizeMismatch = targetSize && item.size && item.size !== targetSize;
+    const isSizeMismatch = targetSize && item.size && !areSizesCompatible(targetSize, item.size);
+
+    // Check assignment status using new utility
+    const isAssignedToThis = isAssignedToMachine(item, currentMachineId);
+    const assignments = migrateToMachineAssignments(item);
+    const isAssignedElsewhere = assignments.some(a => a.machineId !== currentMachineId);
+
+    // Badge Logic - show assignment to this machine AND details of other assignments
+    const otherMachines = assignments.filter(a => a.machineId !== currentMachineId);
+    const otherCount = otherMachines.length;
+
+    // Build other machines display based on count
+    let otherMachinesDisplay = null;
+
+    if (otherCount === 1) {
+        // Single other machine - show full name directly as clickable link
+        const other = otherMachines[0];
+        otherMachinesDisplay = (
+            <Link href={`/machines/${other.machineId}`} onClick={(e) => e.stopPropagation()}>
+                <Badge
+                    variant="outline"
+                    className={`text-xs cursor-pointer hover:underline ${other.status === 'Using' ? 'text-purple-600 border-purple-200 bg-purple-50 hover:bg-purple-100' : 'text-blue-600 border-blue-200 bg-blue-50 hover:bg-blue-100'}`}
+                >
+                    {other.machineName} ({other.status})
+                </Badge>
+            </Link>
+        );
+    } else if (otherCount > 1) {
+        // Multiple other machines - use popover with full names as links
+        otherMachinesDisplay = (
+            <Popover>
+                <PopoverTrigger asChild>
+                    <Badge
+                        variant="outline"
+                        className="text-xs cursor-pointer text-amber-600 border-amber-200 bg-amber-50 hover:bg-amber-100"
+                    >
+                        +{otherCount} machines
+                    </Badge>
+                </PopoverTrigger>
+                <PopoverContent className="w-72 p-2" align="start">
+                    <div className="text-xs font-medium text-muted-foreground mb-2">Also assigned to:</div>
+                    <div className="space-y-1.5">
+                        {otherMachines.map(a => (
+                            <Link
+                                key={a.machineId}
+                                href={`/machines/${a.machineId}`}
+                                className="flex items-center gap-2 p-1.5 rounded bg-muted/50 hover:bg-muted transition-colors"
+                            >
+                                <Gamepad2 className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-xs font-medium hover:underline">{a.machineName}</div>
+                                </div>
+                                <Badge
+                                    variant="outline"
+                                    className={`text-[10px] px-1.5 py-0 flex-shrink-0 ${a.status === 'Using' ? 'text-purple-600 bg-purple-50' : 'text-blue-600 bg-blue-50'}`}
+                                >
+                                    {a.status}
+                                </Badge>
+                            </Link>
+                        ))}
+                    </div>
+                </PopoverContent>
+            </Popover>
+        );
+    }
+
+    let statusBadge;
+
+    if (isAssignedToThis) {
+        const thisAssignment = assignments.find(a => a.machineId === currentMachineId);
+        statusBadge = (
+            <div className="flex items-center gap-1.5 flex-wrap">
+                {thisAssignment?.status === 'Using'
+                    ? <Badge className="bg-purple-600 hover:bg-purple-700">Currently Active</Badge>
+                    : <Badge variant="secondary" className="bg-blue-100 text-blue-700">In Queue</Badge>
+                }
+                {otherMachinesDisplay}
+            </div>
+        );
+    } else if (otherCount > 0) {
+        // Not assigned to this machine, but assigned to others
+        statusBadge = otherMachinesDisplay;
+    } else {
+        statusBadge = <Badge variant="outline" className="text-green-600 border-green-200 bg-green-50">Available</Badge>;
+    }
 
     // Border Logic
     let borderClass = "border-green-500/40 bg-green-50/10 hover:border-green-500 hover:bg-green-50/30"; // Default Good
@@ -499,7 +680,7 @@ function StockItemRow({
                 </div>
 
                 <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                         <span className="font-medium text-sm">{item.name}</span>
                         {statusBadge}
                     </div>

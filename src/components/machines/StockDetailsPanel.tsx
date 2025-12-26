@@ -5,12 +5,29 @@ import { ArcadeMachine, StockItem } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ManageStockModal } from "./ManageStockModal";
-import { Trash2, Package } from "lucide-react";
+import { Trash2, Package, AlertTriangle } from "lucide-react";
 import { machineService, stockService } from "@/services";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataProvider";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
+import {
+    migrateToMachineAssignments,
+    removeMachineAssignment,
+    syncLegacyFieldsFromAssignments,
+    getAssignmentCount,
+    getMachineStockItems
+} from "@/utils/machineAssignmentUtils";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface StockDetailsPanelProps {
     machine: ArcadeMachine;
@@ -22,6 +39,11 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
     const { items, refreshMachines, refreshItems } = useData();
     const [isManageModalOpen, setIsManageModalOpen] = useState(false);
 
+    // Confirmation dialog states
+    const [confirmClear, setConfirmClear] = useState(false);
+    const [confirmRemoveQueue, setConfirmRemoveQueue] = useState<{ index: number; item: any } | null>(null);
+
+
     // Identify target slot
     const targetSlot = slotId
         ? machine.slots.find(s => s.id === slotId)
@@ -29,15 +51,26 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
 
     if (!targetSlot) return <div className="p-4 border rounded-md">No slot configuration found.</div>;
 
-    const currentItem = targetSlot.currentItem;
-
-    // Get real-time stock data
-    const fullCurrentItem = currentItem ? items.find(i => i.id === currentItem.id) : null;
+    // DERIVE current item and queue from stock data (SOURCE OF TRUTH)
+    const { currentItems, queueItems } = getMachineStockItems(machine.id, items);
+    const fullCurrentItem = currentItems[0] || null;
     const totalQty = fullCurrentItem?.locations?.reduce((acc, loc) => acc + loc.quantity, 0) ?? 0;
 
     const stockInfo = calculateStockLevel(totalQty, fullCurrentItem?.stockStatus);
 
-    const queue = targetSlot.upcomingQueue || [];
+    // Check for other machine assignments
+    const currentItemAssignments = fullCurrentItem ? migrateToMachineAssignments(fullCurrentItem) : [];
+    const otherMachineAssignments = currentItemAssignments.filter(a => a.machineId !== machine.id);
+    const otherMachinesCount = otherMachineAssignments.length;
+
+    // Use derived queue from stock data (source of truth)
+    const queue = queueItems.map(item => ({
+        itemId: item.id,
+        name: item.name,
+        imageUrl: item.imageUrl,
+        addedBy: 'system',
+        addedAt: new Date()
+    }));
 
     const handleRemoveFromQueue = async (queueIndex: number, queueItem: any) => {
         if (!user) return;
@@ -55,13 +88,35 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
 
             await machineService.update(machine.id, { slots: updatedSlots });
 
-            // Update item status back to unassigned
-            await stockService.update(queueItem.itemId, {
-                assignedMachineId: null as any,
-                assignedMachineName: null as any,
-                assignedStatus: 'Not Assigned',
-                assignedSlotId: null as any
-            });
+            // Find the full item to update
+            const fullQueueItem = items.find(i => i.id === queueItem.itemId);
+            if (fullQueueItem) {
+                // Remove assignment from machineAssignments array
+                const currentAssignments = migrateToMachineAssignments(fullQueueItem);
+                const updatedAssignments = removeMachineAssignment(currentAssignments, machine.id);
+
+                // CRITICAL: Explicitly clear ALL assignment fields to prevent 
+                // migrateToMachineAssignments from recreating assignments from stale legacy fields
+                const itemUpdate: Partial<StockItem> = {
+                    machineAssignments: updatedAssignments,
+                };
+
+                // If no assignments remain, explicitly clear all legacy fields
+                if (updatedAssignments.length === 0) {
+                    itemUpdate.assignedMachineId = null;
+                    itemUpdate.assignedMachineName = null;
+                    itemUpdate.assignedStatus = 'Not Assigned';
+                    itemUpdate.replacementMachines = [];
+                } else {
+                    // Sync legacy fields from remaining assignments
+                    Object.assign(itemUpdate, syncLegacyFieldsFromAssignments({
+                        ...fullQueueItem,
+                        machineAssignments: updatedAssignments
+                    }));
+                }
+
+                await stockService.update(queueItem.itemId, itemUpdate);
+            }
 
             toast.success("Removed from queue");
             refreshMachines();
@@ -73,7 +128,7 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
     };
 
     const handleClearCurrent = async () => {
-        if (!user || !currentItem) return;
+        if (!user || !fullCurrentItem) return;
         try {
             const updatedSlots = machine.slots.map(s => {
                 if (s.id === targetSlot.id) {
@@ -84,12 +139,34 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
 
             await machineService.update(machine.id, { slots: updatedSlots });
 
-            await stockService.update(currentItem.id, {
-                assignedMachineId: null as any,
-                assignedMachineName: null as any,
-                assignedStatus: 'Not Assigned',
-                assignedSlotId: null as any
-            });
+            // The item to update is already fullCurrentItem
+            if (fullCurrentItem) {
+                // Remove assignment from machineAssignments array
+                const localCurrentAssignments = migrateToMachineAssignments(fullCurrentItem);
+                const updatedAssignments = removeMachineAssignment(localCurrentAssignments, machine.id);
+
+                // CRITICAL: Explicitly clear ALL assignment fields to prevent 
+                // migrateToMachineAssignments from recreating assignments from stale legacy fields
+                const itemUpdate: Partial<StockItem> = {
+                    machineAssignments: updatedAssignments,
+                };
+
+                // If no assignments remain, explicitly clear all legacy fields
+                if (updatedAssignments.length === 0) {
+                    itemUpdate.assignedMachineId = null;
+                    itemUpdate.assignedMachineName = null;
+                    itemUpdate.assignedStatus = 'Not Assigned';
+                    itemUpdate.replacementMachines = [];
+                } else {
+                    // Sync legacy fields from remaining assignments
+                    Object.assign(itemUpdate, syncLegacyFieldsFromAssignments({
+                        ...fullCurrentItem,
+                        machineAssignments: updatedAssignments
+                    }));
+                }
+
+                await stockService.update(fullCurrentItem.id, itemUpdate);
+            }
 
             toast.success("Cleared current item");
             refreshMachines();
@@ -116,11 +193,11 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
             <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">Current Item</h3>
                 <div className="border rounded-xl p-5 flex items-center justify-between bg-card shadow-sm hover:shadow-md transition-shadow">
-                    {currentItem ? (
+                    {fullCurrentItem ? (
                         <div className="flex items-center gap-5">
                             <div className="h-20 w-20 bg-muted rounded-lg overflow-hidden flex-shrink-0 border border-border/50">
-                                {currentItem.imageUrl ? (
-                                    <img src={currentItem.imageUrl} alt={currentItem.name} className="h-full w-full object-cover" />
+                                {fullCurrentItem.imageUrl ? (
+                                    <img src={fullCurrentItem.imageUrl} alt={fullCurrentItem.name} className="h-full w-full object-cover" />
                                 ) : (
                                     <div className="h-full w-full flex items-center justify-center text-muted-foreground bg-secondary/30">
                                         <Package className="h-8 w-8 opacity-40" />
@@ -128,11 +205,19 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                                 )}
                             </div>
                             <div>
-                                <h4 className="font-bold text-lg text-foreground tracking-tight">{currentItem.name}</h4>
+                                <h4 className="font-bold text-lg text-foreground tracking-tight">{fullCurrentItem.name}</h4>
+                                <div className="text-[10px] font-mono text-muted-foreground mt-0.5">{fullCurrentItem.id}</div>
                                 <div className="flex flex-col gap-1.5 mt-1">
-                                    <div className="text-sm text-muted-foreground">Location: {currentItem.locations?.[0]?.name || "Level 1"}</div>
-                                    <div className={`text-xs font-semibold px-2 py-0.5 rounded-md w-fit ${stockInfo.colorClass}`}>
-                                        {totalQty} Units • {stockInfo.label}
+                                    <div className="text-sm text-muted-foreground">Location: {fullCurrentItem.locations?.[0]?.name || "Level 1"}</div>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        <div className={`text-xs font-semibold px-2 py-0.5 rounded-md w-fit ${stockInfo.colorClass}`}>
+                                            {totalQty} Units • {stockInfo.label}
+                                        </div>
+                                        {otherMachinesCount > 0 && (
+                                            <Badge variant="outline" className="text-xs text-amber-600 border-amber-200 bg-amber-50">
+                                                +{otherMachinesCount} other machine{otherMachinesCount > 1 ? 's' : ''}
+                                            </Badge>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -146,8 +231,8 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                         </div>
                     )}
 
-                    {currentItem ? (
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={handleClearCurrent}>
+                    {fullCurrentItem ? (
+                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => setConfirmClear(true)}>
                             <Trash2 className="h-5 w-5" />
                         </Button>
                     ) : (
@@ -186,6 +271,7 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
 
                                     <div className="flex-1 min-w-[120px]">
                                         <div className="font-semibold text-foreground text-lg">{queueItem.name}</div>
+                                        <div className="text-[10px] font-mono text-muted-foreground">{queueItem.itemId}</div>
                                         <div className="text-sm text-muted-foreground">Status: <span className="text-foreground/80">Request</span></div>
                                     </div>
 
@@ -203,7 +289,7 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                                         variant="ghost"
                                         size="icon"
                                         className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full ml-2"
-                                        onClick={() => handleRemoveFromQueue(index, queueItem)}
+                                        onClick={() => setConfirmRemoveQueue({ index, item: queueItem })}
                                     >
                                         <Trash2 className="h-5 w-5" />
                                     </Button>
@@ -220,6 +306,84 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                 machine={machine}
                 slotId={targetSlot.id}
             />
+
+            {/* Clear Current Item Confirmation */}
+            <AlertDialog open={confirmClear} onOpenChange={setConfirmClear}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-amber-500" />
+                            Remove Current Item
+                        </AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-2">
+                                <p>
+                                    Are you sure you want to remove <strong>{fullCurrentItem?.name}</strong> from <strong>{machine.name}</strong>?
+                                </p>
+                                {queue.length > 0 ? (
+                                    <p className="text-sm text-blue-600">
+                                        The first item in the replacement queue will become available for activation.
+                                    </p>
+                                ) : (
+                                    <p className="text-sm text-amber-600">
+                                        ⚠️ This machine has no replacement items queued. It will be empty after removal.
+                                    </p>
+                                )}
+                                {fullCurrentItem && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Item stock: {totalQty} units ({stockInfo.label})
+                                    </p>
+                                )}
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={handleClearCurrent}
+                            className="bg-destructive hover:bg-destructive/90"
+                        >
+                            Remove Item
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            {/* Remove from Queue Confirmation */}
+            <AlertDialog open={!!confirmRemoveQueue} onOpenChange={(open) => !open && setConfirmRemoveQueue(null)}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle className="flex items-center gap-2">
+                            <AlertTriangle className="h-5 w-5 text-amber-500" />
+                            Remove from Queue
+                        </AlertDialogTitle>
+                        <AlertDialogDescription asChild>
+                            <div className="space-y-2">
+                                <p>
+                                    Are you sure you want to remove <strong>{confirmRemoveQueue?.item?.name}</strong> from the replacement queue?
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                    This item will be unassigned from <strong>{machine.name}</strong> and can be assigned elsewhere.
+                                </p>
+                            </div>
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => {
+                                if (confirmRemoveQueue) {
+                                    handleRemoveFromQueue(confirmRemoveQueue.index, confirmRemoveQueue.item);
+                                    setConfirmRemoveQueue(null);
+                                }
+                            }}
+                            className="bg-destructive hover:bg-destructive/90"
+                        >
+                            Remove from Queue
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

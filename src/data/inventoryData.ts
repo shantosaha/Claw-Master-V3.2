@@ -12,13 +12,33 @@ export const sampleInventoryData = [
                 "assignedStatus": "Assigned",
                 "assignedMachineId": "mac_tc_02_p1_top",
                 "assignedMachineName": "Trend Catcher 2 P1 - Top",
+                "machineAssignments": [
+                        {
+                                "machineId": "mac_tc_02_p1_top",
+                                "machineName": "Trend Catcher 2 P1 - Top",
+                                "status": "Using",
+                                "assignedAt": "2023-11-20T10:00:00Z"
+                        },
+                        {
+                                "machineId": "mac_tc_03_p1_top",
+                                "machineName": "Trend Catcher 3 P1 - Top",
+                                "status": "Replacement",
+                                "assignedAt": "2023-11-22T10:00:00Z"
+                        },
+                        {
+                                "machineId": "mac_miya_05",
+                                "machineName": "Crazy Toy Miya 5",
+                                "status": "Replacement",
+                                "assignedAt": "2023-11-25T10:00:00Z"
+                        }
+                ],
                 "imageUrl": "/stock-images/inv_plu_001_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_001_1.jpg",
-                  "/stock-images/inv_plu_001_2.png",
-                  "/stock-images/inv_plu_001_3.png",
-                  "/stock-images/inv_plu_001_4.jpg"
-        ],
+                        "/stock-images/inv_plu_001_1.jpg",
+                        "/stock-images/inv_plu_001_2.png",
+                        "/stock-images/inv_plu_001_3.png",
+                        "/stock-images/inv_plu_001_4.jpg"
+                ],
                 "totalQuantity": 120,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -53,11 +73,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 2 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_002_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_002_1.jpg",
-                  "/stock-images/inv_plu_002_2.png",
-                  "/stock-images/inv_plu_002_3.jpg",
-                  "/stock-images/inv_plu_002_4.jpg"
-        ],
+                        "/stock-images/inv_plu_002_1.jpg",
+                        "/stock-images/inv_plu_002_2.png",
+                        "/stock-images/inv_plu_002_3.jpg",
+                        "/stock-images/inv_plu_002_4.jpg"
+                ],
                 "totalQuantity": 45,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -91,11 +111,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 3 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_003_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_003_1.jpg",
-                  "/stock-images/inv_plu_003_2.jpg",
-                  "/stock-images/inv_plu_003_3.jpg",
-                  "/stock-images/inv_plu_003_4.jpg"
-        ],
+                        "/stock-images/inv_plu_003_1.jpg",
+                        "/stock-images/inv_plu_003_2.jpg",
+                        "/stock-images/inv_plu_003_3.jpg",
+                        "/stock-images/inv_plu_003_4.jpg"
+                ],
                 "totalQuantity": 200,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -129,11 +149,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 4 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_004_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_004_1.jpg",
-                  "/stock-images/inv_plu_004_2.jpg",
-                  "/stock-images/inv_plu_004_3.jpg",
-                  "/stock-images/inv_plu_004_4.jpg"
-        ],
+                        "/stock-images/inv_plu_004_1.jpg",
+                        "/stock-images/inv_plu_004_2.jpg",
+                        "/stock-images/inv_plu_004_3.jpg",
+                        "/stock-images/inv_plu_004_4.jpg"
+                ],
                 "totalQuantity": 85,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -167,11 +187,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 1 P1 - Top",
                 "imageUrl": "/stock-images/inv_plu_005_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_005_1.jpg",
-                  "/stock-images/inv_plu_005_2.jpg",
-                  "/stock-images/inv_plu_005_3.jpg",
-                  "/stock-images/inv_plu_005_4.jpg"
-        ],
+                        "/stock-images/inv_plu_005_1.jpg",
+                        "/stock-images/inv_plu_005_2.jpg",
+                        "/stock-images/inv_plu_005_3.jpg",
+                        "/stock-images/inv_plu_005_4.jpg"
+                ],
                 "totalQuantity": 300,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -205,11 +225,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 1 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_006_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_006_1.jpg",
-                  "/stock-images/inv_plu_006_2.jpg",
-                  "/stock-images/inv_plu_006_3.jpg",
-                  "/stock-images/inv_plu_006_4.jpg"
-        ],
+                        "/stock-images/inv_plu_006_1.jpg",
+                        "/stock-images/inv_plu_006_2.jpg",
+                        "/stock-images/inv_plu_006_3.jpg",
+                        "/stock-images/inv_plu_006_4.jpg"
+                ],
                 "totalQuantity": 150,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -243,11 +263,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 1 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_007_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_007_1.jpg",
-                  "/stock-images/inv_plu_007_2.jpg",
-                  "/stock-images/inv_plu_007_3.jpg",
-                  "/stock-images/inv_plu_007_4.jpg"
-        ],
+                        "/stock-images/inv_plu_007_1.jpg",
+                        "/stock-images/inv_plu_007_2.jpg",
+                        "/stock-images/inv_plu_007_3.jpg",
+                        "/stock-images/inv_plu_007_4.jpg"
+                ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -281,11 +301,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 2 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_008_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_008_1.jpg",
-                  "/stock-images/inv_plu_008_2.jpg",
-                  "/stock-images/inv_plu_008_3.jpg",
-                  "/stock-images/inv_plu_008_4.jpg"
-        ],
+                        "/stock-images/inv_plu_008_1.jpg",
+                        "/stock-images/inv_plu_008_2.jpg",
+                        "/stock-images/inv_plu_008_3.jpg",
+                        "/stock-images/inv_plu_008_4.jpg"
+                ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -317,11 +337,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 1",
                 "imageUrl": "/stock-images/inv_plu_009_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_009_1.jpg",
-                  "/stock-images/inv_plu_009_2.jpg",
-                  "/stock-images/inv_plu_009_3.jpg",
-                  "/stock-images/inv_plu_009_4.jpg"
-        ],
+                        "/stock-images/inv_plu_009_1.jpg",
+                        "/stock-images/inv_plu_009_2.jpg",
+                        "/stock-images/inv_plu_009_3.jpg",
+                        "/stock-images/inv_plu_009_4.jpg"
+                ],
                 "totalQuantity": 500,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -355,11 +375,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 10",
                 "imageUrl": "/stock-images/inv_plu_010_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_010_1.jpg",
-                  "/stock-images/inv_plu_010_2.jpg",
-                  "/stock-images/inv_plu_010_3.jpg",
-                  "/stock-images/inv_plu_010_4.jpg"
-        ],
+                        "/stock-images/inv_plu_010_1.jpg",
+                        "/stock-images/inv_plu_010_2.jpg",
+                        "/stock-images/inv_plu_010_3.jpg",
+                        "/stock-images/inv_plu_010_4.jpg"
+                ],
                 "totalQuantity": 450,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -393,11 +413,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 4 P1 - Top",
                 "imageUrl": "/stock-images/inv_plu_011_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_011_1.jpg",
-                  "/stock-images/inv_plu_011_2.jpg",
-                  "/stock-images/inv_plu_011_3.jpg",
-                  "/stock-images/inv_plu_011_4.jpg"
-        ],
+                        "/stock-images/inv_plu_011_1.jpg",
+                        "/stock-images/inv_plu_011_2.jpg",
+                        "/stock-images/inv_plu_011_3.jpg",
+                        "/stock-images/inv_plu_011_4.jpg"
+                ],
                 "totalQuantity": 90,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -431,11 +451,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 4 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_012_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_012_1.jpg",
-                  "/stock-images/inv_plu_012_2.jpg",
-                  "/stock-images/inv_plu_012_3.jpg",
-                  "/stock-images/inv_plu_012_4.jpg"
-        ],
+                        "/stock-images/inv_plu_012_1.jpg",
+                        "/stock-images/inv_plu_012_2.jpg",
+                        "/stock-images/inv_plu_012_3.jpg",
+                        "/stock-images/inv_plu_012_4.jpg"
+                ],
                 "totalQuantity": 95,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -469,11 +489,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 4 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_013_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_013_1.jpg",
-                  "/stock-images/inv_plu_013_2.jpg",
-                  "/stock-images/inv_plu_013_3.jpg",
-                  "/stock-images/inv_plu_013_4.jpg"
-        ],
+                        "/stock-images/inv_plu_013_1.jpg",
+                        "/stock-images/inv_plu_013_2.jpg",
+                        "/stock-images/inv_plu_013_3.jpg",
+                        "/stock-images/inv_plu_013_4.jpg"
+                ],
                 "totalQuantity": 40,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -507,11 +527,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 5 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_014_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_014_1.jpg",
-                  "/stock-images/inv_plu_014_2.jpg",
-                  "/stock-images/inv_plu_014_3.jpg",
-                  "/stock-images/inv_plu_014_4.jpg"
-        ],
+                        "/stock-images/inv_plu_014_1.jpg",
+                        "/stock-images/inv_plu_014_2.jpg",
+                        "/stock-images/inv_plu_014_3.jpg",
+                        "/stock-images/inv_plu_014_4.jpg"
+                ],
                 "totalQuantity": 35,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -545,11 +565,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 11",
                 "imageUrl": "/stock-images/inv_plu_015_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_015_1.jpg",
-                  "/stock-images/inv_plu_015_2.jpg",
-                  "/stock-images/inv_plu_015_3.jpg",
-                  "/stock-images/inv_plu_015_4.jpg"
-        ],
+                        "/stock-images/inv_plu_015_1.jpg",
+                        "/stock-images/inv_plu_015_2.jpg",
+                        "/stock-images/inv_plu_015_3.jpg",
+                        "/stock-images/inv_plu_015_4.jpg"
+                ],
                 "totalQuantity": 600,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -584,11 +604,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 12",
                 "imageUrl": "/stock-images/inv_plu_016_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_016_1.jpg",
-                  "/stock-images/inv_plu_016_2.jpg",
-                  "/stock-images/inv_plu_016_3.jpg",
-                  "/stock-images/inv_plu_016_4.jpg"
-        ],
+                        "/stock-images/inv_plu_016_1.jpg",
+                        "/stock-images/inv_plu_016_2.jpg",
+                        "/stock-images/inv_plu_016_3.jpg",
+                        "/stock-images/inv_plu_016_4.jpg"
+                ],
                 "totalQuantity": 120,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -622,11 +642,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 3 P1 - Top",
                 "imageUrl": "/stock-images/inv_plu_017_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_017_1.jpg",
-                  "/stock-images/inv_plu_017_2.jpg",
-                  "/stock-images/inv_plu_017_3.jpg",
-                  "/stock-images/inv_plu_017_4.jpg"
-        ],
+                        "/stock-images/inv_plu_017_1.jpg",
+                        "/stock-images/inv_plu_017_2.jpg",
+                        "/stock-images/inv_plu_017_3.jpg",
+                        "/stock-images/inv_plu_017_4.jpg"
+                ],
                 "totalQuantity": 100,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -660,11 +680,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 3 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_018_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_018_1.jpg",
-                  "/stock-images/inv_plu_018_2.jpg",
-                  "/stock-images/inv_plu_018_3.jpg",
-                  "/stock-images/inv_plu_018_4.jpg"
-        ],
+                        "/stock-images/inv_plu_018_1.jpg",
+                        "/stock-images/inv_plu_018_2.jpg",
+                        "/stock-images/inv_plu_018_3.jpg",
+                        "/stock-images/inv_plu_018_4.jpg"
+                ],
                 "totalQuantity": 100,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -698,11 +718,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 5 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_019_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_019_1.jpg",
-                  "/stock-images/inv_plu_019_2.jpg",
-                  "/stock-images/inv_plu_019_3.jpg",
-                  "/stock-images/inv_plu_019_4.jpg"
-        ],
+                        "/stock-images/inv_plu_019_1.jpg",
+                        "/stock-images/inv_plu_019_2.jpg",
+                        "/stock-images/inv_plu_019_3.jpg",
+                        "/stock-images/inv_plu_019_4.jpg"
+                ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -734,11 +754,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 6 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_020_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_020_1.jpg",
-                  "/stock-images/inv_plu_020_2.jpg",
-                  "/stock-images/inv_plu_020_3.jpg",
-                  "/stock-images/inv_plu_020_4.jpg"
-        ],
+                        "/stock-images/inv_plu_020_1.jpg",
+                        "/stock-images/inv_plu_020_2.jpg",
+                        "/stock-images/inv_plu_020_3.jpg",
+                        "/stock-images/inv_plu_020_4.jpg"
+                ],
                 "totalQuantity": 20,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -771,11 +791,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_021_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_021_1.jpg",
-                  "/stock-images/inv_plu_021_2.jpg",
-                  "/stock-images/inv_plu_021_3.jpg",
-                  "/stock-images/inv_plu_021_4.jpg"
-        ],
+                        "/stock-images/inv_plu_021_1.jpg",
+                        "/stock-images/inv_plu_021_2.jpg",
+                        "/stock-images/inv_plu_021_3.jpg",
+                        "/stock-images/inv_plu_021_4.jpg"
+                ],
                 "totalQuantity": 30,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -808,11 +828,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_022_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_022_1.jpg",
-                  "/stock-images/inv_plu_022_2.jpg",
-                  "/stock-images/inv_plu_022_3.jpg",
-                  "/stock-images/inv_plu_022_4.jpg"
-        ],
+                        "/stock-images/inv_plu_022_1.jpg",
+                        "/stock-images/inv_plu_022_2.jpg",
+                        "/stock-images/inv_plu_022_3.jpg",
+                        "/stock-images/inv_plu_022_4.jpg"
+                ],
                 "totalQuantity": 28,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -845,11 +865,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_023_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_023_1.jpg",
-                  "/stock-images/inv_plu_023_2.jpg",
-                  "/stock-images/inv_plu_023_3.jpg",
-                  "/stock-images/inv_plu_023_4.jpg"
-        ],
+                        "/stock-images/inv_plu_023_1.jpg",
+                        "/stock-images/inv_plu_023_2.jpg",
+                        "/stock-images/inv_plu_023_3.jpg",
+                        "/stock-images/inv_plu_023_4.jpg"
+                ],
                 "totalQuantity": 35,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -882,11 +902,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "The Big Claw",
                 "imageUrl": "/stock-images/inv_plu_024_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_024_1.jpg",
-                  "/stock-images/inv_plu_024_2.jpg",
-                  "/stock-images/inv_plu_024_3.jpg",
-                  "/stock-images/inv_plu_024_4.jpg"
-        ],
+                        "/stock-images/inv_plu_024_1.jpg",
+                        "/stock-images/inv_plu_024_2.jpg",
+                        "/stock-images/inv_plu_024_3.jpg",
+                        "/stock-images/inv_plu_024_4.jpg"
+                ],
                 "totalQuantity": 8,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -919,11 +939,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "The Big Claw",
                 "imageUrl": "/stock-images/inv_plu_025_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_025_1.jpg",
-                  "/stock-images/inv_plu_025_2.jpg",
-                  "/stock-images/inv_plu_025_3.jpg",
-                  "/stock-images/inv_plu_025_4.jpg"
-        ],
+                        "/stock-images/inv_plu_025_1.jpg",
+                        "/stock-images/inv_plu_025_2.jpg",
+                        "/stock-images/inv_plu_025_3.jpg",
+                        "/stock-images/inv_plu_025_4.jpg"
+                ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -954,11 +974,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Nano 4",
                 "imageUrl": "/stock-images/inv_bbox_001_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_001_1.jpg",
-                  "/stock-images/inv_bbox_001_2.jpg",
-                  "/stock-images/inv_bbox_001_3.jpg",
-                  "/stock-images/inv_bbox_001_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_001_1.jpg",
+                        "/stock-images/inv_bbox_001_2.jpg",
+                        "/stock-images/inv_bbox_001_3.jpg",
+                        "/stock-images/inv_bbox_001_4.jpg"
+                ],
                 "totalQuantity": 48,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -991,11 +1011,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Handsome Man",
                 "imageUrl": "/stock-images/inv_bbox_002_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_002_1.jpg",
-                  "/stock-images/inv_bbox_002_2.jpg",
-                  "/stock-images/inv_bbox_002_3.jpg",
-                  "/stock-images/inv_bbox_002_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_002_1.jpg",
+                        "/stock-images/inv_bbox_002_2.jpg",
+                        "/stock-images/inv_bbox_002_3.jpg",
+                        "/stock-images/inv_bbox_002_4.jpg"
+                ],
                 "totalQuantity": 36,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1028,11 +1048,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 6 P1 - Top",
                 "imageUrl": "/stock-images/inv_bbox_003_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_003_1.jpg",
-                  "/stock-images/inv_bbox_003_2.jpg",
-                  "/stock-images/inv_bbox_003_3.jpg",
-                  "/stock-images/inv_bbox_003_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_003_1.jpg",
+                        "/stock-images/inv_bbox_003_2.jpg",
+                        "/stock-images/inv_bbox_003_3.jpg",
+                        "/stock-images/inv_bbox_003_4.jpg"
+                ],
                 "totalQuantity": 12,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1065,11 +1085,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_bbox_004_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_004_1.jpg",
-                  "/stock-images/inv_bbox_004_2.jpg",
-                  "/stock-images/inv_bbox_004_3.jpg",
-                  "/stock-images/inv_bbox_004_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_004_1.jpg",
+                        "/stock-images/inv_bbox_004_2.jpg",
+                        "/stock-images/inv_bbox_004_3.jpg",
+                        "/stock-images/inv_bbox_004_4.jpg"
+                ],
                 "totalQuantity": 50,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1102,12 +1122,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll Castle 1",
                 "imageUrl": "/stock-images/inv_fig_001_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_001_1.jpg",
-                  "/stock-images/inv_fig_001_2.jpg",
-                  "/stock-images/inv_fig_001_3.jpg",
-                  "/stock-images/inv_fig_001_4.jpg",
-                  "/stock-images/inv_fig_001_5.jpg"
-        ],
+                        "/stock-images/inv_fig_001_1.jpg",
+                        "/stock-images/inv_fig_001_2.jpg",
+                        "/stock-images/inv_fig_001_3.jpg",
+                        "/stock-images/inv_fig_001_4.jpg",
+                        "/stock-images/inv_fig_001_5.jpg"
+                ],
                 "totalQuantity": 15,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1140,12 +1160,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll House 2",
                 "imageUrl": "/stock-images/inv_fig_002_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_002_1.jpg",
-                  "/stock-images/inv_fig_002_2.jpg",
-                  "/stock-images/inv_fig_002_3.jpg",
-                  "/stock-images/inv_fig_002_4.jpg",
-                  "/stock-images/inv_fig_002_5.jpg"
-        ],
+                        "/stock-images/inv_fig_002_1.jpg",
+                        "/stock-images/inv_fig_002_2.jpg",
+                        "/stock-images/inv_fig_002_3.jpg",
+                        "/stock-images/inv_fig_002_4.jpg",
+                        "/stock-images/inv_fig_002_5.jpg"
+                ],
                 "totalQuantity": 18,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1178,12 +1198,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll House 3",
                 "imageUrl": "/stock-images/inv_fig_003_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_003_1.jpg",
-                  "/stock-images/inv_fig_003_2.jpg",
-                  "/stock-images/inv_fig_003_3.jpg",
-                  "/stock-images/inv_fig_003_4.jpg",
-                  "/stock-images/inv_fig_003_5.jpg"
-        ],
+                        "/stock-images/inv_fig_003_1.jpg",
+                        "/stock-images/inv_fig_003_2.jpg",
+                        "/stock-images/inv_fig_003_3.jpg",
+                        "/stock-images/inv_fig_003_4.jpg",
+                        "/stock-images/inv_fig_003_5.jpg"
+                ],
                 "totalQuantity": 25,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1216,12 +1236,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll House 4",
                 "imageUrl": "/stock-images/inv_fig_004_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_004_1.jpg",
-                  "/stock-images/inv_fig_004_2.jpg",
-                  "/stock-images/inv_fig_004_3.jpg",
-                  "/stock-images/inv_fig_004_4.jpg",
-                  "/stock-images/inv_fig_004_5.jpg"
-        ],
+                        "/stock-images/inv_fig_004_1.jpg",
+                        "/stock-images/inv_fig_004_2.jpg",
+                        "/stock-images/inv_fig_004_3.jpg",
+                        "/stock-images/inv_fig_004_4.jpg",
+                        "/stock-images/inv_fig_004_5.jpg"
+                ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -1252,10 +1272,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 3",
                 "imageUrl": "/stock-images/inv_key_001_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_001_1.jpg",
-                  "/stock-images/inv_key_001_2.jpg",
-                  "/stock-images/inv_key_001_3.jpg"
-        ],
+                        "/stock-images/inv_key_001_1.jpg",
+                        "/stock-images/inv_key_001_2.jpg",
+                        "/stock-images/inv_key_001_3.jpg"
+                ],
                 "totalQuantity": 400,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1288,10 +1308,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 4",
                 "imageUrl": "/stock-images/inv_key_002_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_002_1.jpg",
-                  "/stock-images/inv_key_002_2.jpg",
-                  "/stock-images/inv_key_002_3.jpg"
-        ],
+                        "/stock-images/inv_key_002_1.jpg",
+                        "/stock-images/inv_key_002_2.jpg",
+                        "/stock-images/inv_key_002_3.jpg"
+                ],
                 "totalQuantity": 250,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1324,10 +1344,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 13",
                 "imageUrl": "/stock-images/inv_gat_001_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_001_1.jpg",
-                  "/stock-images/inv_gat_001_2.jpg",
-                  "/stock-images/inv_gat_001_3.jpg"
-        ],
+                        "/stock-images/inv_gat_001_1.jpg",
+                        "/stock-images/inv_gat_001_2.jpg",
+                        "/stock-images/inv_gat_001_3.jpg"
+                ],
                 "totalQuantity": 1000,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1360,10 +1380,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 14",
                 "imageUrl": "/stock-images/inv_gat_002_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_002_1.jpg",
-                  "/stock-images/inv_gat_002_2.jpg",
-                  "/stock-images/inv_gat_002_3.jpg"
-        ],
+                        "/stock-images/inv_gat_002_1.jpg",
+                        "/stock-images/inv_gat_002_2.jpg",
+                        "/stock-images/inv_gat_002_3.jpg"
+                ],
                 "totalQuantity": 800,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -1397,11 +1417,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 15",
                 "imageUrl": "/stock-images/inv_plu_026_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_026_1.jpg",
-                  "/stock-images/inv_plu_026_2.jpg",
-                  "/stock-images/inv_plu_026_3.jpg",
-                  "/stock-images/inv_plu_026_4.jpg"
-        ],
+                        "/stock-images/inv_plu_026_1.jpg",
+                        "/stock-images/inv_plu_026_2.jpg",
+                        "/stock-images/inv_plu_026_3.jpg",
+                        "/stock-images/inv_plu_026_4.jpg"
+                ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -1433,11 +1453,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 16",
                 "imageUrl": "/stock-images/inv_plu_027_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_027_1.jpg",
-                  "/stock-images/inv_plu_027_2.jpg",
-                  "/stock-images/inv_plu_027_3.jpg",
-                  "/stock-images/inv_plu_027_4.jpg"
-        ],
+                        "/stock-images/inv_plu_027_1.jpg",
+                        "/stock-images/inv_plu_027_2.jpg",
+                        "/stock-images/inv_plu_027_3.jpg",
+                        "/stock-images/inv_plu_027_4.jpg"
+                ],
                 "totalQuantity": 0,
                 "quantityText": "Out of Stock",
                 "stockLocations": [],
@@ -1469,11 +1489,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 2 P2 - Top",
                 "imageUrl": "/stock-images/inv_plu_028_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_028_1.jpg",
-                  "/stock-images/inv_plu_028_2.jpg",
-                  "/stock-images/inv_plu_028_3.jpg",
-                  "/stock-images/inv_plu_028_4.jpg"
-        ],
+                        "/stock-images/inv_plu_028_1.jpg",
+                        "/stock-images/inv_plu_028_2.jpg",
+                        "/stock-images/inv_plu_028_3.jpg",
+                        "/stock-images/inv_plu_028_4.jpg"
+                ],
                 "totalQuantity": 55,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1507,11 +1527,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 3 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_029_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_029_1.jpg",
-                  "/stock-images/inv_plu_029_2.jpg",
-                  "/stock-images/inv_plu_029_3.jpg",
-                  "/stock-images/inv_plu_029_4.jpg"
-        ],
+                        "/stock-images/inv_plu_029_1.jpg",
+                        "/stock-images/inv_plu_029_2.jpg",
+                        "/stock-images/inv_plu_029_3.jpg",
+                        "/stock-images/inv_plu_029_4.jpg"
+                ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1544,11 +1564,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_030_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_030_1.jpg",
-                  "/stock-images/inv_plu_030_2.jpg",
-                  "/stock-images/inv_plu_030_3.jpg",
-                  "/stock-images/inv_plu_030_4.jpg"
-        ],
+                        "/stock-images/inv_plu_030_1.jpg",
+                        "/stock-images/inv_plu_030_2.jpg",
+                        "/stock-images/inv_plu_030_3.jpg",
+                        "/stock-images/inv_plu_030_4.jpg"
+                ],
                 "totalQuantity": 20,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1581,11 +1601,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_031_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_031_1.jpg",
-                  "/stock-images/inv_plu_031_2.jpg",
-                  "/stock-images/inv_plu_031_3.jpg",
-                  "/stock-images/inv_plu_031_4.jpg"
-        ],
+                        "/stock-images/inv_plu_031_1.jpg",
+                        "/stock-images/inv_plu_031_2.jpg",
+                        "/stock-images/inv_plu_031_3.jpg",
+                        "/stock-images/inv_plu_031_4.jpg"
+                ],
                 "totalQuantity": 25,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1618,11 +1638,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_032_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_032_1.jpg",
-                  "/stock-images/inv_plu_032_2.jpg",
-                  "/stock-images/inv_plu_032_3.jpg",
-                  "/stock-images/inv_plu_032_4.jpg"
-        ],
+                        "/stock-images/inv_plu_032_1.jpg",
+                        "/stock-images/inv_plu_032_2.jpg",
+                        "/stock-images/inv_plu_032_3.jpg",
+                        "/stock-images/inv_plu_032_4.jpg"
+                ],
                 "totalQuantity": 18,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -1655,11 +1675,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": null,
                 "imageUrl": "/stock-images/inv_plu_033_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_033_1.jpg",
-                  "/stock-images/inv_plu_033_2.jpg",
-                  "/stock-images/inv_plu_033_3.jpg",
-                  "/stock-images/inv_plu_033_4.jpg"
-        ],
+                        "/stock-images/inv_plu_033_1.jpg",
+                        "/stock-images/inv_plu_033_2.jpg",
+                        "/stock-images/inv_plu_033_3.jpg",
+                        "/stock-images/inv_plu_033_4.jpg"
+                ],
                 "totalQuantity": 22,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1693,11 +1713,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 5 P1 - Top",
                 "imageUrl": "/stock-images/inv_plu_034_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_034_1.jpg",
-                  "/stock-images/inv_plu_034_2.jpg",
-                  "/stock-images/inv_plu_034_3.jpg",
-                  "/stock-images/inv_plu_034_4.jpg"
-        ],
+                        "/stock-images/inv_plu_034_1.jpg",
+                        "/stock-images/inv_plu_034_2.jpg",
+                        "/stock-images/inv_plu_034_3.jpg",
+                        "/stock-images/inv_plu_034_4.jpg"
+                ],
                 "totalQuantity": 80,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1731,11 +1751,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 5 P2 - Bottom",
                 "imageUrl": "/stock-images/inv_plu_035_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_035_1.jpg",
-                  "/stock-images/inv_plu_035_2.jpg",
-                  "/stock-images/inv_plu_035_3.jpg",
-                  "/stock-images/inv_plu_035_4.jpg"
-        ],
+                        "/stock-images/inv_plu_035_1.jpg",
+                        "/stock-images/inv_plu_035_2.jpg",
+                        "/stock-images/inv_plu_035_3.jpg",
+                        "/stock-images/inv_plu_035_4.jpg"
+                ],
                 "totalQuantity": 75,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1768,11 +1788,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Star 1",
                 "imageUrl": "/stock-images/inv_plu_036_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_036_1.jpg",
-                  "/stock-images/inv_plu_036_2.jpg",
-                  "/stock-images/inv_plu_036_3.jpg",
-                  "/stock-images/inv_plu_036_4.jpg"
-        ],
+                        "/stock-images/inv_plu_036_1.jpg",
+                        "/stock-images/inv_plu_036_2.jpg",
+                        "/stock-images/inv_plu_036_3.jpg",
+                        "/stock-images/inv_plu_036_4.jpg"
+                ],
                 "totalQuantity": 40,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1805,11 +1825,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Star 2",
                 "imageUrl": "/stock-images/inv_plu_037_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_037_1.jpg",
-                  "/stock-images/inv_plu_037_2.jpg",
-                  "/stock-images/inv_plu_037_3.jpg",
-                  "/stock-images/inv_plu_037_4.jpg"
-        ],
+                        "/stock-images/inv_plu_037_1.jpg",
+                        "/stock-images/inv_plu_037_2.jpg",
+                        "/stock-images/inv_plu_037_3.jpg",
+                        "/stock-images/inv_plu_037_4.jpg"
+                ],
                 "totalQuantity": 35,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1845,11 +1865,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 17",
                 "imageUrl": "/stock-images/inv_plu_38_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_38_1.jpg",
-                  "/stock-images/inv_plu_38_2.jpg",
-                  "/stock-images/inv_plu_38_3.jpg",
-                  "/stock-images/inv_plu_38_4.jpg"
-        ],
+                        "/stock-images/inv_plu_38_1.jpg",
+                        "/stock-images/inv_plu_38_2.jpg",
+                        "/stock-images/inv_plu_38_3.jpg",
+                        "/stock-images/inv_plu_38_4.jpg"
+                ],
                 "totalQuantity": 50,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1892,11 +1912,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 18",
                 "imageUrl": "/stock-images/inv_plu_39_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_39_1.jpg",
-                  "/stock-images/inv_plu_39_2.jpg",
-                  "/stock-images/inv_plu_39_3.jpg",
-                  "/stock-images/inv_plu_39_4.jpg"
-        ],
+                        "/stock-images/inv_plu_39_1.jpg",
+                        "/stock-images/inv_plu_39_2.jpg",
+                        "/stock-images/inv_plu_39_3.jpg",
+                        "/stock-images/inv_plu_39_4.jpg"
+                ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1939,11 +1959,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 19",
                 "imageUrl": "/stock-images/inv_plu_40_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_plu_40_1.jpg",
-                  "/stock-images/inv_plu_40_2.jpg",
-                  "/stock-images/inv_plu_40_3.jpg",
-                  "/stock-images/inv_plu_40_4.jpg"
-        ],
+                        "/stock-images/inv_plu_40_1.jpg",
+                        "/stock-images/inv_plu_40_2.jpg",
+                        "/stock-images/inv_plu_40_3.jpg",
+                        "/stock-images/inv_plu_40_4.jpg"
+                ],
                 "totalQuantity": 70,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -1987,10 +2007,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 5",
                 "imageUrl": "/stock-images/inv_key_3_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_3_1.jpg",
-                  "/stock-images/inv_key_3_2.jpg",
-                  "/stock-images/inv_key_3_3.jpg"
-        ],
+                        "/stock-images/inv_key_3_1.jpg",
+                        "/stock-images/inv_key_3_2.jpg",
+                        "/stock-images/inv_key_3_3.jpg"
+                ],
                 "totalQuantity": 100,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2034,10 +2054,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 6",
                 "imageUrl": "/stock-images/inv_key_4_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_4_1.jpg",
-                  "/stock-images/inv_key_4_2.jpg",
-                  "/stock-images/inv_key_4_3.jpg"
-        ],
+                        "/stock-images/inv_key_4_1.jpg",
+                        "/stock-images/inv_key_4_2.jpg",
+                        "/stock-images/inv_key_4_3.jpg"
+                ],
                 "totalQuantity": 120,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2081,10 +2101,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 7",
                 "imageUrl": "/stock-images/inv_key_5_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_5_1.jpg",
-                  "/stock-images/inv_key_5_2.jpg",
-                  "/stock-images/inv_key_5_3.jpg"
-        ],
+                        "/stock-images/inv_key_5_1.jpg",
+                        "/stock-images/inv_key_5_2.jpg",
+                        "/stock-images/inv_key_5_3.jpg"
+                ],
                 "totalQuantity": 140,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2128,10 +2148,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 8",
                 "imageUrl": "/stock-images/inv_key_6_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_6_1.jpg",
-                  "/stock-images/inv_key_6_2.jpg",
-                  "/stock-images/inv_key_6_3.jpg"
-        ],
+                        "/stock-images/inv_key_6_1.jpg",
+                        "/stock-images/inv_key_6_2.jpg",
+                        "/stock-images/inv_key_6_3.jpg"
+                ],
                 "totalQuantity": 160,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2175,10 +2195,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 9",
                 "imageUrl": "/stock-images/inv_key_7_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_7_1.jpg",
-                  "/stock-images/inv_key_7_2.jpg",
-                  "/stock-images/inv_key_7_3.jpg"
-        ],
+                        "/stock-images/inv_key_7_1.jpg",
+                        "/stock-images/inv_key_7_2.jpg",
+                        "/stock-images/inv_key_7_3.jpg"
+                ],
                 "totalQuantity": 180,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2222,10 +2242,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "INNIS P1",
                 "imageUrl": "/stock-images/inv_key_8_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_8_1.jpg",
-                  "/stock-images/inv_key_8_2.jpg",
-                  "/stock-images/inv_key_8_3.jpg"
-        ],
+                        "/stock-images/inv_key_8_1.jpg",
+                        "/stock-images/inv_key_8_2.jpg",
+                        "/stock-images/inv_key_8_3.jpg"
+                ],
                 "totalQuantity": 200,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2269,10 +2289,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "INNIS P2",
                 "imageUrl": "/stock-images/inv_key_9_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_9_1.jpg",
-                  "/stock-images/inv_key_9_2.jpg",
-                  "/stock-images/inv_key_9_3.jpg"
-        ],
+                        "/stock-images/inv_key_9_1.jpg",
+                        "/stock-images/inv_key_9_2.jpg",
+                        "/stock-images/inv_key_9_3.jpg"
+                ],
                 "totalQuantity": 220,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2316,10 +2336,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "INNIS P3",
                 "imageUrl": "/stock-images/inv_key_10_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_10_1.jpg",
-                  "/stock-images/inv_key_10_2.jpg",
-                  "/stock-images/inv_key_10_3.jpg"
-        ],
+                        "/stock-images/inv_key_10_1.jpg",
+                        "/stock-images/inv_key_10_2.jpg",
+                        "/stock-images/inv_key_10_3.jpg"
+                ],
                 "totalQuantity": 240,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2363,10 +2383,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "INNIS P4",
                 "imageUrl": "/stock-images/inv_key_11_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_11_1.jpg",
-                  "/stock-images/inv_key_11_2.jpg",
-                  "/stock-images/inv_key_11_3.jpg"
-        ],
+                        "/stock-images/inv_key_11_1.jpg",
+                        "/stock-images/inv_key_11_2.jpg",
+                        "/stock-images/inv_key_11_3.jpg"
+                ],
                 "totalQuantity": 260,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2410,10 +2430,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "SKWEB P1",
                 "imageUrl": "/stock-images/inv_key_12_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_12_1.jpg",
-                  "/stock-images/inv_key_12_2.jpg",
-                  "/stock-images/inv_key_12_3.jpg"
-        ],
+                        "/stock-images/inv_key_12_1.jpg",
+                        "/stock-images/inv_key_12_2.jpg",
+                        "/stock-images/inv_key_12_3.jpg"
+                ],
                 "totalQuantity": 280,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2457,10 +2477,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "SKWEB P2",
                 "imageUrl": "/stock-images/inv_key_13_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_13_1.jpg",
-                  "/stock-images/inv_key_13_2.jpg",
-                  "/stock-images/inv_key_13_3.jpg"
-        ],
+                        "/stock-images/inv_key_13_1.jpg",
+                        "/stock-images/inv_key_13_2.jpg",
+                        "/stock-images/inv_key_13_3.jpg"
+                ],
                 "totalQuantity": 300,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2504,10 +2524,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "SKWEB P3",
                 "imageUrl": "/stock-images/inv_key_14_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_14_1.jpg",
-                  "/stock-images/inv_key_14_2.jpg",
-                  "/stock-images/inv_key_14_3.jpg"
-        ],
+                        "/stock-images/inv_key_14_1.jpg",
+                        "/stock-images/inv_key_14_2.jpg",
+                        "/stock-images/inv_key_14_3.jpg"
+                ],
                 "totalQuantity": 320,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2551,10 +2571,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "SKWEB P4",
                 "imageUrl": "/stock-images/inv_key_15_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_15_1.jpg",
-                  "/stock-images/inv_key_15_2.jpg",
-                  "/stock-images/inv_key_15_3.jpg"
-        ],
+                        "/stock-images/inv_key_15_1.jpg",
+                        "/stock-images/inv_key_15_2.jpg",
+                        "/stock-images/inv_key_15_3.jpg"
+                ],
                 "totalQuantity": 340,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2598,10 +2618,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Box P1",
                 "imageUrl": "/stock-images/inv_key_16_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_16_1.jpg",
-                  "/stock-images/inv_key_16_2.jpg",
-                  "/stock-images/inv_key_16_3.jpg"
-        ],
+                        "/stock-images/inv_key_16_1.jpg",
+                        "/stock-images/inv_key_16_2.jpg",
+                        "/stock-images/inv_key_16_3.jpg"
+                ],
                 "totalQuantity": 360,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2645,10 +2665,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Box P2",
                 "imageUrl": "/stock-images/inv_key_17_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_17_1.jpg",
-                  "/stock-images/inv_key_17_2.jpg",
-                  "/stock-images/inv_key_17_3.jpg"
-        ],
+                        "/stock-images/inv_key_17_1.jpg",
+                        "/stock-images/inv_key_17_2.jpg",
+                        "/stock-images/inv_key_17_3.jpg"
+                ],
                 "totalQuantity": 380,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2692,10 +2712,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Box P3",
                 "imageUrl": "/stock-images/inv_key_18_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_18_1.jpg",
-                  "/stock-images/inv_key_18_2.jpg",
-                  "/stock-images/inv_key_18_3.jpg"
-        ],
+                        "/stock-images/inv_key_18_1.jpg",
+                        "/stock-images/inv_key_18_2.jpg",
+                        "/stock-images/inv_key_18_3.jpg"
+                ],
                 "totalQuantity": 400,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2739,10 +2759,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Box P4",
                 "imageUrl": "/stock-images/inv_key_19_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_19_1.jpg",
-                  "/stock-images/inv_key_19_2.jpg",
-                  "/stock-images/inv_key_19_3.jpg"
-        ],
+                        "/stock-images/inv_key_19_1.jpg",
+                        "/stock-images/inv_key_19_2.jpg",
+                        "/stock-images/inv_key_19_3.jpg"
+                ],
                 "totalQuantity": 420,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2786,10 +2806,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Trend Catcher 1 P1 - Bottom",
                 "imageUrl": "/stock-images/inv_key_20_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_key_20_1.jpg",
-                  "/stock-images/inv_key_20_2.jpg",
-                  "/stock-images/inv_key_20_3.jpg"
-        ],
+                        "/stock-images/inv_key_20_1.jpg",
+                        "/stock-images/inv_key_20_2.jpg",
+                        "/stock-images/inv_key_20_3.jpg"
+                ],
                 "totalQuantity": 440,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -2833,11 +2853,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P1",
                 "imageUrl": "/stock-images/inv_bbox_5_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_5_1.jpg",
-                  "/stock-images/inv_bbox_5_2.jpg",
-                  "/stock-images/inv_bbox_5_3.jpg",
-                  "/stock-images/inv_bbox_5_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_5_1.jpg",
+                        "/stock-images/inv_bbox_5_2.jpg",
+                        "/stock-images/inv_bbox_5_3.jpg",
+                        "/stock-images/inv_bbox_5_4.jpg"
+                ],
                 "totalQuantity": 24,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2881,11 +2901,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P2",
                 "imageUrl": "/stock-images/inv_bbox_6_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_6_1.jpg",
-                  "/stock-images/inv_bbox_6_2.jpg",
-                  "/stock-images/inv_bbox_6_3.jpg",
-                  "/stock-images/inv_bbox_6_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_6_1.jpg",
+                        "/stock-images/inv_bbox_6_2.jpg",
+                        "/stock-images/inv_bbox_6_3.jpg",
+                        "/stock-images/inv_bbox_6_4.jpg"
+                ],
                 "totalQuantity": 30,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2929,11 +2949,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P3",
                 "imageUrl": "/stock-images/inv_bbox_7_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_7_1.jpg",
-                  "/stock-images/inv_bbox_7_2.jpg",
-                  "/stock-images/inv_bbox_7_3.jpg",
-                  "/stock-images/inv_bbox_7_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_7_1.jpg",
+                        "/stock-images/inv_bbox_7_2.jpg",
+                        "/stock-images/inv_bbox_7_3.jpg",
+                        "/stock-images/inv_bbox_7_4.jpg"
+                ],
                 "totalQuantity": 36,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -2977,11 +2997,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P4",
                 "imageUrl": "/stock-images/inv_bbox_8_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_8_1.jpg",
-                  "/stock-images/inv_bbox_8_2.jpg",
-                  "/stock-images/inv_bbox_8_3.jpg",
-                  "/stock-images/inv_bbox_8_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_8_1.jpg",
+                        "/stock-images/inv_bbox_8_2.jpg",
+                        "/stock-images/inv_bbox_8_3.jpg",
+                        "/stock-images/inv_bbox_8_4.jpg"
+                ],
                 "totalQuantity": 42,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3025,11 +3045,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P5",
                 "imageUrl": "/stock-images/inv_bbox_9_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_9_1.jpg",
-                  "/stock-images/inv_bbox_9_2.jpg",
-                  "/stock-images/inv_bbox_9_3.jpg",
-                  "/stock-images/inv_bbox_9_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_9_1.jpg",
+                        "/stock-images/inv_bbox_9_2.jpg",
+                        "/stock-images/inv_bbox_9_3.jpg",
+                        "/stock-images/inv_bbox_9_4.jpg"
+                ],
                 "totalQuantity": 48,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3073,11 +3093,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P6",
                 "imageUrl": "/stock-images/inv_bbox_10_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_10_1.jpg",
-                  "/stock-images/inv_bbox_10_2.jpg",
-                  "/stock-images/inv_bbox_10_3.jpg",
-                  "/stock-images/inv_bbox_10_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_10_1.jpg",
+                        "/stock-images/inv_bbox_10_2.jpg",
+                        "/stock-images/inv_bbox_10_3.jpg",
+                        "/stock-images/inv_bbox_10_4.jpg"
+                ],
                 "totalQuantity": 54,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3121,11 +3141,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Star 1",
                 "imageUrl": "/stock-images/inv_bbox_11_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_11_1.jpg",
-                  "/stock-images/inv_bbox_11_2.jpg",
-                  "/stock-images/inv_bbox_11_3.jpg",
-                  "/stock-images/inv_bbox_11_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_11_1.jpg",
+                        "/stock-images/inv_bbox_11_2.jpg",
+                        "/stock-images/inv_bbox_11_3.jpg",
+                        "/stock-images/inv_bbox_11_4.jpg"
+                ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3169,11 +3189,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Star 2",
                 "imageUrl": "/stock-images/inv_bbox_12_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_12_1.jpg",
-                  "/stock-images/inv_bbox_12_2.jpg",
-                  "/stock-images/inv_bbox_12_3.jpg",
-                  "/stock-images/inv_bbox_12_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_12_1.jpg",
+                        "/stock-images/inv_bbox_12_2.jpg",
+                        "/stock-images/inv_bbox_12_3.jpg",
+                        "/stock-images/inv_bbox_12_4.jpg"
+                ],
                 "totalQuantity": 66,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3217,11 +3237,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Star 3",
                 "imageUrl": "/stock-images/inv_bbox_13_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_13_1.jpg",
-                  "/stock-images/inv_bbox_13_2.jpg",
-                  "/stock-images/inv_bbox_13_3.jpg",
-                  "/stock-images/inv_bbox_13_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_13_1.jpg",
+                        "/stock-images/inv_bbox_13_2.jpg",
+                        "/stock-images/inv_bbox_13_3.jpg",
+                        "/stock-images/inv_bbox_13_4.jpg"
+                ],
                 "totalQuantity": 72,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3265,11 +3285,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Star 4",
                 "imageUrl": "/stock-images/inv_bbox_14_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_14_1.jpg",
-                  "/stock-images/inv_bbox_14_2.jpg",
-                  "/stock-images/inv_bbox_14_3.jpg",
-                  "/stock-images/inv_bbox_14_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_14_1.jpg",
+                        "/stock-images/inv_bbox_14_2.jpg",
+                        "/stock-images/inv_bbox_14_3.jpg",
+                        "/stock-images/inv_bbox_14_4.jpg"
+                ],
                 "totalQuantity": 78,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3313,11 +3333,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Hip-Hop Elf 1",
                 "imageUrl": "/stock-images/inv_bbox_15_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_15_1.jpg",
-                  "/stock-images/inv_bbox_15_2.jpg",
-                  "/stock-images/inv_bbox_15_3.jpg",
-                  "/stock-images/inv_bbox_15_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_15_1.jpg",
+                        "/stock-images/inv_bbox_15_2.jpg",
+                        "/stock-images/inv_bbox_15_3.jpg",
+                        "/stock-images/inv_bbox_15_4.jpg"
+                ],
                 "totalQuantity": 84,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3361,11 +3381,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Hip-Hop Elf 2",
                 "imageUrl": "/stock-images/inv_bbox_16_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_16_1.jpg",
-                  "/stock-images/inv_bbox_16_2.jpg",
-                  "/stock-images/inv_bbox_16_3.jpg",
-                  "/stock-images/inv_bbox_16_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_16_1.jpg",
+                        "/stock-images/inv_bbox_16_2.jpg",
+                        "/stock-images/inv_bbox_16_3.jpg",
+                        "/stock-images/inv_bbox_16_4.jpg"
+                ],
                 "totalQuantity": 90,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3409,11 +3429,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Hip-Hop Elf 3",
                 "imageUrl": "/stock-images/inv_bbox_17_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_17_1.jpg",
-                  "/stock-images/inv_bbox_17_2.jpg",
-                  "/stock-images/inv_bbox_17_3.jpg",
-                  "/stock-images/inv_bbox_17_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_17_1.jpg",
+                        "/stock-images/inv_bbox_17_2.jpg",
+                        "/stock-images/inv_bbox_17_3.jpg",
+                        "/stock-images/inv_bbox_17_4.jpg"
+                ],
                 "totalQuantity": 96,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3457,11 +3477,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Hip-Hop Elf 4",
                 "imageUrl": "/stock-images/inv_bbox_18_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_18_1.jpg",
-                  "/stock-images/inv_bbox_18_2.jpg",
-                  "/stock-images/inv_bbox_18_3.jpg",
-                  "/stock-images/inv_bbox_18_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_18_1.jpg",
+                        "/stock-images/inv_bbox_18_2.jpg",
+                        "/stock-images/inv_bbox_18_3.jpg",
+                        "/stock-images/inv_bbox_18_4.jpg"
+                ],
                 "totalQuantity": 102,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3505,11 +3525,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy L-1",
                 "imageUrl": "/stock-images/inv_bbox_19_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_19_1.jpg",
-                  "/stock-images/inv_bbox_19_2.jpg",
-                  "/stock-images/inv_bbox_19_3.jpg",
-                  "/stock-images/inv_bbox_19_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_19_1.jpg",
+                        "/stock-images/inv_bbox_19_2.jpg",
+                        "/stock-images/inv_bbox_19_3.jpg",
+                        "/stock-images/inv_bbox_19_4.jpg"
+                ],
                 "totalQuantity": 108,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3553,11 +3573,11 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Nano 1",
                 "imageUrl": "/stock-images/inv_bbox_20_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_bbox_20_1.jpg",
-                  "/stock-images/inv_bbox_20_2.jpg",
-                  "/stock-images/inv_bbox_20_3.jpg",
-                  "/stock-images/inv_bbox_20_4.jpg"
-        ],
+                        "/stock-images/inv_bbox_20_1.jpg",
+                        "/stock-images/inv_bbox_20_2.jpg",
+                        "/stock-images/inv_bbox_20_3.jpg",
+                        "/stock-images/inv_bbox_20_4.jpg"
+                ],
                 "totalQuantity": 114,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -3601,10 +3621,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 2",
                 "imageUrl": "/stock-images/inv_gat_3_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_3_1.jpg",
-                  "/stock-images/inv_gat_3_2.jpg",
-                  "/stock-images/inv_gat_3_3.jpg"
-        ],
+                        "/stock-images/inv_gat_3_1.jpg",
+                        "/stock-images/inv_gat_3_2.jpg",
+                        "/stock-images/inv_gat_3_3.jpg"
+                ],
                 "totalQuantity": 500,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3648,10 +3668,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 20",
                 "imageUrl": "/stock-images/inv_gat_4_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_4_1.jpg",
-                  "/stock-images/inv_gat_4_2.jpg",
-                  "/stock-images/inv_gat_4_3.jpg"
-        ],
+                        "/stock-images/inv_gat_4_1.jpg",
+                        "/stock-images/inv_gat_4_2.jpg",
+                        "/stock-images/inv_gat_4_3.jpg"
+                ],
                 "totalQuantity": 600,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3695,10 +3715,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 21",
                 "imageUrl": "/stock-images/inv_gat_5_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_5_1.jpg",
-                  "/stock-images/inv_gat_5_2.jpg",
-                  "/stock-images/inv_gat_5_3.jpg"
-        ],
+                        "/stock-images/inv_gat_5_1.jpg",
+                        "/stock-images/inv_gat_5_2.jpg",
+                        "/stock-images/inv_gat_5_3.jpg"
+                ],
                 "totalQuantity": 700,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3742,10 +3762,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 22",
                 "imageUrl": "/stock-images/inv_gat_6_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_6_1.jpg",
-                  "/stock-images/inv_gat_6_2.jpg",
-                  "/stock-images/inv_gat_6_3.jpg"
-        ],
+                        "/stock-images/inv_gat_6_1.jpg",
+                        "/stock-images/inv_gat_6_2.jpg",
+                        "/stock-images/inv_gat_6_3.jpg"
+                ],
                 "totalQuantity": 800,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3789,10 +3809,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 23",
                 "imageUrl": "/stock-images/inv_gat_7_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_7_1.jpg",
-                  "/stock-images/inv_gat_7_2.jpg",
-                  "/stock-images/inv_gat_7_3.jpg"
-        ],
+                        "/stock-images/inv_gat_7_1.jpg",
+                        "/stock-images/inv_gat_7_2.jpg",
+                        "/stock-images/inv_gat_7_3.jpg"
+                ],
                 "totalQuantity": 900,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3836,10 +3856,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 24",
                 "imageUrl": "/stock-images/inv_gat_8_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_8_1.jpg",
-                  "/stock-images/inv_gat_8_2.jpg",
-                  "/stock-images/inv_gat_8_3.jpg"
-        ],
+                        "/stock-images/inv_gat_8_1.jpg",
+                        "/stock-images/inv_gat_8_2.jpg",
+                        "/stock-images/inv_gat_8_3.jpg"
+                ],
                 "totalQuantity": 1000,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3883,10 +3903,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 25",
                 "imageUrl": "/stock-images/inv_gat_9_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_9_1.jpg",
-                  "/stock-images/inv_gat_9_2.jpg",
-                  "/stock-images/inv_gat_9_3.jpg"
-        ],
+                        "/stock-images/inv_gat_9_1.jpg",
+                        "/stock-images/inv_gat_9_2.jpg",
+                        "/stock-images/inv_gat_9_3.jpg"
+                ],
                 "totalQuantity": 1100,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3930,10 +3950,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Miya 26",
                 "imageUrl": "/stock-images/inv_gat_10_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_gat_10_1.jpg",
-                  "/stock-images/inv_gat_10_2.jpg",
-                  "/stock-images/inv_gat_10_3.jpg"
-        ],
+                        "/stock-images/inv_gat_10_1.jpg",
+                        "/stock-images/inv_gat_10_2.jpg",
+                        "/stock-images/inv_gat_10_3.jpg"
+                ],
                 "totalQuantity": 1200,
                 "quantityText": "High Stock",
                 "stockLocations": [
@@ -3977,12 +3997,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll Castle 2",
                 "imageUrl": "/stock-images/inv_fig_5_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_5_1.jpg",
-                  "/stock-images/inv_fig_5_2.jpg",
-                  "/stock-images/inv_fig_5_3.jpg",
-                  "/stock-images/inv_fig_5_4.jpg",
-                  "/stock-images/inv_fig_5_5.jpg"
-        ],
+                        "/stock-images/inv_fig_5_1.jpg",
+                        "/stock-images/inv_fig_5_2.jpg",
+                        "/stock-images/inv_fig_5_3.jpg",
+                        "/stock-images/inv_fig_5_4.jpg",
+                        "/stock-images/inv_fig_5_5.jpg"
+                ],
                 "totalQuantity": 10,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -4026,12 +4046,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll Castle 3",
                 "imageUrl": "/stock-images/inv_fig_6_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_6_1.jpg",
-                  "/stock-images/inv_fig_6_2.jpg",
-                  "/stock-images/inv_fig_6_3.jpg",
-                  "/stock-images/inv_fig_6_4.jpg",
-                  "/stock-images/inv_fig_6_5.jpg"
-        ],
+                        "/stock-images/inv_fig_6_1.jpg",
+                        "/stock-images/inv_fig_6_2.jpg",
+                        "/stock-images/inv_fig_6_3.jpg",
+                        "/stock-images/inv_fig_6_4.jpg",
+                        "/stock-images/inv_fig_6_5.jpg"
+                ],
                 "totalQuantity": 13,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -4075,12 +4095,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll Castle 4",
                 "imageUrl": "/stock-images/inv_fig_7_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_7_1.jpg",
-                  "/stock-images/inv_fig_7_2.jpg",
-                  "/stock-images/inv_fig_7_3.jpg",
-                  "/stock-images/inv_fig_7_4.jpg",
-                  "/stock-images/inv_fig_7_5.jpg"
-        ],
+                        "/stock-images/inv_fig_7_1.jpg",
+                        "/stock-images/inv_fig_7_2.jpg",
+                        "/stock-images/inv_fig_7_3.jpg",
+                        "/stock-images/inv_fig_7_4.jpg",
+                        "/stock-images/inv_fig_7_5.jpg"
+                ],
                 "totalQuantity": 16,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -4124,12 +4144,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll Castle 5",
                 "imageUrl": "/stock-images/inv_fig_8_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_8_1.jpg",
-                  "/stock-images/inv_fig_8_2.jpg",
-                  "/stock-images/inv_fig_8_3.jpg",
-                  "/stock-images/inv_fig_8_4.jpg",
-                  "/stock-images/inv_fig_8_5.jpg"
-        ],
+                        "/stock-images/inv_fig_8_1.jpg",
+                        "/stock-images/inv_fig_8_2.jpg",
+                        "/stock-images/inv_fig_8_3.jpg",
+                        "/stock-images/inv_fig_8_4.jpg",
+                        "/stock-images/inv_fig_8_5.jpg"
+                ],
                 "totalQuantity": 19,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -4173,12 +4193,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll Castle 6",
                 "imageUrl": "/stock-images/inv_fig_9_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_9_1.jpg",
-                  "/stock-images/inv_fig_9_2.jpg",
-                  "/stock-images/inv_fig_9_3.jpg",
-                  "/stock-images/inv_fig_9_4.jpg",
-                  "/stock-images/inv_fig_9_5.jpg"
-        ],
+                        "/stock-images/inv_fig_9_1.jpg",
+                        "/stock-images/inv_fig_9_2.jpg",
+                        "/stock-images/inv_fig_9_3.jpg",
+                        "/stock-images/inv_fig_9_4.jpg",
+                        "/stock-images/inv_fig_9_5.jpg"
+                ],
                 "totalQuantity": 22,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -4222,12 +4242,12 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Doll House 1",
                 "imageUrl": "/stock-images/inv_fig_10_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_fig_10_1.jpg",
-                  "/stock-images/inv_fig_10_2.jpg",
-                  "/stock-images/inv_fig_10_3.jpg",
-                  "/stock-images/inv_fig_10_4.jpg",
-                  "/stock-images/inv_fig_10_5.jpg"
-        ],
+                        "/stock-images/inv_fig_10_1.jpg",
+                        "/stock-images/inv_fig_10_2.jpg",
+                        "/stock-images/inv_fig_10_3.jpg",
+                        "/stock-images/inv_fig_10_4.jpg",
+                        "/stock-images/inv_fig_10_5.jpg"
+                ],
                 "totalQuantity": 25,
                 "quantityText": "Low",
                 "stockLocations": [
@@ -4271,10 +4291,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Star 3",
                 "imageUrl": "/stock-images/inv_toy_1_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_1_1.jpg",
-                  "/stock-images/inv_toy_1_2.jpg",
-                  "/stock-images/inv_toy_1_3.jpg"
-        ],
+                        "/stock-images/inv_toy_1_1.jpg",
+                        "/stock-images/inv_toy_1_2.jpg",
+                        "/stock-images/inv_toy_1_3.jpg"
+                ],
                 "totalQuantity": 30,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4318,10 +4338,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Star 4",
                 "imageUrl": "/stock-images/inv_toy_2_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_2_1.jpg",
-                  "/stock-images/inv_toy_2_2.jpg",
-                  "/stock-images/inv_toy_2_3.jpg"
-        ],
+                        "/stock-images/inv_toy_2_1.jpg",
+                        "/stock-images/inv_toy_2_2.jpg",
+                        "/stock-images/inv_toy_2_3.jpg"
+                ],
                 "totalQuantity": 35,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4365,10 +4385,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Hip-Hop Elf 1",
                 "imageUrl": "/stock-images/inv_toy_3_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_3_1.jpg",
-                  "/stock-images/inv_toy_3_2.jpg",
-                  "/stock-images/inv_toy_3_3.jpg"
-        ],
+                        "/stock-images/inv_toy_3_1.jpg",
+                        "/stock-images/inv_toy_3_2.jpg",
+                        "/stock-images/inv_toy_3_3.jpg"
+                ],
                 "totalQuantity": 40,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4412,10 +4432,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Hip-Hop Elf 2",
                 "imageUrl": "/stock-images/inv_toy_4_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_4_1.jpg",
-                  "/stock-images/inv_toy_4_2.jpg",
-                  "/stock-images/inv_toy_4_3.jpg"
-        ],
+                        "/stock-images/inv_toy_4_1.jpg",
+                        "/stock-images/inv_toy_4_2.jpg",
+                        "/stock-images/inv_toy_4_3.jpg"
+                ],
                 "totalQuantity": 45,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4459,10 +4479,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Hip-Hop Elf 3",
                 "imageUrl": "/stock-images/inv_toy_5_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_5_1.jpg",
-                  "/stock-images/inv_toy_5_2.jpg",
-                  "/stock-images/inv_toy_5_3.jpg"
-        ],
+                        "/stock-images/inv_toy_5_1.jpg",
+                        "/stock-images/inv_toy_5_2.jpg",
+                        "/stock-images/inv_toy_5_3.jpg"
+                ],
                 "totalQuantity": 50,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4506,10 +4526,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Hip-Hop Elf 4",
                 "imageUrl": "/stock-images/inv_toy_6_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_6_1.jpg",
-                  "/stock-images/inv_toy_6_2.jpg",
-                  "/stock-images/inv_toy_6_3.jpg"
-        ],
+                        "/stock-images/inv_toy_6_1.jpg",
+                        "/stock-images/inv_toy_6_2.jpg",
+                        "/stock-images/inv_toy_6_3.jpg"
+                ],
                 "totalQuantity": 55,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4553,10 +4573,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy L-1",
                 "imageUrl": "/stock-images/inv_toy_7_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_7_1.jpg",
-                  "/stock-images/inv_toy_7_2.jpg",
-                  "/stock-images/inv_toy_7_3.jpg"
-        ],
+                        "/stock-images/inv_toy_7_1.jpg",
+                        "/stock-images/inv_toy_7_2.jpg",
+                        "/stock-images/inv_toy_7_3.jpg"
+                ],
                 "totalQuantity": 60,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4600,10 +4620,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Nano 1",
                 "imageUrl": "/stock-images/inv_toy_8_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_8_1.jpg",
-                  "/stock-images/inv_toy_8_2.jpg",
-                  "/stock-images/inv_toy_8_3.jpg"
-        ],
+                        "/stock-images/inv_toy_8_1.jpg",
+                        "/stock-images/inv_toy_8_2.jpg",
+                        "/stock-images/inv_toy_8_3.jpg"
+                ],
                 "totalQuantity": 65,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4647,10 +4667,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Nano 2",
                 "imageUrl": "/stock-images/inv_toy_9_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_9_1.jpg",
-                  "/stock-images/inv_toy_9_2.jpg",
-                  "/stock-images/inv_toy_9_3.jpg"
-        ],
+                        "/stock-images/inv_toy_9_1.jpg",
+                        "/stock-images/inv_toy_9_2.jpg",
+                        "/stock-images/inv_toy_9_3.jpg"
+                ],
                 "totalQuantity": 70,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4694,10 +4714,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Nano 3",
                 "imageUrl": "/stock-images/inv_toy_10_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_toy_10_1.jpg",
-                  "/stock-images/inv_toy_10_2.jpg",
-                  "/stock-images/inv_toy_10_3.jpg"
-        ],
+                        "/stock-images/inv_toy_10_1.jpg",
+                        "/stock-images/inv_toy_10_2.jpg",
+                        "/stock-images/inv_toy_10_3.jpg"
+                ],
                 "totalQuantity": 75,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4741,10 +4761,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Nano 2",
                 "imageUrl": "/stock-images/inv_pop_1_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_1_1.jpg",
-                  "/stock-images/inv_pop_1_2.jpg",
-                  "/stock-images/inv_pop_1_3.jpg"
-        ],
+                        "/stock-images/inv_pop_1_1.jpg",
+                        "/stock-images/inv_pop_1_2.jpg",
+                        "/stock-images/inv_pop_1_3.jpg"
+                ],
                 "totalQuantity": 15,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4788,10 +4808,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Nano 3",
                 "imageUrl": "/stock-images/inv_pop_2_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_2_1.jpg",
-                  "/stock-images/inv_pop_2_2.jpg",
-                  "/stock-images/inv_pop_2_3.jpg"
-        ],
+                        "/stock-images/inv_pop_2_1.jpg",
+                        "/stock-images/inv_pop_2_2.jpg",
+                        "/stock-images/inv_pop_2_3.jpg"
+                ],
                 "totalQuantity": 18,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4835,10 +4855,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Crazy Toy Nano 4",
                 "imageUrl": "/stock-images/inv_pop_3_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_3_1.jpg",
-                  "/stock-images/inv_pop_3_2.jpg",
-                  "/stock-images/inv_pop_3_3.jpg"
-        ],
+                        "/stock-images/inv_pop_3_1.jpg",
+                        "/stock-images/inv_pop_3_2.jpg",
+                        "/stock-images/inv_pop_3_3.jpg"
+                ],
                 "totalQuantity": 21,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4882,10 +4902,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Handsome Man",
                 "imageUrl": "/stock-images/inv_pop_4_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_4_1.jpg",
-                  "/stock-images/inv_pop_4_2.jpg",
-                  "/stock-images/inv_pop_4_3.jpg"
-        ],
+                        "/stock-images/inv_pop_4_1.jpg",
+                        "/stock-images/inv_pop_4_2.jpg",
+                        "/stock-images/inv_pop_4_3.jpg"
+                ],
                 "totalQuantity": 24,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4929,10 +4949,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P1",
                 "imageUrl": "/stock-images/inv_pop_5_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_5_1.jpg",
-                  "/stock-images/inv_pop_5_2.jpg",
-                  "/stock-images/inv_pop_5_3.jpg"
-        ],
+                        "/stock-images/inv_pop_5_1.jpg",
+                        "/stock-images/inv_pop_5_2.jpg",
+                        "/stock-images/inv_pop_5_3.jpg"
+                ],
                 "totalQuantity": 27,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -4976,10 +4996,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P2",
                 "imageUrl": "/stock-images/inv_pop_6_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_6_1.jpg",
-                  "/stock-images/inv_pop_6_2.jpg",
-                  "/stock-images/inv_pop_6_3.jpg"
-        ],
+                        "/stock-images/inv_pop_6_1.jpg",
+                        "/stock-images/inv_pop_6_2.jpg",
+                        "/stock-images/inv_pop_6_3.jpg"
+                ],
                 "totalQuantity": 30,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -5023,10 +5043,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P3",
                 "imageUrl": "/stock-images/inv_pop_7_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_7_1.jpg",
-                  "/stock-images/inv_pop_7_2.jpg",
-                  "/stock-images/inv_pop_7_3.jpg"
-        ],
+                        "/stock-images/inv_pop_7_1.jpg",
+                        "/stock-images/inv_pop_7_2.jpg",
+                        "/stock-images/inv_pop_7_3.jpg"
+                ],
                 "totalQuantity": 33,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -5070,10 +5090,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P4",
                 "imageUrl": "/stock-images/inv_pop_8_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_8_1.jpg",
-                  "/stock-images/inv_pop_8_2.jpg",
-                  "/stock-images/inv_pop_8_3.jpg"
-        ],
+                        "/stock-images/inv_pop_8_1.jpg",
+                        "/stock-images/inv_pop_8_2.jpg",
+                        "/stock-images/inv_pop_8_3.jpg"
+                ],
                 "totalQuantity": 36,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -5117,10 +5137,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P5",
                 "imageUrl": "/stock-images/inv_pop_9_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_9_1.jpg",
-                  "/stock-images/inv_pop_9_2.jpg",
-                  "/stock-images/inv_pop_9_3.jpg"
-        ],
+                        "/stock-images/inv_pop_9_1.jpg",
+                        "/stock-images/inv_pop_9_2.jpg",
+                        "/stock-images/inv_pop_9_3.jpg"
+                ],
                 "totalQuantity": 39,
                 "quantityText": "Good",
                 "stockLocations": [
@@ -5164,10 +5184,10 @@ export const sampleInventoryData = [
                 "assignedMachineName": "Hex Claw P6",
                 "imageUrl": "/stock-images/inv_pop_10_1.jpg",
                 "imageUrls": [
-                  "/stock-images/inv_pop_10_1.jpg",
-                  "/stock-images/inv_pop_10_2.jpg",
-                  "/stock-images/inv_pop_10_3.jpg"
-        ],
+                        "/stock-images/inv_pop_10_1.jpg",
+                        "/stock-images/inv_pop_10_2.jpg",
+                        "/stock-images/inv_pop_10_3.jpg"
+                ],
                 "totalQuantity": 42,
                 "quantityText": "Good",
                 "stockLocations": [

@@ -17,6 +17,14 @@ export interface StockLocation {
     quantity: number;
 }
 
+// Machine Assignment structure for multi-machine support
+export interface MachineAssignment {
+    machineId: string;
+    machineName: string;
+    status: 'Using' | 'Replacement';
+    assignedAt: Date | string;
+}
+
 export interface StockItem {
     id: string;
     sku: string;
@@ -59,7 +67,6 @@ export interface StockItem {
     lowStockThreshold: number; // Was required
     value?: number;
     payouts?: { playCost: number; playsRequired: number }[] | number[]; // Updated to support object structure
-    assignedSlotId?: string;
     createdAt: Date | string; // Was required Date
     updatedAt: Date | string; // Was required Date
     history?: AuditLog[];
@@ -67,6 +74,9 @@ export interface StockItem {
     description?: string;
     assignmentType?: 'Using' | 'Replacement';
     replacementMachines?: { id: string; name: string }[];
+
+    // Multi-machine assignment support
+    machineAssignments?: MachineAssignment[];
 }
 
 export type MachineSlot = ArcadeMachineSlot;

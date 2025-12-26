@@ -3,6 +3,7 @@
 import * as React from "react";
 import { StockItem } from "@/types";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
+import { getComputedAssignedStatus, getAssignmentCount, getPrimaryAssignment } from "@/utils/machineAssignmentUtils";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -61,16 +62,19 @@ export function StockItemCard({
     };
 
     const getAssignmentStatusBadge = () => {
-        const status = item.assignedStatus || "Not Assigned";
+        const status = getComputedAssignedStatus(item);
+        const count = getAssignmentCount(item);
+        const countSuffix = count > 1 ? ` (${count})` : "";
+
         if (status === "Assigned") {
             return {
-                text: "Using",
+                text: `Using${countSuffix}`,
                 className: "bg-purple-500 text-white hover:bg-purple-600",
             };
         }
         if (status === "Assigned for Replacement") {
             return {
-                text: "Assigned for Upcoming",
+                text: `Replacement${countSuffix}`,
                 className: "bg-blue-100 text-blue-700 hover:bg-blue-100",
             };
         }
@@ -82,6 +86,8 @@ export function StockItemCard({
 
     const stockStatus = getStockStatusBadge();
     const assignmentStatus = getAssignmentStatusBadge();
+    const assignmentCount = getAssignmentCount(item);
+    const primaryAssignment = getPrimaryAssignment(item);
 
     if (viewStyle === "compact-grid") {
         return (
@@ -257,31 +263,49 @@ export function StockItemCard({
                         </DropdownMenuContent>
                     </DropdownMenu>
 
-                    {/* Assignment Status (clickable) */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Badge className={cn("w-full justify-center text-xs py-1 cursor-pointer", assignmentStatus.className)}>
+                    {/* Assignment Status - Read-only for multi-machine, dropdown for single */}
+                    {assignmentCount > 1 ? (
+                        // Multi-machine: Read-only badge with info text
+                        <div className="flex flex-col gap-0.5">
+                            <Badge
+                                className={cn("w-full justify-center text-xs py-1 cursor-default", assignmentStatus.className)}
+                            >
                                 {assignmentStatus.text}
                             </Badge>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="start">
-                            <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Not Assigned")}>
-                                Not Assigned
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Assigned")}>
-                                Using
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Assigned for Replacement")}>
-                                Replacement
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                            <span className="text-[9px] text-muted-foreground text-center">Use sidebar in details page</span>
+                        </div>
+                    ) : (
+                        // Single or no machine: Dropdown
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Badge className={cn("w-full justify-center text-xs py-1 cursor-pointer", assignmentStatus.className)}>
+                                    {assignmentStatus.text}
+                                </Badge>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                                <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Not Assigned")}>
+                                    Not Assigned
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Assigned")}>
+                                    Using
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Assigned for Replacement")}>
+                                    Replacement
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    )}
 
                     {/* Assigned Machine */}
-                    {item.assignedMachineId ? (
+                    {assignmentCount > 0 ? (
                         <div className="flex items-center gap-1 text-xs text-muted-foreground">
                             <LinkIcon className="h-3 w-3" />
-                            <span className="truncate">{item.assignedMachineName || "Machine"}</span>
+                            <span className="truncate">
+                                {primaryAssignment?.machineName || "Machine"}
+                                {assignmentCount > 1 && (
+                                    <span className="text-primary font-medium"> +{assignmentCount - 1}</span>
+                                )}
+                            </span>
                         </div>
                     ) : (
                         <div className="text-xs text-muted-foreground">Not Assigned</div>
@@ -457,34 +481,53 @@ export function StockItemCard({
                         <div className="flex flex-col min-w-0">
                             <span className="text-xs text-muted-foreground">Assignment</span>
                             <span className="text-[11px] text-muted-foreground truncate">
-                                {item.assignedMachineName || "No machine assigned"}
+                                {assignmentCount > 0
+                                    ? `${primaryAssignment?.machineName || "Machine"}${assignmentCount > 1 ? ` +${assignmentCount - 1}` : ""}`
+                                    : "No machine assigned"
+                                }
                             </span>
                         </div>
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
+                        {assignmentCount > 1 ? (
+                            // Multi-machine: Read-only badge with info text
+                            <div className="flex flex-col gap-0.5 items-end">
                                 <Badge
                                     className={cn(
-                                        "min-w-[130px] justify-center text-xs py-1 cursor-pointer",
+                                        "min-w-[130px] justify-center text-xs py-1 cursor-default",
                                         assignmentStatus.className
                                     )}
                                 >
                                     {assignmentStatus.text}
                                 </Badge>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Not Assigned")}>
-                                    Not Assigned
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Assigned")}>
-                                    Using
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => onChangeAssignedStatus(item.id, "Assigned for Replacement")}
-                                >
-                                    Replacement
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
+                                <span className="text-[9px] text-muted-foreground">Use sidebar in details page</span>
+                            </div>
+                        ) : (
+                            // Single or no machine: Dropdown
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Badge
+                                        className={cn(
+                                            "min-w-[130px] justify-center text-xs py-1 cursor-pointer",
+                                            assignmentStatus.className
+                                        )}
+                                    >
+                                        {assignmentStatus.text}
+                                    </Badge>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Not Assigned")}>
+                                        Not Assigned
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => onChangeAssignedStatus(item.id, "Assigned")}>
+                                        Using
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                        onClick={() => onChangeAssignedStatus(item.id, "Assigned for Replacement")}
+                                    >
+                                        Replacement
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
                     </div>
                 </div>
 

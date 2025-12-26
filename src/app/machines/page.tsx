@@ -208,18 +208,10 @@ export default function MachinesPage() {
             if (machine.slots && machine.slots.length > 0) {
                 // Create an entry for each slot
                 machine.slots.forEach(slot => {
-                    // 1. Find Active Item
-                    // Strategy 1: Exact Slot ID Match (Prioritize "Assigned")
-                    let assignedItem = machineItems.find(item =>
-                        item.assignedSlotId === slot.id && item.assignedStatus === 'Assigned'
+                    // Since each machine now has only one slot, just find items by status
+                    const assignedItem = machineItems.find(item =>
+                        item.assignedStatus === 'Assigned'
                     );
-
-                    // Strategy 2: Fallback - if no item found, check for items with no slot ID
-                    if (!assignedItem) {
-                        assignedItem = machineItems.find(item =>
-                            !item.assignedSlotId && item.assignedStatus === 'Assigned'
-                        );
-                    }
 
                     // Calculate Stock Level
                     let derivedStockLevel: ArcadeMachineSlot['stockLevel'] = 'Out of Stock';
@@ -232,10 +224,9 @@ export default function MachinesPage() {
                         derivedStockLevel = 'Out of Stock';
                     }
 
-                    // 2. Find Upcoming Queue
+                    // Find Upcoming Queue - replacement items for this machine
                     const replacementItems = machineItems.filter(item =>
-                        item.assignedStatus === 'Assigned for Replacement' &&
-                        (item.assignedSlotId === slot.id || (!item.assignedSlotId && slot.id === machine.slots[0].id))
+                        item.assignedStatus === 'Assigned for Replacement'
                     );
 
                     const upcomingQueue = replacementItems.map(item => ({
@@ -270,8 +261,8 @@ export default function MachinesPage() {
             } else {
                 // Fallback for machines with no slots
                 const assignedItem = machineItems.find(item =>
-                    (!item.assignedSlotId && item.assignedStatus === 'Assigned')
-                ) || machineItems.find(item => item.assignedStatus === 'Assigned');
+                    item.assignedStatus === 'Assigned'
+                );
 
                 // Find queue for machine-level assignment
                 const replacementItems = machineItems.filter(item =>
@@ -333,9 +324,9 @@ export default function MachinesPage() {
     const getMachineStockLevel = (machine: ArcadeMachine): string | null => {
         const machineItems = items.filter(item => item.assignedMachineId === machine.id);
         if (machine.slots?.length > 0) {
-            const slot = machine.slots[0];
+            // Since each machine has only one slot, just look for assigned items
             const assignedItem = machineItems.find(item =>
-                (item.assignedSlotId === slot.id || !item.assignedSlotId) && item.assignedStatus === 'Assigned'
+                item.assignedStatus === 'Assigned'
             );
             if (assignedItem) {
                 const locationsSum = assignedItem.locations?.reduce((sum, loc) => sum + loc.quantity, 0);
@@ -547,19 +538,10 @@ export default function MachinesPage() {
                         const enrichedSlots = machine.slots.map(slot => {
                             const machineItems = items.filter(item => item.assignedMachineId === machine.id);
 
-                            // Find assigned item with relaxed logic
-                            let assignedItem = machineItems.find(item =>
-                                item.assignedSlotId === slot.id &&
+                            // Since each machine now has only one slot, just find items by status
+                            const assignedItem = machineItems.find(item =>
                                 item.assignedStatus === 'Assigned'
                             );
-
-                            // Fallback
-                            if (!assignedItem) {
-                                assignedItem = machineItems.find(item =>
-                                    !item.assignedSlotId &&
-                                    item.assignedStatus === 'Assigned'
-                                );
-                            }
 
                             // Calculate Stock Level for Card View
                             let derivedStockLevel: ArcadeMachineSlot['stockLevel'] = 'Out of Stock';
@@ -569,10 +551,9 @@ export default function MachinesPage() {
                                 derivedStockLevel = calculateStockLevel(totalQty, assignedItem.stockStatus).status as ArcadeMachineSlot['stockLevel'];
                             }
 
-                            // Find Upcoming Queue
+                            // Find Upcoming Queue - replacement items for this machine
                             const replacementItems = machineItems.filter(item =>
-                                item.assignedStatus === 'Assigned for Replacement' &&
-                                (item.assignedSlotId === slot.id || (!item.assignedSlotId && slot.id === machine.slots[0].id))
+                                item.assignedStatus === 'Assigned for Replacement'
                             );
 
                             const upcomingQueue = replacementItems.map(item => ({

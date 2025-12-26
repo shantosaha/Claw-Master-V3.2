@@ -18,6 +18,7 @@ import type { StockItem } from "@/types";
 import { Package, MapPin, Ticket, DollarSign, ClipboardList, Tag, Edit3, Trash2, CalendarClock, Info, Gamepad2, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
+import { migrateToMachineAssignments } from "@/utils/machineAssignmentUtils";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface StockItemDetailsDialogProps {
@@ -226,26 +227,37 @@ export function StockItemDetailsDialog({
                             <DetailRow label="Low Stock Threshold" value={`${item.lowStockThreshold} units`} icon={Info} />
                             <DetailRow label="Cost Price" value={item.supplyChain?.costPerUnit ? `$${item.supplyChain.costPerUnit.toFixed(2)}` : "N/A"} icon={DollarSign} />
                             <DetailRow label="Ticket Value" value={item.value ? `${item.value} tickets` : "N/A"} icon={Ticket} />
-                            {(item.assignedMachineName || item.assignedMachineId) && (
-                                <DetailRow label="Assigned Machine" icon={Gamepad2}>
-                                    <div className="flex items-center flex-wrap gap-1">
-                                        {item.assignedMachineName ? (
-                                            <>
-                                                <Link href={`/machines/${item.assignedMachineId || ''}`} passHref>
-                                                    <Button variant="link" className="p-0 h-auto text-sm text-foreground font-normal text-left" onClick={(e) => e.stopPropagation()}>
-                                                        {item.assignedMachineName}
-                                                    </Button>
-                                                </Link>
-                                                {item.assignedSlotId && (
-                                                    <span className="text-muted-foreground text-xs">/ Slot ID: {item.assignedSlotId}</span>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <span className="text-muted-foreground text-sm">Machine ID: {item.assignedMachineId}</span>
-                                        )}
-                                    </div>
-                                </DetailRow>
-                            )}
+                            {(() => {
+                                const assignments = migrateToMachineAssignments(item);
+                                if (assignments.length === 0) return null;
+
+                                return (
+                                    <DetailRow label="Assigned Machines" icon={Gamepad2}>
+                                        <div className="flex flex-col gap-1">
+                                            {assignments.map((assignment, index) => (
+                                                <div key={assignment.machineId} className="flex items-center gap-2">
+                                                    <Link href={`/machines/${assignment.machineId}`} passHref>
+                                                        <Button variant="link" className="p-0 h-auto text-sm text-foreground font-normal text-left" onClick={(e) => e.stopPropagation()}>
+                                                            {assignment.machineName}
+                                                        </Button>
+                                                    </Link>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className={cn(
+                                                            "text-[10px] px-1.5 py-0",
+                                                            assignment.status === "Using"
+                                                                ? "bg-green-500/10 text-green-600 border-green-500/20"
+                                                                : "bg-blue-500/10 text-blue-600 border-blue-500/20"
+                                                        )}
+                                                    >
+                                                        {assignment.status}
+                                                    </Badge>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </DetailRow>
+                                );
+                            })()}
                             <DetailRow label="Created At" value={formatDate(item.createdAt)} icon={CalendarClock} />
                             <DetailRow label="Last Updated" value={formatDate(item.updatedAt)} icon={CalendarClock} />
                         </div>

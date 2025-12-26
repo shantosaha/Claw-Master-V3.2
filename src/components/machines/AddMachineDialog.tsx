@@ -53,9 +53,109 @@ const TYPES = [
     "Crazy Toy Nano", "Crazy Star", "Crazy Toy Miya"
 ];
 
+// Location code mappings for machine ID generation
+const LOCATION_CODES: Record<string, string> = {
+    "Ground": "gnd",
+    "Basement": "bmt",
+    "Level-1": "lv1",
+    "Level-2": "lv2",
+    "Level-3": "lv3",
+    "Arcade Floor": "arc",
+    "Storage": "str",
+    "Warehouse": "whs",
+    "Repair Shop": "rep",
+};
+
+// Type code mappings for machine ID generation
+const TYPE_CODES: Record<string, string> = {
+    "Trend Catcher": "tc",
+    "Trend Box": "tb",
+    "SKWEB": "sk",
+    "INNIS": "in",
+    "Doll Castle": "dc",
+    "Doll House": "dh",
+    "Giant Claw": "gc",
+    "Crazy Toy Nano": "ctn",
+    "Crazy Star": "cs",
+    "Crazy Toy Miya": "ctm",
+};
+
+// Slot suffix codes for machine ID
+const SLOT_CODES: Record<string, string> = {
+    "P1": "p1",
+    "P2": "p2",
+    "P3": "p3",
+    "P4": "p4",
+    "Left": "l",
+    "Right": "r",
+    "Top": "t",
+    "Bottom": "b",
+    "": "m", // Main/single slot
+};
+
 // Generate a random 4-digit number
 const generateAssetTag = () => {
     return String(Math.floor(1000 + Math.random() * 9000));
+};
+
+/**
+ * Generate a structured, human-readable machine ID
+ * Format: mac_{location}_{type}_{number}_{slot}
+ * Example: mac_gnd_tc_01_p1 (Ground floor, Trend Catcher, #01, Player 1)
+ */
+const generateMachineId = (
+    location: string,
+    type: string,
+    slotSuffix: string = "",
+    existingMachines: { id: string }[] = []
+): string => {
+    // Get location code (default to first 3 chars lowercase if not mapped)
+    const locCode = LOCATION_CODES[location] || location.substring(0, 3).toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    // Get type code (default to first 2 chars of each word if not mapped)
+    let typeCode = TYPE_CODES[type];
+    if (!typeCode && type) {
+        // Generate code from type name: take first letter of each word
+        typeCode = type
+            .split(/\s+/)
+            .map(word => word.charAt(0).toLowerCase())
+            .join('')
+            .substring(0, 3);
+    }
+    typeCode = typeCode || 'un'; // 'un' for unknown
+
+    // Get slot code
+    const slotCode = SLOT_CODES[slotSuffix] || slotSuffix.toLowerCase().replace(/[^a-z0-9]/g, '').substring(0, 2) || 'm';
+
+    // Find the next available number for this location+type+slot combo
+    const prefix = `mac_${locCode}_${typeCode}_`;
+    const suffix = `_${slotCode}`;
+
+    // Find existing machines with similar IDs to determine next number
+    const existingNumbers = existingMachines
+        .map(m => m.id)
+        .filter(id => id.startsWith(prefix) && id.endsWith(suffix))
+        .map(id => {
+            // Extract number from ID like mac_gnd_tc_01_p1
+            const match = id.match(new RegExp(`${prefix}(\\d+)${suffix}`));
+            return match ? parseInt(match[1], 10) : 0;
+        })
+        .filter(n => !isNaN(n));
+
+    const nextNumber = existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
+    const paddedNumber = String(nextNumber).padStart(2, '0');
+
+    return `mac_${locCode}_${typeCode}_${paddedNumber}_${slotCode}`;
+};
+
+/**
+ * Generate a slot ID based on machine ID
+ * Format: slot_{location}_{type}_{number}_{slot}
+ * Example: slot_gnd_tc_01_p1
+ */
+const generateSlotId = (machineId: string): string => {
+    // Replace 'mac_' prefix with 'slot_'
+    return machineId.replace(/^mac_/, 'slot_');
 };
 
 // Get slot count based on config
@@ -139,7 +239,7 @@ interface AddMachineDialogProps {
 
 export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit }: AddMachineDialogProps) {
     const { user } = useAuth();
-    const { items: stockItems, refreshMachines, refreshItems } = useData();
+    const { machines, items: stockItems, refreshMachines, refreshItems } = useData();
     const [loading, setLoading] = useState(false);
 
     // Photo states
@@ -517,72 +617,211 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                     { updated: commonData }
                 );
             } else {
-                // Use temp machine slots if available (they contain stock assignments)
-                // Otherwise generate fresh slots
-                let slots: ArcadeMachineSlot[];
+                // Check if this is a multi-slot configuration
+                const isMultiSlotConfig = getSlotCount(data.physicalConfig) > 1;
 
-                if (tempMachine && tempMachine.slots && tempMachine.slots.length > 0) {
-                    // Use the temp machine slots which have stock assignments
-                    slots = tempMachine.slots.map((slot, i) => ({
-                        ...slot,
-                        // Update the slot name based on the final machine name
-                        name: data.physicalConfig === 'single' && i === 0
-                            ? 'Main'
-                            : getSlotSuffixes(data.physicalConfig)[i] || slot.name,
-                        // Ensure we have the slot size
-                        size: slotSizes[i] || data.prizeSize,
-                    }));
-                } else {
-                    // Generate fresh slots if no temp machine exists
-                    slots = generateSlots(data.physicalConfig, data.name);
-                    // Apply slot sizes
-                    slots = slots.map((slot, i) => ({
-                        ...slot,
-                        size: slotSizes[i] || data.prizeSize,
-                    }));
-                }
+                if (isMultiSlotConfig) {
+                    // MULTI-SLOT: Always create separate machines for each slot
+                    // The only difference between "shared" and "separate" is the asset tag
+                    const suffixes = getSlotSuffixes(data.physicalConfig);
+                    const createdMachineIds: string[] = [];
 
-                const newMachine: Omit<ArcadeMachine, "id"> = {
-                    ...commonData,
-                    slots,
-                    createdAt: new Date(),
-                    lastSyncedAt: new Date(),
-                    playCount: 0,
-                    revenue: 0,
-                };
+                    // For shared mode, use one asset tag for all
+                    // For separate mode, generate sequential tags (e.g., 1001, 1002, 1003, 1004)
+                    const baseAssetTag = data.assetTag?.trim() || generateAssetTag();
+                    const isSharedMode = data.assetTagMode === 'shared';
 
-                machineId = await machineService.add(newMachine);
+                    for (let i = 0; i < suffixes.length; i++) {
+                        const suffix = suffixes[i];
 
-                await logAction(
-                    user?.uid || "system",
-                    "create",
-                    "machine",
-                    machineId,
-                    `Created machine: ${data.name}`,
-                    null,
-                    newMachine
-                );
+                        // Shared mode: all use the same asset tag
+                        // Separate mode: sequential tags based on base (1001, 1002, 1003...)
+                        let slotAssetTag: string;
+                        if (isSharedMode) {
+                            slotAssetTag = baseAssetTag;
+                        } else {
+                            // Parse base tag as number and add index, or append index if not numeric
+                            const baseNum = parseInt(baseAssetTag, 10);
+                            if (!isNaN(baseNum)) {
+                                slotAssetTag = String(baseNum + i);
+                            } else {
+                                // If not a number, append suffix like "TAG-1", "TAG-2"
+                                slotAssetTag = `${baseAssetTag}-${i + 1}`;
+                            }
+                        }
 
-                // Update stock items with the new machine ID
-                for (let i = 0; i < slots.length; i++) {
-                    const slot = slots[i];
-                    if (slot.currentItem) {
-                        await stockService.update(slot.currentItem.id, {
-                            assignedMachineId: machineId,
-                            assignedMachineName: data.name,
-                            assignedStatus: 'Assigned',
-                            assignedSlotId: slot.id
-                        });
+                        const slotMachineName = `${data.name} ${suffix}`;
+
+                        // Generate structured machine ID
+                        // Combine existing machines with already created ones in this batch
+                        const allExistingMachines = [
+                            ...machines,
+                            ...createdMachineIds.map(id => ({ id }))
+                        ];
+                        const newMachineId = generateMachineId(
+                            finalLocation,
+                            finalType,
+                            suffix,
+                            allExistingMachines
+                        );
+
+                        // Generate structured slot ID based on machine ID
+                        const slotId = generateSlotId(newMachineId);
+
+                        // Get slot data from temp machine if available
+                        const tempSlot = tempMachine?.slots?.[i];
+
+                        // Create a single-slot machine for this playfield side
+                        const singleSlot: ArcadeMachineSlot = {
+                            id: slotId,
+                            name: 'Main',
+                            gameType: tempSlot?.gameType || 'Standard',
+                            status: tempSlot?.status || 'online',
+                            currentItem: tempSlot?.currentItem || null,
+                            upcomingQueue: tempSlot?.upcomingQueue || [],
+                            stockLevel: tempSlot?.stockLevel || 'Out of Stock',
+                            size: slotSizes[i] || data.prizeSize,
+                        };
+
+                        const separateMachine: Omit<ArcadeMachine, "id"> = {
+                            name: slotMachineName,
+                            assetTag: slotAssetTag,
+                            location: finalLocation,
+                            status: data.status,
+                            physicalConfig: 'single', // Each is now an independent single machine
+                            type: finalType,
+                            prizeSize: slotSizes[i] || data.prizeSize,
+                            notes: data.notes ? `${data.notes} (Part of ${data.name} - ${suffix})` : `Part of ${data.name} - ${suffix}`,
+                            tag: data.tag ? `${data.tag}-${suffix}` : '',
+                            subGroup: data.subGroup,
+                            imageUrl: capturedImage || undefined,
+                            slots: [singleSlot],
+                            createdAt: new Date(),
+                            lastSyncedAt: new Date(),
+                            updatedAt: new Date(),
+                            playCount: 0,
+                            revenue: 0,
+                            // Link to parent group for reference
+                            group: data.name, // Store original machine name as group for linking
+                        };
+
+                        // Use set with structured ID instead of add with auto-generated ID
+                        await machineService.set(newMachineId, separateMachine);
+                        createdMachineIds.push(newMachineId);
+
+                        await logAction(
+                            user?.uid || "system",
+                            "create",
+                            "machine",
+                            newMachineId,
+                            `Created machine: ${slotMachineName} (ID: ${newMachineId})`,
+                            null,
+                            { ...separateMachine, id: newMachineId }
+                        );
+
+                        // Update stock items for this machine
+                        if (singleSlot.currentItem) {
+                            await stockService.update(singleSlot.currentItem.id, {
+                                assignedMachineId: newMachineId,
+                                assignedMachineName: slotMachineName,
+                                assignedStatus: 'Assigned',
+                            });
+                        }
+                        if (singleSlot.upcomingQueue && singleSlot.upcomingQueue.length > 0) {
+                            for (const queueItem of singleSlot.upcomingQueue) {
+                                await stockService.update(queueItem.itemId, {
+                                    assignedMachineId: newMachineId,
+                                    assignedMachineName: slotMachineName,
+                                    assignedStatus: 'Assigned for Replacement',
+                                });
+                            }
+                        }
                     }
-                    // Also handle queued items
-                    if (slot.upcomingQueue && slot.upcomingQueue.length > 0) {
-                        for (const queueItem of slot.upcomingQueue) {
-                            await stockService.update(queueItem.itemId, {
+
+                    // Use the first created machine ID for playfield settings
+                    machineId = createdMachineIds[0];
+
+                    const tagMode = data.assetTagMode === 'shared' ? 'shared asset tag' : 'separate asset tags';
+                    toast.success(`Created ${createdMachineIds.length} machines with ${tagMode}`, {
+                        description: suffixes.map((s) => `${data.name} ${s}`).join(', ')
+                    });
+                } else {
+                    // SINGLE SLOT: Create one machine with one slot
+
+                    // Generate structured machine ID for single slot (no suffix)
+                    const newMachineId = generateMachineId(
+                        finalLocation,
+                        finalType,
+                        "", // Empty suffix for single/main slot
+                        machines
+                    );
+
+                    // Generate structured slot ID
+                    const slotId = generateSlotId(newMachineId);
+
+                    let slots: ArcadeMachineSlot[];
+
+                    if (tempMachine && tempMachine.slots && tempMachine.slots.length > 0) {
+                        slots = tempMachine.slots.map((slot, i) => ({
+                            ...slot,
+                            id: slotId, // Use structured slot ID
+                            name: 'Main',
+                            size: slotSizes[i] || data.prizeSize,
+                        }));
+                    } else {
+                        slots = [{
+                            id: slotId,
+                            name: 'Main',
+                            gameType: 'Standard',
+                            status: 'online' as const,
+                            currentItem: null,
+                            upcomingQueue: [],
+                            stockLevel: 'Out of Stock' as const,
+                            size: slotSizes[0] || data.prizeSize,
+                        }];
+                    }
+
+                    const newMachine: Omit<ArcadeMachine, "id"> = {
+                        ...commonData,
+                        slots,
+                        createdAt: new Date(),
+                        lastSyncedAt: new Date(),
+                        playCount: 0,
+                        revenue: 0,
+                    };
+
+                    // Use set with structured ID instead of add with auto-generated ID
+                    await machineService.set(newMachineId, newMachine);
+                    machineId = newMachineId;
+
+                    await logAction(
+                        user?.uid || "system",
+                        "create",
+                        "machine",
+                        machineId,
+                        `Created machine: ${data.name} (ID: ${machineId})`,
+                        null,
+                        { ...newMachine, id: machineId }
+                    );
+
+                    // Update stock items with the new machine ID
+                    for (let i = 0; i < slots.length; i++) {
+                        const slot = slots[i];
+                        if (slot.currentItem) {
+                            await stockService.update(slot.currentItem.id, {
                                 assignedMachineId: machineId,
                                 assignedMachineName: data.name,
-                                assignedStatus: 'Assigned for Replacement',
-                                assignedSlotId: slot.id
+                                assignedStatus: 'Assigned',
                             });
+                        }
+                        if (slot.upcomingQueue && slot.upcomingQueue.length > 0) {
+                            for (const queueItem of slot.upcomingQueue) {
+                                await stockService.update(queueItem.itemId, {
+                                    assignedMachineId: machineId,
+                                    assignedMachineName: data.name,
+                                    assignedStatus: 'Assigned for Replacement',
+                                });
+                            }
                         }
                     }
                 }

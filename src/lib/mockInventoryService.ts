@@ -80,6 +80,23 @@ export const mockInventoryService = {
         return newItem.id;
     },
 
+    set: async (id: string, item: Omit<StockItem, "id">) => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const newItem = {
+            ...item,
+            id,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        } as StockItem;
+
+        // Remove existing if any (UPSERT behavior)
+        inMemoryItems = inMemoryItems.filter(i => i.id !== id);
+        inMemoryItems.push(newItem);
+
+        notifyListeners();
+        return id;
+    },
+
     update: async (id: string, data: Partial<StockItem>) => {
         await new Promise(resolve => setTimeout(resolve, 500));
         const index = inMemoryItems.findIndex(i => i.id === id);

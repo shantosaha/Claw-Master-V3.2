@@ -14,6 +14,7 @@ import {
 import { format, formatDistanceToNow } from "date-fns";
 import { Bot, ExternalLink, Clock, ArrowRight, User, ArrowLeftRight, Plus, Minus, ChevronRight, MapPin } from "lucide-react";
 import Link from "next/link";
+import { migrateToMachineAssignments } from "@/utils/machineAssignmentUtils";
 
 interface MachineAssignmentHistoryProps {
     item: StockItem;
@@ -52,23 +53,25 @@ export function MachineAssignmentHistory({
     // Parse all assignment-related history entries
     const historyEntries: HistoryEntry[] = [];
 
-    // Add current assignment as first entry if exists
-    if (item.assignedMachineId && item.assignedMachineName) {
+    // Add all current assignments from machineAssignments array
+    const currentAssignments = migrateToMachineAssignments(item);
+    currentAssignments.forEach((assignment, index) => {
         historyEntries.push({
-            id: 'current',
-            action: `Assigned to machine`,
+            id: `current-${assignment.machineId}`,
+            action: assignment.status === 'Using' ? 'Using in machine' : 'Queued as replacement',
             actionType: 'assign',
-            machineName: item.assignedMachineName,
-            machineId: item.assignedMachineId,
-            toMachine: item.assignedMachineName,
-            toMachineId: item.assignedMachineId,
-            status: item.assignedStatus,
-            toStatus: item.assignedStatus === 'Assigned' ? 'Using' : item.assignedStatus === 'Assigned for Replacement' ? 'Replacement' : item.assignedStatus,
-            timestamp: new Date(item.updatedAt || item.createdAt),
+            machineName: assignment.machineName,
+            machineId: assignment.machineId,
+            toMachine: assignment.machineName,
+            toMachineId: assignment.machineId,
+
+            status: assignment.status === 'Using' ? 'Assigned' : 'Assigned for Replacement',
+            toStatus: assignment.status,
+            timestamp: new Date(assignment.assignedAt),
             userId: 'system',
             isCurrent: true
         });
-    }
+    });
 
     // Parse history for all assignment/machine actions
     if (item.history) {
@@ -123,9 +126,6 @@ export function MachineAssignmentHistory({
                     fromMachineId,
                     toMachine,
                     toMachineId,
-                    slotName: toSlot || fromSlot,
-                    fromSlot,
-                    toSlot,
                     status: toStatus,
                     fromStatus,
                     toStatus,
@@ -284,10 +284,10 @@ export function MachineAssignmentHistory({
                             {/* Action Type */}
                             <div className="flex items-center gap-3 p-3 rounded-lg bg-muted/50">
                                 <div className={`p-2 rounded-lg ${selectedEntry.actionType === 'assign' ? 'bg-green-100 text-green-600 dark:bg-green-900/30 dark:text-green-400' :
-                                        selectedEntry.actionType === 'unassign' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
-                                            selectedEntry.actionType === 'status_change' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
-                                                selectedEntry.actionType === 'transfer' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' :
-                                                    'bg-muted'
+                                    selectedEntry.actionType === 'unassign' ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' :
+                                        selectedEntry.actionType === 'status_change' ? 'bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400' :
+                                            selectedEntry.actionType === 'transfer' ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400' :
+                                                'bg-muted'
                                     }`}>
                                     {selectedEntry.actionType === 'assign' && <Plus className="h-4 w-4" />}
                                     {selectedEntry.actionType === 'unassign' && <Minus className="h-4 w-4" />}
@@ -337,7 +337,6 @@ export function MachineAssignmentHistory({
                                         <Bot className="h-5 w-5 text-muted-foreground" />
                                         <div className="flex-1">
                                             <p className="font-medium text-sm">{selectedEntry.machineName}</p>
-                                            {selectedEntry.slotName && <p className="text-xs text-muted-foreground">{selectedEntry.slotName}</p>}
                                         </div>
                                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                     </Link>
