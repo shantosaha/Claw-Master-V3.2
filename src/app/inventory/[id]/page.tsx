@@ -846,15 +846,15 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                 }
             }
 
-            // REPLACEMENT Mode Logic
-            let queueItems: StockItem[] = [];
-            if (targetStatus === "Assigned for Replacement") {
-                queueItems = items.filter(i =>
-                    i.assignedMachineId === machineId &&
-                    i.assignedStatus === "Assigned for Replacement"
-                );
+            // Collect queue items for BOTH modes - using getMachineStockItems (source of truth)
+            const { queueItems: machineQueueItems } = getMachineStockItems(machineId, items);
+            const queueItems = machineQueueItems.filter(i => i.id !== currentItem.id);
 
-                if (queueItems.length > 0) {
+            // Inform user about queued items if any exist
+            if (queueItems.length > 0) {
+                if (targetStatus === "Assigned") {
+                    warnings.push(`ℹ️ This machine has ${queueItems.length} item(s) in queue.`);
+                } else {
                     warnings.push(`ℹ️ Adding to existing queue (${queueItems.length} item(s) already queued).`);
                 }
             }

@@ -18,6 +18,7 @@ import {
     getAssignmentCount,
     getMachineStockItems
 } from "@/utils/machineAssignmentUtils";
+import { promoteFirstQueueItem } from "@/utils/promoteQueueItem";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -169,6 +170,34 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
             }
 
             toast.success("Cleared current item");
+
+            // Auto-promote first queue item if available
+            const promotedItem = await promoteFirstQueueItem(
+                machine.id,
+                machine.name,
+                items,
+                user?.email || 'system'
+            );
+
+            if (promotedItem) {
+                // Update slot with new current item
+                const promotedSlots = machine.slots.map(s => {
+                    if (s.id === targetSlot.id) {
+                        return {
+                            ...s,
+                            currentItem: promotedItem,
+                            upcomingQueue: (s.upcomingQueue || []).filter(q => q.itemId !== promotedItem.id)
+                        };
+                    }
+                    return s;
+                });
+                await machineService.update(machine.id, { slots: promotedSlots });
+
+                toast.info("Queue Item Promoted", {
+                    description: `${promotedItem.name} is now the current item`
+                });
+            }
+
             refreshMachines();
             refreshItems();
         } catch (e) {

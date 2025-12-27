@@ -34,8 +34,10 @@ import {
     removeMachineAssignment,
     updateAssignmentStatus,
     syncLegacyFieldsFromAssignments,
-    getComputedAssignedStatus
+    getComputedAssignedStatus,
+    getMachineStockItems
 } from "@/utils/machineAssignmentUtils";
+import { promoteFirstQueueItem, createAutoUnassignLog } from "@/utils/promoteQueueItem";
 
 interface MachineAssignmentManagerProps {
     item: StockItem;
@@ -139,6 +141,35 @@ export function MachineAssignmentManager({
             const oldStatus = assignment?.status || 'Unknown';
             const updatedAssignments = updateAssignmentStatus(assignments, machineId, newStatus);
             const machineName = assignment?.machineName;
+
+            // If promoting to "Using", auto-unassign any existing "Using" item on this machine
+            if (newStatus === 'Using') {
+                const { currentItems } = getMachineStockItems(machineId, items);
+                const existingUsingItem = currentItems.find(i => i.id !== item.id);
+
+                if (existingUsingItem) {
+                    // Create auto-unassign log for the old item
+                    const unassignLog = createAutoUnassignLog(
+                        existingUsingItem.id,
+                        machineId,
+                        machineName || 'Unknown',
+                        item.name,
+                        user?.email || 'system'
+                    );
+                    const updatedOldHistory = [...(existingUsingItem.history || []), unassignLog];
+
+                    // Remove assignment from old item
+                    const oldItemAssignments = migrateToMachineAssignments(existingUsingItem);
+                    const updatedOldAssignments = removeMachineAssignment(oldItemAssignments, machineId);
+
+                    await stockService.update(existingUsingItem.id, {
+                        machineAssignments: updatedOldAssignments,
+                        ...syncLegacyFieldsFromAssignments({ ...existingUsingItem, machineAssignments: updatedOldAssignments }),
+                        history: updatedOldHistory,
+                        updatedAt: new Date()
+                    });
+                }
+            }
 
             // Update stock item
             await stockService.update(item.id, {
@@ -286,6 +317,33 @@ export function MachineAssignmentManager({
             toast.success("Assignment Removed", {
                 description: `${item.name} removed from ${confirmRemove.machineName}`
             });
+
+            // If removed item was "Using", auto-promote first queue item
+            if (confirmRemove.status === 'Using') {
+                const promotedItem = await promoteFirstQueueItem(
+                    confirmRemove.machineId,
+                    confirmRemove.machineName,
+                    items,
+                    user?.email || 'system'
+                );
+
+                if (promotedItem) {
+                    // Update machine slot with new current item
+                    const machineForPromotion = machines.find(m => m.id === confirmRemove.machineId);
+                    if (machineForPromotion) {
+                        const promotedSlots = machineForPromotion.slots.map(slot => ({
+                            ...slot,
+                            currentItem: promotedItem,
+                            upcomingQueue: (slot.upcomingQueue || []).filter(q => q.itemId !== promotedItem.id)
+                        }));
+                        await machineService.update(machineForPromotion.id, { slots: promotedSlots });
+                    }
+
+                    toast.info("Queue Item Promoted", {
+                        description: `${promotedItem.name} is now the current item`
+                    });
+                }
+            }
 
             onUpdate();
         } catch (error) {

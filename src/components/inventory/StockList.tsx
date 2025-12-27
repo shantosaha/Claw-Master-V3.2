@@ -1160,7 +1160,6 @@ export function StockList() {
                     if (item.assignedMachineId || item.assignedMachineName) {
                         changes.assignedMachineId = null;
                         changes.assignedMachineName = null;
-                        changes.assignedSlotId = null;
                         needsUpdate = true;
                     }
                 }
@@ -1170,7 +1169,6 @@ export function StockList() {
                         changes.assignedStatus = "Not Assigned";
                         changes.assignedMachineId = null;
                         changes.assignedMachineName = null;
-                        changes.assignedSlotId = null;
                         needsUpdate = true;
                     }
                 }
