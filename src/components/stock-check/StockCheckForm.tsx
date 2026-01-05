@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { maintenanceService, auditService, stockService, machineService } from "@/services";
-import { ArcadeMachine, ArcadeMachineSlot, StockItem, UpcomingStockItem } from "@/types";
+import { maintenanceService, auditService, stockService, machineService, itemMachineSettingsService } from "@/services";
+import { ArcadeMachine, ArcadeMachineSlot, StockItem, UpcomingStockItem, ItemMachineSettings } from "@/types";
 import { useData } from "@/context/DataProvider";
 import { useAuth } from "@/context/AuthContext";
 import { logAction } from "@/services/auditLogger";
@@ -241,6 +241,9 @@ export function StockCheckForm() {
     const [historyLoading, setHistoryLoading] = useState(false);
     const [lastCheckByMachine, setLastCheckByMachine] = useState<Record<string, LastCheckInfo>>({});
 
+    // Synced Claw Settings State (keyed by itemId-machineId)
+    const [allClawSettings, setAllClawSettings] = useState<Record<string, ItemMachineSettings>>({});
+
     // Build maps for quick lookups
     const itemsById = useMemo(() => {
         const map: Record<string, StockItem> = {};
@@ -434,6 +437,30 @@ export function StockCheckForm() {
 
     useEffect(() => { loadHistory(); }, []);
     useEffect(() => { if (activeTab === "history") loadHistory(); }, [activeTab]);
+
+    // Load all claw settings
+    useEffect(() => {
+        const loadClawSettings = async () => {
+            try {
+                const settings = await itemMachineSettingsService.getAll();
+                const map: Record<string, ItemMachineSettings> = {};
+                settings.forEach(s => {
+                    const key = `${s.itemId}-${s.machineId}`;
+                    map[key] = s;
+                });
+                setAllClawSettings(map);
+            } catch (error) {
+                console.error("Failed to load claw settings:", error);
+            }
+        };
+        loadClawSettings();
+    }, []);
+
+    // Helper: Get claw settings for a specific item-machine pair
+    const getClawSettings = (itemId: string | undefined, machineId: string): ItemMachineSettings | null => {
+        if (!itemId) return null;
+        return allClawSettings[`${itemId}-${machineId}`] || null;
+    };
 
     const filteredMachines = useMemo(() => {
         return machines.filter(m =>
@@ -905,6 +932,20 @@ export function StockCheckForm() {
                                                                 <span>Qty: <strong className="text-foreground">{systemQty}</strong></span>
                                                                 {check.actualQty !== null && getDifferenceDisplay(systemQty, check.actualQty)}
                                                             </div>
+                                                            {/* Synced Claw Settings */}
+                                                            {(() => {
+                                                                const settings = getClawSettings(assignedItem?.id, machine.id);
+                                                                if (!settings) return null;
+                                                                return (
+                                                                    <div className="flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground bg-muted/30 px-1.5 py-0.5 rounded">
+                                                                        <span>C1:{settings.c1}</span>
+                                                                        <span>C2:{settings.c2}</span>
+                                                                        <span>C3:{settings.c3}</span>
+                                                                        <span>C4:{settings.c4}</span>
+                                                                        <span className="text-foreground font-medium">P:{settings.playPerWin}</span>
+                                                                    </div>
+                                                                );
+                                                            })()}
                                                         </div>
                                                         <Button
                                                             variant={check.verified ? "default" : "outline"}

@@ -6,7 +6,12 @@ import {
     MaintenanceTask,
     ReorderRequest,
     AuditLog,
-    RevenueEntry
+    RevenueEntry,
+    Category,
+    Vendor,
+    StorageLocation,
+    ItemMachineSettings,
+    ItemAssignmentHistory
 } from "@/types";
 import { isFirebaseInitialized } from "@/lib/firebase";
 import { mockInventoryService } from "@/lib/mockInventoryService";
@@ -20,10 +25,24 @@ const firestoreMachineService = createFirestoreService<ArcadeMachine>("machines"
 export const stockService = isFirebaseInitialized ? firestoreStockService : mockInventoryService;
 export const machineService = isFirebaseInitialized ? firestoreMachineService : mockMachineService;
 
+// Core operational services
 export const settingsService = createFirestoreService<PlayfieldSetting>("playfieldSettings");
 export const maintenanceService = createFirestoreService<MaintenanceTask>("maintenanceTasks");
 export const orderService = createFirestoreService<ReorderRequest>("reorderRequests");
 export const auditService = createFirestoreService<AuditLog>("auditLogs");
+
+// NEW: Lookup/Reference collections
+export const categoryService = createFirestoreService<Category>("categories");
+export const vendorService = createFirestoreService<Vendor>("vendors");
+export const locationService = createFirestoreService<StorageLocation>("storageLocations");
+
+// NEW: Machine-specific item settings (claw settings per item per machine)
+export const itemMachineSettingsService = createFirestoreService<ItemMachineSettings>("itemMachineSettings");
+
+// NEW: Assignment history (item-machine lifecycle tracking)
+export const assignmentHistoryService = createFirestoreService<ItemAssignmentHistory>("itemAssignmentHistory");
+
+// Revenue services
 export { revenueService } from "./revenueService";
 export { machineRevenueService } from "./machineRevenueService";
 export { snapshotService } from "./snapshotService";

@@ -1,3 +1,36 @@
+import { StockItem, StockItemLocation, StockLocation } from "@/types";
+
+// ============================================================================
+// Location Helpers - Handle both legacy (locations) and new (stockLocations)
+// ============================================================================
+
+/**
+ * Get locations array from item, preferring new stockLocations over legacy locations
+ * Returns array in StockLocation format { name, quantity } for backward compatibility
+ */
+export function getItemLocations(item: StockItem): StockLocation[] {
+    // Prefer new stockLocations if available
+    if (item.stockLocations && item.stockLocations.length > 0) {
+        return item.stockLocations.map(sl => ({
+            name: sl.locationName,
+            quantity: sl.quantity
+        }));
+    }
+    // Fall back to legacy locations
+    return item.locations || [];
+}
+
+/**
+ * Get total quantity across all locations
+ */
+export function getTotalQuantity(item: StockItem): number {
+    const locations = getItemLocations(item);
+    return locations.reduce((sum, loc) => sum + loc.quantity, 0);
+}
+
+// ============================================================================
+// Stock Level Calculation
+// ============================================================================
 
 export type StockLevelStatus = "Out of Stock" | "Low Stock" | "Limited Stock" | "In Stock";
 
@@ -6,7 +39,6 @@ export interface StockLevelInfo {
     label: string;
     colorClass: string;
 }
-
 export function calculateStockLevel(quantity: number, explicitStatus?: string): StockLevelInfo {
     // explicitStatus is ignored to enforce quantity-based stock levels as per new requirements.
     // If we need to support manual overrides again (e.g. for damaged stock not yet removed),

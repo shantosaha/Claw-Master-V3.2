@@ -8,129 +8,331 @@ export interface UserProfile {
     photoURL?: string;
     preferences?: {
         theme?: 'light' | 'dark' | 'system';
-        layout?: Record<string, unknown>; // For saving page layouts
+        layout?: Record<string, unknown>;
     };
 }
 
+// ============================================================================
+// NEW: Lookup/Reference Collections
+// ============================================================================
+
+/**
+ * Category for stock items (e.g., "Plushy", "Keychain", "Figure")
+ */
+export interface Category {
+    id: string;
+    name: string;
+    description?: string;
+    parentId?: string;      // For sub-categories
+    sortOrder: number;
+    isActive: boolean;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+/**
+ * Storage/Warehouse location for stock
+ */
+export interface StorageLocation {
+    id: string;
+    name: string;           // e.g., "Basement - Plushy Room"
+    type: 'warehouse' | 'floor' | 'storage_room';
+    floor?: string;
+    zone?: string;
+    capacity?: number;
+    isActive: boolean;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+/**
+ * Vendor/Supplier information
+ */
+export interface Vendor {
+    id: string;
+    name: string;
+    contactName?: string;
+    email?: string;
+    phone?: string;
+    address?: {
+        street: string;
+        city: string;
+        state: string;
+        postalCode: string;
+        country: string;
+    };
+    website?: string;
+    paymentTerms?: string;  // e.g., "Net 30"
+    notes?: string;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+// ============================================================================
+// NEW: Machine-Specific Item Settings (Claw Settings per Item per Machine)
+// ============================================================================
+
+/**
+ * Claw settings for a specific item on a specific machine
+ * Different machines may need different settings for the same item
+ */
+export interface ItemMachineSettings {
+    id: string;
+
+    // References
+    itemId: string;
+    itemName: string;        // Cached for display
+    machineId: string;
+    machineName: string;     // Cached for display
+    slotId?: string;
+
+    // Claw Grip Stages
+    c1: number;              // Stage 1: Weak grip / Catch
+    c2: number;              // Stage 2: Strong grip / Pickup
+    c3: number;              // Stage 3: Retention / Carry to chute
+    c4: number;              // Stage 4: Max strength when winning (varies: 24, 48, 64)
+
+    // Profit Calculation
+    playPrice: number;       // Price per play on this machine (e.g., $1.80)
+    playPerWin: number;      // Target plays before a win
+    expectedRevenue: number; // playPrice × playPerWin
+
+    // Metadata
+    notes?: string;
+    lastUpdatedBy: string;
+    lastUpdatedAt: Date | string;
+    createdAt: Date | string;
+}
+
+// ============================================================================
+// NEW: Assignment History (Track item-machine lifecycle with periods)
+// ============================================================================
+
+/**
+ * Tracks each time an item is assigned/removed from a machine
+ * Enables revenue per period analytics
+ */
+export interface ItemAssignmentHistory {
+    id: string;
+
+    // References
+    itemId: string;
+    itemName: string;
+    machineId: string;
+    machineName: string;
+    slotId?: string;
+
+    // Assignment Period
+    assignedAt: Date | string;
+    removedAt?: Date | string;  // null if currently assigned
+
+    // Status during this period
+    status: 'Using' | 'Replacement' | 'Queue';
+    queuePosition: number;      // 1=current, 2=next replacement, 3=third...
+
+    // Audit
+    assignedBy: string;
+    removedBy?: string;
+    removalReason?: 'replaced' | 'sold_out' | 'stock_rotation' | 'maintenance' | 'removed';
+}
+
+// ============================================================================
+// Stock Item Location (for quantity per warehouse)
+// ============================================================================
+
+/**
+ * Stock quantity at a specific location
+ */
+export interface StockItemLocation {
+    locationId?: string;     // FK → StorageLocation.id (optional for backward compat)
+    locationName: string;    // Cached for display
+    quantity: number;
+}
+
+/** @deprecated Use StockItemLocation instead */
 export interface StockLocation {
     name: string;
     quantity: number;
 }
 
-// Machine Assignment structure for multi-machine support
+// ============================================================================
+// Machine Assignment (current assignments for an item)
+// ============================================================================
+
+/**
+ * Current machine assignment for an item
+ */
 export interface MachineAssignment {
     machineId: string;
     machineName: string;
+    slotId?: string;
     status: 'Using' | 'Replacement';
+    queuePosition?: number;   // 1=current, 2=next, 3=third... (optional for backward compat)
     assignedAt: Date | string;
 }
 
+// ============================================================================
+// STOCK ITEM - Main Entity
+// ============================================================================
+
 export interface StockItem {
     id: string;
-    sku: string;
+    sku: string;             // Should be unique
     name: string;
-    type?: string; // Make optional to fix build errors in other files
-    category: string; // Revert to required or keep as is (was required)
-    size?: string;
-    subSize?: string;
+
+    // Category - now supports both legacy string and new FK
+    category: string;        // Category name (legacy) or categoryId
+    categoryId?: string;     // FK → Category.id (new)
+
+    type?: string;           // e.g., "Plushy"
+    size?: string;           // "Extra-Small", "Small", "Medium", "Large", "Big"
+    subSize?: string;        // "For Top", "For Bottom"
     brand?: string;
     tags?: string[];
-    stockStatus?: string;
-    assignedStatus?: string;
-    assignedMachineId?: string | null;
-    assignedMachineName?: string | null;
+    description?: string;
+
+    // Images
     imageUrl?: string;
     imageUrls?: string[];
-    aiImageHint?: string; // Added for AI image generation
+    aiImageHint?: string;
+
+    // Stock Status (workflow state, NOT stock level)
+    stockStatus?: 'Organized' | 'Arrived' | 'Ordered' | 'Requested' | string;
+
+    // Quantity & Locations
+    // NOTE: Stock level (In Stock, Low Stock, Out of Stock) is COMPUTED from sum of quantities
+
+    // Legacy format - REQUIRED for backward compatibility
+    locations: StockLocation[];
+
+    // New format - optional, prefer this when available in new code
+    stockLocations?: StockItemLocation[];
+
+    lowStockThreshold: number;
+
+    /** @deprecated Computed from locations/stockLocations */
     totalQuantity?: number;
+    /** @deprecated Computed from locations/stockLocations */
     quantityText?: string;
+    /** @deprecated Computed from locations/stockLocations */
+    quantity?: number;
+    quantityDescription?: string;
 
-    // Location handling
-    stockLocations?: { locationName: string; quantity: number }[];
-    locations: StockLocation[]; // Revert to required as existing code expects it
+    // Machine Assignments - PRIMARY SOURCE OF TRUTH
+    machineAssignments?: MachineAssignment[];  // Optional for backward compat
 
+    /** @deprecated Computed from machineAssignments - use for read only */
+    assignedStatus?: 'Not Assigned' | 'Assigned' | 'Assigned for Replacement' | string;
+    /** @deprecated Use machineAssignments instead */
+    assignedMachineId?: string | null;
+    /** @deprecated Use machineAssignments instead */
+    assignedMachineName?: string | null;
+    /** @deprecated Use machineAssignments[].status instead */
+    assignmentType?: 'Using' | 'Replacement';
+    /** @deprecated Use machineAssignments instead */
+    replacementMachines?: { id: string; name: string }[];
+
+    // Technical Specifications
     technicalSpecs?: {
         weightGrams: number;
         dimensions: { lengthCm: number; widthCm: number; heightCm: number };
-        recommendedClawStrength: string;
+        recommendedClawStrength: 'Low' | 'Medium' | 'High' | string;
+        // Low: Light items < 100g, easy grip
+        // Medium: Standard items 100-150g
+        // High: Heavy items > 150g or awkward shapes
     };
+
+    // Supply Chain - now supports vendor FK
     supplyChain?: {
-        vendor: string;
-        costPerUnit: number;
+        vendorId?: string;       // FK → Vendor.id (new)
+        vendor: string;          // Vendor name (legacy or cached)
+        costPerUnit: number;     // BUYING COST from vendor
         reorderPoint: number;
+        leadTimeDays?: number;
+        minimumOrderQuantity?: number;
     };
+
+    // Pricing
+    value?: number;              // TARGET REVENUE needed for profit
+
+    // Payout Configuration (per price point)
+    // Supports both legacy (playCost/playsRequired) and new (playPrice/targetPlays) field names
+    payouts?: {
+        // New field names
+        playPrice?: number;      // Machine play price (e.g., $1.80)
+        targetPlays?: number;    // Plays needed to profit at this price
+        profitMargin?: number;   // Expected profit per win
+        // Legacy field names (backward compatibility)
+        playCost?: number;       // @deprecated - use playPrice
+        playsRequired?: number;  // @deprecated - use targetPlays
+    }[] | number[];  // Also support simple number array for legacy
+    /** @deprecated Use payouts[] or ItemMachineSettings */
     playWinTarget?: number;
-    lastUpdateDate?: string | Date;
 
-    // Existing fields
-    quantityDescription?: string;
-    lowStockThreshold: number; // Was required
-    value?: number;
-    payouts?: { playCost: number; playsRequired: number }[] | number[]; // Updated to support object structure
-    createdAt: Date | string; // Was required Date
-    updatedAt: Date | string; // Was required Date
-    /** @deprecated - Read only. History is now stored in global auditLogs collection */
-    history?: AuditLog[];
-
-    quantity?: number;
-    description?: string;
-    assignmentType?: 'Using' | 'Replacement';
-    replacementMachines?: { id: string; name: string }[];
-
-    // Multi-machine assignment support
-    machineAssignments?: MachineAssignment[];
-
-    // Soft delete / Archive support
-    isArchived?: boolean;
-    archivedAt?: Date | string;
-    archivedBy?: string;
-
-    // Revenue tracking
+    // Revenue Stats (cached)
     revenueStats?: {
         totalRevenue: number;
         totalPlays: number;
         lastUpdated?: Date | string;
     };
+
+    // Timestamps
+    createdAt: Date | string;
+    updatedAt: Date | string;
+    lastUpdateDate?: string | Date;
+
+    /** @deprecated Use auditLogs collection instead */
+    history?: AuditLog[];
+
+    // Soft delete / Archive
+    isArchived?: boolean;
+    archivedAt?: Date | string;
+    archivedBy?: string;
 }
 
-export type MachineSlot = ArcadeMachineSlot;
+// ============================================================================
+// Machine/Slot Types
+// ============================================================================
 
 export interface UpcomingStockItem {
     itemId: string;
     name: string;
     sku?: string;
     imageUrl?: string;
-    addedBy: string; // User ID
+    addedBy: string;
     addedAt: Date;
 }
 
 export interface ArcadeMachineSlot {
-    id: string; // Sub-unit ID
-    name: string; // e.g., "Claw 1"
-    assetTag?: string; // Optional unique asset tag for this slot
+    id: string;
+    name: string;
+    assetTag?: string;
     gameType: string;
     status: 'online' | 'offline' | 'error';
-    size?: string; // e.g., "Extra-Small", "Small", "Medium", "Large", "Big"
-    compatibleSizes?: string[]; // Array of sizes this slot can accept e.g., ["Extra-Small", "Small"]
-    // Stock Management
-    currentItem: StockItem | null; // Changed from assignedStockItemId to full object or null for better access
+    size?: string;
+    compatibleSizes?: string[];
+
+    // Stock Management - NOW uses ID reference
+    currentItemId?: string | null;   // FK → StockItem.id (NEW - ID only)
+    /** @deprecated Use currentItemId and lookup item. Kept for backward compatibility during migration */
+    currentItem?: StockItem | null;
     upcomingQueue: UpcomingStockItem[];
     stockLevel: 'Full' | 'Good' | 'Low' | 'Empty' | 'In Stock' | 'Limited Stock' | 'Low Stock' | 'Out of Stock';
 }
+
+export type MachineSlot = ArcadeMachineSlot;
 
 export interface ArcadeMachine {
     id: string;
     assetTag: string;
     name: string;
     location: string;
-    group?: string; // e.g., "Cranes"
+    group?: string;
     subGroup?: string;
-    tag?: string; // For API Sync (Primary Key from Game Report)
+    tag?: string;
 
-    // Physical Configuration
     physicalConfig: 'single' | 'multi_4_slot' | 'dual_module' | 'multi_dual_stack';
-
-    status: 'Online' | 'Offline' | 'Maintenance' | 'Error'; // Capitalized to match requirements
+    status: 'Online' | 'Offline' | 'Maintenance' | 'Error';
     slots: ArcadeMachineSlot[];
 
     playCount?: number;
@@ -139,33 +341,35 @@ export interface ArcadeMachine {
     createdAt: Date;
     updatedAt: Date;
     imageUrl?: string;
-    prizeSize?: string; // e.g. "Extra-Small", "Small", "Medium", "Large", "Big"
+    prizeSize?: string;
     notes?: string;
-    type?: string; // e.g. "Trend Catcher"
-    /** @deprecated - Read only. History is now stored in global auditLogs collection */
+    type?: string;
+
+    /** @deprecated Use auditLogs collection instead */
     history?: AuditLog[];
 
-
-
-    // Soft delete / Archive support
     isArchived?: boolean;
     archivedAt?: Date | string;
     archivedBy?: string;
 }
 
+// ============================================================================
+// Settings & Operations
+// ============================================================================
+
 export interface PlayfieldSetting {
     id: string;
     machineId: string;
-    slotId?: string; // If specific to a slot
+    slotId?: string;
 
-    // New Fields
-    c1?: number; // Weak grip / Catch (First stage)
-    c2?: number; // Strong grip / Pickup (Second stage)
-    c3?: number; // Retention / Carry to chute (Third stage)
-    c4?: number; // Max strength when paying out
-    payoutRate?: number; // Plays per prize
+    // Claw Settings
+    c1?: number;
+    c2?: number;
+    c3?: number;
+    c4?: number;
+    payoutRate?: number;
 
-    // Legacy fields (optional)
+    // Legacy
     strengthSetting?: number;
     voltage?: number;
     payoutPercentage?: number;
@@ -175,7 +379,7 @@ export interface PlayfieldSetting {
     stockItemName?: string;
 
     timestamp: Date;
-    setBy: string; // User ID
+    setBy: string;
 }
 
 export interface MaintenanceTask {
@@ -184,8 +388,8 @@ export interface MaintenanceTask {
     description: string;
     priority: 'low' | 'medium' | 'high' | 'critical';
     status: 'open' | 'in-progress' | 'resolved';
-    assignedTo?: string; // User ID
-    createdBy: string; // User ID
+    assignedTo?: string;
+    createdBy: string;
     createdAt: Date;
     resolvedAt?: Date;
     images?: string[];
@@ -193,12 +397,12 @@ export interface MaintenanceTask {
 
 export interface ReorderRequest {
     id: string;
-    itemId?: string; // Optional if it's a request for a new item
-    itemName: string; // Required for display
+    itemId?: string;
+    itemName: string;
     itemCategory?: string;
     quantityRequested: number;
     quantityReceived?: number;
-    requestedBy: string; // User ID
+    requestedBy: string;
     status: 'submitted' | 'approved' | 'ordered' | 'fulfilled' | 'received' | 'organized' | 'rejected';
     notes?: string;
     createdAt: Date;
@@ -207,18 +411,22 @@ export interface ReorderRequest {
 
 export interface AuditLog {
     id: string;
-    action: string; // Changed from actionType to match provided code
-    entityType: 'StockItem' | 'Machine' | 'Settings' | 'User' | 'stock' | 'machine' | 'settings' | 'user'; // Expanded to match provided code
+    action: string;
+    entityType: 'StockItem' | 'Machine' | 'Settings' | 'User' | 'Category' | 'Vendor' | 'Location' | 'stock' | 'machine' | 'settings' | 'user';
     entityId: string;
     oldValue?: unknown;
     newValue?: unknown;
     userId: string;
-    userRole?: string; // Added for history view
-    timestamp: Date | string; // Allow string for flexibility
-    details?: Record<string, unknown>; // Changed from string to Record for structured data
+    userRole?: string;
+    timestamp: Date | string;
+    details?: Record<string, unknown>;
 }
 
-export type User = UserProfile; // Alias for compatibility
+export type User = UserProfile;
+
+// ============================================================================
+// Form Values
+// ============================================================================
 
 export interface AdjustStockFormValues {
     locationName: string;
@@ -232,6 +440,7 @@ export interface AdjustStockFormValues {
 export interface StockItemFormSubmitValues {
     name: string;
     category: string;
+    categoryId?: string;
     newCategoryName?: string;
     imageUrl?: string | File;
     imageUrls?: (string | File)[];
@@ -241,14 +450,18 @@ export interface StockItemFormSubmitValues {
     description?: string;
     value?: number;
     locations: { name: string; quantity: number }[];
-    payouts?: { playCost: number; playsRequired: number }[];
+    stockLocations?: StockItemLocation[];
+    payouts?: { playPrice: number; targetPlays: number; profitMargin?: number }[];
     assignedMachineId?: string;
     assignmentStatus?: 'Not Assigned' | 'Assigned' | 'Assigned for Replacement';
     _parsedOverallNumericQuantity?: number;
     _sumOfLocationQuantities?: number;
 }
 
-// Interface for the flattened display item in Machine List
+// ============================================================================
+// Display Types
+// ============================================================================
+
 export interface MachineDisplayItem extends ArcadeMachine {
     isSlot: boolean;
     slotId?: string;
@@ -257,13 +470,17 @@ export interface MachineDisplayItem extends ArcadeMachine {
     originalMachine: ArcadeMachine;
 }
 
-// Revenue tracking entry
+// ============================================================================
+// Revenue Types
+// ============================================================================
+
 export interface RevenueEntry {
     id: string;
     itemId: string;
     itemName: string;
     machineId?: string;
     machineName?: string;
+    assignmentPeriodId?: string;  // NEW: Links to specific ItemAssignmentHistory
     amount: number;
     playCount?: number;
     date: Date | string;
@@ -272,7 +489,6 @@ export interface RevenueEntry {
     createdAt: Date | string;
 }
 
-// Machine daily revenue reading (from API)
 export interface MachineRevenueReading {
     id: string;
     machineId: string;
@@ -283,7 +499,6 @@ export interface MachineRevenueReading {
     createdAt: Date | string;
 }
 
-// Calculated Revenue Attribution
 export interface AttributedRevenue {
     itemId: string;
     totalRevenue: number;
@@ -299,16 +514,18 @@ export interface AttributedRevenue {
     }[];
 }
 
-// Version Snapshot for point-in-time backups
+// ============================================================================
+// Snapshot Types
+// ============================================================================
+
 export interface Snapshot {
     id: string;
     entityType: 'stockItem' | 'machine';
     entityId: string;
     entityName: string;
     version: number;
-    label?: string; // Optional user-provided label (e.g., "Before Price Update")
-    data: Record<string, unknown>; // The full entity state at snapshot time
+    label?: string;
+    data: Record<string, unknown>;
     createdBy: string;
     createdAt: Date | string;
 }
-

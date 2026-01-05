@@ -509,6 +509,7 @@ export default function MachineDetailsPage() {
                         <h2 className="text-lg font-semibold mb-4">Playfield Settings</h2>
                         <SettingsPanel
                             machineId={enrichedMachine.id}
+                            machineName={enrichedMachine.name}
                             activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
                         />
                     </div>

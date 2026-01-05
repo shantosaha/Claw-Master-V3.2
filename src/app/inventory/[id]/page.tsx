@@ -34,6 +34,8 @@ import { AdjustStockDialog } from "@/components/inventory/AdjustStockDialog";
 import { RequestReorderDialog } from "@/components/inventory/RequestReorderDialog";
 import { RevenueSection } from "@/components/inventory/RevenueSection";
 import { SnapshotHistory } from "@/components/common/SnapshotHistory";
+import { MachineSettingsCard } from "@/components/inventory/MachineSettingsCard";
+import { AssignmentHistoryPanel } from "@/components/inventory/AssignmentHistoryPanel";
 import { useAuth } from "@/context/AuthContext";
 import {
     migrateToMachineAssignments,
@@ -2193,6 +2195,17 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                     <MachineAssignmentHistory
                         item={item}
                         machines={machines}
+                    />
+
+                    {/* NEW: Machine-Specific Claw Settings */}
+                    <MachineSettingsCard
+                        item={item}
+                        machines={machines}
+                    />
+
+                    {/* NEW: Assignment History with Revenue Per Period */}
+                    <AssignmentHistoryPanel
+                        item={item}
                     />
 
                     {/* Metadata Card */}

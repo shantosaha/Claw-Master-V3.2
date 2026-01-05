@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { ArcadeMachine, StockItem } from "@/types";
+import { useState, useEffect } from "react";
+import { ArcadeMachine, StockItem, ItemMachineSettings } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ManageStockModal } from "./ManageStockModal";
-import { Trash2, Package, AlertTriangle } from "lucide-react";
-import { machineService, stockService } from "@/services";
+import { Trash2, Package, AlertTriangle, Settings2 } from "lucide-react";
+import { machineService, stockService, itemMachineSettingsService } from "@/services";
 import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataProvider";
@@ -39,6 +39,7 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
     const { user } = useAuth();
     const { items, refreshMachines, refreshItems } = useData();
     const [isManageModalOpen, setIsManageModalOpen] = useState(false);
+    const [clawSettings, setClawSettings] = useState<ItemMachineSettings | null>(null);
 
     // Confirmation dialog states
     const [confirmClear, setConfirmClear] = useState(false);
@@ -63,6 +64,27 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
     const currentItemAssignments = fullCurrentItem ? migrateToMachineAssignments(fullCurrentItem) : [];
     const otherMachineAssignments = currentItemAssignments.filter(a => a.machineId !== machine.id);
     const otherMachinesCount = otherMachineAssignments.length;
+
+    // Load claw settings for current item
+    useEffect(() => {
+        if (fullCurrentItem?.id) {
+            loadClawSettings();
+        } else {
+            setClawSettings(null);
+        }
+    }, [fullCurrentItem?.id, machine.id]);
+
+    const loadClawSettings = async () => {
+        try {
+            const allSettings = await itemMachineSettingsService.getAll();
+            const settings = allSettings.find(
+                s => s.itemId === fullCurrentItem?.id && s.machineId === machine.id
+            );
+            setClawSettings(settings || null);
+        } catch (error) {
+            console.error("Failed to load claw settings:", error);
+        }
+    };
 
     // Use derived queue from stock data (source of truth)
     const queue = queueItems.map(item => ({
@@ -248,6 +270,20 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                                             </Badge>
                                         )}
                                     </div>
+                                    {/* Synced Claw Settings */}
+                                    {clawSettings && (
+                                        <div className="flex items-center gap-2 mt-2">
+                                            <Settings2 className="h-3 w-3 text-muted-foreground" />
+                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                <span>C1:{clawSettings.c1}</span>
+                                                <span>C2:{clawSettings.c2}</span>
+                                                <span>C3:{clawSettings.c3}</span>
+                                                <span>C4:{clawSettings.c4}</span>
+                                                <span className="text-foreground font-medium">Payout: {clawSettings.playPerWin}</span>
+                                            </div>
+                                            <Badge variant="outline" className="text-[10px]">Synced</Badge>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
