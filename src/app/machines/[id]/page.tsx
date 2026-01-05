@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { StockDetailsPanel } from "@/components/machines/StockDetailsPanel";
 import { StockAssignmentHistory } from "@/components/machines/StockAssignmentHistory";
+import { SnapshotHistory } from "@/components/common/SnapshotHistory";
 
 // Constants for select field options
 const STATUS_OPTIONS = [
@@ -223,18 +224,7 @@ export default function MachineDetailsPage() {
             // Add updated timestamp
             updateData.updatedAt = new Date();
 
-            // Create history log entry
-            const historyLog = createHistoryLog("FIELD_UPDATE", {
-                field: fieldLabel,
-                fieldName,
-                oldValue: oldValue ?? "Not set",
-                newValue: newValue || "Not set",
-                message: `Changed ${fieldLabel} from "${oldValue ?? 'Not set'}" to "${newValue || 'Not set'}"`
-            });
-
-            // Update machine's embedded history
-            const updatedHistory = [...(enrichedMachine.history || []), historyLog];
-            updateData.history = updatedHistory;
+            // Note: History is now handled globally via logAction below
 
             // Update the machine
             await machineService.update(enrichedMachine.id, updateData);
@@ -530,6 +520,13 @@ export default function MachineDetailsPage() {
                             logs={activityLogs}
                         />
                     </div>
+
+                    {/* Version History */}
+                    <SnapshotHistory
+                        entity={enrichedMachine}
+                        entityType="machine"
+                        userId={user?.uid}
+                    />
 
                     {/* History & Logs */}
                     <div className="rounded-lg border p-4">

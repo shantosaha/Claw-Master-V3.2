@@ -25,17 +25,47 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
         return collection(db, collectionName);
     };
 
-    // persistent storage for non-hardcoded collections (like settings, audit logs)
-    const localStore: T[] = [];
+    // State for demo mode persistence
+    let _localCache: T[] | null = null;
+
+    const saveToStorage = () => {
+        if (typeof window !== 'undefined' && _localCache) {
+            try {
+                localStorage.setItem(`demo_${collectionName}`, JSON.stringify(_localCache));
+            } catch (e) {
+                console.error("Failed to persist demo data", e);
+            }
+        }
+    };
 
     const getDemoData = (): T[] => {
-        switch (collectionName) {
-            case "machines": return DEMO_MACHINES as unknown as T[];
-            case "stockItems": return DEMO_STOCK as unknown as T[];
-            case "reorderRequests": return DEMO_ORDERS as unknown as T[];
-            case "maintenanceTasks": return DEMO_MAINTENANCE as unknown as T[];
-            default: return localStore;
+        if (_localCache) return _localCache;
+
+        // Try load from local storage
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(`demo_${collectionName}`);
+            if (saved) {
+                try {
+                    _localCache = JSON.parse(saved);
+                    return _localCache!;
+                } catch (e) {
+                    console.error("Failed to parse demo data", e);
+                }
+            }
         }
+
+        // Fallback to initial data
+        switch (collectionName) {
+            case "machines": _localCache = JSON.parse(JSON.stringify(DEMO_MACHINES)); break;
+            case "stockItems": _localCache = JSON.parse(JSON.stringify(DEMO_STOCK)); break;
+            case "reorderRequests": _localCache = JSON.parse(JSON.stringify(DEMO_ORDERS)); break;
+            case "maintenanceTasks": _localCache = JSON.parse(JSON.stringify(DEMO_MAINTENANCE)); break;
+            default: _localCache = [];
+        }
+
+        // Initial save
+        saveToStorage();
+        return _localCache!;
     };
 
     return {
@@ -49,7 +79,7 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
         // Get document by ID
         getById: async (id: string): Promise<T | null> => {
             if (!isFirebaseInitialized) {
-                const data = getDemoData().find((item) => (item as T & { id: string }).id === id);
+                const data = getDemoData().find((item) => (item as any).id === id);
                 return data || null;
             }
             const docRef = doc(db, collectionName, id);
@@ -60,11 +90,20 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
         // Add new document (Auto ID)
         add: async (data: Omit<T, "id">): Promise<string> => {
             if (!isFirebaseInitialized) {
-                console.warn("Firebase not initialized, adding to demo data in-memory");
-                const newId = "mock-id-" + Date.now();
-                const newItem = { ...data, id: newId, createdAt: new Date(), updatedAt: new Date() } as unknown as T;
+                // Determine ID - use input ID if present (migration) or generate
+                const inputId = (data as any).id;
+                const newId = inputId || "mock-id-" + Date.now() + Math.random().toString(36).substr(2, 5);
+
+                const newItem = {
+                    ...data,
+                    id: newId,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                } as unknown as T;
+
                 const list = getDemoData();
                 list.push(newItem);
+                saveToStorage();
                 return newId;
             }
             const docRef = await addDoc(getCollectionRef(), {
@@ -80,12 +119,19 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
             if (!isFirebaseInitialized) {
                 const list = getDemoData();
                 const index = list.findIndex((item) => (item as any).id === id);
-                const newItem = { ...data, id, createdAt: new Date(), updatedAt: new Date() } as unknown as T;
+                const newItem = {
+                    ...data,
+                    id,
+                    createdAt: new Date(),
+                    updatedAt: new Date()
+                } as unknown as T;
+
                 if (index >= 0) {
                     list[index] = newItem;
                 } else {
                     list.push(newItem);
                 }
+                saveToStorage();
                 return;
             }
             const docRef = doc(db, collectionName, id);
@@ -96,6 +142,29 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
             });
         },
 
+        // Get documents where field == value
+        getByField: async (field: string, value: any): Promise<T[]> => {
+            if (!isFirebaseInitialized) {
+                // Filter demo/local data
+                let data = getDemoData().filter((item) => (item as any)[field] === value);
+                // Default sort by createdAt desc
+                data.sort((a: any, b: any) => {
+                    const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+                    const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+                    return dateB - dateA;
+                });
+                return data;
+            }
+            // Real Firestore query
+            const q = query(
+                getCollectionRef(),
+                where(field, "==", value),
+                orderBy("createdAt", "desc")
+            );
+            const snapshot = await getDocs(q);
+            return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as unknown as T));
+        },
+
         // Update document
         update: async (id: string, data: Partial<T>): Promise<void> => {
             if (!isFirebaseInitialized) {
@@ -103,6 +172,7 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
                 const item = list.find((i) => (i as any).id === id);
                 if (item) {
                     Object.assign(item, { ...data, updatedAt: new Date() });
+                    saveToStorage();
                 }
                 return;
             }
@@ -118,7 +188,10 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
             if (!isFirebaseInitialized) {
                 const list = getDemoData();
                 const index = list.findIndex((item) => (item as any).id === id);
-                if (index !== -1) list.splice(index, 1);
+                if (index !== -1) {
+                    list.splice(index, 1);
+                    saveToStorage();
+                }
                 return;
             }
             const docRef = doc(db, collectionName, id);

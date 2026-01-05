@@ -1,6 +1,6 @@
 "use client";
 
-import * as React from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import {
     Dialog,
@@ -15,12 +15,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { StockItem, AuditLog } from "@/types";
 import { History, UserCircle, Edit, ArrowRightLeft, ListPlus, ListMinus, ListX } from "lucide-react";
+import { auditService } from "@/services";
 
 interface StockItemHistoryDialogProps {
     isOpen: boolean;
     onOpenChange: (isOpen: boolean) => void;
     item: StockItem | null;
-    historyLogs: AuditLog[];
+    historyLogs?: AuditLog[]; // Optional now, we fetch internally
 }
 
 const ActionIcon = ({ action }: { action: string }) => {
@@ -37,12 +38,57 @@ const formatActionText = (action: string) => {
     return action.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
-export function StockItemHistoryDialog({ isOpen, onOpenChange, item, historyLogs }: StockItemHistoryDialogProps) {
+export function StockItemHistoryDialog({ isOpen, onOpenChange, item, historyLogs: propLogs }: StockItemHistoryDialogProps) {
+    const [fetchedLogs, setFetchedLogs] = useState<AuditLog[]>([]);
+
+    useEffect(() => {
+        if (isOpen && item) {
+            const loadLogs = async () => {
+                try {
+                    const logs = await auditService.getByField("entityId", item.id);
+                    setFetchedLogs(logs);
+                } catch (error) {
+                    console.error("Failed to fetch history logs", error);
+                }
+            };
+            loadLogs();
+        } else {
+            setFetchedLogs([]);
+        }
+    }, [isOpen, item]);
+
+    const historyLogs = useMemo(() => {
+        const merged = [...fetchedLogs];
+        const existingIds = new Set(merged.map(l => l.id));
+
+        // Merge with item specific history (legacy/embedded)
+        if (item?.history) {
+            item.history.forEach(log => {
+                if (!existingIds.has(log.id)) {
+                    merged.push(log);
+                    existingIds.add(log.id);
+                }
+            });
+        }
+
+        // Merge with prop passed history if any (fallback)
+        if (propLogs) {
+            propLogs.forEach(log => {
+                if (!existingIds.has(log.id)) {
+                    merged.push(log);
+                    existingIds.add(log.id);
+                }
+            });
+        }
+
+        return merged;
+    }, [fetchedLogs, item, propLogs]);
+
     if (!item) return null;
 
     // Filter logs for this item and sort by date descending
     const fullHistory = historyLogs
-        .filter(log => log.entityType === 'StockItem' && log.entityId === item.id)
+        .filter(log => (log.entityType === 'StockItem' && log.entityId === item.id) || (item.history?.some(h => h.id === log.id)))
         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
     // Limit to 5 most recent entries for the summary view

@@ -67,9 +67,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { MoreHorizontal, Edit, Trash2, Settings2, History, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { MoreHorizontal, Edit, Trash2, Settings2, History, ChevronLeft, ChevronRight, Archive, RotateCcw } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn, generateId } from "@/lib/utils";
 import { usePageState } from "@/hooks/usePageState";
 
 // Define state shape for persistence
@@ -158,6 +164,7 @@ export function StockList() {
     const [isReceiveOpen, setIsReceiveOpen] = useState(false);
     const [isDeleteOpen, setIsDeleteOpen] = useState(false);
     const [itemToDelete, setItemToDelete] = useState<StockItem | null>(null);
+    const [showArchived, setShowArchived] = useState(false);
     const [isHistoryOpen, setIsHistoryOpen] = useState(false);
     const [historyItemId, setHistoryItemId] = useState<string | null>(null);
     const activeHistoryItem = useMemo(() =>
@@ -258,7 +265,10 @@ export function StockList() {
                 (assignedStatusFilter === "assigned" && itemAssignedStatus === "Assigned") ||
                 (assignedStatusFilter === "assigned-for-replacement" && itemAssignedStatus === "Assigned for Replacement");
 
-            return matchesSearch && matchesCategory && matchesStatus && matchesSize && matchesBrand && matchesAssignedStatus;
+            // Archive filter - hide archived items unless showArchived is true
+            const matchesArchiveFilter = showArchived || !item.isArchived;
+
+            return matchesSearch && matchesCategory && matchesStatus && matchesSize && matchesBrand && matchesAssignedStatus && matchesArchiveFilter;
         });
 
         // Sorting
@@ -337,7 +347,7 @@ export function StockList() {
             });
         }
         return result;
-    }, [items, searchTerm, selectedCategory, selectedSize, selectedBrand, stockStatus, assignedStatusFilter, sortColumn, sortDirection, sortOrder]);
+    }, [items, searchTerm, selectedCategory, selectedSize, selectedBrand, stockStatus, assignedStatusFilter, sortColumn, sortDirection, sortOrder, showArchived]);
 
 
 
@@ -456,56 +466,38 @@ export function StockList() {
             };
 
             if (editingItem) {
-                const historyLog = createHistoryLog("UPDATE_ITEM", {
+                createHistoryLog("UPDATE_ITEM", {
                     changes: "Item details updated",
                     name: itemData.name !== editingItem.name ? `Name changed from ${editingItem.name} to ${itemData.name}` : undefined,
                     quantity: itemData.quantity !== editingItem.quantity ? `Quantity changed from ${editingItem.quantity} to ${itemData.quantity}` : undefined
                 }, editingItem.id);
 
-                const updatedHistory = [...(editingItem.history || []), historyLog];
-
                 await stockService.update(editingItem.id, {
                     ...itemData,
-                    history: updatedHistory,
                     updatedAt: new Date()
                 });
                 // Update state directly instead of reloading
                 setItems(prevItems => prevItems.map(item =>
-                    item.id === editingItem.id ? { ...item, ...itemData, history: updatedHistory, updatedAt: new Date() } : item
+                    item.id === editingItem.id ? { ...item, ...itemData, updatedAt: new Date() } : item
                 ));
                 toast.success("Item Updated", { description: `${itemData.name} has been updated.` });
             } else {
                 // Generate structured ID for the new stock item
+                // Generate structured ID for the new stock item
                 const newId = generateStockItemId(itemData.category, items);
 
-                const historyLog = createHistoryLog("CREATE_ITEM", {
+                createHistoryLog("CREATE_ITEM", {
                     name: itemData.name,
                     category: itemData.category,
                     initialQuantity: itemData.quantity
-                }, newId, true); // Skip global log initially
+                }, newId, false);
 
                 // Use set with structured ID instead of add with auto-generated ID
                 await stockService.set(newId, {
                     ...itemData,
-                    history: [historyLog],
                     createdAt: new Date(),
                     updatedAt: new Date()
                 });
-
-                // Now dispatch global log with correct ID
-                auditService.add({
-                    action: "CREATE_ITEM",
-                    entityType: "StockItem",
-                    entityId: newId,
-                    userId: userProfile?.uid || "system",
-                    userRole: userProfile?.role || "system",
-                    timestamp: new Date(),
-                    details: {
-                        name: itemData.name,
-                        category: itemData.category,
-                        initialQuantity: itemData.quantity
-                    }
-                }).catch(console.error);
 
                 // State is updated via subscription - no need to manually add here
                 toast.success("Item Created", { description: `${itemData.name} has been added.` });
@@ -521,9 +513,10 @@ export function StockList() {
     const handleDelete = async () => {
         if (!itemToDelete) return;
         try {
-            // Log deletion before removing
-            await auditService.add({
-                action: "DELETE_ITEM",
+            // Log archive action
+            const logEntry: AuditLog = {
+                id: generateId(),
+                action: "ARCHIVE_ITEM",
                 entityType: "StockItem",
                 entityId: itemToDelete.id,
                 userId: userProfile?.uid || "system",
@@ -533,17 +526,72 @@ export function StockList() {
                     name: itemToDelete.name,
                     sku: itemToDelete.sku
                 }
+            };
+
+            await auditService.add(logEntry);
+
+            // Soft delete - archive instead of remove
+            await stockService.update(itemToDelete.id, {
+                isArchived: true,
+                archivedAt: new Date(),
+                archivedBy: userProfile?.email || "system",
             });
 
-            await stockService.remove(itemToDelete.id);
-            // Update state directly
-            setItems(prevItems => prevItems.filter(item => item.id !== itemToDelete.id));
-            toast.success("Item Deleted", { description: `${itemToDelete.name} has been removed.` });
+            // Update state locally
+            setItems(prevItems => prevItems.map(item =>
+                item.id === itemToDelete.id
+                    ? {
+                        ...item,
+                        isArchived: true,
+                        archivedAt: new Date(),
+                        archivedBy: userProfile?.email || "system",
+                    }
+                    : item
+            ));
+            toast.success("Item Archived", { description: `${itemToDelete.name} has been archived.` });
             setIsDeleteOpen(false);
             setItemToDelete(null);
         } catch (error) {
-            console.error("Failed to delete item:", error);
-            toast.error("Error", { description: "Failed to delete item." });
+            console.error("Failed to archive item:", error);
+            toast.error("Error", { description: "Failed to archive item." });
+        }
+    };
+
+    const handleRestore = async (item: StockItem) => {
+        try {
+            const logEntry: AuditLog = {
+                id: generateId(),
+                action: "RESTORE_ITEM",
+                entityType: "StockItem",
+                entityId: item.id,
+                userId: userProfile?.uid || "system",
+                userRole: userProfile?.role || "system",
+                timestamp: new Date(),
+                details: { name: item.name, sku: item.sku }
+            };
+
+            await auditService.add(logEntry);
+
+            await stockService.update(item.id, {
+                isArchived: false,
+                archivedAt: undefined,
+                archivedBy: undefined,
+            });
+
+            setItems(prevItems => prevItems.map(i =>
+                i.id === item.id
+                    ? {
+                        ...i,
+                        isArchived: false,
+                        archivedAt: undefined,
+                        archivedBy: undefined,
+                    }
+                    : i
+            ));
+            toast.success("Item Restored", { description: `${item.name} has been restored.` });
+        } catch (error) {
+            console.error("Failed to restore item:", error);
+            toast.error("Error", { description: "Failed to restore item." });
         }
     };
 
@@ -581,17 +629,14 @@ export function StockList() {
             reason: values.notes
         }, itemId);
 
-        const updatedHistory = [...(item.history || []), newHistoryEntry];
-
         try {
             await stockService.update(itemId, {
                 locations: newLocations,
-                history: updatedHistory,
                 updatedAt: new Date()
             });
             // Update state directly
             setItems(prevItems => prevItems.map(i =>
-                i.id === itemId ? { ...i, locations: newLocations, history: updatedHistory, updatedAt: new Date() } : i
+                i.id === itemId ? { ...i, locations: newLocations, updatedAt: new Date() } : i
             ));
             toast.success("Stock Adjusted", { description: `Stock for ${item.name} updated.` });
         } catch (error) {
@@ -709,12 +754,9 @@ export function StockList() {
                 newStatus: "Out of Stock",
                 quantitySetTo: 0
             }, item.id);
-            const updatedHistory = [...(updatedItem.history || []), historyLog];
-
             await stockService.update(item.id, {
                 locations: updatedItem.locations,
                 stockStatus: updatedItem.stockStatus,
-                history: updatedHistory,
                 updatedAt: new Date(),
             });
 
@@ -725,7 +767,6 @@ export function StockList() {
                             ...i,
                             locations: updatedItem.locations,
                             stockStatus: updatedItem.stockStatus,
-                            history: updatedHistory,
                             updatedAt: new Date(),
                         } as StockItem
                         : i
@@ -753,11 +794,8 @@ export function StockList() {
                 machine: item.assignedMachineName || "None",
                 machineId: item.assignedMachineId || undefined
             }, item.id);
-            const updatedHistory = [...(item.history || []), historyLog];
-
             const updates: Partial<StockItem> = {
                 assignedStatus: newStatus,
-                history: updatedHistory,
                 updatedAt: new Date()
             };
 
@@ -1034,8 +1072,6 @@ export function StockList() {
                     machine: machine.name,
                     machineId: machine.id
                 }, currentActiveItem.id);
-                const updatedHistory = [...(currentActiveItem.history || []), unassignLog];
-
                 // Remove assignment from machineAssignments array
                 const currentAssignments = migrateToMachineAssignments(currentActiveItem);
                 const updatedOldAssignments = removeMachineAssignment(currentAssignments, machine.id);
@@ -1043,14 +1079,13 @@ export function StockList() {
                 await stockService.update(currentActiveItem.id, {
                     machineAssignments: updatedOldAssignments,
                     ...syncLegacyFieldsFromAssignments({ ...currentActiveItem, machineAssignments: updatedOldAssignments }),
-                    history: updatedHistory,
                     updatedAt: new Date()
                 });
 
                 // Update local state for the unassigned item
                 setItems(prevItems => prevItems.map(item =>
                     item.id === currentActiveItem.id
-                        ? { ...item, machineAssignments: updatedOldAssignments, assignedMachineId: undefined, assignedMachineName: undefined, assignedStatus: "Not Assigned", history: updatedHistory, updatedAt: new Date() }
+                        ? { ...item, machineAssignments: updatedOldAssignments, assignedMachineId: undefined, assignedMachineName: undefined, assignedStatus: "Not Assigned", updatedAt: new Date() }
                         : item
                 ));
             }
@@ -1063,13 +1098,10 @@ export function StockList() {
             slot: slotId || "Any",
             status: targetStatus
         }, assigningItem.id);
-        const updatedAssignHistory = [...(assigningItem.history || []), assignLog];
-
         await stockService.update(assigningItem.id, {
             assignedMachineId: machine.id,
             assignedMachineName: machine.name,
             assignedStatus: targetStatus,
-            history: updatedAssignHistory,
             updatedAt: new Date()
         });
 
@@ -1081,7 +1113,6 @@ export function StockList() {
                     assignedMachineId: machine.id,
                     assignedMachineName: machine.name,
                     assignedStatus: targetStatus,
-                    history: updatedAssignHistory,
                     updatedAt: new Date()
                 }
                 : item
@@ -1279,7 +1310,24 @@ export function StockList() {
                 onAssignedStatusChange={setAssignedStatusFilter}
             />
 
-            {viewStyle === 'list' ? (
+            {/* Show Archived Toggle */}
+            <div className="flex items-center gap-2 mb-4 px-1">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={showArchived}
+                        onChange={(e) => setShowArchived(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Archive className="h-4 w-4" />
+                    Show Archived Items
+                    {items.filter(i => i.isArchived).length > 0 && (
+                        <span className="text-xs bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                            {items.filter(i => i.isArchived).length}
+                        </span>
+                    )}
+                </label>
+            </div>            {viewStyle === 'list' ? (
                 <div className="rounded-md border">
                     <Table>
                         <TableHeader>
@@ -1325,7 +1373,7 @@ export function StockList() {
                                             key={item.id}
                                             className={cn(
                                                 "hover:bg-muted/50 group cursor-pointer transition-all",
-                                                isAssignedButNoStock && "relative z-10 !bg-red-100 dark:!bg-red-900/30 !ring-2 !ring-red-600 !ring-inset animate-pulse"
+                                                isAssignedButNoStock && "border-l-4 border-l-red-500 bg-red-50/50 dark:bg-red-950/20"
                                             )}
                                             onClick={() => {
                                                 setDetailsItem(item);
@@ -1359,12 +1407,20 @@ export function StockList() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="font-medium">
-                                                <Link
-                                                    href={`/inventory/${item.id}`}
-                                                    className="text-primary underline underline-offset-4 group-hover:decoration-2"
-                                                >
-                                                    {item.name}
-                                                </Link>
+                                                <div className="flex items-center gap-2">
+                                                    <Link
+                                                        href={`/inventory/${item.id}`}
+                                                        className="text-primary underline underline-offset-4 group-hover:decoration-2"
+                                                    >
+                                                        {item.name}
+                                                    </Link>
+                                                    {item.isArchived && (
+                                                        <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-900/20 text-xs">
+                                                            <Archive className="h-3 w-3 mr-1" />
+                                                            Archived
+                                                        </Badge>
+                                                    )}
+                                                </div>
                                             </TableCell>
                                             <TableCell>
                                                 <Badge variant="secondary" className="transition-shadow group-hover:shadow-sm group-hover:ring-2 group-hover:ring-primary/40">
@@ -1444,30 +1500,79 @@ export function StockList() {
                                             </TableCell>
 
 
-                                            <TableCell className="text-right">
-                                                <DropdownMenu>
-                                                    <DropdownMenuTrigger asChild>
-                                                        <div className="cursor-pointer">
-                                                            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
-                                                                <MoreHorizontal className="h-4 w-4" />
-                                                            </Button>
-                                                        </div>
-                                                    </DropdownMenuTrigger>
-                                                    <DropdownMenuContent align="end">
-                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setEditingItem(item); setIsFormOpen(true); }}>
-                                                            <Edit className="mr-2 h-4 w-4" /> Edit
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setAdjustItem(item); setIsAdjustOpen(true); }}>
-                                                            <Settings2 className="mr-2 h-4 w-4" /> Adjust Stock
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setHistoryItemId(item.id); setIsHistoryOpen(true); }}>
-                                                            <History className="mr-2 h-4 w-4" /> View History
-                                                        </DropdownMenuItem>
-                                                        <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setItemToDelete(item); setIsDeleteOpen(true); }} className="text-destructive">
-                                                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                                        </DropdownMenuItem>
-                                                    </DropdownMenuContent>
-                                                </DropdownMenu>
+                                            <TableCell onClick={(e) => e.stopPropagation()}>
+                                                <TooltipProvider delayDuration={300}>
+                                                    <div className="flex items-center justify-end gap-0.5">
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                                    onClick={(e) => { e.stopPropagation(); setEditingItem(item); setIsFormOpen(true); }}
+                                                                >
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent side="top"><p>Edit</p></TooltipContent>
+                                                        </Tooltip>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                                    onClick={(e) => { e.stopPropagation(); setAdjustItem(item); setIsAdjustOpen(true); }}
+                                                                >
+                                                                    <Settings2 className="h-4 w-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent side="top"><p>Adjust Stock</p></TooltipContent>
+                                                        </Tooltip>
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <Button
+                                                                    variant="ghost"
+                                                                    size="icon"
+                                                                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                                    onClick={(e) => { e.stopPropagation(); setHistoryItemId(item.id); setIsHistoryOpen(true); }}
+                                                                >
+                                                                    <History className="h-4 w-4" />
+                                                                </Button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent side="top"><p>View History</p></TooltipContent>
+                                                        </Tooltip>
+                                                        {item.isArchived ? (
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                        onClick={(e) => { e.stopPropagation(); handleRestore(item); }}
+                                                                    >
+                                                                        <RotateCcw className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent side="top"><p>Restore</p></TooltipContent>
+                                                            </Tooltip>
+                                                        ) : (
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <Button
+                                                                        variant="ghost"
+                                                                        size="icon"
+                                                                        className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                                                        onClick={(e) => { e.stopPropagation(); setItemToDelete(item); setIsDeleteOpen(true); }}
+                                                                    >
+                                                                        <Archive className="h-4 w-4" />
+                                                                    </Button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent side="top"><p>Archive</p></TooltipContent>
+                                                            </Tooltip>
+                                                        )}
+                                                    </div>
+                                                </TooltipProvider>
                                             </TableCell>
                                         </TableRow>
                                     );
@@ -1602,7 +1707,6 @@ export function StockList() {
                 isOpen={isHistoryOpen}
                 onOpenChange={setIsHistoryOpen}
                 item={activeHistoryItem}
-                historyLogs={activeHistoryItem?.history || []}
             />
             <ReceiveOrderDialog
                 open={isReceiveOpen}
@@ -1615,16 +1719,16 @@ export function StockList() {
             <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogTitle>Archive Item?</AlertDialogTitle>
                         <AlertDialogDescription>
-                            This action cannot be undone. This will permanently delete
-                            <span className="font-semibold"> {itemToDelete?.name}</span> and remove it from our servers.
+                            This will archive <span className="font-semibold">{itemToDelete?.name}</span>.
+                            Archived items are hidden from the main list but can be restored later.
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">
-                            Delete
+                        <AlertDialogAction onClick={handleDelete} className="bg-amber-600 hover:bg-amber-700">
+                            Archive
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

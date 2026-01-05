@@ -35,15 +35,14 @@ export function ConfirmDialog({
 
     useEffect(() => {
         if (!open) {
+            setCountdown(10);
             return;
         }
 
-        setCountdown(10);
         const timer = setInterval(() => {
             setCountdown((prev) => {
                 if (prev <= 1) {
                     clearInterval(timer);
-                    onOpenChange(false); // Auto-abort
                     return 0;
                 }
                 return prev - 1;
@@ -51,7 +50,13 @@ export function ConfirmDialog({
         }, 1000);
 
         return () => clearInterval(timer);
-    }, [open, onOpenChange]);
+    }, [open]);
+
+    useEffect(() => {
+        if (open && countdown === 0) {
+            onOpenChange(false);
+        }
+    }, [countdown, open, onOpenChange]);
 
     const isFlashing = countdown <= 5;
 

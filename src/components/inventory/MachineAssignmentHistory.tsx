@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { ArcadeMachine, StockItem } from "@/types";
+import { useState, useEffect, useMemo } from "react";
+import { ArcadeMachine, StockItem, AuditLog } from "@/types";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -15,6 +15,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { Bot, ExternalLink, Clock, ArrowRight, User, ArrowLeftRight, Plus, Minus, ChevronRight, MapPin } from "lucide-react";
 import Link from "next/link";
 import { migrateToMachineAssignments } from "@/utils/machineAssignmentUtils";
+import { auditService } from "@/services";
 
 interface MachineAssignmentHistoryProps {
     item: StockItem;
@@ -49,6 +50,37 @@ export function MachineAssignmentHistory({
 }: MachineAssignmentHistoryProps) {
     const [selectedEntry, setSelectedEntry] = useState<HistoryEntry | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [fetchedLogs, setFetchedLogs] = useState<AuditLog[]>([]);
+
+    useEffect(() => {
+        if (item?.id) {
+            const loadLogs = async () => {
+                try {
+                    const logs = await auditService.getByField("entityId", item.id);
+                    setFetchedLogs(logs);
+                } catch (error) {
+                    console.error("Failed to fetch history logs", error);
+                }
+            };
+            loadLogs();
+        }
+    }, [item?.id]);
+
+    const allLogs = useMemo(() => {
+        const merged = [...fetchedLogs];
+        const existingIds = new Set(merged.map(l => l.id));
+
+        if (item.history) {
+            item.history.forEach(log => {
+                if (!existingIds.has(log.id)) {
+                    merged.push(log);
+                    existingIds.add(log.id);
+                }
+            });
+        }
+        return merged;
+    }, [fetchedLogs, item.history]);
+
 
     // Parse all assignment-related history entries
     const historyEntries: HistoryEntry[] = [];
@@ -74,8 +106,8 @@ export function MachineAssignmentHistory({
     });
 
     // Parse history for all assignment/machine actions
-    if (item.history) {
-        item.history.forEach(log => {
+    if (allLogs.length > 0) {
+        allLogs.forEach(log => {
             const actionLower = log.action.toLowerCase();
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const details = log.details as any;
@@ -192,7 +224,8 @@ export function MachineAssignmentHistory({
                 <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
                         <Bot className="h-4 w-4" />
-                        Machine Assignment History
+                        <span className="hidden sm:inline">Machine Assignment History</span>
+                        <span className="sm:hidden">Assignment History</span>
                     </CardTitle>
                 </CardHeader>
                 <CardContent className="pt-0">
@@ -201,7 +234,7 @@ export function MachineAssignmentHistory({
                             No assignment history found.
                         </p>
                     ) : (
-                        <ScrollArea className="h-[240px]">
+                        <ScrollArea className="h-[220px] pr-1">
                             <div className="space-y-1.5">
                                 {sortedHistory.map((entry, index) => (
                                     <div
@@ -216,27 +249,27 @@ export function MachineAssignmentHistory({
                                         <div className="flex items-center justify-between gap-2">
                                             <div className="flex items-center gap-2 flex-1 min-w-0">
                                                 {getActionIcon(entry.actionType)}
-                                                <span className="text-sm font-medium">{entry.action}</span>
+                                                <span className="text-xs font-medium truncate">{entry.action}</span>
                                             </div>
                                             <div className="flex items-center gap-1.5 shrink-0">
                                                 {entry.isCurrent && (
-                                                    <Badge variant="default" className="text-xs h-5">Current</Badge>
+                                                    <Badge variant="default" className="text-[10px] h-5">Current</Badge>
                                                 )}
                                                 <ChevronRight className="h-4 w-4 text-muted-foreground" />
                                             </div>
                                         </div>
 
                                         {/* Row 2: Machine info (compact) */}
-                                        <div className="flex items-center gap-1.5 text-xs mt-1.5 ml-5">
-                                            <MapPin className="h-3 w-3 text-muted-foreground" />
+                                        <div className="flex items-center gap-1.5 text-xs mt-1.5 ml-5 min-w-0">
+                                            <MapPin className="h-3 w-3 text-muted-foreground shrink-0" />
                                             {entry.actionType === 'transfer' ? (
-                                                <span className="text-muted-foreground">
+                                                <span className="text-muted-foreground truncate">
                                                     <span className="font-medium text-foreground">{entry.fromMachine}</span>
                                                     <ArrowRight className="h-3 w-3 inline mx-1" />
                                                     <span className="font-medium text-primary">{entry.toMachine}</span>
                                                 </span>
                                             ) : entry.actionType === 'status_change' ? (
-                                                <span className="text-muted-foreground">
+                                                <span className="text-muted-foreground truncate">
                                                     <span className="font-medium text-foreground">{entry.machineName}</span>
                                                     <span className="mx-1">•</span>
                                                     <span>{getStatusLabel(entry.fromStatus)}</span>
@@ -244,7 +277,7 @@ export function MachineAssignmentHistory({
                                                     <span className="font-medium text-blue-600 dark:text-blue-400">{getStatusLabel(entry.toStatus)}</span>
                                                 </span>
                                             ) : (
-                                                <span className="text-muted-foreground">
+                                                <span className="text-muted-foreground truncate">
                                                     <span className="font-medium text-foreground">{entry.machineName}</span>
                                                     {entry.toStatus && (
                                                         <span className="ml-1">({getStatusLabel(entry.toStatus)})</span>
@@ -254,10 +287,10 @@ export function MachineAssignmentHistory({
                                         </div>
 
                                         {/* Row 3: Time + User */}
-                                        <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1.5 ml-5">
+                                        <div className="flex items-center gap-2 text-[10px] text-muted-foreground mt-1.5 ml-5 flex-wrap">
                                             <div className="flex items-center gap-1">
                                                 <Clock className="h-3 w-3" />
-                                                <span>{format(entry.timestamp, "MMM d, yyyy 'at' h:mm a")}</span>
+                                                <span className="truncate">{format(entry.timestamp, "MMM d, yy 'at' h:mm a")}</span>
                                             </div>
                                             <div className="flex items-center gap-1">
                                                 <User className="h-3 w-3" />

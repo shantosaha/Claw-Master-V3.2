@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MoreHorizontal, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Package } from "lucide-react";
+import { MoreHorizontal, Edit, Trash2, ArrowUpDown, ArrowUp, ArrowDown, Package, Archive, RotateCcw } from "lucide-react";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -21,6 +21,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatDate } from "@/lib/utils/date";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
@@ -32,6 +38,7 @@ interface MachineTableProps {
     onStatusUpdate: (machine: MachineDisplayItem, status: string) => void;
     onAssignStock: (machine: ArcadeMachine, slotId?: string) => void;
     onStockLevelChange: (item: StockItem, newLevel: string) => void;
+    onRestore?: (machine: MachineDisplayItem) => void;
 }
 
 type SortField = 'assetTag' | 'name' | 'location' | 'prizeSize' | 'status' | 'playCount' | 'revenue' | 'currentItemName' | 'stockLevel' | 'queueLength';
@@ -43,7 +50,8 @@ export function MachineTable({
     onDelete,
     onStatusUpdate,
     onAssignStock,
-    onStockLevelChange
+    onStockLevelChange,
+    onRestore
 }: MachineTableProps) {
     const router = useRouter();
     const [sortField, setSortField] = useState<SortField | null>(null);
@@ -428,26 +436,52 @@ export function MachineTable({
                                         </DropdownMenu>
                                     </TableCell>
                                     <TableCell className="text-right px-2 py-1">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                    <span className="sr-only">Open menu</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => onEdit(item)}>
-                                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="text-destructive"
-                                                    onClick={() => onDelete(item)}
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" /> {item.isSlot && item.slotId ? "Delete Slot" : "Delete Machine"}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <TooltipProvider delayDuration={300}>
+                                            <div className="flex items-center justify-end gap-0.5">
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                            onClick={(e) => { e.stopPropagation(); onEdit(item); }}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top"><p>Edit</p></TooltipContent>
+                                                </Tooltip>
+                                                {item.originalMachine.isArchived && onRestore ? (
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                onClick={(e) => { e.stopPropagation(); onRestore(item); }}
+                                                            >
+                                                                <RotateCcw className="h-4 w-4" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top"><p>Restore</p></TooltipContent>
+                                                    </Tooltip>
+                                                ) : (
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                                                onClick={(e) => { e.stopPropagation(); onDelete(item); }}
+                                                            >
+                                                                <Archive className="h-4 w-4" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top"><p>{item.isSlot && item.slotId ? "Delete Slot" : "Archive"}</p></TooltipContent>
+                                                    </Tooltip>
+                                                )}
+                                            </div>
+                                        </TooltipProvider>
                                     </TableCell>
                                 </TableRow>
                             );

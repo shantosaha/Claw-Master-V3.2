@@ -17,6 +17,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { StockRotationDialog } from "./StockRotationDialog";
+import { generateId } from "@/lib/utils";
 
 interface SlotsListProps {
     machine: ArcadeMachine;
@@ -33,7 +34,7 @@ export function SlotsList({ machine, onUpdate }: SlotsListProps) {
         setAdding(true);
         try {
             const newSlot: ArcadeMachineSlot = {
-                id: crypto.randomUUID(),
+                id: generateId(),
                 name: newSlotName,
                 gameType: "Claw", // Default
                 status: "online",

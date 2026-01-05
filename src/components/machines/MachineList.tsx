@@ -14,7 +14,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Search, Plus, MoreHorizontal, Edit, Trash2, RefreshCw } from "lucide-react";
+import { Search, Plus, MoreHorizontal, Edit, Trash2, RefreshCw, Archive, RotateCcw } from "lucide-react";
+import { toast } from "sonner";
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -22,6 +23,12 @@ import {
     DropdownMenuLabel,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatDate } from "@/lib/utils/date";
 import { format } from "date-fns";
 import { AddMachineDialog } from "./AddMachineDialog";
@@ -37,6 +44,7 @@ export function MachineList() {
     const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
     const [itemToEdit, setItemToEdit] = useState<MachineDisplayItem | null>(null);
     const [itemToDelete, setItemToDelete] = useState<MachineDisplayItem | null>(null);
+    const [showArchived, setShowArchived] = useState(false);
 
     useEffect(() => {
         let unsubscribeMachines: (() => void) | undefined;
@@ -139,22 +147,45 @@ export function MachineList() {
     const handleConfirmDelete = async () => {
         if (itemToDelete) {
             try {
-                // Always delete the parent machine
-                await machineService.remove(itemToDelete.originalMachine.id);
+                // Soft delete - archive instead of remove
+                await machineService.update(itemToDelete.originalMachine.id, {
+                    isArchived: true,
+                    archivedAt: new Date(),
+                    archivedBy: 'user'
+                });
+                toast.success("Machine Archived", { description: `${itemToDelete.name} has been archived.` });
                 loadItems();
             } catch (error) {
-                console.error("Failed to delete machine:", error);
+                console.error("Failed to archive machine:", error);
+                toast.error("Failed to archive machine");
             }
         }
         setIsDeleteDialogOpen(false);
         setItemToDelete(null);
     };
 
-    const filteredItems = items.filter((item) =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.assetTag.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.location.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    const handleRestore = async (item: MachineDisplayItem) => {
+        try {
+            await machineService.update(item.originalMachine.id, {
+                isArchived: false,
+                archivedAt: undefined,
+                archivedBy: undefined
+            });
+            toast.success("Machine Restored", { description: `${item.name} has been restored.` });
+            loadItems();
+        } catch (error) {
+            console.error("Failed to restore machine:", error);
+            toast.error("Failed to restore machine");
+        }
+    };
+
+    const filteredItems = items.filter((item) => {
+        const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.assetTag.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.location.toLowerCase().includes(searchTerm.toLowerCase());
+        const matchesArchive = showArchived || !item.originalMachine.isArchived;
+        return matchesSearch && matchesArchive;
+    });
 
     const getStatusColor = (status: string) => {
         // Handle both machine status (Capitalized) and slot status (lowercase)
@@ -195,6 +226,25 @@ export function MachineList() {
                 </div>
             </div>
 
+            {/* Show Archived Toggle */}
+            <div className="flex items-center gap-2 mb-4 px-1">
+                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
+                    <input
+                        type="checkbox"
+                        checked={showArchived}
+                        onChange={(e) => setShowArchived(e.target.checked)}
+                        className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <Archive className="h-4 w-4" />
+                    Show Archived Machines
+                    {items.filter(i => i.originalMachine.isArchived).length > 0 && (
+                        <span className="text-xs bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
+                            {items.filter(i => i.originalMachine.isArchived).length}
+                        </span>
+                    )}
+                </label>
+            </div>
+
             <div className="rounded-md border">
                 <Table>
                     <TableHeader>
@@ -220,7 +270,17 @@ export function MachineList() {
                             filteredItems.map((item) => (
                                 <TableRow key={item.slotId || item.id}>
                                     <TableCell className="font-medium">{item.assetTag}</TableCell>
-                                    <TableCell>{item.name}</TableCell>
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
+                                            {item.name}
+                                            {item.originalMachine.isArchived && (
+                                                <Badge variant="outline" className="text-amber-600 border-amber-300 bg-amber-50 dark:bg-amber-900/20 text-xs">
+                                                    <Archive className="h-3 w-3 mr-1" />
+                                                    Archived
+                                                </Badge>
+                                            )}
+                                        </div>
+                                    </TableCell>
                                     <TableCell>{item.location}</TableCell>
                                     <TableCell>
                                         <Badge variant={getStatusColor(item.slotStatus || item.status) as any}>
@@ -234,26 +294,52 @@ export function MachineList() {
                                         {formatDate(item.lastSyncedAt, "MMM d, HH:mm")}
                                     </TableCell>
                                     <TableCell className="text-right">
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-8 w-8 p-0">
-                                                    <span className="sr-only">Open menu</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => handleEdit(item)}>
-                                                    <Edit className="mr-2 h-4 w-4" /> Edit
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem
-                                                    className="text-destructive"
-                                                    onClick={() => handleDeleteClick(item)}
-                                                >
-                                                    <Trash2 className="mr-2 h-4 w-4" /> Delete Machine
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
+                                        <TooltipProvider delayDuration={300}>
+                                            <div className="flex items-center justify-end gap-0.5">
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <Button
+                                                            variant="ghost"
+                                                            size="icon"
+                                                            className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                                                            onClick={(e) => { e.stopPropagation(); handleEdit(item); }}
+                                                        >
+                                                            <Edit className="h-4 w-4" />
+                                                        </Button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="top"><p>Edit</p></TooltipContent>
+                                                </Tooltip>
+                                                {item.originalMachine.isArchived ? (
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-green-600 hover:text-green-700 hover:bg-green-50"
+                                                                onClick={(e) => { e.stopPropagation(); handleRestore(item); }}
+                                                            >
+                                                                <RotateCcw className="h-4 w-4" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top"><p>Restore</p></TooltipContent>
+                                                    </Tooltip>
+                                                ) : (
+                                                    <Tooltip>
+                                                        <TooltipTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                className="h-8 w-8 text-amber-600 hover:text-amber-700 hover:bg-amber-50"
+                                                                onClick={(e) => { e.stopPropagation(); handleDeleteClick(item); }}
+                                                            >
+                                                                <Archive className="h-4 w-4" />
+                                                            </Button>
+                                                        </TooltipTrigger>
+                                                        <TooltipContent side="top"><p>Archive</p></TooltipContent>
+                                                    </Tooltip>
+                                                )}
+                                            </div>
+                                        </TooltipProvider>
                                     </TableCell>
                                 </TableRow>
                             ))
@@ -272,10 +358,9 @@ export function MachineList() {
             <ConfirmDialog
                 open={isDeleteDialogOpen}
                 onOpenChange={setIsDeleteDialogOpen}
-                title="Delete Machine"
-                description={`Are you sure you want to delete "${itemToDelete?.name}"? This will delete the entire machine and all its slots. This action cannot be undone.`}
+                title="Archive Machine"
+                description={`Are you sure you want to archive "${itemToDelete?.name}"? Archived machines are hidden from the main list but can be restored later.`}
                 onConfirm={handleConfirmDelete}
-                destructive
             />
         </div>
     );

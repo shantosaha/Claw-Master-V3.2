@@ -5,7 +5,8 @@ import {
     PlayfieldSetting,
     MaintenanceTask,
     ReorderRequest,
-    AuditLog
+    AuditLog,
+    RevenueEntry
 } from "@/types";
 import { isFirebaseInitialized } from "@/lib/firebase";
 import { mockInventoryService } from "@/lib/mockInventoryService";
@@ -23,6 +24,9 @@ export const settingsService = createFirestoreService<PlayfieldSetting>("playfie
 export const maintenanceService = createFirestoreService<MaintenanceTask>("maintenanceTasks");
 export const orderService = createFirestoreService<ReorderRequest>("reorderRequests");
 export const auditService = createFirestoreService<AuditLog>("auditLogs");
+export { revenueService } from "./revenueService";
+export { machineRevenueService } from "./machineRevenueService";
+export { snapshotService } from "./snapshotService";
 export { apiService } from "./apiService";
 
 // Setup synchronization between services (only for mock mode)

@@ -32,6 +32,8 @@ import { MachineAssignmentHistory } from "@/components/inventory/MachineAssignme
 import { MachineAssignmentManager } from "@/components/inventory/MachineAssignmentManager";
 import { AdjustStockDialog } from "@/components/inventory/AdjustStockDialog";
 import { RequestReorderDialog } from "@/components/inventory/RequestReorderDialog";
+import { RevenueSection } from "@/components/inventory/RevenueSection";
+import { SnapshotHistory } from "@/components/common/SnapshotHistory";
 import { useAuth } from "@/context/AuthContext";
 import {
     migrateToMachineAssignments,
@@ -187,26 +189,24 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                     newValue = newQty.toString();
                     changeMessage = `Stock location "${newLocations[locIndex].name}" quantity updated from "${oldValue}" to "${newValue}"`;
 
-                    // Also log as stock adjustment
-                    const historyLog = createHistoryLog("ADJUST_STOCK", {
+                    // Also log as stock adjustment (logged to global audit service by createHistoryLog)
+                    createHistoryLog("ADJUST_STOCK", {
                         message: changeMessage,
                         location: newLocations[locIndex].name,
                         previousQuantity: oldQty,
                         newQuantity: newQty,
                         change: newQty - oldQty
                     }, item.id);
-                    updateData.history = [...(item.history || []), historyLog];
                 }
                 updateData.locations = newLocations;
             }
 
             // Create log for the field update if not already logged as stock adjust
             if (changeMessage && !field.startsWith("location_")) {
-                const historyLog = createHistoryLog("UPDATE_ITEM", {
+                createHistoryLog("UPDATE_ITEM", {
                     changes: [changeMessage],
                     message: changeMessage
                 }, item.id);
-                updateData.history = [...(item.history || []), historyLog];
             }
 
             await stockService.update(item.id, updateData);
@@ -423,14 +423,10 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
             }
 
             if (changes.length > 0) {
-                newHistory.push(createHistoryLog("UPDATE_ITEM", {
+                createHistoryLog("UPDATE_ITEM", {
                     changes: changes,
                     message: `Updated fields: ${changes.join(', ')}`
-                }, item.id));
-            }
-
-            if (newHistory.length > 0) {
-                updates.history = [...(item.history || []), ...newHistory];
+                }, item.id);
             }
 
             await stockService.update(item.id, updates);
@@ -1161,6 +1157,20 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                                     </div>
                                 </CardContent>
                             </Card>
+
+                            {/* Revenue Tracking */}
+                            <RevenueSection
+                                item={item}
+                                machines={machines || []}
+                                userId={userProfile?.uid}
+                            />
+
+                            {/* Version History */}
+                            <SnapshotHistory
+                                entity={item}
+                                entityType="stockItem"
+                                userId={userProfile?.uid}
+                            />
 
                             {/* Notes Section */}
                             <Card>
@@ -3526,11 +3536,8 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
 
                         const newHistoryEntry = createHistoryLog("ADJUST_STOCK", historyDetails, itemId);
 
-                        const updatedHistory = [...(item.history || []), newHistoryEntry];
-
                         await stockService.update(itemId, {
                             locations: newLocations,
-                            history: updatedHistory,
                             updatedAt: new Date()
                         });
 
@@ -3569,17 +3576,13 @@ export default function InventoryDetailPage({ params }: { params: Promise<{ id: 
                             const currentStock = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
                             const projectedTotal = currentStock + data.quantity;
 
-                            // Log this action on the item as well
-                            const log = createHistoryLog("REQUEST_REORDER", {
+                            // Log this action on the item (logged to global audit service)
+                            createHistoryLog("REQUEST_REORDER", {
                                 quantityRequested: data.quantity,
                                 currentStock: currentStock,
                                 projectedTotalAfterReceiving: projectedTotal,
                                 notes: data.notes
                             }, item.id);
-
-                            await stockService.update(item.id, {
-                                history: [...(item.history || []), log]
-                            });
 
                             toast.success("Reorder Requested", { description: `Request for ${data.quantity} units submitted.` });
                             setIsRequestReorderOpen(false);

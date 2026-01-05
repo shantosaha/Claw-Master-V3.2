@@ -69,133 +69,141 @@ export function StockFilters({
         searchTerm !== "";
 
     return (
-        <div className="flex flex-wrap items-center gap-2 p-2 bg-muted/20 rounded-md">
-            {/* Search */}
-            <div className="relative flex-grow min-w-[200px]">
+        <div className="space-y-3 p-2 bg-muted/20 rounded-md">
+            {/* Row 1: Search (full width on mobile) */}
+            <div className="relative w-full">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                     placeholder="Search items..."
                     value={searchTerm}
                     onChange={(e) => onSearchChange(e.target.value)}
-                    className="pl-9"
+                    className="pl-9 w-full"
                 />
             </div>
 
-            {/* Category */}
-            <Select value={selectedCategory} onValueChange={onCategoryChange}>
-                <SelectTrigger className="w-auto min-w-[120px]">
-                    <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="All">All Categories</SelectItem>
-                    {categories.map((cat) => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+            {/* Row 2: Filters (grid on mobile, flex on larger screens) */}
+            <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-2">
+                {/* Category */}
+                <Select value={selectedCategory} onValueChange={onCategoryChange}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[120px]">
+                        <SelectValue placeholder="Category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">All Categories</SelectItem>
+                        {categories.map((cat) => (
+                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
-            {/* Sort */}
-            <Select value={sortOrder} onValueChange={(v) => onSortChange(v as SortOption)}>
-                <SelectTrigger className="w-auto min-w-[120px]">
-                    <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="date-new">Newest First</SelectItem>
-                    <SelectItem value="date-old">Oldest First</SelectItem>
-                    <SelectItem value="name-asc">Name (A-Z)</SelectItem>
-                    <SelectItem value="name-desc">Name (Z-A)</SelectItem>
-                    <SelectItem value="qty-asc">Qty (Low-High)</SelectItem>
-                    <SelectItem value="qty-desc">Qty (High-Low)</SelectItem>
-                </SelectContent>
-            </Select>
+                {/* Sort */}
+                <Select value={sortOrder} onValueChange={(v) => onSortChange(v as SortOption)}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[120px]">
+                        <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="date-new">Newest First</SelectItem>
+                        <SelectItem value="date-old">Oldest First</SelectItem>
+                        <SelectItem value="name-asc">Name (A-Z)</SelectItem>
+                        <SelectItem value="name-desc">Name (Z-A)</SelectItem>
+                        <SelectItem value="qty-asc">Qty (Low-High)</SelectItem>
+                        <SelectItem value="qty-desc">Qty (High-Low)</SelectItem>
+                    </SelectContent>
+                </Select>
 
-            {/* Stock Status */}
-            <Select value={stockStatus} onValueChange={(v) => onStatusChange(v as StockStatusFilter)}>
-                <SelectTrigger className="w-auto min-w-[120px]">
-                    <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Items</SelectItem>
-                    <SelectItem value="out">Out of Stock</SelectItem>
-                    <SelectItem value="low">Low Stock</SelectItem>
-                    <SelectItem value="limited">Limited Stock</SelectItem>
-                    <SelectItem value="in-stock-not-low">In Stock</SelectItem>
-                </SelectContent>
-            </Select>
+                {/* Stock Status */}
+                <Select value={stockStatus} onValueChange={(v) => onStatusChange(v as StockStatusFilter)}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[120px]">
+                        <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Items</SelectItem>
+                        <SelectItem value="out">Out of Stock</SelectItem>
+                        <SelectItem value="low">Low Stock</SelectItem>
+                        <SelectItem value="limited">Limited Stock</SelectItem>
+                        <SelectItem value="in-stock-not-low">In Stock</SelectItem>
+                    </SelectContent>
+                </Select>
 
-            {/* Size */}
-            <Select value={selectedSize} onValueChange={onSizeChange}>
-                <SelectTrigger className="w-auto min-w-[120px]">
-                    <SelectValue placeholder="Size" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="All">All Sizes</SelectItem>
-                    {sizes.filter(Boolean).map((size) => (
-                        <SelectItem key={size} value={size!}>{size}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+                {/* Size */}
+                <Select value={selectedSize} onValueChange={onSizeChange}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[100px]">
+                        <SelectValue placeholder="Size" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">All Sizes</SelectItem>
+                        {sizes.filter(Boolean).map((size) => (
+                            <SelectItem key={size} value={size!}>{size}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
-            {/* Brand */}
-            <Select value={selectedBrand} onValueChange={onBrandChange}>
-                <SelectTrigger className="w-auto min-w-[120px]">
-                    <SelectValue placeholder="Brand" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="All">All Brands</SelectItem>
-                    {brands.filter(Boolean).map((brand) => (
-                        <SelectItem key={brand} value={brand!}>{brand}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
+                {/* Brand */}
+                <Select value={selectedBrand} onValueChange={onBrandChange}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[100px]">
+                        <SelectValue placeholder="Brand" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="All">All Brands</SelectItem>
+                        {brands.filter(Boolean).map((brand) => (
+                            <SelectItem key={brand} value={brand!}>{brand}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
 
-            {/* Assigned Status */}
-            <Select value={assignedStatusFilter} onValueChange={onAssignedStatusChange}>
-                <SelectTrigger className="w-auto min-w-[120px]">
-                    <SelectValue placeholder="Assigned" />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="not-assigned">Not Assigned</SelectItem>
-                    <SelectItem value="assigned">Using</SelectItem>
-                    <SelectItem value="assigned-for-replacement">Replacement</SelectItem>
-                </SelectContent>
-            </Select>
+                {/* Assigned Status */}
+                <Select value={assignedStatusFilter} onValueChange={onAssignedStatusChange}>
+                    <SelectTrigger className="w-full sm:w-auto sm:min-w-[110px]">
+                        <SelectValue placeholder="Assigned" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Status</SelectItem>
+                        <SelectItem value="not-assigned">Not Assigned</SelectItem>
+                        <SelectItem value="assigned">Using</SelectItem>
+                        <SelectItem value="assigned-for-replacement">Replacement</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
 
-            {/* Reset Filters */}
-            {hasActiveFilters && (
-                <Button variant="outline" size="sm" onClick={onResetFilters} className="gap-2">
-                    <FilterX className="h-4 w-4" />
-                    Reset
-                </Button>
-            )}
+            {/* Row 3: View Style + Reset (always visible) */}
+            <div className="flex items-center justify-between gap-2">
+                {/* Reset Filters */}
+                {hasActiveFilters ? (
+                    <Button variant="outline" size="sm" onClick={onResetFilters} className="gap-2">
+                        <FilterX className="h-4 w-4" />
+                        <span className="hidden sm:inline">Reset</span>
+                    </Button>
+                ) : (
+                    <div /> // Spacer when no active filters
+                )}
 
-            {/* View Style Buttons */}
-            <div className="flex items-center border rounded-md">
-                <Button
-                    variant={viewStyle === 'list' ? 'secondary' : 'ghost'}
-                    size="icon"
-                    className="h-9 w-9 rounded-r-none"
-                    onClick={() => onViewStyleChange('list')}
-                >
-                    <ListIcon className="h-4 w-4" />
-                </Button>
-                <Button
-                    variant={viewStyle === 'grid' ? 'secondary' : 'ghost'}
-                    size="icon"
-                    className="h-9 w-9 rounded-none border-l border-r"
-                    onClick={() => onViewStyleChange('grid')}
-                >
-                    <LayoutGrid className="h-4 w-4" />
-                </Button>
-                <Button
-                    variant={viewStyle === 'compact-grid' ? 'secondary' : 'ghost'}
-                    size="icon"
-                    className="h-9 w-9 rounded-l-none"
-                    onClick={() => onViewStyleChange('compact-grid')}
-                >
-                    <Grip className="h-4 w-4" />
-                </Button>
+                {/* View Style Buttons */}
+                <div className="flex items-center border rounded-md">
+                    <Button
+                        variant={viewStyle === 'list' ? 'secondary' : 'ghost'}
+                        size="icon"
+                        className="h-9 w-9 rounded-r-none"
+                        onClick={() => onViewStyleChange('list')}
+                    >
+                        <ListIcon className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant={viewStyle === 'grid' ? 'secondary' : 'ghost'}
+                        size="icon"
+                        className="h-9 w-9 rounded-none border-l border-r"
+                        onClick={() => onViewStyleChange('grid')}
+                    >
+                        <LayoutGrid className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant={viewStyle === 'compact-grid' ? 'secondary' : 'ghost'}
+                        size="icon"
+                        className="h-9 w-9 rounded-l-none"
+                        onClick={() => onViewStyleChange('compact-grid')}
+                    >
+                        <Grip className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
         </div>
     );

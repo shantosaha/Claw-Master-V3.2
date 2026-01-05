@@ -69,7 +69,9 @@ export interface StockItem {
     payouts?: { playCost: number; playsRequired: number }[] | number[]; // Updated to support object structure
     createdAt: Date | string; // Was required Date
     updatedAt: Date | string; // Was required Date
+    /** @deprecated - Read only. History is now stored in global auditLogs collection */
     history?: AuditLog[];
+
     quantity?: number;
     description?: string;
     assignmentType?: 'Using' | 'Replacement';
@@ -77,6 +79,18 @@ export interface StockItem {
 
     // Multi-machine assignment support
     machineAssignments?: MachineAssignment[];
+
+    // Soft delete / Archive support
+    isArchived?: boolean;
+    archivedAt?: Date | string;
+    archivedBy?: string;
+
+    // Revenue tracking
+    revenueStats?: {
+        totalRevenue: number;
+        totalPlays: number;
+        lastUpdated?: Date | string;
+    };
 }
 
 export type MachineSlot = ArcadeMachineSlot;
@@ -128,8 +142,15 @@ export interface ArcadeMachine {
     prizeSize?: string; // e.g. "Extra-Small", "Small", "Medium", "Large", "Big"
     notes?: string;
     type?: string; // e.g. "Trend Catcher"
+    /** @deprecated - Read only. History is now stored in global auditLogs collection */
+    history?: AuditLog[];
 
-    history?: AuditLog[]; // Embedded history for quick access, or keep separate if too large
+
+
+    // Soft delete / Archive support
+    isArchived?: boolean;
+    archivedAt?: Date | string;
+    archivedBy?: string;
 }
 
 export interface PlayfieldSetting {
@@ -235,3 +256,59 @@ export interface MachineDisplayItem extends ArcadeMachine {
     slotStatus?: ArcadeMachineSlot['status'];
     originalMachine: ArcadeMachine;
 }
+
+// Revenue tracking entry
+export interface RevenueEntry {
+    id: string;
+    itemId: string;
+    itemName: string;
+    machineId?: string;
+    machineName?: string;
+    amount: number;
+    playCount?: number;
+    date: Date | string;
+    notes?: string;
+    createdBy: string;
+    createdAt: Date | string;
+}
+
+// Machine daily revenue reading (from API)
+export interface MachineRevenueReading {
+    id: string;
+    machineId: string;
+    date: Date | string;
+    revenue: number;
+    playCount: number;
+    source: 'api' | 'manual';
+    createdAt: Date | string;
+}
+
+// Calculated Revenue Attribution
+export interface AttributedRevenue {
+    itemId: string;
+    totalRevenue: number;
+    totalPlays: number;
+    breakdown: {
+        machineId: string;
+        machineName: string;
+        periodStart: Date | string;
+        periodEnd: Date | string;
+        revenue: number;
+        plays: number;
+        days: number;
+    }[];
+}
+
+// Version Snapshot for point-in-time backups
+export interface Snapshot {
+    id: string;
+    entityType: 'stockItem' | 'machine';
+    entityId: string;
+    entityName: string;
+    version: number;
+    label?: string; // Optional user-provided label (e.g., "Before Price Update")
+    data: Record<string, unknown>; // The full entity state at snapshot time
+    createdBy: string;
+    createdAt: Date | string;
+}
+

@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { StockItem } from "@/types";
-import { stockService } from "@/services";
+import { StockItem, AuditLog } from "@/types";
+import { stockService, auditService } from "@/services";
 import { useData } from "@/context/DataProvider";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { generateId } from "@/lib/utils";
 
 interface StockLevelChangeDialogProps {
     open: boolean;
@@ -53,6 +54,24 @@ export function StockLevelChangeDialog({ open, onOpenChange, item, newLevel }: S
             }
 
             console.log("Updating item:", item.id, "with locations:", updatedLocations, "stockStatus:", newLevel);
+
+            const logEntry: AuditLog = {
+                id: generateId(),
+                action: "STOCK_LEVEL_CHANGE",
+                entityType: "StockItem",
+                entityId: item.id,
+                userId: "user",
+                userRole: "user",
+                timestamp: new Date(),
+                details: {
+                    itemName: item.name,
+                    oldStatus: item.stockStatus || 'Unknown',
+                    newStatus: newLevel,
+                    updatedLocations: updatedLocations
+                }
+            };
+
+            await auditService.add(logEntry);
 
             await stockService.update(item.id, {
                 locations: updatedLocations,

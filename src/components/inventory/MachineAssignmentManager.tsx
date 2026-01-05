@@ -361,18 +361,19 @@ export function MachineAssignmentManager({
         <>
             <Card>
                 <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-base flex items-center gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                        <CardTitle className="text-sm font-medium flex items-center gap-2">
                             <Gamepad2 className="h-4 w-4 text-primary" />
-                            Machine Assignments
-                            <Badge variant="outline" className="ml-2">
+                            <span className="hidden sm:inline">Machine Assignments</span>
+                            <span className="sm:hidden">Assignments</span>
+                            <Badge variant="outline" className="ml-1">
                                 {assignments.length}
                             </Badge>
                         </CardTitle>
                         {onAddMachine && (
-                            <Button size="sm" variant="outline" onClick={onAddMachine}>
-                                <Plus className="h-4 w-4 mr-1" />
-                                Add Machine
+                            <Button size="sm" variant="outline" onClick={onAddMachine} className="h-8">
+                                <Plus className="h-4 w-4 sm:mr-1" />
+                                <span className="hidden sm:inline">Add Machine</span>
                             </Button>
                         )}
                     </div>
@@ -408,27 +409,25 @@ export function MachineAssignmentManager({
                             <div
                                 key={assignment.machineId}
                                 className={`
-                                    flex items-center justify-between p-3 rounded-lg border
+                                    flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg border
                                     ${assignment.status === 'Using'
                                         ? 'bg-purple-50/50 border-purple-200 dark:bg-purple-950/20 dark:border-purple-800'
                                         : 'bg-blue-50/50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-800'
                                     }
                                 `}
                             >
-                                <div className="flex items-center gap-3">
-                                    <Gamepad2 className={`h-5 w-5 ${assignment.status === 'Using' ? 'text-purple-600' : 'text-blue-600'
+                                <div className="flex items-center gap-2 min-w-0">
+                                    <Gamepad2 className={`h-4 w-4 shrink-0 ${assignment.status === 'Using' ? 'text-purple-600' : 'text-blue-600'
                                         }`} />
-                                    <div>
-                                        <Link
-                                            href={`/machines/${assignment.machineId}`}
-                                            className="font-medium text-sm hover:underline"
-                                        >
-                                            {assignment.machineName}
-                                        </Link>
-                                    </div>
+                                    <Link
+                                        href={`/machines/${assignment.machineId}`}
+                                        className="font-medium text-sm hover:underline truncate"
+                                    >
+                                        {assignment.machineName}
+                                    </Link>
                                 </div>
 
-                                <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 shrink-0">
                                     <Select
                                         value={assignment.status}
                                         onValueChange={(value) => handleStatusChange(
@@ -437,7 +436,7 @@ export function MachineAssignmentManager({
                                         )}
                                         disabled={isUpdating}
                                     >
-                                        <SelectTrigger className="w-[130px] h-8">
+                                        <SelectTrigger className="w-[110px] h-8 text-xs">
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>

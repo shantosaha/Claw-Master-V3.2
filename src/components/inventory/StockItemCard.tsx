@@ -93,7 +93,7 @@ export function StockItemCard({
         return (
             <Card className={cn(
                 "overflow-hidden hover:shadow-lg transition-all duration-200 group relative",
-                isAssignedButNoStock && "relative z-10 !bg-red-100 dark:!bg-red-900/30 !border-2 !border-red-600 animate-pulse"
+                isAssignedButNoStock && "border-l-4 border-l-red-500 bg-red-50/50 dark:bg-red-950/20"
             )}>
                 {/* Three-dot menu in top right */}
                 <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -319,7 +319,7 @@ export function StockItemCard({
     return (
         <Card className={cn(
             "overflow-hidden hover:shadow-lg transition-all duration-200 group relative h-full flex flex-col",
-            isAssignedButNoStock && "relative z-10 !bg-red-100 dark:!bg-red-900/30 !border-2 !border-red-600 animate-pulse"
+            isAssignedButNoStock && "border-l-4 border-l-red-500 bg-red-50/50 dark:bg-red-950/20"
         )}>
             {/* Three-dot menu in top right */}
             <div className="absolute top-3 right-3 z-10 opacity-0 group-hover:opacity-100 transition-opacity">

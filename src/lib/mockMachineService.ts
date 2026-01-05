@@ -1,4 +1,5 @@
 import { ArcadeMachine, ArcadeMachineSlot, StockItem } from "@/types";
+import { relinkMachineItems } from "@/utils/relinkMachineItems";
 
 // Initial data provided by the user
 const INITIAL_MACHINES: any[] = [
@@ -2291,22 +2292,14 @@ export const mockMachineService = {
 
     syncStockItems: async (items: StockItem[]) => {
         initializeMachines();
-        let changed = false;
-        inMemoryMachines.forEach(machine => {
-            machine.slots.forEach(slot => {
-                if (slot.currentItem) {
-                    const freshItem = items.find(i => i.id === slot.currentItem!.id);
-                    if (freshItem) {
-                        // Check if changed (simple comparison)
-                        if (JSON.stringify(slot.currentItem) !== JSON.stringify(freshItem)) {
-                            slot.currentItem = freshItem;
-                            changed = true;
-                        }
-                    }
-                }
-            });
-        });
+        // Completely rebuild machine slot assignments from stock items
+        const relinkedMachines = relinkMachineItems(inMemoryMachines, items);
+
+        // Check if anything changed
+        const changed = JSON.stringify(inMemoryMachines) !== JSON.stringify(relinkedMachines);
+
         if (changed) {
+            inMemoryMachines = relinkedMachines;
             saveToStorage();
             notifyListeners();
         }

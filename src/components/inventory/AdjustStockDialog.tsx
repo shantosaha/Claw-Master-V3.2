@@ -140,6 +140,30 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
         }
     }, [item, isOpen, form, user, requestToReceive]);
 
+    // Build location options: item's current locations + all predefined locations (no duplicates)
+    // This must be called before any early returns to maintain hook order
+    const locationOptions = React.useMemo(() => {
+        if (!item) return [];
+        const optionsSet = new Set<string>();
+
+        // Add item's existing locations first
+        if (item.locations && item.locations.length > 0) {
+            item.locations.forEach(loc => optionsSet.add(loc.name));
+        }
+
+        // Add all predefined storage locations
+        allStorageLocations.forEach(loc => optionsSet.add(loc));
+
+        return Array.from(optionsSet).map(name => {
+            const itemLoc = item.locations?.find(l => l.name === name);
+            return {
+                name,
+                quantity: itemLoc?.quantity || 0
+            };
+        });
+    }, [item]);
+
+    // Early return AFTER all hooks have been called
     if (!item) return null;
 
     const handleSubmit = (data: z.infer<typeof adjustStockSchema>) => {
@@ -176,27 +200,6 @@ export function AdjustStockDialog({ isOpen, onOpenChange, item, onSubmit, user, 
             });
         }
     };
-
-    // Build location options: item's current locations + all predefined locations (no duplicates)
-    const locationOptions = React.useMemo(() => {
-        const optionsSet = new Set<string>();
-
-        // Add item's existing locations first
-        if (item.locations && item.locations.length > 0) {
-            item.locations.forEach(loc => optionsSet.add(loc.name));
-        }
-
-        // Add all predefined storage locations
-        allStorageLocations.forEach(loc => optionsSet.add(loc));
-
-        return Array.from(optionsSet).map(name => {
-            const itemLoc = item.locations?.find(l => l.name === name);
-            return {
-                name,
-                quantity: itemLoc?.quantity || 0
-            };
-        });
-    }, [item]);
 
     return (
         <Dialog open={isOpen} onOpenChange={onOpenChange}>

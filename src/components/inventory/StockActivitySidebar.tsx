@@ -207,7 +207,7 @@ export function StockActivitySidebar({
                     </div>
                 ) : (
                     <TooltipProvider>
-                        <ScrollArea className="h-[300px] pr-2">
+                        <ScrollArea className="h-[280px] pr-1">
                             <div className="space-y-1">
                                 {sortedHistory.map((log, index) => {
                                     const performedBy = getPerformedBy(log);
@@ -230,14 +230,14 @@ export function StockActivitySidebar({
                                                     {/* Content */}
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex items-start justify-between gap-2">
-                                                            <p className="font-medium text-xs text-foreground">
+                                                            <p className="font-medium text-xs text-foreground truncate">
                                                                 {formatActionName(log.action)}
                                                             </p>
-                                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                                            <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
                                                                 {formatDistanceToNow(new Date(log.timestamp), { addSuffix: true })}
                                                             </span>
                                                         </div>
-                                                        <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                                                        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
                                                             {description}
                                                         </p>
                                                         {performedBy && (
