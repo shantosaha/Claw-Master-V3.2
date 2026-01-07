@@ -5,13 +5,17 @@
     - [x] Set up Firebase (Firestore, Auth, Storage) <!-- id: 1 -->
     - [x] Configure Environment Variables <!-- id: 2 -->
     - [x] Create initial directory structure (components, lib, hooks, types) <!-- id: 3 -->
-
+    - [x] Reorganize documentation into Topic/View structure <!-- id: 999 -->
 
 - [ ] **Authentication & User Management**
-    - [ ] Implement Firebase Auth (Google SSO) <!-- id: 4 -->
+    - [x] Implement Firebase Auth (Google SSO) <!-- id: 4 -->
     - [x] Create `AuthContext` and User Provider <!-- id: 5 -->
-    - [ ] Implement RBAC (Role-Based Access Control) logic <!-- id: 6 -->
-    - [ ] Create Team Management Page <!-- id: 7 -->
+    - [x] Create Team Management Page <!-- id: 7 -->
+    - [ ] Implement Email Verification Logic <!-- id: 40 -->
+    - [ ] Implement Session Timeout (30m) <!-- id: 41 -->
+    - [ ] Create VerificationBanner Component <!-- id: 42 -->
+    - [ ] Create SessionManager Component <!-- id: 43 -->
+    - [ ] Verify RBAC Security Rules <!-- id: 6 -->
 
 - [ ] **External API Integration (Smart Sync)**
     - [ ] Create `ApiService` for fetching `game_report` and `jotform` <!-- id: 31 -->

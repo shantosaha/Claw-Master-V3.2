@@ -91,8 +91,8 @@ export async function handle${toPascalCase(permissionId)}(userId: string) {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
-                        <code>{generateCodeExample()}</code>
+                    <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap break-words">
+                        <code className="block">{generateCodeExample()}</code>
                     </pre>
                 </CardContent>
             </Card>
@@ -108,8 +108,8 @@ export async function handle${toPascalCase(permissionId)}(userId: string) {
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto">
-                        <code>{generateBackendExample()}</code>
+                    <pre className="text-xs bg-muted p-3 rounded-md overflow-x-auto whitespace-pre-wrap break-words">
+                        <code className="block">{generateBackendExample()}</code>
                     </pre>
                 </CardContent>
             </Card>

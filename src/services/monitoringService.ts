@@ -27,6 +27,29 @@ export interface MonitoringAlert {
     acknowledged: boolean;
 }
 
+export interface MonitoringReportItem {
+    machineId: string;
+    tag: string;
+    description: string;
+    customerPlays: number;
+    staffPlays: number;
+    payouts: number;
+    playsPerPayout: number;
+    payoutSettings: number; // Target plays per payout
+    settingsDate: Date;
+    staffName: string; // Who modified settings
+    c1: number;
+    c2: number;
+    c3: number;
+    c4: number;
+    imageUrl?: string;
+    remarks?: string;
+    payoutStatus: 'Very High' | 'High' | 'OK' | 'Low' | 'Very Low';
+    payoutAccuracy: number; // Percentage: (Target / Actual) * 100
+    status: 'online' | 'offline' | 'error' | 'maintenance';
+    lastUpdated?: Date;
+}
+
 type MachineStatusCallback = (data: MachineStatus[]) => void;
 type AlertCallback = (alerts: MonitoringAlert[]) => void;
 
@@ -223,6 +246,77 @@ class MonitoringService {
 
     getAlerts(): MonitoringAlert[] {
         return this.alerts;
+    }
+
+    private determinePayoutStatus(playsPerPayout: number, target: number): MonitoringReportItem['payoutStatus'] {
+        const ratio = playsPerPayout / target;
+
+        if (ratio < 0.5) return 'Very High';
+        if (ratio < 0.8) return 'High';
+        if (ratio <= 1.3) return 'OK';
+        if (ratio <= 1.8) return 'Low';
+        return 'Very Low';
+    }
+
+    async fetchMonitoringReport(startDate: Date, endDate: Date): Promise<MonitoringReportItem[]> {
+        // In a real implementation, this would likely be an aggregated backend call.
+        // For now, we will simulate this aggregation by fetching machines and combining with mock stats.
+
+        try {
+            const machines = await this.fetchMachineStatuses();
+
+            return machines.map(machine => {
+                // Simulate data based on machine hash/id for consistency
+                const seed = machine.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+                const random = (offset: number) => {
+                    const x = Math.sin(seed + offset) * 10000;
+                    return x - Math.floor(x);
+                };
+
+                const customerPlays = Math.floor(random(1) * 500) + 50;
+                const payouts = Math.floor(customerPlays / (random(2) * 20 + 10)); // ~1/10 to 1/30 win rate
+                const staffPlays = Math.floor(random(3) * 15);
+                const payoutSettings = 10 + Math.floor(random(4) * 40); // Target plays
+
+                // Calculate plays per payout
+                const playsPerPayout = payouts > 0 ? Math.round((customerPlays + staffPlays) / payouts) : 0;
+
+                // Calculate Payout Accuracy % (Target / Actual)
+                // If Actual is 0 (no payouts), accuracy is effectively 0 for now (or handle as special case)
+                // Use formula: (Target / Actual) * 100. 
+                // Ex: Target 10, Actual 5 => 200%. Target 10, Actual 20 => 50%.
+                const payoutAccuracy = playsPerPayout > 0 ? Math.round((payoutSettings / playsPerPayout) * 100) : 0;
+
+                // Determine status using the new logic
+                const payoutStatus = this.determinePayoutStatus(playsPerPayout, payoutSettings);
+
+                return {
+                    machineId: machine.id,
+                    tag: machine.assetTag || 'N/A',
+                    description: machine.name,
+                    status: machine.status,
+                    customerPlays,
+                    staffPlays,
+                    payouts,
+                    playsPerPayout,
+                    payoutSettings,
+                    payoutAccuracy,
+                    settingsDate: new Date(Date.now() - random(5) * 30 * 24 * 60 * 60 * 1000), // Random date in last 30 days
+                    staffName: ['Daniel Valix', 'Shanto Saha', 'Tommy Wong'][Math.floor(random(6) * 3)],
+                    c1: 15 + Math.floor(random(7) * 40),
+                    c2: 10 + Math.floor(random(8) * 30),
+                    c3: 5 + Math.floor(random(9) * 20),
+                    c4: 20 + Math.floor(random(10) * 40),
+                    imageUrl: undefined, // Monitor page normally doesn't load generic images, would need specific ones
+                    remarks: random(11) > 0.7 ? "Update settings" : undefined,
+                    payoutStatus,
+                    lastUpdated: new Date()
+                };
+            });
+        } catch (error) {
+            console.error("Failed to fetch monitoring report", error);
+            return [];
+        }
     }
 }
 

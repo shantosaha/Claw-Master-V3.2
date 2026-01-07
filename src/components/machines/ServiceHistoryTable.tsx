@@ -1,0 +1,136 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { format } from "date-fns";
+import {
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Image as ImageIcon, FileText } from "lucide-react";
+import { ServiceReport } from "@/types";
+import { serviceReportService } from "@/services/serviceReportService";
+
+interface ServiceHistoryTableProps {
+    machineId: string;
+}
+
+export function ServiceHistoryTable({ machineId }: ServiceHistoryTableProps) {
+    const [reports, setReports] = useState<ServiceReport[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            setIsLoading(true);
+            try {
+                const data = await serviceReportService.getReports(machineId);
+                setReports(data.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
+            } catch (error) {
+                console.error("Failed to fetch service reports", error);
+            }
+            setIsLoading(false);
+        };
+
+        fetchReports();
+    }, [machineId]);
+
+    if (isLoading) {
+        return <div className="p-8 text-center text-muted-foreground">Loading service history...</div>;
+    }
+
+    if (reports.length === 0) {
+        return <div className="p-8 text-center text-muted-foreground">No service reports found.</div>;
+    }
+
+    return (
+        <div className="rounded-md border bg-card">
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                        <TableHead>Date</TableHead>
+                        <TableHead>Tag</TableHead>
+                        <TableHead>Staff</TableHead>
+                        <TableHead className="text-right">C1</TableHead>
+                        <TableHead className="text-right">C2</TableHead>
+                        <TableHead className="text-right">C3</TableHead>
+                        <TableHead className="text-right">C4</TableHead>
+                        <TableHead className="text-right">Win Rate</TableHead>
+                        <TableHead className="text-center">Image</TableHead>
+                        <TableHead>Notes</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {reports.map((report) => (
+                        <TableRow key={report.id}>
+                            <TableCell className="font-medium">
+                                {format(report.timestamp, "MMM dd, yyyy")}
+                            </TableCell>
+                            <TableCell>{report.inflowSku || report.machineName}</TableCell>
+                            <TableCell>{report.staffName}</TableCell>
+                            <TableCell className="text-right">{report.c1}</TableCell>
+                            <TableCell className="text-right">{report.c2}</TableCell>
+                            <TableCell className="text-right">{report.c3}</TableCell>
+                            <TableCell className="text-right">{report.c4}</TableCell>
+                            <TableCell className="text-right">1/{report.playsPerWin}</TableCell>
+                            <TableCell className="text-center">
+                                {report.imageUrl ? (
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <ImageIcon className="h-4 w-4 text-primary" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-3xl">
+                                            <DialogHeader>
+                                                <DialogTitle>Service Image - {format(report.timestamp, "MMM dd")}</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
+                                                {/* Using standard img for simplicity with external URLs */}
+                                                <img
+                                                    src={report.imageUrl}
+                                                    alt="Service Report"
+                                                    className="object-contain w-full h-full"
+                                                />
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                ) : (
+                                    <span className="text-muted-foreground">-</span>
+                                )}
+                            </TableCell>
+                            <TableCell className="max-w-[200px]">
+                                {report.remarks ? (
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <div className="truncate cursor-pointer hover:text-primary flex items-center gap-1">
+                                                <FileText className="h-3 w-3 inline" />
+                                                {report.remarks}
+                                            </div>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                            <DialogHeader>
+                                                <DialogTitle>Service Notes</DialogTitle>
+                                            </DialogHeader>
+                                            <ScrollArea className="h-[200px]">
+                                                <p className="text-sm text-foreground leading-relaxed p-4">
+                                                    {report.remarks}
+                                                </p>
+                                            </ScrollArea>
+                                        </DialogContent>
+                                    </Dialog>
+                                ) : "-"}
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+        </div>
+    );
+}

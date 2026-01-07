@@ -2229,7 +2229,7 @@ const mapToArcadeMachine = (data: any): ArcadeMachine => {
 let inMemoryMachines: ArcadeMachine[] = [];
 let initialized = false;
 
-const STORAGE_KEY = 'claw_master_machines';
+const STORAGE_KEY = 'claw_master_machines_v1';
 
 const initializeMachines = () => {
     if (initialized) return;
@@ -2246,18 +2246,94 @@ const initializeMachines = () => {
                     updatedAt: new Date(m.updatedAt),
                     lastSyncedAt: m.lastSyncedAt ? new Date(m.lastSyncedAt) : undefined
                 }));
+
+                // Backfill advanced settings if missing in stored data
+                inMemoryMachines = inMemoryMachines.map(m => {
+                    if (!m.advancedSettings) {
+                        return {
+                            ...m,
+                            advancedSettings: {
+                                ...DEFAULT_ADVANCED_SETTINGS,
+                                macId: `801F${Math.floor(Math.random() * 99999999).toString(16).toUpperCase()}`
+                            }
+                        };
+                    }
+                    return m;
+                });
+
             } catch (e) {
                 console.error("Failed to parse stored machines", e);
-                inMemoryMachines = INITIAL_MACHINES.map(mapToArcadeMachine);
+                inMemoryMachines = INITIAL_MACHINES.map(m => {
+                    const machine = mapToArcadeMachine(m);
+                    return {
+                        ...machine,
+                        advancedSettings: {
+                            ...DEFAULT_ADVANCED_SETTINGS,
+                            macId: `801F${Math.floor(Math.random() * 99999999).toString(16).toUpperCase()}`
+                        }
+                    };
+                });
             }
         } else {
-            inMemoryMachines = INITIAL_MACHINES.map(mapToArcadeMachine);
+            inMemoryMachines = INITIAL_MACHINES.map(m => {
+                const machine = mapToArcadeMachine(m);
+                return {
+                    ...machine,
+                    advancedSettings: {
+                        ...DEFAULT_ADVANCED_SETTINGS,
+                        macId: `801F${Math.floor(Math.random() * 99999999).toString(16).toUpperCase()}`
+                    }
+                };
+            });
             localStorage.setItem(STORAGE_KEY, JSON.stringify(inMemoryMachines));
         }
     } else {
-        inMemoryMachines = INITIAL_MACHINES.map(mapToArcadeMachine);
+        inMemoryMachines = INITIAL_MACHINES.map(m => {
+            const machine = mapToArcadeMachine(m);
+            return {
+                ...machine,
+                advancedSettings: {
+                    ...DEFAULT_ADVANCED_SETTINGS,
+                    macId: `801F${Math.floor(Math.random() * 99999999).toString(16).toUpperCase()}`
+                }
+            };
+        });
     }
     initialized = true;
+};
+
+// Default settings matching Intercard for mocks
+const DEFAULT_ADVANCED_SETTINGS: ArcadeMachine['advancedSettings'] = {
+    macId: "801F121992D6",
+    mainCategory: "Group 4-Cranes",
+    subCategory: "Medium",
+    esrbRating: "NOT RATED",
+    cardCashPlayPrice: 2.40,
+    cardTokenPlayPrice: 0,
+    creditCardPlayPrice: 0.00,
+    coinValue: 1.00,
+    vipDiscountedPrice: 2.30,
+    readerModel: "iReader Series",
+    gameInterface: "Crane",
+    buttonConfiguration: "No Start Button",
+    currencyDecimalPlace: "2 Decimal",
+    debitOrder: "Cash First",
+    ticketDispenserBridge: "Disabled",
+    pulseWidth: 100,
+    pulsePauseWidth: 100,
+    pulsesToActuate: 1,
+    hopperTimeOut: 100,
+    rfidTapDelay: 1,
+    coinsDispensedPerPulse: 1, // Added missing field
+
+    // Feature Flags flattened
+    allowBonusPlay: true,
+    flipDisplay: false,
+    pointsForPlay: false,
+    depleteBalance: false,
+    touchEnabled: false,
+    eclipseFeature: false,
+    enableMobileIReader: false,
 };
 
 const saveToStorage = () => {

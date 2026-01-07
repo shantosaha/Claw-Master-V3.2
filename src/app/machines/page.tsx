@@ -369,8 +369,8 @@ export default function MachinesPage() {
     };
 
     // Get unique values for filters
-    const uniqueTypes = Array.from(new Set(machines.map(m => m.type).filter(Boolean)));
-    const uniqueLocations = Array.from(new Set(machines.map(m => m.location).filter(Boolean)));
+    const uniqueTypes = Array.from(new Set(machines.map(m => m.type).filter(type => type && type.trim() !== "")));
+    const uniqueLocations = Array.from(new Set(machines.map(m => m.location).filter(loc => loc && loc.trim() !== "")));
 
     // Normalize prize sizes to eliminate duplicates (e.g., "Extra Small" vs "Extra-Small" vs "extra small")
     const normalizePrizeSize = (size: string): string => {
@@ -379,7 +379,7 @@ export default function MachinesPage() {
         ).join(' ');
     };
     const uniquePrizeSizes = Array.from(new Set(
-        machines.map(m => m.prizeSize).filter(Boolean).map(size => normalizePrizeSize(size as string))
+        machines.map(m => m.prizeSize).filter(size => size && size.trim() !== "").map(size => normalizePrizeSize(size as string))
     ));
 
     // Helper to get machine's stock level from its slots

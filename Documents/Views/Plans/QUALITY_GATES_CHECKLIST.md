@@ -1,0 +1,1 @@
+/Users/frankenstein/Documents/Work/Claw Mater/Claw-Master-V3/Documents/Project/Quality-Assurance/QUALITY_GATES_CHECKLIST.md

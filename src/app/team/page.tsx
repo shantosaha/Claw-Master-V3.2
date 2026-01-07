@@ -817,7 +817,7 @@ export default function TeamPage() {
 
                 {/* CREATE PERMISSION DIALOG */}
                 <Dialog open={isCreatingPerm} onOpenChange={setIsCreatingPerm}>
-                    <DialogContent className="w-[95vw] max-w-[1600px] max-h-[95vh] overflow-y-auto">
+                    <DialogContent className="w-[95vw] max-w-none sm:max-w-[1600px] max-h-[95vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Create Custom Permission</DialogTitle>
                             <DialogDescription>
@@ -933,7 +933,7 @@ export default function TeamPage() {
                             </div>
 
                             {/* RIGHT: Live Code Preview */}
-                            <div className="space-y-2">
+                            <div className="space-y-2 min-w-0">
                                 <Label className="text-base">Live Code Preview</Label>
                                 <p className="text-xs text-muted-foreground mb-4">
                                     This shows how developers will use this permission in code

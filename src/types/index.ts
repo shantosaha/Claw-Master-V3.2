@@ -408,9 +408,58 @@ export interface ArcadeMachine {
     /** @deprecated Use auditLogs collection instead */
     history?: AuditLog[];
 
+    // Advanced Configuration (Intercard Style)
+    advancedSettings?: AdvancedMachineSettings;
+
     isArchived?: boolean;
     archivedAt?: Date | string;
     archivedBy?: string;
+}
+
+// ============================================================================
+// Advanced Machine Settings (Intercard Integration)
+// ============================================================================
+
+export interface AdvancedMachineSettings {
+    // Identity
+    macId?: string;
+
+    // Categorization
+    mainCategory?: string;
+    subCategory?: string;
+    esrbRating?: string;
+
+    // Pricing
+    cardCashPlayPrice?: number;
+    cardTokenPlayPrice?: number;
+    creditCardPlayPrice?: number;
+    coinValue?: number;
+    vipDiscountedPrice?: number;
+
+    // Hardware Configuration
+    readerModel?: 'Fedelis' | 'Nano Series' | 'Impulse' | 'iReader 1' | 'iReader Series' | 'Impulse Tap' | string;
+    gameInterface?: 'Video' | 'Redemption' | 'Crane' | 'Table Game' | 'Attractions' | 'Banked Points' | 'Balance Review' | 'Redemption Center' | 'Merchandiser' | 'Coin/Ticket Tracking' | 'Token Changer' | 'Ticket Eater' | 'Redemption Review' | 'MDB Vending' | 'Benchmark Ticket To Prize' | 'Deltronics Serial Ticket Eater' | 'Redemption with Hopper & Coin monitor' | 'Bay Tek Prize Hub' | 'Entry Gate/Locker' | 'Exit Gate/Locker' | 'Access Control' | 'Two Player Video' | 'Two Player Video Time Play Only' | 'Wizard of Oz Kiosk' | 'Laundry' | 'Benchmark Ticket Eater' | 'Midway Games' | 'MDB Coin Mech' | string;
+    buttonConfiguration?: 'No Start Button' | 'Start Button';
+    currencyDecimalPlace?: 'No Decimal' | '2 Decimal' | '3 Decimal';
+    debitOrder?: 'Cash First' | 'Bonus Cash First';
+    ticketDispenserBridge?: 'Enabled' | 'Disabled';
+
+    // Motor / Technical Settings
+    pulseWidth?: number;            // ms
+    pulsePauseWidth?: number;       // ms
+    pulsesToActuate?: number;
+    hopperTimeOut?: number;         // sec
+    rfidTapDelay?: number;          // sec
+    coinsDispensedPerPulse?: number;
+
+    // Feature Flags / Functions
+    allowBonusPlay?: boolean;
+    flipDisplay?: boolean;
+    pointsForPlay?: boolean;
+    depleteBalance?: boolean;
+    touchEnabled?: boolean;
+    eclipseFeature?: boolean;
+    enableMobileIReader?: boolean;
 }
 
 // ============================================================================
@@ -700,3 +749,20 @@ export interface StockCheckSettings {
     updatedAt?: Date | string;
 }
 
+// Service Report Interface
+export interface ServiceReport {
+    id: string;
+    machineId: string;
+    machineName: string; // "Tag" in the form context
+    location: string;
+    staffName: string;
+    c1: number;
+    c2: number;
+    c3: number;
+    c4: number;
+    playsPerWin: number; // "Plays Per"
+    inflowSku?: string;
+    remarks?: string;
+    imageUrl?: string;
+    timestamp: Date;
+}

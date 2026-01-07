@@ -73,7 +73,7 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
 
     // Derived Data
     const uniqueCategories = useMemo(() => {
-        const cats = new Set(items.map(i => i.category).filter(Boolean));
+        const cats = new Set(items.map(i => i.category).filter(cat => cat && cat.trim() !== ""));
         return Array.from(cats).sort();
     }, [items]);
 

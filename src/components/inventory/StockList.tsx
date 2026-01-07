@@ -142,17 +142,17 @@ export function StockList() {
     const setAssignedStatusFilter = (value: string) => updateState('assignedStatusFilter', value);
 
     const categories = useMemo(() => {
-        const cats = new Set(items.map(i => i.category).filter(Boolean));
+        const cats = new Set(items.map(i => i.category).filter(cat => cat && cat.trim() !== ""));
         return Array.from(cats).sort();
     }, [items]);
 
     const sizes = useMemo(() => {
-        const s = new Set(items.map(i => i.size).filter(Boolean));
+        const s = new Set(items.map(i => i.size).filter(size => size && size.trim() !== ""));
         return Array.from(s).sort();
     }, [items]);
 
     const brands = useMemo(() => {
-        const b = new Set(items.map(i => i.brand).filter(Boolean));
+        const b = new Set(items.map(i => i.brand).filter(brand => brand && brand.trim() !== ""));
         return Array.from(b).sort();
     }, [items]);
 

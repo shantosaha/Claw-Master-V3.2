@@ -22,6 +22,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { StockDetailsPanel } from "@/components/machines/StockDetailsPanel";
 import { StockAssignmentHistory } from "@/components/machines/StockAssignmentHistory";
 import { SnapshotHistory } from "@/components/common/SnapshotHistory";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { MachineComparisonTable } from "@/components/machines/MachineComparisonTable";
+import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
+import { ServiceHistoryTable } from "@/components/machines/ServiceHistoryTable";
 
 // Constants for select field options
 const STATUS_OPTIONS = [
@@ -320,225 +324,261 @@ export default function MachineDetailsPage() {
                 </div>
             </div>
 
-            <div className="grid gap-6 lg:grid-cols-3">
-                {/* Left Column - Machine Details (Editable) */}
-                <div className="lg:col-span-2 space-y-6">
-                    {/* Basic Information */}
-                    <div className="rounded-lg border p-4">
-                        <h2 className="text-lg font-semibold mb-4">Machine Information</h2>
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <InlineEditField
-                                type="text"
-                                label="Machine Name"
-                                value={enrichedMachine.name}
-                                disabled={!isEditMode || !canEditMachineName}
-                                onSave={(val) => handleFieldUpdate("name", "Machine Name", val, enrichedMachine.name)}
-                            />
-                            <InlineEditField
-                                type="text"
-                                label="Asset Tag"
-                                value={enrichedMachine.assetTag}
-                                disabled={!isEditMode}
-                                onSave={(val) => handleFieldUpdate("assetTag", "Asset Tag", val, enrichedMachine.assetTag)}
-                            />
-                            <div className="flex flex-col gap-1.5 p-2 rounded-md bg-muted/30 border border-transparent">
-                                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Machine ID</span>
-                                <span className="text-sm font-mono break-all select-all">{enrichedMachine.id}</span>
-                            </div>
-                            <InlineEditField
-                                type="text"
-                                label="API Tag"
-                                value={enrichedMachine.tag || ""}
-                                disabled={!isEditMode}
-                                onSave={(val) => handleFieldUpdate("tag", "API Tag", val, enrichedMachine.tag)}
-                            />
-                            <InlineEditField
-                                type="select"
-                                label="Location"
-                                value={enrichedMachine.location}
-                                disabled={!isEditMode}
-                                options={[
-                                    ...LOCATION_OPTIONS,
-                                    // Add current location if not in options
-                                    ...(LOCATION_OPTIONS.some(o => o.value === enrichedMachine.location)
-                                        ? []
-                                        : [{ label: enrichedMachine.location, value: enrichedMachine.location }])
-                                ]}
-                                onSave={(val) => handleFieldUpdate("location", "Location", val, enrichedMachine.location)}
-                            />
-                            <InlineEditField
-                                type="select"
-                                label="Status"
-                                value={enrichedMachine.status}
-                                disabled={!isEditMode}
-                                options={STATUS_OPTIONS}
-                                onSave={(val) => handleFieldUpdate("status", "Status", val, enrichedMachine.status)}
-                            />
-                            <InlineEditField
-                                type="text"
-                                label="Machine Type"
-                                value={enrichedMachine.type || ""}
-                                disabled={!isEditMode}
-                                onSave={(val) => handleFieldUpdate("type", "Machine Type", val, enrichedMachine.type)}
-                            />
-                            <InlineEditField
-                                type="select"
-                                label="Physical Config"
-                                value={enrichedMachine.physicalConfig}
-                                disabled={!isEditMode}
-                                options={PHYSICAL_CONFIG_OPTIONS}
-                                onSave={(val) => handleFieldUpdate("physicalConfig", "Physical Config", val, enrichedMachine.physicalConfig)}
-                            />
-                            <InlineEditField
-                                type="select"
-                                label="Prize Size"
-                                value={enrichedMachine.prizeSize || ""}
-                                disabled={!isEditMode}
-                                options={[{ label: "Not Set", value: "" }, ...PRIZE_SIZE_OPTIONS]}
-                                onSave={(val) => handleFieldUpdate("prizeSize", "Prize Size", val, enrichedMachine.prizeSize)}
-                            />
-                            <InlineEditField
-                                type="text"
-                                label="Group"
-                                value={enrichedMachine.group || ""}
-                                disabled={!isEditMode}
-                                onSave={(val) => handleFieldUpdate("group", "Group", val, enrichedMachine.group)}
-                            />
-                            <InlineEditField
-                                type="text"
-                                label="Sub-Group"
-                                value={enrichedMachine.subGroup || ""}
-                                disabled={!isEditMode}
-                                onSave={(val) => handleFieldUpdate("subGroup", "Sub-Group", val, enrichedMachine.subGroup)}
-                            />
-                        </div>
-                    </div>
 
-                    {/* Performance Stats */}
-                    <div className="rounded-lg border p-4">
-                        <h2 className="text-lg font-semibold mb-4">Performance & Stats</h2>
-                        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                            <InlineEditField
-                                type="number"
-                                label="Play Count"
-                                value={enrichedMachine.playCount ?? 0}
-                                disabled={!isEditMode}
-                                onSave={(val) => handleFieldUpdate("playCount", "Play Count", val, enrichedMachine.playCount)}
-                            />
-                            <InlineEditField
-                                type="number"
-                                label="Revenue"
-                                value={enrichedMachine.revenue ?? 0}
-                                disabled={!isEditMode}
-                                onSave={(val) => handleFieldUpdate("revenue", "Revenue", val, enrichedMachine.revenue)}
-                            />
-                            <div className="flex flex-col gap-1">
-                                <span className="text-xs font-medium text-muted-foreground">Last Synced</span>
-                                <span className="text-sm text-foreground">
-                                    {enrichedMachine.lastSyncedAt
-                                        ? new Date(enrichedMachine.lastSyncedAt).toLocaleString()
-                                        : "Never"}
-                                </span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <span className="text-xs font-medium text-muted-foreground">Created At</span>
-                                <span className="text-sm text-foreground">
-                                    {enrichedMachine.createdAt
-                                        ? new Date(enrichedMachine.createdAt).toLocaleString()
-                                        : "-"}
-                                </span>
-                            </div>
-                            <div className="flex flex-col gap-1">
-                                <span className="text-xs font-medium text-muted-foreground">Updated At</span>
-                                <span className="text-sm text-foreground">
-                                    {enrichedMachine.updatedAt
-                                        ? new Date(enrichedMachine.updatedAt).toLocaleString()
-                                        : "-"}
-                                </span>
-                            </div>
-                        </div>
-                    </div>
+            <Tabs defaultValue={searchParams.get("tab") || "overview"} className="w-full">
+                <TabsList>
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="comparison">Comparison Analytics</TabsTrigger>
+                    <TabsTrigger value="service">Service Reports</TabsTrigger>
+                </TabsList>
 
-                    {/* Notes */}
-                    <div className="rounded-lg border p-4">
-                        <h2 className="text-lg font-semibold mb-4">Notes</h2>
-                        <InlineEditField
-                            type="textarea"
-                            label="Machine Notes"
-                            value={enrichedMachine.notes || ""}
-                            disabled={!isEditMode}
-                            onSave={(val) => handleFieldUpdate("notes", "Notes", val, enrichedMachine.notes)}
-                            className="w-full"
-                        />
-                    </div>
-
-                    {/* Stock Details */}
-                    <div className="rounded-lg border p-4">
-                        <StockDetailsPanel
-                            machine={enrichedMachine}
-                            slotId={slotId || undefined}
-                        />
-                    </div>
-                </div>
-
-                {/* Right Column - Settings, History, Image */}
-                <div className="space-y-6">
-                    {/* Machine Image */}
-                    <div className="rounded-lg border p-4">
-                        <h2 className="text-lg font-semibold mb-4">Machine Image</h2>
-                        <div className="aspect-video bg-muted rounded-lg overflow-hidden relative group">
-                            {enrichedMachine.imageUrl ? (
-                                <img
-                                    src={enrichedMachine.imageUrl}
-                                    alt={enrichedMachine.name}
-                                    className="w-full h-full object-cover"
-                                />
-                            ) : (
-                                <div className="w-full h-full flex items-center justify-center">
-                                    <Camera className="h-12 w-12 text-muted-foreground/50" />
+                <TabsContent value="overview" className="mt-6">
+                    <div className="grid gap-6 lg:grid-cols-3">
+                        {/* Left Column - Machine Details (Editable) */}
+                        <div className="lg:col-span-2 space-y-6">
+                            {/* Basic Information */}
+                            <div className="rounded-lg border p-4">
+                                <h2 className="text-lg font-semibold mb-4">Machine Information</h2>
+                                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <InlineEditField
+                                        type="text"
+                                        label="Machine Name"
+                                        value={enrichedMachine.name}
+                                        disabled={!isEditMode || !canEditMachineName}
+                                        onSave={(val) => handleFieldUpdate("name", "Machine Name", val, enrichedMachine.name)}
+                                    />
+                                    <InlineEditField
+                                        type="text"
+                                        label="Asset Tag"
+                                        value={enrichedMachine.assetTag}
+                                        disabled={!isEditMode}
+                                        onSave={(val) => handleFieldUpdate("assetTag", "Asset Tag", val, enrichedMachine.assetTag)}
+                                    />
+                                    <div className="flex flex-col gap-1.5 p-2 rounded-md bg-muted/30 border border-transparent">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Machine ID</span>
+                                        <span className="text-sm font-mono break-all select-all">{enrichedMachine.id}</span>
+                                    </div>
+                                    <InlineEditField
+                                        type="text"
+                                        label="API Tag"
+                                        value={enrichedMachine.tag || ""}
+                                        disabled={!isEditMode}
+                                        onSave={(val) => handleFieldUpdate("tag", "API Tag", val, enrichedMachine.tag)}
+                                    />
+                                    <InlineEditField
+                                        type="select"
+                                        label="Location"
+                                        value={enrichedMachine.location}
+                                        disabled={!isEditMode}
+                                        options={[
+                                            ...LOCATION_OPTIONS,
+                                            // Add current location if not in options
+                                            ...(LOCATION_OPTIONS.some(o => o.value === enrichedMachine.location)
+                                                ? []
+                                                : [{ label: enrichedMachine.location, value: enrichedMachine.location }])
+                                        ]}
+                                        onSave={(val) => handleFieldUpdate("location", "Location", val, enrichedMachine.location)}
+                                    />
+                                    <InlineEditField
+                                        type="select"
+                                        label="Status"
+                                        value={enrichedMachine.status}
+                                        disabled={!isEditMode}
+                                        options={STATUS_OPTIONS}
+                                        onSave={(val) => handleFieldUpdate("status", "Status", val, enrichedMachine.status)}
+                                    />
+                                    <InlineEditField
+                                        type="text"
+                                        label="Machine Type"
+                                        value={enrichedMachine.type || ""}
+                                        disabled={!isEditMode}
+                                        onSave={(val) => handleFieldUpdate("type", "Machine Type", val, enrichedMachine.type)}
+                                    />
+                                    <InlineEditField
+                                        type="select"
+                                        label="Physical Config"
+                                        value={enrichedMachine.physicalConfig}
+                                        disabled={!isEditMode}
+                                        options={PHYSICAL_CONFIG_OPTIONS}
+                                        onSave={(val) => handleFieldUpdate("physicalConfig", "Physical Config", val, enrichedMachine.physicalConfig)}
+                                    />
+                                    <InlineEditField
+                                        type="select"
+                                        label="Prize Size"
+                                        value={enrichedMachine.prizeSize || ""}
+                                        disabled={!isEditMode}
+                                        options={[{ label: "Not Set", value: "" }, ...PRIZE_SIZE_OPTIONS]}
+                                        onSave={(val) => handleFieldUpdate("prizeSize", "Prize Size", val, enrichedMachine.prizeSize)}
+                                    />
+                                    <InlineEditField
+                                        type="text"
+                                        label="Group"
+                                        value={enrichedMachine.group || ""}
+                                        disabled={!isEditMode}
+                                        onSave={(val) => handleFieldUpdate("group", "Group", val, enrichedMachine.group)}
+                                    />
+                                    <InlineEditField
+                                        type="text"
+                                        label="Sub-Group"
+                                        value={enrichedMachine.subGroup || ""}
+                                        disabled={!isEditMode}
+                                        onSave={(val) => handleFieldUpdate("subGroup", "Sub-Group", val, enrichedMachine.subGroup)}
+                                    />
                                 </div>
-                            )}
-                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                <Button variant="secondary" size="sm">
-                                    <ImagePlus className="h-4 w-4 mr-2" />
-                                    {enrichedMachine.imageUrl ? "Change Image" : "Add Image"}
-                                </Button>
+                            </div>
+
+                            {/* Performance Stats */}
+                            <div className="rounded-lg border p-4">
+                                <h2 className="text-lg font-semibold mb-4">Performance & Stats</h2>
+                                <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                                    <InlineEditField
+                                        type="number"
+                                        label="Play Count"
+                                        value={enrichedMachine.playCount ?? 0}
+                                        disabled={!isEditMode}
+                                        onSave={(val) => handleFieldUpdate("playCount", "Play Count", val, enrichedMachine.playCount)}
+                                    />
+                                    <InlineEditField
+                                        type="number"
+                                        label="Revenue"
+                                        value={enrichedMachine.revenue ?? 0}
+                                        disabled={!isEditMode}
+                                        onSave={(val) => handleFieldUpdate("revenue", "Revenue", val, enrichedMachine.revenue)}
+                                    />
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-medium text-muted-foreground">Last Synced</span>
+                                        <span className="text-sm text-foreground">
+                                            {enrichedMachine.lastSyncedAt
+                                                ? new Date(enrichedMachine.lastSyncedAt).toLocaleString()
+                                                : "Never"}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-medium text-muted-foreground">Created At</span>
+                                        <span className="text-sm text-foreground">
+                                            {enrichedMachine.createdAt
+                                                ? new Date(enrichedMachine.createdAt).toLocaleString()
+                                                : "-"}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-medium text-muted-foreground">Updated At</span>
+                                        <span className="text-sm text-foreground">
+                                            {enrichedMachine.updatedAt
+                                                ? new Date(enrichedMachine.updatedAt).toLocaleString()
+                                                : "-"}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Notes */}
+                            <div className="rounded-lg border p-4">
+                                <h2 className="text-lg font-semibold mb-4">Notes</h2>
+                                <InlineEditField
+                                    type="textarea"
+                                    label="Machine Notes"
+                                    value={enrichedMachine.notes || ""}
+                                    disabled={!isEditMode}
+                                    onSave={(val) => handleFieldUpdate("notes", "Notes", val, enrichedMachine.notes)}
+                                    className="w-full"
+                                />
+                            </div>
+
+                            {/* Stock Details */}
+                            <div className="rounded-lg border p-4">
+                                <StockDetailsPanel
+                                    machine={enrichedMachine}
+                                    slotId={slotId || undefined}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Right Column - Settings, History, Image */}
+                        <div className="space-y-6">
+                            {/* Machine Image */}
+                            <div className="rounded-lg border p-4">
+                                <h2 className="text-lg font-semibold mb-4">Machine Image</h2>
+                                <div className="aspect-video bg-muted rounded-lg overflow-hidden relative group">
+                                    {enrichedMachine.imageUrl ? (
+                                        <img
+                                            src={enrichedMachine.imageUrl}
+                                            alt={enrichedMachine.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <Camera className="h-12 w-12 text-muted-foreground/50" />
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <Button variant="secondary" size="sm">
+                                            <ImagePlus className="h-4 w-4 mr-2" />
+                                            {enrichedMachine.imageUrl ? "Change Image" : "Add Image"}
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Playfield Settings */}
+                            <div className="rounded-lg border p-4">
+                                <h2 className="text-lg font-semibold mb-4">Machine Configuration</h2>
+                                <SettingsPanel
+                                    machineId={enrichedMachine.id}
+                                    machineName={enrichedMachine.name}
+                                    activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
+                                />
+                            </div>
+
+                            {/* Stock Assignment History */}
+                            <div className="rounded-lg border p-4">
+                                <StockAssignmentHistory
+                                    machine={enrichedMachine}
+                                    logs={activityLogs}
+                                />
+                            </div>
+
+                            {/* Version History */}
+                            <SnapshotHistory
+                                entity={enrichedMachine}
+                                entityType="machine"
+                                userId={user?.uid}
+                            />
+
+                            {/* History & Logs */}
+                            <div className="rounded-lg border p-4">
+                                <h2 className="text-lg font-semibold mb-4">History & Activity Log</h2>
+                                <HistoryList history={activityLogs} />
                             </div>
                         </div>
                     </div>
+                </TabsContent>
 
-                    {/* Playfield Settings */}
-                    <div className="rounded-lg border p-4">
-                        <h2 className="text-lg font-semibold mb-4">Playfield Settings</h2>
-                        <SettingsPanel
-                            machineId={enrichedMachine.id}
-                            machineName={enrichedMachine.name}
-                            activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
-                        />
-                    </div>
 
-                    {/* Stock Assignment History */}
-                    <div className="rounded-lg border p-4">
-                        <StockAssignmentHistory
-                            machine={enrichedMachine}
-                            logs={activityLogs}
-                        />
-                    </div>
 
-                    {/* Version History */}
-                    <SnapshotHistory
-                        entity={enrichedMachine}
-                        entityType="machine"
-                        userId={user?.uid}
-                    />
+                <TabsContent value="comparison" className="mt-6">
+                    <MachineComparisonTable machine={enrichedMachine} />
+                </TabsContent>
 
-                    {/* History & Logs */}
-                    <div className="rounded-lg border p-4">
-                        <h2 className="text-lg font-semibold mb-4">History & Activity Log</h2>
-                        <HistoryList history={activityLogs} />
-                    </div>
-                </div>
-            </div>
-        </div>
+                <TabsContent value="service" className="mt-6">
+                    <Tabs defaultValue="history" className="w-full">
+                        <div className="flex items-center justify-between mb-4">
+                            <TabsList>
+                                <TabsTrigger value="history">History</TabsTrigger>
+                                <TabsTrigger value="new">New Report</TabsTrigger>
+                            </TabsList>
+                        </div>
+
+                        <TabsContent value="history">
+                            <ServiceHistoryTable machineId={enrichedMachine.id} />
+                        </TabsContent>
+
+                        <TabsContent value="new">
+                            <ServiceReportForm machine={enrichedMachine} />
+                        </TabsContent>
+                    </Tabs>
+                </TabsContent>
+            </Tabs>
+        </div >
     );
 }
