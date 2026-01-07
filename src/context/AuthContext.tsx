@@ -23,6 +23,7 @@ interface AuthContextType {
     canSubmitStockCheck: () => boolean;
     canConfigureStockCheckSettings: () => boolean;
     canEditRoles: () => boolean;
+    canAccessMigration: () => boolean;
     getRoleById: (id: string) => CustomRole | undefined;
     refreshData: () => Promise<void>;
 }
@@ -41,6 +42,7 @@ const AuthContext = createContext<AuthContextType>({
     canSubmitStockCheck: () => false,
     canConfigureStockCheckSettings: () => false,
     canEditRoles: () => false,
+    canAccessMigration: () => false,
     getRoleById: () => undefined,
     refreshData: async () => { },
 });
@@ -103,6 +105,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     editTeam: true,
                     editRoles: true,
                     viewAnalytics: true,
+                    accessMigration: true,
                 },
             };
             setUser(mockUser as User);
@@ -210,6 +213,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return hasPermission('editRoles');
     };
 
+    const canAccessMigration = (): boolean => {
+        return hasPermission('accessMigration');
+    };
+
     const getRoleById = (id: string): CustomRole | undefined => {
         return roles.find(r => r.id === id);
     };
@@ -229,6 +236,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             canSubmitStockCheck,
             canConfigureStockCheckSettings,
             canEditRoles,
+            canAccessMigration,
             getRoleById,
             refreshData: loadData,
         }}>

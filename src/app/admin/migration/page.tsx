@@ -15,9 +15,11 @@ import {
     itemMachineSettingsService
 } from "@/services";
 import { AuditLog, StockItem, MachineAssignment, ItemAssignmentHistory, ItemMachineSettings } from "@/types";
-import { Loader2, CheckCircle2, AlertCircle, Play, Database } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Play, Database, ShieldAlert } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 export default function MigrationPage() {
+    const { canAccessMigration } = useAuth();
     const [status, setStatus] = useState("Ready");
     const [progress, setProgress] = useState(0);
     const [isRunning, setIsRunning] = useState(false);
@@ -257,6 +259,25 @@ export default function MigrationPage() {
             setIsRunning(false);
         }
     };
+
+    // Check permission
+    if (!canAccessMigration()) {
+        return (
+            <div className="p-8 max-w-4xl mx-auto">
+                <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/20">
+                    <CardHeader>
+                        <CardTitle className="text-red-600 dark:text-red-400 flex items-center gap-2">
+                            <ShieldAlert className="h-5 w-5" />
+                            Access Denied
+                        </CardTitle>
+                        <CardDescription className="text-red-700 dark:text-red-300">
+                            You do not have permission to access migration tools. Only administrators can access this page.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            </div>
+        );
+    }
 
     return (
         <div className="p-8 max-w-4xl mx-auto space-y-6">

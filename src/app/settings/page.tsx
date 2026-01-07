@@ -15,7 +15,7 @@ import {
     AlertTriangle, Download, Trash2, Plug, Upload,
     Keyboard, Code, History, RotateCcw, Info,
     Lock, Unlock, Cloud, Sparkles, FileDiff,
-    Accessibility, Palette, Clock, ShieldCheck
+    Accessibility, Palette, Clock, ShieldCheck, Database
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -24,7 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { StockCheckSettingsForm } from "@/components/stock-check/StockCheckSettingsForm";
 
 export default function SettingsPage() {
-    const { user, canConfigureStockCheckSettings } = useAuth();
+    const { user, canConfigureStockCheckSettings, canAccessMigration } = useAuth();
 
     // --- State Definitions ---
     // General
@@ -438,6 +438,9 @@ export default function SettingsPage() {
                         <TabsTrigger value="automation">Automation</TabsTrigger>
                         {canConfigureStockCheckSettings() && (
                             <TabsTrigger value="stock-check">Stock Check</TabsTrigger>
+                        )}
+                        {canAccessMigration() && (
+                            <TabsTrigger value="migration">Migration</TabsTrigger>
                         )}
                         <TabsTrigger value="presets">Presets</TabsTrigger>
                         <TabsTrigger value="system">System</TabsTrigger>
@@ -993,6 +996,53 @@ export default function SettingsPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
+
+                    {/* Migration Tab */}
+                    {canAccessMigration() && (
+                        <TabsContent value="migration" className="space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <Database className="h-5 w-5" />
+                                        Data Migration Tools
+                                    </CardTitle>
+                                    <CardDescription>
+                                        Access tools for migrating and managing database schema changes.
+                                    </CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div className="space-y-2">
+                                        <p className="text-sm text-muted-foreground">
+                                            Migration tools allow you to safely update the database structure and migrate data between different schema versions.
+                                        </p>
+                                        <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900 rounded-lg p-4">
+                                            <div className="flex items-start gap-2">
+                                                <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+                                                <div>
+                                                    <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+                                                        Admin Only Feature
+                                                    </p>
+                                                    <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                                                        These tools can modify your database. Always backup your data before running migrations.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div className="pt-4">
+                                        <Button
+                                            variant="default"
+                                            className="w-full"
+                                            onClick={() => window.location.href = '/admin/migration'}
+                                        >
+                                            <Database className="mr-2 h-4 w-4" />
+                                            Open Migration Tools
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    )}
 
                     {/* About Tab */}
                     <TabsContent value="about" className="space-y-4">

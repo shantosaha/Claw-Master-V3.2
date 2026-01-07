@@ -817,7 +817,7 @@ export default function TeamPage() {
 
                 {/* CREATE PERMISSION DIALOG */}
                 <Dialog open={isCreatingPerm} onOpenChange={setIsCreatingPerm}>
-                    <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogContent className="w-[95vw] max-w-[1600px] max-h-[95vh] overflow-y-auto">
                         <DialogHeader>
                             <DialogTitle>Create Custom Permission</DialogTitle>
                             <DialogDescription>
@@ -855,47 +855,49 @@ export default function TeamPage() {
 
                                 <Separator />
 
-                                <div className="space-y-2">
-                                    <Label>Target Entity</Label>
-                                    <Select
-                                        value={permForm.targetEntity || ""}
-                                        onValueChange={(v) => setPermForm(prev => ({ ...prev, targetEntity: v as PermissionDef['targetEntity'] }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select what this permission controls" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="machine">Machine</SelectItem>
-                                            <SelectItem value="inventory">Inventory</SelectItem>
-                                            <SelectItem value="user">User</SelectItem>
-                                            <SelectItem value="maintenance">Maintenance</SelectItem>
-                                            <SelectItem value="revenue">Revenue</SelectItem>
-                                            <SelectItem value="settings">Settings</SelectItem>
-                                            <SelectItem value="stockCheck">Stock Check</SelectItem>
-                                            <SelectItem value="custom">Custom</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-2">
+                                        <Label>Target Entity</Label>
+                                        <Select
+                                            value={permForm.targetEntity || ""}
+                                            onValueChange={(v) => setPermForm(prev => ({ ...prev, targetEntity: v as PermissionDef['targetEntity'] }))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select entity" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="machine">Machine</SelectItem>
+                                                <SelectItem value="inventory">Inventory</SelectItem>
+                                                <SelectItem value="user">User</SelectItem>
+                                                <SelectItem value="maintenance">Maintenance</SelectItem>
+                                                <SelectItem value="revenue">Revenue</SelectItem>
+                                                <SelectItem value="settings">Settings</SelectItem>
+                                                <SelectItem value="stockCheck">Stock Check</SelectItem>
+                                                <SelectItem value="custom">Custom</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
 
-                                <div className="space-y-2">
-                                    <Label>Action Type</Label>
-                                    <Select
-                                        value={permForm.actionType || ""}
-                                        onValueChange={(v) => setPermForm(prev => ({ ...prev, actionType: v as PermissionDef['actionType'] }))}
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Select the action type" />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="create">Create</SelectItem>
-                                            <SelectItem value="read">Read/View</SelectItem>
-                                            <SelectItem value="update">Update/Edit</SelectItem>
-                                            <SelectItem value="delete">Delete</SelectItem>
-                                            <SelectItem value="approve">Approve</SelectItem>
-                                            <SelectItem value="configure">Configure</SelectItem>
-                                            <SelectItem value="custom">Custom</SelectItem>
-                                        </SelectContent>
-                                    </Select>
+                                    <div className="space-y-2">
+                                        <Label>Action Type</Label>
+                                        <Select
+                                            value={permForm.actionType || ""}
+                                            onValueChange={(v) => setPermForm(prev => ({ ...prev, actionType: v as PermissionDef['actionType'] }))}
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Select action" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="create">Create</SelectItem>
+                                                <SelectItem value="read">Read/View</SelectItem>
+                                                <SelectItem value="update">Update/Edit</SelectItem>
+                                                <SelectItem value="delete">Delete</SelectItem>
+                                                <SelectItem value="approve">Approve</SelectItem>
+                                                <SelectItem value="configure">Configure</SelectItem>
+                                                <SelectItem value="custom">Custom</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
@@ -918,6 +920,14 @@ export default function TeamPage() {
                                             onChange={(e) => setPermForm(prev => ({ ...prev, customAction: e.target.value }))}
                                             placeholder="Describe the custom action"
                                         />
+                                    </div>
+                                )}
+
+                                {/* Permission ID Preview */}
+                                {permForm.name && (
+                                    <div className="p-3 bg-muted rounded-md">
+                                        <p className="text-xs text-muted-foreground mb-1">Generated Permission ID:</p>
+                                        <code className="text-sm font-mono">{permForm.name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "")}</code>
                                     </div>
                                 )}
                             </div>

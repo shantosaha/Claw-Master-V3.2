@@ -17,6 +17,7 @@ import {
     BarChart3,
     Activity,
     History,
+    Database,
     LucideIcon,
     ChevronLeft,
     ChevronRight,
@@ -24,12 +25,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-// Define nav item type with optional role restrictions
+// Define nav item type with optional role restrictions and permission checks
 interface NavItem {
     name: string;
     href: string;
     icon: LucideIcon;
     roles?: UserProfile['role'][]; // If undefined, accessible to all authenticated users
+    permission?: string; // Optional permission key to check
 }
 
 const navItems: NavItem[] = [
@@ -44,6 +46,7 @@ const navItems: NavItem[] = [
     { name: "Team", href: "/team", icon: Users, roles: ['admin', 'manager'] },
     { name: "Settings History", href: "/settings/history", icon: History },
     { name: "Settings", href: "/settings", icon: Settings },
+    { name: "Migration", href: "/admin/migration", icon: Database, permission: 'accessMigration' },
 ];
 
 interface SidebarProps {
@@ -54,16 +57,19 @@ interface SidebarProps {
 
 export function Sidebar({ open, collapsed, onToggle }: SidebarProps) {
     const pathname = usePathname();
-    const { userProfile } = useAuth();
+    const { userProfile, hasPermission } = useAuth();
 
-    // Filter nav items based on user role
+    // Filter nav items based on user role and permissions
     const filteredNavItems = navItems.filter(item => {
-        // If no role restriction, show to everyone
-        if (!item.roles) return true;
+        // If no role restriction and no permission, show to everyone
+        if (!item.roles && !item.permission) return true;
         // If user has no profile, hide restricted items
         if (!userProfile) return false;
+        // Check permission if specified
+        if (item.permission && !hasPermission(item.permission)) return false;
         // Check if user's role is in the allowed roles
-        return item.roles.includes(userProfile.role);
+        if (item.roles && !item.roles.includes(userProfile.role)) return false;
+        return true;
     });
 
     return (

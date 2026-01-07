@@ -33,6 +33,7 @@ export interface UserProfile {
         viewTeam?: boolean;
         editTeam?: boolean;
         editRoles?: boolean;        // Can create/edit/delete custom roles
+        accessMigration?: boolean;  // Can access data migration tools
     };
 }
 
