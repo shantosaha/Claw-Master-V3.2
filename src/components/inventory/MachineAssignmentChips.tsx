@@ -51,9 +51,9 @@ export function MachineAssignmentChips({
                     </p>
                 ) : (
                     <div className="flex flex-wrap gap-2">
-                        {assignments.map((assignment) => (
+                        {assignments.map((assignment, index) => (
                             <MachineChip
-                                key={assignment.machineId}
+                                key={`${assignment.machineId}-${index}`}
                                 assignment={assignment}
                                 editable={editable}
                                 onRemove={

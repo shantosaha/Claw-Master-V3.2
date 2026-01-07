@@ -11,7 +11,10 @@ import {
     Vendor,
     StorageLocation,
     ItemMachineSettings,
-    ItemAssignmentHistory
+    ItemAssignmentHistory,
+    MachineType,
+    Store,
+    Zone
 } from "@/types";
 import { isFirebaseInitialized } from "@/lib/firebase";
 import { mockInventoryService } from "@/lib/mockInventoryService";
@@ -36,6 +39,11 @@ export const categoryService = createFirestoreService<Category>("categories");
 export const vendorService = createFirestoreService<Vendor>("vendors");
 export const locationService = createFirestoreService<StorageLocation>("storageLocations");
 
+// NEW: Machine lookup tables
+export const machineTypeService = createFirestoreService<MachineType>("machineTypes");
+export const storeService = createFirestoreService<Store>("stores");
+export const zoneService = createFirestoreService<Zone>("zones");
+
 // NEW: Machine-specific item settings (claw settings per item per machine)
 export const itemMachineSettingsService = createFirestoreService<ItemMachineSettings>("itemMachineSettings");
 
@@ -54,6 +62,9 @@ export { notificationService } from "./notificationService";
 export { appSettingsService } from "./appSettingsService";
 export { roleService } from "./roleService";
 export { permissionService } from "./permissionService";
+
+// Game Report Sync Service
+export { gameReportService } from "./gameReportService";
 
 // Setup synchronization between services (only for mock mode)
 if (!isFirebaseInitialized) {

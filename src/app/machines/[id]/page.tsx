@@ -328,6 +328,7 @@ export default function MachineDetailsPage() {
             <Tabs defaultValue={searchParams.get("tab") || "overview"} className="w-full">
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="settings">Settings</TabsTrigger>
                     <TabsTrigger value="comparison">Comparison Analytics</TabsTrigger>
                     <TabsTrigger value="service">Service Reports</TabsTrigger>
                 </TabsList>
@@ -372,6 +373,14 @@ export default function MachineDetailsPage() {
                                         disabled={!isEditMode}
                                         onSave={(val) => handleFieldUpdate("storeLocation", "Store Location", val, enrichedMachine.storeLocation)}
                                     />
+                                    <div className="flex flex-col gap-1.5 p-2 rounded-md bg-purple-50/50 border border-purple-100/50">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-purple-700">MAC ID</span>
+                                        <span className="text-sm font-mono break-all">{enrichedMachine.advancedSettings?.macId || "Not assigned"}</span>
+                                    </div>
+                                    <div className="flex flex-col gap-1.5 p-2 rounded-md bg-emerald-50/50 border border-emerald-100/50">
+                                        <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Card Play Price</span>
+                                        <span className="text-sm font-semibold">${enrichedMachine.advancedSettings?.cardCashPlayPrice?.toFixed(2) || "1.80"}</span>
+                                    </div>
                                     <InlineEditField
                                         type="select"
                                         label="Location"
@@ -527,15 +536,6 @@ export default function MachineDetailsPage() {
                                 </div>
                             </div>
 
-                            {/* Playfield Settings */}
-                            <div className="rounded-lg border p-4">
-                                <h2 className="text-lg font-semibold mb-4">Machine Configuration</h2>
-                                <SettingsPanel
-                                    machineId={enrichedMachine.id}
-                                    machineName={enrichedMachine.name}
-                                    activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
-                                />
-                            </div>
 
                             {/* Stock Assignment History */}
                             <div className="rounded-lg border p-4">
@@ -561,10 +561,31 @@ export default function MachineDetailsPage() {
                     </div>
                 </TabsContent>
 
+                <TabsContent value="settings" className="mt-6">
+                    <div className="grid gap-6 lg:grid-cols-3">
+                        <div className="lg:col-span-2">
+                            <SettingsPanel
+                                machineId={enrichedMachine.id}
+                                machineName={enrichedMachine.name}
+                                activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
+                            />
+                        </div>
+                        <div className="space-y-6">
+                            <div className="rounded-lg border p-4">
+                                <h2 className="text-lg font-semibold mb-2">Configuration Guide</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    Adjust claw strength stages (C1-C4) and payout rates to optimize machine performance.
+                                    Settings are automatically synced to the active stock item.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </TabsContent>
+
 
 
                 <TabsContent value="comparison" className="mt-6">
-                    <MachineComparisonTable machine={enrichedMachine} />
+                    <MachineComparisonTable machines={[enrichedMachine as any]} initialMachineId={enrichedMachine.id} />
                 </TabsContent>
 
                 <TabsContent value="service" className="mt-6">

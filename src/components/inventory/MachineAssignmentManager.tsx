@@ -405,9 +405,9 @@ export function MachineAssignmentManager({
                             )}
                         </div>
                     ) : (
-                        assignments.map((assignment) => (
+                        assignments.map((assignment, index) => (
                             <div
-                                key={assignment.machineId}
+                                key={`${assignment.machineId}-${index}`}
                                 className={`
                                     flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 rounded-lg border
                                     ${assignment.status === 'Using'

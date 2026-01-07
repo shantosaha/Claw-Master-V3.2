@@ -129,6 +129,69 @@ export interface Vendor {
 }
 
 // ============================================================================
+// NEW: Machine Lookup Tables
+// ============================================================================
+
+/**
+ * Machine Type definition (e.g., "Trend Catcher", "Doll Castle")
+ */
+export interface MachineType {
+    id: string;
+    name: string;                    // Display name
+    manufacturer?: string;           // Maker/brand
+    defaultSlotCount: number;        // Standard slot count
+    compatiblePrizeSizes: string[];  // Allowed sizes (e.g., ["Small", "Extra Small"])
+    hasTopBottom: boolean;           // Dual playfield (Top/Bottom)
+    defaultPricing?: {
+        cardCashPlayPrice?: number;
+        cardTokenPlayPrice?: number;
+    };
+    imageUrl?: string;               // Reference image
+    isActive: boolean;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+/**
+ * Store/Location entity (e.g., "KOKO 614")
+ */
+export interface Store {
+    id: string;
+    name: string;                   // Display name
+    code: string;                   // API identifier (e.g., "KOKO 614")
+    address?: {
+        street?: string;
+        city?: string;
+        state?: string;
+        postalCode?: string;
+        country?: string;
+    };
+    timezone?: string;              // Local timezone
+    operatingHours?: {
+        open?: string;              // "09:00"
+        close?: string;             // "22:00"
+    };
+    isActive: boolean;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+/**
+ * Zone within a store (e.g., "Main Floor", "Level 1")
+ */
+export interface Zone {
+    id: string;
+    storeId: string;                // FK → Store.id
+    name: string;                   // Zone name
+    level?: string;                 // Floor level
+    machineCapacity?: number;       // Max machines
+    sortOrder: number;              // Display order
+    isActive: boolean;
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+// ============================================================================
 // NEW: Machine-Specific Item Settings (Claw Settings per Item per Machine)
 // ============================================================================
 
@@ -389,8 +452,15 @@ export interface ArcadeMachine {
     location: string;
     group?: string;
     subGroup?: string;
-    tag?: string;
-    storeLocation?: string;  // Store ID from API (e.g., "KOKO 614")
+
+    // API Sync Fields
+    tag?: number;            // API machine tag ID (numeric)
+    storeLocation?: string;  // Store code from API (e.g., "KOKO 614")
+
+    // NEW: Foreign Key References
+    storeId?: string;        // FK → Store.id
+    zoneId?: string;         // FK → Zone.id  
+    typeId?: string;         // FK → MachineType.id
 
     physicalConfig: 'single' | 'multi_4_slot' | 'dual_module' | 'multi_dual_stack';
     status: 'Online' | 'Offline' | 'Maintenance' | 'Error';
@@ -608,6 +678,8 @@ export interface RevenueEntry {
 export interface MachineRevenueReading {
     id: string;
     machineId: string;
+    slotId?: string;      // FK → ArcadeMachineSlot.id (NEW)
+    itemId?: string;      // FK → StockItem.id - item in machine during this period (NEW)
     date: Date | string;
     revenue: number;
     playCount: number;

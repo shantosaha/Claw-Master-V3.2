@@ -20,8 +20,8 @@ export function relinkMachineItems(
         ...machine,
         slots: machine.slots.map(slot => ({
             ...slot,
-            currentItem: null as StockItem | null,
-            upcomingQueue: [] as UpcomingStockItem[]
+            currentItem: (slot.currentItem as StockItem | null) || null,
+            upcomingQueue: (slot.upcomingQueue as UpcomingStockItem[]) || []
         }))
     }));
 

@@ -15,6 +15,7 @@ export interface MachineStatus {
         temperature?: number;
         errorCode?: string;
     };
+    imageUrl?: string;
 }
 
 export interface MonitoringAlert {
@@ -97,6 +98,7 @@ class MonitoringService {
             location: machine.location,
             status: this.determineStatusFromMachine(machine),
             lastPing: new Date(),
+            imageUrl: machine.slots?.[0]?.currentItem?.imageUrl,
             telemetry: {
                 voltage: 115 + Math.random() * 10,
                 playCountToday: Math.floor(Math.random() * 150),
@@ -235,6 +237,11 @@ class MonitoringService {
         }
     }
 
+    acknowledgeAllAlerts(): void {
+        this.alerts.forEach(a => a.acknowledged = true);
+        this.notifyAlertSubscribers();
+    }
+
     clearAcknowledgedAlerts(): void {
         this.alerts = this.alerts.filter(a => !a.acknowledged);
         this.notifyAlertSubscribers();
@@ -307,8 +314,8 @@ class MonitoringService {
                     c2: 10 + Math.floor(random(8) * 30),
                     c3: 5 + Math.floor(random(9) * 20),
                     c4: 20 + Math.floor(random(10) * 40),
-                    imageUrl: undefined, // Monitor page normally doesn't load generic images, would need specific ones
-                    remarks: random(11) > 0.7 ? "Update settings" : undefined,
+                    imageUrl: machine.imageUrl,
+                    remarks: random(11) > 0.8 ? (random(12) > 0.5 ? "Update settings" : "Low stock") : undefined,
                     payoutStatus,
                     lastUpdated: new Date()
                 };

@@ -36,7 +36,10 @@ import {
     FileBarChart,
     ArrowUpDown,
     ArrowUp,
-    ArrowDown
+    ArrowDown,
+    Users,
+    Target,
+    ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { monitoringService, MachineStatus, MonitoringAlert, MonitoringReportItem } from "@/services/monitoringService";
@@ -48,8 +51,21 @@ import { DatePickerWithRange } from "@/components/analytics/DateRangePicker";
 import { GlobalServiceHistoryTable } from "@/components/machines/GlobalServiceHistoryTable";
 import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
 import { MachineComparisonTable } from "@/components/machines/MachineComparisonTable";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import {
+    ResponsiveContainer,
+    AreaChart,
+    Area,
+    XAxis,
+    YAxis,
+    Tooltip as RechartsTooltip,
+    BarChart,
+    Bar,
+    Cell,
+    LineChart,
+    Line
+} from "recharts";
 
 // Custom hook for monitoring data
 function useMonitoring() {
@@ -123,6 +139,189 @@ function useMonitoring() {
 
 // Extended type for UI
 type ExtendedMachineStatus = MachineStatus & Partial<MonitoringReportItem>;
+
+// New Component: Machine Quick View Dialog
+function MachineQuickViewDialog({
+    machine,
+    open,
+    onOpenChange
+}: {
+    machine: ExtendedMachineStatus | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+}) {
+    if (!machine) return null;
+
+    // Generate some trend data based on machine ID
+    const trendData = useMemo(() => {
+        const seed = machine.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
+        const random = (offset: number) => {
+            const x = Math.sin(seed + offset) * 10000;
+            return x - Math.floor(x);
+        };
+
+        return Array.from({ length: 12 }, (_, i) => ({
+            time: `${i * 2}h`,
+            plays: Math.floor(random(i) * 20) + 5
+        }));
+    }, [machine.id]);
+
+    const statusColors = {
+        online: "bg-green-500",
+        offline: "bg-gray-400",
+        error: "bg-red-500",
+        maintenance: "bg-yellow-500",
+    };
+
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl sm:max-w-3xl overflow-y-auto max-h-[90vh]">
+                <DialogHeader>
+                    <div className="flex items-center gap-3">
+                        <div className={cn("h-3 w-3 rounded-full", statusColors[machine.status || 'online'])} />
+                        <DialogTitle>{machine.name} - Quick View</DialogTitle>
+                    </div>
+                    <DialogDescription>
+                        Real-time status and performance metrics for {machine.location}
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+                    {/* Visuals & Status */}
+                    <div className="space-y-4">
+                        <div className="aspect-video relative rounded-lg overflow-hidden border bg-muted">
+                            {machine.imageUrl ? (
+                                <img src={machine.imageUrl} alt={machine.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center">
+                                    <View className="h-12 w-12 text-muted-foreground opacity-20" />
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <Card className="p-3 bg-muted/30">
+                                <p className="text-[10px] uppercase text-muted-foreground font-bold">Accuracy</p>
+                                <div className="flex items-end gap-1">
+                                    <p className="text-xl font-bold">{machine.payoutAccuracy}%</p>
+                                    <p className={cn(
+                                        "text-[10px] mb-1 font-medium",
+                                        machine.payoutAccuracy && machine.payoutAccuracy > 100 ? "text-red-500" : "text-green-500"
+                                    )}>
+                                        {machine.payoutStatus}
+                                    </p>
+                                </div>
+                            </Card>
+                            <Card className="p-3 bg-muted/30">
+                                <p className="text-[10px] uppercase text-muted-foreground font-bold">Plays Today</p>
+                                <p className="text-xl font-bold">{machine.customerPlays ?? 0}</p>
+                            </Card>
+                        </div>
+
+                        <div className="space-y-2">
+                            <h4 className="text-xs font-bold uppercase text-muted-foreground">Performance & Settings</h4>
+                            <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm border-t pt-2">
+                                <div className="space-y-1">
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground text-[11px]">Staff Plays:</span>
+                                        <span className="font-mono font-bold text-blue-500">{machine.staffPlays ?? 0}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground text-[11px]">Payouts:</span>
+                                        <span className="font-mono font-bold text-green-600">{machine.payouts ?? 0}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground text-[11px]">Plays/Win:</span>
+                                        <span className="font-mono font-bold">{machine.playsPerPayout?.toFixed(1) ?? '0.0'}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-muted-foreground text-[11px]">Target P/W:</span>
+                                        <span className="font-mono font-bold text-muted-foreground">{machine.payoutSettings ?? 0}</span>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-2 bg-muted/20 p-2 rounded">
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[9px] uppercase font-bold text-muted-foreground">C1</span>
+                                        <span className="font-bold text-xs">{machine.c1 ?? 0}</span>
+                                    </div>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[9px] uppercase font-bold text-muted-foreground">C2</span>
+                                        <span className="font-bold text-xs">{machine.c2 ?? 0}</span>
+                                    </div>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[9px] uppercase font-bold text-muted-foreground">C3</span>
+                                        <span className="font-bold text-xs">{machine.c3 ?? 0}</span>
+                                    </div>
+                                    <div className="flex flex-col items-center">
+                                        <span className="text-[9px] uppercase font-bold text-muted-foreground">C4</span>
+                                        <span className="font-bold text-xs font-mono text-blue-600">{machine.c4 ?? 0}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Chart & Control */}
+                    <div className="space-y-4">
+                        <div className="h-[200px] w-full">
+                            <h4 className="text-xs font-bold uppercase text-muted-foreground mb-4">24h Play Trend</h4>
+                            <ResponsiveContainer width="100%" height="100%">
+                                <AreaChart data={trendData}>
+                                    <defs>
+                                        <linearGradient id="colorPlays" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                        </linearGradient>
+                                    </defs>
+                                    <XAxis dataKey="time" hide />
+                                    <YAxis hide />
+                                    <RechartsTooltip
+                                        labelStyle={{ color: 'black' }}
+                                        contentStyle={{ borderRadius: '8px' }}
+                                    />
+                                    <Area
+                                        type="monotone"
+                                        dataKey="plays"
+                                        stroke="#3b82f6"
+                                        fillOpacity={1}
+                                        fill="url(#colorPlays)"
+                                    />
+                                </AreaChart>
+                            </ResponsiveContainer>
+                        </div>
+
+                        <div className="space-y-2 pt-4">
+                            <h4 className="text-xs font-bold uppercase text-muted-foreground">Claw Strength History</h4>
+                            <div className="space-y-1">
+                                {[
+                                    { date: "Jan 07", c1: 45, c2: 30, c3: 15, c4: 55, staff: "Daniel" },
+                                    { date: "Jan 03", c1: 40, c2: 25, c3: 15, c4: 50, staff: "Shanto" },
+                                ].map((h, i) => (
+                                    <div key={i} className="flex items-center justify-between text-[11px] p-2 bg-muted/30 rounded">
+                                        <span className="font-medium text-muted-foreground">{h.date}</span>
+                                        <div className="flex gap-2">
+                                            <span>{h.c1}-{h.c2}-{h.c3} ({h.c4})</span>
+                                        </div>
+                                        <span className="text-blue-500">{h.staff}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="pt-4 flex gap-2">
+                            <Button className="flex-1" asChild>
+                                <Link href={`/machines/${machine.id}`}>Go to Page</Link>
+                            </Button>
+                            <Button variant="outline" className="flex-1" onClick={() => onOpenChange(false)}>
+                                Close
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 // Machine Status Card Component
 function MachineStatusCard({ machine, onAction }: { machine: ExtendedMachineStatus, onAction?: (action: string, machine: ExtendedMachineStatus) => void }) {
@@ -290,16 +489,11 @@ function MachineStatusCard({ machine, onAction }: { machine: ExtendedMachineStat
                             onClick={(e) => {
                                 if (onAction) {
                                     e.preventDefault();
-                                    onAction('compare', machine);
+                                    onAction('quick_view', machine);
                                 }
                             }}
-                            asChild={!onAction}
                         >
-                            {!onAction ? (
-                                <Link href={`/machines/${machine.id}`}>
-                                    View Details
-                                </Link>
-                            ) : "Compare"}
+                            Quick Details
                         </Button>
                         <Button
                             variant="outline"
@@ -308,16 +502,16 @@ function MachineStatusCard({ machine, onAction }: { machine: ExtendedMachineStat
                             onClick={(e) => {
                                 if (onAction) {
                                     e.preventDefault();
-                                    onAction('submit_report', machine);
+                                    onAction('compare', machine);
                                 }
                             }}
                             asChild={!onAction}
                         >
                             {!onAction ? (
-                                <Link href={`/machines/${machine.id}?tab=settings`}>
-                                    Settings
+                                <Link href={`/machines/${machine.id}`}>
+                                    View Full
                                 </Link>
-                            ) : "Service"}
+                            ) : "Compare"}
                         </Button>
                     </div>
                 </div>
@@ -377,9 +571,24 @@ function AlertPanel({
                         </Badge>
                     )}
                 </CardTitle>
-                <Button variant="ghost" size="sm">
-                    {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
+                <div className="flex items-center gap-2">
+                    {unacknowledgedCount > 0 && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                monitoringService.acknowledgeAllAlerts();
+                            }}
+                        >
+                            Acknowledge All
+                        </Button>
+                    )}
+                    <Button variant="ghost" size="sm">
+                        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                    </Button>
+                </div>
             </CardHeader>
 
             {isExpanded && (
@@ -598,7 +807,27 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                 <TableCell className="text-right text-xs">{item.c3}</TableCell>
                                 <TableCell className="text-right text-xs">{item.c4}</TableCell>
                                 <TableCell>
-                                    <span className="text-xs text-blue-500 cursor-pointer hover:underline">Show Image</span>
+                                    {item.imageUrl ? (
+                                        <Dialog>
+                                            <DialogTrigger asChild>
+                                                <span className="text-xs text-blue-500 cursor-pointer hover:underline">Show Image</span>
+                                            </DialogTrigger>
+                                            <DialogContent className="max-w-3xl w-full p-0 overflow-hidden bg-transparent border-none shadow-none">
+                                                <VisuallyHidden>
+                                                    <DialogTitle>{item.description} Image</DialogTitle>
+                                                </VisuallyHidden>
+                                                <div className="relative w-full h-full flex items-center justify-center">
+                                                    <img
+                                                        src={item.imageUrl}
+                                                        alt={item.description}
+                                                        className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                                                    />
+                                                </div>
+                                            </DialogContent>
+                                        </Dialog>
+                                    ) : (
+                                        <span className="text-xs text-muted-foreground italic">No image</span>
+                                    )}
                                 </TableCell>
                                 <TableCell className="text-xs text-muted-foreground">{item.remarks}</TableCell>
                             </TableRow>
@@ -650,6 +879,143 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
     );
 }
 
+// New Component: Stat Detail Dialog
+function StatDetailDialog({
+    type,
+    machines,
+    onClose
+}: {
+    type: 'revenue' | 'activity' | 'accuracy' | 'uptime' | null;
+    machines: ExtendedMachineStatus[];
+    onClose: () => void;
+}) {
+    if (!type) return null;
+
+    const titles = {
+        revenue: "Estimated Revenue Drill-down",
+        activity: "Activity Leaderboard",
+        accuracy: "Payout Accuracy Overview",
+        uptime: "Network Health Details"
+    };
+
+    const sortedData = useMemo(() => {
+        const list = [...machines];
+        if (type === 'revenue' || type === 'activity') {
+            return list.sort((a, b) => (b.customerPlays || 0) - (a.customerPlays || 0));
+        }
+        if (type === 'accuracy') {
+            return list.filter(m => m.payoutStatus !== 'OK').sort((a, b) => {
+                const statusOrder = { 'Very High': 4, 'Very Low': 3, 'High': 2, 'Low': 1, 'OK': 0 };
+                return (statusOrder[b.payoutStatus as keyof typeof statusOrder] || 0) - (statusOrder[a.payoutStatus as keyof typeof statusOrder] || 0);
+            });
+        }
+        if (type === 'uptime') {
+            return list.filter(m => m.status !== 'online');
+        }
+        return list;
+    }, [machines, type]);
+
+    const chartData = useMemo(() => {
+        return sortedData.slice(0, 8).map(m => ({
+            name: m.name.substring(0, 10),
+            value: type === 'revenue' ? (m.customerPlays || 0) * 3.6 : (m.customerPlays || 0)
+        }));
+    }, [sortedData, type]);
+
+    return (
+        <Dialog open={!!type} onOpenChange={(open) => !open && onClose()}>
+            <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>{titles[type]}</DialogTitle>
+                    <DialogDescription>
+                        Breakdown of the top metrics and status alerts for the current period.
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
+                    {/* List Section */}
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-bold uppercase text-muted-foreground">List Breakdown</h4>
+                        <div className="rounded-md border bg-muted/20">
+                            <Table>
+                                <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="text-xs">Machine</TableHead>
+                                        <TableHead className="text-xs text-right">
+                                            {type === 'revenue' ? 'Revenue' : (type === 'accuracy' ? 'Status' : 'Plays')}
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {sortedData.slice(0, 10).map((m) => (
+                                        <TableRow key={m.id}>
+                                            <TableCell className="py-2">
+                                                <div className="flex flex-col">
+                                                    <span className="font-medium text-xs">{m.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{m.location}</span>
+                                                </div>
+                                            </TableCell>
+                                            <TableCell className="text-right py-2">
+                                                {type === 'revenue' && <span className="font-mono text-xs">${((m.customerPlays || 0) * 3.6).toFixed(0)}</span>}
+                                                {type === 'activity' && <span className="font-mono text-xs">{m.customerPlays}</span>}
+                                                {type === 'accuracy' && (
+                                                    <Badge variant="outline" className={cn(
+                                                        "text-[10px] h-4",
+                                                        m.payoutStatus === 'Very High' ? "bg-red-500 text-white" :
+                                                            (m.payoutStatus === 'Very Low' ? "bg-yellow-600 text-white" : "bg-muted")
+                                                    )}>
+                                                        {m.payoutStatus}
+                                                    </Badge>
+                                                )}
+                                                {type === 'uptime' && (
+                                                    <Badge variant="destructive" className="text-[10px] h-4 capitalize">
+                                                        {m.status}
+                                                    </Badge>
+                                                )}
+                                            </TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                            </Table>
+                        </div>
+                    </div>
+
+                    {/* Chart Section */}
+                    <div className="space-y-4">
+                        <h4 className="text-sm font-bold uppercase text-muted-foreground">Visualization</h4>
+                        <div className="h-[250px] w-full bg-muted/10 rounded-lg border p-4">
+                            {(type === 'revenue' || type === 'activity') ? (
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={chartData} layout="vertical">
+                                        <XAxis type="number" hide />
+                                        <YAxis dataKey="name" type="category" width={80} fontSize={10} tickLine={false} axisLine={false} />
+                                        <RechartsTooltip cursor={{ fill: 'transparent' }} />
+                                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                                            {chartData.map((entry, index) => (
+                                                <Cell key={`cell-${index}`} fill={type === 'revenue' ? '#22c55e' : '#3b82f6'} fillOpacity={0.8 - (index * 0.1)} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-full text-muted-foreground space-y-2">
+                                    <Activity className="h-10 w-10 opacity-20" />
+                                    <p className="text-xs italic">Visualization for {type} is list-based</p>
+                                </div>
+                            )}
+                        </div>
+                        <div className="pt-4">
+                            <Button className="w-full" variant="outline" onClick={onClose}>
+                                Close Detailed View
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 export default function MonitoringPage() {
     const {
         machines,
@@ -669,6 +1035,7 @@ export default function MonitoringPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [locationFilter, setLocationFilter] = useState<string>("all");
+    const [payoutStatusFilter, setPayoutStatusFilter] = useState<string>("all");
     const [viewMode, setViewMode] = useState<"grid" | "report">("grid");
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
         from: new Date(new Date().setDate(new Date().getDate() - 7)),
@@ -679,6 +1046,18 @@ export default function MonitoringPage() {
 
     // Report specific state (mock data for now)
     const [reportData, setReportData] = useState<MonitoringReportItem[]>([]);
+
+    // Aggregated stats from report data
+    const stats = useMemo(() => {
+        const totalPlays = reportData.reduce((acc, curr) => acc + (curr.customerPlays || 0), 0);
+        const totalRevenue = reportData.reduce((acc, curr) => acc + ((curr.customerPlays || 0) * 3.6), 0);
+        const criticalCount = reportData.filter(r => r.payoutStatus === 'Very High' || r.payoutStatus === 'Very Low').length;
+        const avgAccuracy = reportData.length > 0
+            ? Math.round(reportData.reduce((acc, curr) => acc + (curr.payoutAccuracy || 0), 0) / reportData.length)
+            : 0;
+
+        return { totalPlays, totalRevenue, criticalCount, avgAccuracy };
+    }, [reportData]);
 
     useEffect(() => {
         const fetchReport = async () => {
@@ -708,13 +1087,24 @@ export default function MonitoringPage() {
         return mergedMachines.filter(machine => {
             const name = machine.name?.toLowerCase() || "";
             const tag = machine.assetTag?.toLowerCase() || machine.tag?.toLowerCase() || "";
+            const staff = machine.staffName?.toLowerCase() || "";
+            const remarks = machine.remarks?.toLowerCase() || "";
+            const payoutStatus = machine.payoutStatus?.toLowerCase() || "";
             const query = searchQuery.toLowerCase() || "";
 
-            const matchesSearch = name.includes(query) || tag.includes(query);
+            const matchesSearch = name.includes(query) ||
+                tag.includes(query) ||
+                staff.includes(query) ||
+                remarks.includes(query) ||
+                payoutStatus.includes(query);
+
             const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
-            return matchesSearch && matchesLocation;
+            const matchesPayoutStatus = payoutStatusFilter === "all" || machine.payoutStatus === payoutStatusFilter;
+            const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
+
+            return matchesSearch && matchesLocation && matchesPayoutStatus && matchesStatus;
         });
-    }, [mergedMachines, searchQuery, locationFilter]);
+    }, [mergedMachines, searchQuery, locationFilter, payoutStatusFilter, statusFilter]);
 
     const sortedMachines = useMemo(() => {
         const sorted = [...filteredMachines];
@@ -757,8 +1147,10 @@ export default function MonitoringPage() {
         return sorted;
     }, [filteredMachines, sortOption]);
 
-    const [selectedMachineForAction, setSelectedMachineForAction] = useState<ExtendedMachineStatus | null>(null);
     const [selectedTab, setSelectedTab] = useState("monitor");
+    const [selectedMachineForAction, setSelectedMachineForAction] = useState<ExtendedMachineStatus | null>(null);
+    const [activeStatDetail, setActiveStatDetail] = useState<'revenue' | 'activity' | 'accuracy' | 'uptime' | null>(null);
+    const [quickViewMachine, setQuickViewMachine] = useState<ExtendedMachineStatus | null>(null);
 
     if (error) {
         return (
@@ -793,58 +1185,84 @@ export default function MonitoringPage() {
         <div className="container mx-auto p-4 sm:p-6 space-y-6">
             {/* Top Stats Dashboard */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                <Card className="shadow-sm">
+                <Card
+                    className="shadow-sm border-l-4 border-l-green-500 cursor-pointer hover:shadow-md transition-all active:scale-95"
+                    onClick={() => setActiveStatDetail('revenue')}
+                >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Online Machines</CardTitle>
-                        <Wifi className="h-4 w-4 text-green-500" />
+                        <CardTitle className="text-sm font-medium">Estimated Revenue</CardTitle>
+                        <DollarSign className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">{onlineCount}</div>
-                        <p className="text-xs text-muted-foreground">
-                            {((onlineCount / machines.length) * 100).toFixed(1)}% Operational
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Active Alerts</CardTitle>
-                        <Activity className="h-4 w-4 text-red-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{unacknowledgedAlerts.length}</div>
-                        <p className="text-xs text-muted-foreground">
-                            Requires Attention
-                        </p>
-                    </CardContent>
-                </Card>
-                <Card className="shadow-sm">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Payout Health</CardTitle>
-                        <Zap className="h-4 w-4 text-yellow-500" />
-                    </CardHeader>
-                    <CardContent>
-                        {/* Placeholder logic for aggregate payout health */}
                         <div className="text-2xl font-bold">
-                            {Math.round(reportData.reduce((acc, curr) => acc + (curr.customerPlays + curr.staffPlays), 0) / Math.max(1, reportData.reduce((acc, curr) => acc + curr.payouts, 0)))}
+                            ${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                         </div>
-                        <p className="text-xs text-muted-foreground">
-                            Avg Plays / Win
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Avg <span className="font-medium">${(stats.totalRevenue / Math.max(1, machines.length)).toFixed(1)}</span> / unit
+                            <span className="text-[10px] ml-2 text-blue-500 font-medium">Click to show details</span>
                         </p>
                     </CardContent>
                 </Card>
-                <Card className="shadow-sm">
+
+                <Card
+                    className="shadow-sm border-l-4 border-l-blue-500 cursor-pointer hover:shadow-md transition-all active:scale-95"
+                    onClick={() => setActiveStatDetail('activity')}
+                >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">System Status</CardTitle>
-                        <RefreshCw className="h-4 w-4 text-blue-500" />
+                        <CardTitle className="text-sm font-medium">Customer Activity</CardTitle>
+                        <PlayCircle className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">Live</div>
-                        <p className="text-xs text-muted-foreground">
-                            Last updated: {lastUpdate ? format(lastUpdate, 'h:mm:ss a') : 'Never'}
+                        <div className="text-2xl font-bold">
+                            {stats.totalPlays.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">Plays</span>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            <span className="font-medium">{Math.round(stats.totalPlays / Math.max(1, machines.length))}</span> sessions / unit
+                            <span className="text-[10px] ml-2 text-blue-500 font-medium">Click to show details</span>
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card
+                    className="shadow-sm border-l-4 border-l-yellow-500 cursor-pointer hover:shadow-md transition-all active:scale-95"
+                    onClick={() => setActiveStatDetail('accuracy')}
+                >
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Payout Accuracy</CardTitle>
+                        <Target className="h-4 w-4 text-yellow-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">{stats.avgAccuracy}%</div>
+                        <p className="text-xs text-muted-foreground mt-1 text-orange-600 font-medium">
+                            {stats.criticalCount} machines need attention
+                        </p>
+                    </CardContent>
+                </Card>
+
+                <Card
+                    className="shadow-sm border-l-4 border-l-purple-500 cursor-pointer hover:shadow-md transition-all active:scale-95"
+                    onClick={() => setActiveStatDetail('uptime')}
+                >
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                        <CardTitle className="text-sm font-medium">Network Uptime</CardTitle>
+                        <Wifi className="h-4 w-4 text-purple-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="text-2xl font-bold">
+                            {((onlineCount / Math.max(1, machines.length)) * 100).toFixed(1)}%
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            <span className="font-medium text-green-600">{onlineCount}</span> live, <span className="font-medium text-red-600">{offlineCount}</span> down
                         </p>
                     </CardContent>
                 </Card>
             </div>
+
+            <StatDetailDialog
+                type={activeStatDetail}
+                machines={mergedMachines as any}
+                onClose={() => setActiveStatDetail(null)}
+            />
 
             <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-4">
                 <div className="flex justify-between items-center">
@@ -867,7 +1285,7 @@ export default function MonitoringPage() {
                                 <div className="relative w-full sm:w-64">
                                     <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                                     <Input
-                                        placeholder="Search machines..."
+                                        placeholder="Search machines, staff, or remarks..."
                                         value={searchQuery}
                                         onChange={(e) => setSearchQuery(e.target.value)}
                                         className="pl-9 h-9"
@@ -879,33 +1297,62 @@ export default function MonitoringPage() {
                                     className="w-[280px]"
                                 />
 
-                                <Select value={locationFilter} onValueChange={setLocationFilter}>
-                                    <SelectTrigger className="w-[140px] h-9">
-                                        <SelectValue placeholder="Location" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="all">All Locations</SelectItem>
-                                        {locations.map(loc => (
-                                            <SelectItem key={loc} value={loc}>{loc}</SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                {/* New Sort Dropdown for Grid View */}
-                                <Select value={sortOption} onValueChange={setSortOption}>
-                                    <SelectTrigger className="w-[160px] h-9">
-                                        <ArrowUpDown className="h-4 w-4 mr-2" />
-                                        <SelectValue placeholder="Sort By" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="default">Default</SelectItem>
-                                        <SelectItem value="payout-high">High Payout Ratio</SelectItem>
-                                        <SelectItem value="payout-low">Low Payout Ratio</SelectItem>
-                                        <SelectItem value="plays-high">Plays: Most To Less</SelectItem>
-                                        <SelectItem value="plays-low">Plays: Less to Most</SelectItem>
-                                        <SelectItem value="payouts-high">Most payout</SelectItem>
-                                        <SelectItem value="payouts-low">Lowest payout</SelectItem>
-                                    </SelectContent>
-                                </Select>
+                                <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                                    <Select value={locationFilter} onValueChange={setLocationFilter}>
+                                        <SelectTrigger className="w-[130px] h-9">
+                                            <SelectValue placeholder="Location" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Locations</SelectItem>
+                                            {locations.map(loc => (
+                                                <SelectItem key={loc} value={loc}>{loc}</SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+
+                                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                                        <SelectTrigger className="w-[120px] h-9">
+                                            <SelectValue placeholder="Machine Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Statuses</SelectItem>
+                                            <SelectItem value="online">Online</SelectItem>
+                                            <SelectItem value="offline">Offline</SelectItem>
+                                            <SelectItem value="error">Error</SelectItem>
+                                            <SelectItem value="maintenance">Maintenance</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    <Select value={payoutStatusFilter} onValueChange={setPayoutStatusFilter}>
+                                        <SelectTrigger className="w-[120px] h-9">
+                                            <SelectValue placeholder="Payout Status" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="all">All Payouts</SelectItem>
+                                            <SelectItem value="Very High">Very High</SelectItem>
+                                            <SelectItem value="High">High</SelectItem>
+                                            <SelectItem value="OK">OK</SelectItem>
+                                            <SelectItem value="Low">Low</SelectItem>
+                                            <SelectItem value="Very Low">Very Low</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+
+                                    <Select value={sortOption} onValueChange={setSortOption}>
+                                        <SelectTrigger className="w-[150px] h-9">
+                                            <ArrowUpDown className="h-4 w-4 mr-2" />
+                                            <SelectValue placeholder="Sort By" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="default">Default</SelectItem>
+                                            <SelectItem value="payout-high">High Payout Ratio</SelectItem>
+                                            <SelectItem value="payout-low">Low Payout Ratio</SelectItem>
+                                            <SelectItem value="plays-high">Plays: Most To Less</SelectItem>
+                                            <SelectItem value="plays-low">Plays: Less to Most</SelectItem>
+                                            <SelectItem value="payouts-high">Most payout</SelectItem>
+                                            <SelectItem value="payouts-low">Lowest payout</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
                             </div>
                             <div className="flex gap-1 border rounded-md p-1">
                                 <Button
@@ -932,12 +1379,13 @@ export default function MonitoringPage() {
                                         key={machine.id}
                                         machine={machine}
                                         onAction={(action, machine) => {
+                                            setSelectedMachineForAction(machine);
                                             if (action === 'submit_report') {
-                                                setSelectedMachineForAction(machine);
                                                 setSelectedTab("submit");
                                             } else if (action === 'compare') {
-                                                setSelectedMachineForAction(machine);
                                                 setSelectedTab("comparison");
+                                            } else if (action === 'quick_view') {
+                                                setQuickViewMachine(machine);
                                             }
                                         }}
                                     />
@@ -947,6 +1395,12 @@ export default function MonitoringPage() {
                             <MonitoringReportTable data={sortedMachines as any} />
                         )}
                     </div>
+
+                    <MachineQuickViewDialog
+                        machine={quickViewMachine}
+                        open={!!quickViewMachine}
+                        onOpenChange={(open) => !open && setQuickViewMachine(null)}
+                    />
                 </TabsContent>
 
                 <TabsContent value="history">
@@ -975,7 +1429,7 @@ export default function MonitoringPage() {
                         </div>
                         {selectedMachineForAction ? (
                             <ServiceReportForm
-                                machine={selectedMachineForAction as any}
+                                machine={selectedMachineForAction as ExtendedMachineStatus}
                                 onSuccess={() => {
                                     setSelectedMachineForAction(null);
                                     setSelectedTab("monitor");

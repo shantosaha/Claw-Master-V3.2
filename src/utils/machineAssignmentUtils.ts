@@ -7,7 +7,13 @@ import { StockItem, MachineAssignment } from '@/types';
 export function migrateToMachineAssignments(item: StockItem): MachineAssignment[] {
     // If it explicitly has an array (even empty), trust it as source of truth
     if (Array.isArray(item.machineAssignments)) {
-        return item.machineAssignments;
+        // De-duplicate by machineId to prevent React key errors
+        const seen = new Set<string>();
+        return item.machineAssignments.filter(a => {
+            if (seen.has(a.machineId)) return false;
+            seen.add(a.machineId);
+            return true;
+        });
     }
 
     const assignments: MachineAssignment[] = [];

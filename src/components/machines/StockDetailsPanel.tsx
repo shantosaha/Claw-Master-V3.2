@@ -11,6 +11,10 @@ import { toast } from "sonner";
 import { useAuth } from "@/context/AuthContext";
 import { useData } from "@/context/DataProvider";
 import { calculateStockLevel } from "@/utils/inventoryUtils";
+import { promoteFirstQueueItem } from "@/utils/promoteQueueItem";
+import Link from "next/link";
+import { StockItemDetailsDialog } from "../inventory/StockItemDetailsDialog";
+import { ClawSettingsDialog } from "../inventory/ClawSettingsDialog";
 import {
     migrateToMachineAssignments,
     removeMachineAssignment,
@@ -18,7 +22,6 @@ import {
     getAssignmentCount,
     getMachineStockItems
 } from "@/utils/machineAssignmentUtils";
-import { promoteFirstQueueItem } from "@/utils/promoteQueueItem";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -44,6 +47,8 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
     // Confirmation dialog states
     const [confirmClear, setConfirmClear] = useState(false);
     const [confirmRemoveQueue, setConfirmRemoveQueue] = useState<{ index: number; item: any } | null>(null);
+    const [selectedItemForDetail, setSelectedItemForDetail] = useState<StockItem | null>(null);
+    const [isClawSettingsOpen, setIsClawSettingsOpen] = useState(false);
 
 
     // Identify target slot
@@ -72,7 +77,7 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
         } else {
             setClawSettings(null);
         }
-    }, [fullCurrentItem?.id, machine.id]);
+    }, [fullCurrentItem?.id, machine.updatedAt, machine.id]);
 
     const loadClawSettings = async () => {
         try {
@@ -243,7 +248,10 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
             {/* Current Item */}
             <div>
                 <h3 className="text-sm font-semibold text-foreground mb-3">Current Item</h3>
-                <div className="border rounded-xl p-5 flex items-center justify-between bg-card shadow-sm hover:shadow-md transition-shadow">
+                <div
+                    className="border rounded-xl p-5 flex items-center justify-between bg-card shadow-sm hover:shadow-md transition-shadow cursor-pointer group/card"
+                    onClick={() => setSelectedItemForDetail(fullCurrentItem)}
+                >
                     {fullCurrentItem ? (
                         <div className="flex items-center gap-5">
                             <div className="h-20 w-20 bg-muted rounded-lg overflow-hidden flex-shrink-0 border border-border/50">
@@ -256,7 +264,13 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                                 )}
                             </div>
                             <div>
-                                <h4 className="font-bold text-lg text-foreground tracking-tight">{fullCurrentItem.name}</h4>
+                                <Link
+                                    href={`/inventory/${fullCurrentItem.id}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="block group/link"
+                                >
+                                    <h4 className="font-bold text-lg text-foreground tracking-tight group-hover/link:text-purple-600 transition-colors">{fullCurrentItem.name}</h4>
+                                </Link>
                                 <div className="text-[10px] font-mono text-muted-foreground mt-0.5">{fullCurrentItem.id}</div>
                                 <div className="flex flex-col gap-1.5 mt-1">
                                     <div className="text-sm text-muted-foreground">Location: {fullCurrentItem.locations?.[0]?.name || "Level 1"}</div>
@@ -271,17 +285,48 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                                         )}
                                     </div>
                                     {/* Synced Claw Settings */}
-                                    {clawSettings && (
+                                    {fullCurrentItem && (
                                         <div className="flex items-center gap-2 mt-2">
-                                            <Settings2 className="h-3 w-3 text-muted-foreground" />
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <span>C1:{clawSettings.c1}</span>
-                                                <span>C2:{clawSettings.c2}</span>
-                                                <span>C3:{clawSettings.c3}</span>
-                                                <span>C4:{clawSettings.c4}</span>
-                                                <span className="text-foreground font-medium">Payout: {clawSettings.playPerWin}</span>
-                                            </div>
-                                            <Badge variant="outline" className="text-[10px]">Synced</Badge>
+                                            {clawSettings ? (
+                                                <>
+                                                    <Settings2 className="h-3.5 w-3.5 text-purple-600" />
+                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                        <span title="Stage 1 Grip">C1:{clawSettings.c1}</span>
+                                                        <span title="Stage 2 Grip">C2:{clawSettings.c2}</span>
+                                                        <span title="Stage 3 Grip">C3:{clawSettings.c3}</span>
+                                                        <span title="Stage 4 (Win)">C4:{clawSettings.c4}</span>
+                                                        <span className="text-foreground font-semibold ml-1">Payout: 1 in {clawSettings.playPerWin}</span>
+                                                    </div>
+                                                    <Badge
+                                                        variant="outline"
+                                                        className="text-[10px] h-5 bg-purple-50 text-purple-700 border-purple-100 border cursor-pointer hover:bg-purple-100 transition-colors"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setIsClawSettingsOpen(true);
+                                                        }}
+                                                    >
+                                                        Synced
+                                                    </Badge>
+                                                </>
+                                            ) : (
+                                                <div className="flex items-center gap-2">
+                                                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded border border-dashed border-amber-300 bg-amber-50 text-[10px] text-amber-700">
+                                                        <AlertTriangle className="h-3 w-3" />
+                                                        Claw Settings Not Configured
+                                                    </div>
+                                                    <Button
+                                                        variant="link"
+                                                        size="sm"
+                                                        className="h-auto p-0 text-[10px] text-purple-700 font-bold"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setIsClawSettingsOpen(true);
+                                                        }}
+                                                    >
+                                                        Sync Now
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
@@ -297,7 +342,15 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                     )}
 
                     {fullCurrentItem ? (
-                        <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full" onClick={() => setConfirmClear(true)}>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setConfirmClear(true);
+                            }}
+                        >
                             <Trash2 className="h-5 w-5" />
                         </Button>
                     ) : (
@@ -323,7 +376,11 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                             const fullItem = items.find(i => i.id === queueItem.itemId);
 
                             return (
-                                <div key={index} className="border rounded-xl p-4 flex items-center gap-6 bg-card shadow-sm hover:translate-x-1 transition-all duration-200">
+                                <div
+                                    key={index}
+                                    className="border rounded-xl p-4 flex items-center gap-6 bg-card shadow-sm hover:translate-x-1 hover:shadow-md transition-all duration-200 cursor-pointer group/card"
+                                    onClick={() => setSelectedItemForDetail(fullItem || null)}
+                                >
                                     <div className="text-xl font-bold text-muted-foreground/40 w-8 text-center select-none">#{index + 1}</div>
 
                                     <div className="h-16 w-16 bg-muted rounded-lg overflow-hidden flex-shrink-0 border border-border/50">
@@ -335,7 +392,13 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                                     </div>
 
                                     <div className="flex-1 min-w-[120px]">
-                                        <div className="font-semibold text-foreground text-lg">{queueItem.name}</div>
+                                        <Link
+                                            href={`/inventory/${queueItem.itemId}`}
+                                            onClick={(e) => e.stopPropagation()}
+                                            className="block group/link"
+                                        >
+                                            <div className="font-semibold text-foreground text-lg group-hover/link:text-purple-600 transition-colors">{queueItem.name}</div>
+                                        </Link>
                                         <div className="text-[10px] font-mono text-muted-foreground">{queueItem.itemId}</div>
                                         <div className="text-sm text-muted-foreground">Status: <span className="text-foreground/80">Request</span></div>
                                     </div>
@@ -354,7 +417,10 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                                         variant="ghost"
                                         size="icon"
                                         className="h-10 w-10 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full ml-2"
-                                        onClick={() => setConfirmRemoveQueue({ index, item: queueItem })}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setConfirmRemoveQueue({ index, item: queueItem });
+                                        }}
                                     >
                                         <Trash2 className="h-5 w-5" />
                                     </Button>
@@ -449,6 +515,28 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>
+
+            {/* Item Details Pop-up */}
+            <StockItemDetailsDialog
+                isOpen={!!selectedItemForDetail}
+                onOpenChange={(open) => !open && setSelectedItemForDetail(null)}
+                item={selectedItemForDetail}
+                onEdit={() => { }} // Placeholder as parent doesn't handle edits for this context
+                onDelete={() => { }} // Placeholder
+                canPerformWriteActions={false}
+                canDelete={false}
+            />
+            {/* Claw Settings Dialog */}
+            {fullCurrentItem && (
+                <ClawSettingsDialog
+                    open={isClawSettingsOpen}
+                    onOpenChange={setIsClawSettingsOpen}
+                    item={fullCurrentItem}
+                    machine={machine}
+                    slotId={targetSlot.id}
+                    onSaved={() => loadClawSettings()}
+                />
+            )}
         </div>
     );
 }

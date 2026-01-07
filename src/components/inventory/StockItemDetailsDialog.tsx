@@ -235,7 +235,7 @@ export function StockItemDetailsDialog({
                                     <DetailRow label="Assigned Machines" icon={Gamepad2}>
                                         <div className="flex flex-col gap-1">
                                             {assignments.map((assignment, index) => (
-                                                <div key={assignment.machineId} className="flex items-center gap-2">
+                                                <div key={`${assignment.machineId}-${index}`} className="flex items-center gap-2">
                                                     <Link href={`/machines/${assignment.machineId}`} passHref>
                                                         <Button variant="link" className="p-0 h-auto text-sm text-foreground font-normal text-left" onClick={(e) => e.stopPropagation()}>
                                                             {assignment.machineName}

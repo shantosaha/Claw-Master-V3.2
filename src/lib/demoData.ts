@@ -139,3 +139,39 @@ export const DEMO_MAINTENANCE: MaintenanceTask[] = [
 ];
 
 
+export const DEMO_ITEM_MACHINE_SETTINGS: any[] = [
+    {
+        id: "ims-1",
+        itemId: "inv_plu_014",
+        itemName: "Disney - Angel (Pink)",
+        machineId: "mac_tc_01_p1_top",
+        machineName: "Trend #1 P1 - Top",
+        c1: 24,
+        c2: 18,
+        c3: 12,
+        c4: 24,
+        playPrice: 1.80,
+        playPerWin: 12,
+        expectedRevenue: 21.60,
+        lastUpdatedBy: "system",
+        lastUpdatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+    },
+    {
+        id: "ims-2",
+        itemId: "inv_plu_003",
+        itemName: "Kirby - Standard Pink (12cm)",
+        machineId: "mac_tc_02_p1_top",
+        machineName: "Trend #2 P1 - Top",
+        c1: 20,
+        c2: 15,
+        c3: 10,
+        c4: 24,
+        playPrice: 1.80,
+        playPerWin: 10,
+        expectedRevenue: 18.00,
+        lastUpdatedBy: "system",
+        lastUpdatedAt: new Date().toISOString(),
+        createdAt: new Date().toISOString()
+    }
+];

@@ -14,6 +14,7 @@ import { formatDate } from "@/lib/utils/date";
 import { useAuth } from "@/context/AuthContext";
 import { toast } from "sonner";
 import Link from "next/link";
+import { useData } from "@/context/DataProvider";
 import { Badge } from "@/components/ui/badge";
 import { RefreshCw, Save, Lock } from "lucide-react";
 import { PermissionGate } from "@/components/auth/PermissionGate";
@@ -26,6 +27,7 @@ interface SettingsPanelProps {
 
 export function SettingsPanel({ machineId, machineName, activeStockItem }: SettingsPanelProps) {
     const { user } = useAuth();
+    const { refreshMachines } = useData();
     const [activeTab, setActiveTab] = useState("playfield");
 
     // Existing playfield state
@@ -147,6 +149,8 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
 
             // 2. If there's an active stock item, also save to itemMachineSettingsService
             if (activeStockItem?.id) {
+                const playPrice = advancedSettings.cardCashPlayPrice || 1.80;
+
                 const itemSettingsData: Omit<ItemMachineSettings, 'id'> = {
                     itemId: activeStockItem.id,
                     itemName: activeStockItem.name,
@@ -156,9 +160,9 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                     c2,
                     c3,
                     c4,
-                    playPrice: 1.80, // Default, could be made configurable
+                    playPrice,
                     playPerWin: payoutRate,
-                    expectedRevenue: 1.80 * payoutRate,
+                    expectedRevenue: playPrice * payoutRate,
                     lastUpdatedBy: user.uid,
                     lastUpdatedAt: new Date().toISOString(),
                     createdAt: itemSettings?.createdAt || new Date().toISOString(),
@@ -195,6 +199,7 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
             });
 
             await loadSettings();
+            await refreshMachines();
         } catch (error) {
             console.error("Failed to save settings:", error);
             toast.error("Failed to save settings");
@@ -226,6 +231,7 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
             toast.success("Advanced Settings Saved", {
                 description: "Machine configuration updated successfully."
             });
+            await refreshMachines();
         } catch (error) {
             console.error("Failed to save advanced settings:", error);
             toast.error("Failed to save advanced settings");

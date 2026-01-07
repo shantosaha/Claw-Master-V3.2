@@ -17,7 +17,7 @@ import {
     serverTimestamp
 } from "firebase/firestore";
 import { db, isFirebaseInitialized } from "@/lib/firebase";
-import { DEMO_MACHINES, DEMO_STOCK, DEMO_ORDERS, DEMO_MAINTENANCE } from "@/lib/demoData";
+import { DEMO_MACHINES, DEMO_STOCK, DEMO_ORDERS, DEMO_MAINTENANCE, DEMO_ITEM_MACHINE_SETTINGS } from "@/lib/demoData";
 
 export const createFirestoreService = <T extends DocumentData>(collectionName: string) => {
     // Helper to get collection ref safely
@@ -61,6 +61,7 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
             case "stockItems": _localCache = JSON.parse(JSON.stringify(DEMO_STOCK)); break;
             case "reorderRequests": _localCache = JSON.parse(JSON.stringify(DEMO_ORDERS)); break;
             case "maintenanceTasks": _localCache = JSON.parse(JSON.stringify(DEMO_MAINTENANCE)); break;
+            case "itemMachineSettings": _localCache = JSON.parse(JSON.stringify(DEMO_ITEM_MACHINE_SETTINGS)); break;
             default: _localCache = [];
         }
 

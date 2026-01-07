@@ -82,7 +82,11 @@ export function ClawSettingsDialog({
                 setC2(15);
                 setC3(10);
                 setC4(24);
-                setPlayPrice(1.80);
+
+                // Use machine's pricing if available
+                const machinePrice = machine.advancedSettings?.cardCashPlayPrice || 1.80;
+                setPlayPrice(machinePrice);
+
                 setPlayPerWin(10);
                 setNotes("");
             }

@@ -101,8 +101,8 @@ export function MachineAssignmentBadge({
                     Assigned Machines ({count})
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {assignments.map((assignment) => (
-                    <DropdownMenuItem key={assignment.machineId} asChild>
+                {assignments.map((assignment, index) => (
+                    <DropdownMenuItem key={`${assignment.machineId}-${index}`} asChild>
                         <Link
                             href={`/machines/${assignment.machineId}`}
                             className="flex items-center justify-between gap-2 cursor-pointer"

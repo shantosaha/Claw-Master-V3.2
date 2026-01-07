@@ -238,7 +238,7 @@ export function MachineAssignmentHistory({
                             <div className="space-y-1.5">
                                 {sortedHistory.map((entry, index) => (
                                     <div
-                                        key={entry.id || index}
+                                        key={`${entry.id || 'history'}-${index}`}
                                         className={`p-2.5 rounded-lg border cursor-pointer transition-all hover:shadow-sm ${entry.isCurrent
                                             ? 'bg-primary/5 border-primary/20 hover:bg-primary/10'
                                             : 'bg-muted/20 border-border/50 hover:bg-muted/40'
