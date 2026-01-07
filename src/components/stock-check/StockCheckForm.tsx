@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo, useRef } from "react";
-import { maintenanceService, auditService, stockService, machineService, itemMachineSettingsService } from "@/services";
+import { maintenanceService, auditService, stockService, machineService, itemMachineSettingsService, appSettingsService } from "@/services";
 import { ArcadeMachine, ArcadeMachineSlot, StockItem, UpcomingStockItem, ItemMachineSettings } from "@/types";
 import { useData } from "@/context/DataProvider";
 import { useAuth } from "@/context/AuthContext";
@@ -72,6 +72,9 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { format, formatDistanceToNow } from "date-fns";
+import { getMachineStockItems } from "@/utils/machineAssignmentUtils";
+import { PendingReviewsTab } from "./PendingReviewsTab";
+import { pendingStockCheckService } from "@/services";
 
 // Types
 interface ItemCheckData {
@@ -106,6 +109,8 @@ interface StockCheckReport {
         totalItems: number;
         issuesFound: number;
     };
+    status?: 'pending' | 'approved' | 'discarded';
+    reviewedBy?: string;
 }
 
 interface LastCheckInfo {
@@ -239,6 +244,9 @@ export function StockCheckForm() {
     // History State
     const [history, setHistory] = useState<StockCheckReport[]>([]);
     const [historyLoading, setHistoryLoading] = useState(false);
+
+    // Pending Reviews Count
+    const [pendingCount, setPendingCount] = useState(0);
     const [lastCheckByMachine, setLastCheckByMachine] = useState<Record<string, LastCheckInfo>>({});
 
     // Synced Claw Settings State (keyed by itemId-machineId)
@@ -272,49 +280,25 @@ export function StockCheckForm() {
 
     // Resolve slots with assigned items and queued items with details
     const getMachineSlotData = (machine: ArcadeMachine): SlotWithItem[] => {
-        // Get all items assigned to this machine
-        const allAssignedItems = items.filter(item => item.assignedMachineId === machine.id);
+        // Use shared utility to get correct items based on machineAssignments source of truth
+        const { currentItems, queueItems } = getMachineStockItems(machine.id, items);
 
-        // Strategy: 
-        // 1. Look for 'Using' or 'Assigned' status for current item
-        // 2. Look for 'Upcoming' or 'Queue' for queue items
-        // 3. Fallback: First item is current, rest are queue
+        const currentItem = currentItems[0] || null;
 
-        let currentItem = allAssignedItems.find(i => i.assignedStatus === 'Using' || i.assignedStatus === 'Assigned');
+        const mappedQueueItems = queueItems.map(item => ({
+            itemId: item.id,
+            name: item.name,
+            imageUrl: item.imageUrl,
+            addedBy: "System",
+            addedAt: new Date(item.updatedAt || new Date()),
+            itemDetails: item
+        } as UpcomingStockItem & { itemDetails: StockItem }));
 
-        // Fallback if no specific status
-        if (!currentItem && allAssignedItems.length > 0) {
-            currentItem = allAssignedItems[0];
-        }
-
-        const pooledQueue = allAssignedItems
-            .filter(i => i.id !== currentItem?.id)
-            // Optional: Sort by something if needed, e.g. assignedAt
-            .map(item => ({
-                itemId: item.id,
-                name: item.name,
-                imageUrl: item.imageUrl,
-                addedBy: "System",
-                addedAt: new Date(),
-                itemDetails: item
-            } as UpcomingStockItem & { itemDetails: StockItem }));
-
-        // Map to slots - for now we just map to the first slot since user said "we are not using as slots"
-        // But we need to maintain the visual structure of slots if they exist physically.
-        // If specific slot assignment exists, use it.
-
-        return machine.slots.map((slot, index) => {
-            // If item has specific slot assignment, use it. matches slot.id
-            // Otherwise if index 0, place the main machine item here.
-
-            let slotItem = currentItem;
-            // logic can be refined: check i.assignedSlotId === slot.id
-
-            // Create a queue specific to this slot if needed, or just show the machine queue on the first slot
-            const slotQueue = index === 0 ? pooledQueue : [];
-
-            return { slot, assignedItem: index === 0 ? (currentItem || null) : null, queuedItems: slotQueue };
-        });
+        return machine.slots.map((slot, index) => ({
+            slot,
+            assignedItem: index === 0 ? currentItem : null,
+            queuedItems: index === 0 ? mappedQueueItems : []
+        }));
     };
 
     // Get all images for an item
@@ -336,38 +320,44 @@ export function StockCheckForm() {
 
     // Initialize states
     useEffect(() => {
-        if (machines.length > 0) { // Removed items dependency to strict init
+        if (machines.length > 0) {
             setMachineChecks(prev => {
-                const initial: Record<string, MachineCheckData> = { ...prev };
+                const updated: Record<string, MachineCheckData> = { ...prev };
                 machines.forEach(m => {
-                    if (!initial[m.id]) {
-                        initial[m.id] = { checked: false, note: "", status: m.status };
+                    if (!updated[m.id]) {
+                        // Brand new machine
+                        updated[m.id] = { checked: false, note: "", status: m.status };
+                    } else if (!updated[m.id].checked) {
+                        // Machine exists but hasn't been "started/checked" by user,
+                        // update its current status if changed in background
+                        if (updated[m.id].status !== m.status) {
+                            updated[m.id] = { ...updated[m.id], status: m.status };
+                        }
                     }
                 });
-                return initial;
+                return updated;
             });
 
             setItemChecks(prev => {
-                const initial: Record<string, Record<string, ItemCheckData>> = { ...prev };
+                const updated: Record<string, Record<string, ItemCheckData>> = { ...prev };
                 machines.forEach(m => {
-                    if (!initial[m.id]) initial[m.id] = {};
+                    if (!updated[m.id]) updated[m.id] = {};
 
-                    // We initialize state structure, but actual ITEM DATA comes from render
                     m.slots.forEach(slot => {
-                        if (!initial[m.id][slot.id]) {
-                            initial[m.id][slot.id] = {
+                        if (!updated[m.id][slot.id]) {
+                            updated[m.id][slot.id] = {
                                 verified: false,
                                 actualQty: null,
                                 issue: "",
                                 slotName: slot.name,
-                                itemName: "", // Deprecated in state, read from live item
-                                itemId: "", // Deprecated/Syncing
-                                systemQty: 0, // Deprecated/Syncing
+                                itemName: "",
+                                itemId: "",
+                                systemQty: 0,
                             };
                         }
                     });
                 });
-                return initial;
+                return updated;
             });
         }
     }, [machines]); // Only machines structure triggers init
@@ -393,18 +383,27 @@ export function StockCheckForm() {
         }
     }, [replacementItems]);
 
-    // Load history
     const loadHistory = async () => {
         setHistoryLoading(true);
         try {
-            const logs = await auditService.query(
+            // Fetch legacy history from audit logs
+            const legacyLogsReq = auditService.query(
                 where("entityType", "==", "stock"),
                 where("action", "==", "create"),
                 orderBy("timestamp", "desc"),
                 limit(50)
             );
 
-            const reports: StockCheckReport[] = logs
+            // Fetch new system history (pending & processed)
+            const [pendingReq, historyReq] = await Promise.all([
+                pendingStockCheckService.getPending(),
+                pendingStockCheckService.getHistory(),
+            ]);
+
+            const legacyLogs = await legacyLogsReq;
+
+            // Process legacy reports
+            const legacyReports: StockCheckReport[] = legacyLogs
                 .filter(log => log.entityId.startsWith("STK-CHK-"))
                 .map(log => ({
                     id: log.id,
@@ -412,13 +411,49 @@ export function StockCheckForm() {
                     timestamp: log.timestamp
                 }));
 
-            setHistory(reports);
+            // Process new system reports
+            const modernReports: StockCheckReport[] = [...pendingReq, ...historyReq].map(check => ({
+                ...check.report,
+                id: check.id, // Use submission ID
+                timestamp: check.submittedAt,
+                status: check.status,
+                reviewedBy: check.reviewedByName,
+                submittedBy: check.submittedBy,
+                submittedByName: check.submittedByName
+            } as unknown as StockCheckReport));
+
+            // Deduplicate: If we have a modern report for a specific machine/time, skip the legacy log for it
+            const uniqueReports: StockCheckReport[] = [];
+
+            // First pass: add modern reports
+            modernReports.forEach(report => {
+                uniqueReports.push(report);
+            });
+
+            // Second pass: add legacy reports if they don't look like they are already covered
+            legacyReports.forEach(report => {
+                // Check if we already have this ID or if the timestamp is exactly the same as a modern one
+                const isDuplicate = uniqueReports.some(r =>
+                    r.id === report.id ||
+                    (Math.abs(new Date(r.timestamp).getTime() - new Date(report.timestamp).getTime()) < 1000)
+                );
+
+                if (!isDuplicate) {
+                    uniqueReports.push(report);
+                }
+            });
+
+            // Sort by timestamp descending
+            uniqueReports.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+            setHistory(uniqueReports);
 
             const lastChecks: Record<string, LastCheckInfo> = {};
-            reports.forEach(report => {
+            uniqueReports.forEach(report => {
                 if (report.machineChecks) {
                     Object.keys(report.machineChecks).forEach(machineId => {
-                        if (!lastChecks[machineId]) {
+                        // Only update if newer
+                        const reportTime = new Date(report.timestamp);
+                        if (!lastChecks[machineId] || new Date(lastChecks[machineId].timestamp) < reportTime) {
                             lastChecks[machineId] = {
                                 timestamp: report.timestamp,
                                 by: report.submittedByName || report.submittedBy
@@ -430,6 +465,7 @@ export function StockCheckForm() {
             setLastCheckByMachine(lastChecks);
         } catch (error) {
             console.error("Failed to load history:", error);
+            toast.error("Failed to load history");
         } finally {
             setHistoryLoading(false);
         }
@@ -437,6 +473,21 @@ export function StockCheckForm() {
 
     useEffect(() => { loadHistory(); }, []);
     useEffect(() => { if (activeTab === "history") loadHistory(); }, [activeTab]);
+
+    // Load pending count for badge
+    useEffect(() => {
+        const loadPendingCount = async () => {
+            try {
+                const pendingItems = await pendingStockCheckService.getPending();
+                setPendingCount(pendingItems.length);
+            } catch (error) {
+                console.error("Failed to load pending count:", error);
+            }
+        };
+        loadPendingCount();
+        // Refresh when switching back to check tab
+        if (activeTab === "check") loadPendingCount();
+    }, [activeTab]);
 
     // Load all claw settings
     useEffect(() => {
@@ -544,9 +595,50 @@ export function StockCheckForm() {
     };
 
     const handleSubmit = async () => {
+        // Race condition prevention
+        if (submitting) return;
+
         if (!user) {
             toast.error("Please log in to submit checks");
             return;
+        }
+
+        // Blocking Rules Check
+        try {
+            console.log("[StockCheck] Checking if submission is blocked...");
+            const blockStatus = await appSettingsService.isSubmissionBlocked();
+            console.log("[StockCheck] Block status:", blockStatus);
+
+            if (blockStatus.blocked) {
+                console.warn("[StockCheck] Submission BLOCKED:", blockStatus.reason);
+                toast.error("Submission Blocked", {
+                    description: blockStatus.reason || "Please try again later."
+                });
+                return;
+            }
+
+            // Check for pending specific block
+            const settings = await appSettingsService.getStockCheckSettings();
+            console.log("[StockCheck] Current settings:", settings);
+
+            if (settings.queueMode === 'block_until_resolved') {
+                const pendingItems = await pendingStockCheckService.getPending();
+                console.log("[StockCheck] Pending items count:", pendingItems.length);
+
+                if (pendingItems.length > 0) {
+                    console.warn("[StockCheck] Queue BLOCKED: pending items exist");
+                    toast.error("Queue Blocked", {
+                        description: "Please resolve pending submissions before creating a new one."
+                    });
+                    return;
+                }
+            }
+
+            console.log("[StockCheck] ✓ Submission allowed");
+        } catch (error) {
+            console.error("Failed to check blocking status:", error);
+            // Fallback: allow submission if check fails? Or block?
+            // Safer to allow but warn? defaulting to allow as per service logic
         }
 
         if (stats.checkedMachines === 0 && stats.verifiedItems === 0) {
@@ -569,145 +661,7 @@ export function StockCheckForm() {
                     fullItemChecks[m.id][slot.id] = {
                         verified: check.verified,
                         actualQty: check.actualQty,
-                        issue: check.issue, // User input
-                        slotName: slot.name,
-                        itemName: assignedItem?.name || "Empty Slot", // Live data
-                        itemId: assignedItem?.id || "",
-                        systemQty: assignedItem?.totalQuantity || 0,
-                        itemImage: assignedItem?.imageUrl
-                    };
-                });
-            });
-
-            const report: Omit<StockCheckReport, 'id'> = {
-                machineChecks,
-                itemChecks: fullItemChecks,
-                replacementItemChecks,
-                submittedBy: user.uid,
-                submittedByName: user.displayName || user.email || "Unknown",
-                timestamp: new Date(),
-                stats: {
-                    checkedMachines: stats.checkedMachines,
-                    totalMachines: stats.totalMachines,
-                    verifiedItems: stats.verifiedItems,
-                    totalItems: stats.totalItems,
-                    issuesFound: stats.issuesFound
-                }
-            };
-
-            await logAction(
-                user.uid,
-                "create",
-                "stock",
-                "STK-CHK-" + Date.now(),
-                "Submitted Comprehensive Stock Check",
-                null,
-                report
-            );
-
-            let tasksCreated = 0;
-            let stocksUpdated = 0;
-            let machinesUpdated = 0;
-
-            // Update machine statuses
-            for (const [machineId, data] of Object.entries(machineChecks)) {
-                if (data.status) {
-                    const machine = machines.find(m => m.id === machineId);
-                    if (machine && machine.status !== data.status) {
-                        try {
-                            await machineService.update(machineId, { status: data.status });
-                            machinesUpdated++;
-                        } catch (e) {
-                            console.error(`Failed to update machine ${machineId} status:`, e);
-                        }
-                    }
-                }
-
-                if (data.note.trim() !== "") {
-                    await maintenanceService.add({
-                        machineId,
-                        description: `[Stock Check] General: ${data.note}`,
-                        priority: "medium",
-                        status: "open",
-                        createdBy: user.uid,
-                        createdAt: new Date(),
-                    } as any);
-                    tasksCreated++;
-                }
-            }
-
-            // Update stock quantities and create maintenance tasks
-            for (const [machineId, checks] of Object.entries(fullItemChecks)) {
-                for (const [slotId, check] of Object.entries(checks)) {
-                    // Update stock quantity if actual differs from system
-                    if (check.actualQty !== null && check.itemId && check.actualQty !== check.systemQty) {
-                        try {
-                            await stockService.update(check.itemId, { quantity: check.actualQty });
-                            stocksUpdated++;
-                        } catch (e) {
-                            console.error(`Failed to update stock ${check.itemId}:`, e);
-                        }
-                    }
-
-                    if (check.issue.trim() !== "") {
-                        await maintenanceService.add({
-                            machineId,
-                            description: `[Stock Check] ${check.slotName} - ${check.itemName}: ${check.issue}`,
-                            priority: "medium",
-                            status: "open",
-                            createdBy: user.uid,
-                            createdAt: new Date(),
-                        } as any);
-                        tasksCreated++;
-                    }
-                }
-            }
-
-            // Update replacement item quantities
-            for (const [itemId, check] of Object.entries(replacementItemChecks)) {
-                if (check.actualQty !== null && check.actualQty !== check.systemQty) {
-                    try {
-                        await stockService.update(itemId, { quantity: check.actualQty });
-                        stocksUpdated++;
-                    } catch (e) {
-                        console.error(`Failed to update replacement stock ${itemId}:`, e);
-                    }
-                }
-
-                if (check.issue.trim() !== "") {
-                    await maintenanceService.add({
-                        machineId: "storage",
-                        description: `[Stock Check] Replacement - ${check.itemName}: ${check.issue}`,
-                        priority: "medium",
-                        status: "open",
-                        createdBy: user.uid,
-                        createdAt: new Date(),
-                    } as any);
-                    tasksCreated++;
-                }
-            }
-
-            // Refresh data
-            if (refreshMachines) refreshMachines();
-            if (refreshItems) refreshItems();
-
-            toast.success(
-                `Report submitted! ${stocksUpdated} stocks updated, ${machinesUpdated} machine statuses changed, ${tasksCreated} maintenance tasks created.`
-            );
-
-            // Reset form
-            const resetMachineChecks: Record<string, MachineCheckData> = {};
-            const resetItemChecks: Record<string, Record<string, ItemCheckData>> = {};
-
-            machines.forEach(m => {
-                resetMachineChecks[m.id] = { checked: false, note: "", status: m.status };
-                resetItemChecks[m.id] = {};
-                const slotData = getMachineSlotData(m);
-                slotData.forEach(({ slot, assignedItem }) => {
-                    resetItemChecks[m.id][slot.id] = {
-                        verified: false,
-                        actualQty: null,
-                        issue: "",
+                        issue: check.issue,
                         slotName: slot.name,
                         itemName: assignedItem?.name || "Empty Slot",
                         itemId: assignedItem?.id || "",
@@ -717,26 +671,129 @@ export function StockCheckForm() {
                 });
             });
 
-            setMachineChecks(resetMachineChecks);
-            setItemChecks(resetItemChecks);
+            // Build report for pending review
+            const report = {
+                machineChecks,
+                itemChecks: fullItemChecks,
+                replacementItemChecks,
+                stats: {
+                    checkedMachines: stats.checkedMachines,
+                    totalMachines: stats.totalMachines,
+                    verifiedItems: stats.verifiedItems,
+                    totalItems: stats.totalItems,
+                    issuesFound: stats.issuesFound
+                }
+            };
 
-            const resetReplacementChecks: Record<string, ItemCheckData> = {};
-            replacementItems.forEach(item => {
-                const totalQty = item.locations?.reduce((sum, loc) => sum + loc.quantity, 0) || item.quantity || 0;
-                resetReplacementChecks[item.id] = {
-                    verified: false,
-                    actualQty: null,
-                    issue: "",
-                    slotName: "Storage",
-                    itemName: item.name,
-                    itemId: item.id,
-                    systemQty: totalQty,
-                    itemImage: item.imageUrl
-                };
-            });
-            setReplacementItemChecks(resetReplacementChecks);
+            // Capture system snapshot for comparison
+            const snapshotBefore = {
+                machines: machines.map(m => ({
+                    id: m.id,
+                    name: m.name,
+                    status: m.status as 'Online' | 'Offline' | 'Maintenance' | 'Error'
+                })),
+                items: items.map(i => ({
+                    id: i.id,
+                    name: i.name,
+                    quantity: i.totalQuantity || i.quantity || 0,
+                    assignedMachineId: i.assignedMachineId
+                })),
+                capturedAt: new Date()
+            };
 
-            loadHistory();
+            // CRITICAL: Create pending submission
+            await pendingStockCheckService.create(
+                report,
+                snapshotBefore,
+                user.uid,
+                user.displayName || user.email || "Unknown"
+            );
+
+            // CRITICAL: Record submission timestamp IMMEDIATELY (before UI reset)
+            // This ensures the next rapid click will be blocked
+            try {
+                await appSettingsService.recordSubmission();
+                console.log("[StockCheck] Submission timestamp recorded successfully");
+            } catch (err) {
+                console.error("[StockCheck] Failed to record submission timestamp:", err);
+                // Continue anyway - don't block the UI
+            }
+
+            // SUCCESS! - Reset form IMMEDIATELY
+            const resetForm = () => {
+                const resetMachineChecks: Record<string, MachineCheckData> = {};
+                const resetItemChecks: Record<string, Record<string, ItemCheckData>> = {};
+
+                machines.forEach(m => {
+                    resetMachineChecks[m.id] = { checked: false, note: "", status: m.status };
+                    resetItemChecks[m.id] = {};
+                    const slotData = getMachineSlotData(m);
+                    slotData.forEach(({ slot, assignedItem }) => {
+                        resetItemChecks[m.id][slot.id] = {
+                            verified: false,
+                            actualQty: null,
+                            issue: "",
+                            slotName: slot.name,
+                            itemName: assignedItem?.name || "Empty Slot",
+                            itemId: assignedItem?.id || "",
+                            systemQty: assignedItem?.totalQuantity || 0,
+                            itemImage: assignedItem?.imageUrl
+                        };
+                    });
+                });
+
+                setMachineChecks(resetMachineChecks);
+                setItemChecks(resetItemChecks);
+
+                const resetReplacementChecks: Record<string, ItemCheckData> = {};
+                replacementItems.forEach(item => {
+                    const totalQty = item.locations?.reduce((sum, loc) => sum + loc.quantity, 0) || item.quantity || 0;
+                    resetReplacementChecks[item.id] = {
+                        verified: false,
+                        actualQty: null,
+                        issue: "",
+                        slotName: "Storage",
+                        itemName: item.name,
+                        itemId: item.id,
+                        systemQty: totalQty,
+                        itemImage: item.imageUrl
+                    };
+                });
+                setReplacementItemChecks(resetReplacementChecks);
+            };
+
+            resetForm();
+            toast.success(
+                "Stock check submitted for review!",
+                { description: "An approver will review and apply the changes." }
+            );
+
+            // Switch to pending tab
+            setActiveTab("pending");
+
+            // Post-submission non-critical tasks (don't block reset)
+            const postSubmission = async () => {
+                try {
+                    // 1. Log to audit (long-term tracking)
+                    await logAction(
+                        user.uid,
+                        "create",
+                        "stock",
+                        "STK-CHK-" + Date.now(),
+                        "Submitted Stock Check for Review",
+                        null,
+                        { ...report, status: "pending_review" }
+                    );
+
+                    // 2. Update pending count
+                    const items = await pendingStockCheckService.getPending();
+                    setPendingCount(items.length);
+                } catch (err) {
+                    console.error("Post-submission tasks failed", err);
+                }
+            };
+
+            postSubmission();
 
         } catch (error) {
             console.error("Failed to submit stock check:", error);
@@ -775,10 +832,19 @@ export function StockCheckForm() {
             )}
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-                <TabsList className="grid w-full max-w-md grid-cols-2">
+                <TabsList className="grid w-full max-w-lg grid-cols-3">
                     <TabsTrigger value="check" className="gap-2">
                         <ClipboardCheck className="h-4 w-4" />
                         Stock Check
+                    </TabsTrigger>
+                    <TabsTrigger value="pending" className="gap-2">
+                        <AlertCircle className="h-4 w-4" />
+                        Pending
+                        {pendingCount > 0 && (
+                            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+                                {pendingCount}
+                            </Badge>
+                        )}
                     </TabsTrigger>
                     <TabsTrigger value="history" className="gap-2">
                         <History className="h-4 w-4" />
@@ -863,7 +929,7 @@ export function StockCheckForm() {
                                             <Label className="text-xs text-muted-foreground">Status:</Label>
                                             <Select
                                                 value={machineData.status || machine.status}
-                                                onValueChange={(val) => handleMachineStatus(machine.id, val as any)}
+                                                onValueChange={(val) => handleMachineStatus(machine.id, val as 'Online' | 'Offline' | 'Maintenance' | 'Error')}
                                             >
                                                 <SelectTrigger className="h-7 text-xs flex-1">
                                                     <SelectValue />
@@ -890,7 +956,8 @@ export function StockCheckForm() {
                                     <div className="p-3 space-y-2">
                                         {slotData.map(({ slot, assignedItem, queuedItems }) => {
                                             const check = machineItemChecks[slot.id] || { verified: false, actualQty: null, issue: "" };
-                                            const systemQty = assignedItem?.totalQuantity || 0;
+                                            // Calculate quantity from locations or fallback
+                                            const systemQty = assignedItem?.locations?.reduce((sum, loc) => sum + loc.quantity, 0) ?? assignedItem?.quantity ?? 0;
                                             const itemImages = getItemImages(assignedItem);
 
                                             return (
@@ -1007,7 +1074,7 @@ export function StockCheckForm() {
                                                                                 ) : (
                                                                                     <span className="text-xs font-medium truncate text-purple-700 block">{queued.name}</span>
                                                                                 )}
-                                                                                <span className="text-[10px] text-purple-500">Qty: <strong>{queuedItemFull?.totalQuantity || 0}</strong></span>
+                                                                                <span className="text-[10px] text-purple-500">Qty: <strong>{queuedItemFull?.locations?.reduce((sum, loc) => sum + loc.quantity, 0) ?? queuedItemFull?.totalQuantity ?? 0}</strong></span>
                                                                             </div>
                                                                         </div>
                                                                     );
@@ -1144,6 +1211,9 @@ export function StockCheckForm() {
                                                             <div>
                                                                 <div className="flex items-center gap-2">
                                                                     <p className="font-medium">Stock Check Report</p>
+                                                                    {report.status === 'approved' && <Badge variant="default" className="bg-green-600 hover:bg-green-700 text-xs">Approved</Badge>}
+                                                                    {report.status === 'discarded' && <Badge variant="destructive" className="text-xs">Rejected</Badge>}
+                                                                    {report.status === 'pending' && <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 hover:bg-yellow-200 text-xs">Pending</Badge>}
                                                                     {report.stats?.issuesFound > 0 && (
                                                                         <Badge variant="destructive" className="text-xs">
                                                                             {report.stats.issuesFound} issues
@@ -1323,6 +1393,11 @@ export function StockCheckForm() {
                             )}
                         </CardContent>
                     </Card>
+                </TabsContent>
+
+                {/* Pending Reviews Tab */}
+                <TabsContent value="pending" className="space-y-4 pb-20">
+                    <PendingReviewsTab />
                 </TabsContent>
             </Tabs>
         </>

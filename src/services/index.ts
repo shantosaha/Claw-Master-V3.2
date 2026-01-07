@@ -48,6 +48,13 @@ export { machineRevenueService } from "./machineRevenueService";
 export { snapshotService } from "./snapshotService";
 export { apiService } from "./apiService";
 
+// Stock Check Approval Workflow Services
+export { pendingStockCheckService } from "./pendingStockCheckService";
+export { notificationService } from "./notificationService";
+export { appSettingsService } from "./appSettingsService";
+export { roleService } from "./roleService";
+export { permissionService } from "./permissionService";
+
 // Setup synchronization between services (only for mock mode)
 if (!isFirebaseInitialized) {
     interface MockStockService {

@@ -2343,6 +2343,25 @@ export const mockMachineService = {
         }
     },
 
+    updateBatch: async (updates: { id: string; data: Partial<ArcadeMachine> }[]) => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        initializeMachines();
+        let changed = false;
+
+        updates.forEach(({ id, data }) => {
+            const index = inMemoryMachines.findIndex(m => m.id === id);
+            if (index !== -1) {
+                inMemoryMachines[index] = { ...inMemoryMachines[index], ...data };
+                changed = true;
+            }
+        });
+
+        if (changed) {
+            saveToStorage();
+            notifyListeners();
+        }
+    },
+
     remove: async (id: string): Promise<void> => {
         initializeMachines();
         inMemoryMachines = inMemoryMachines.filter(m => m.id !== id);

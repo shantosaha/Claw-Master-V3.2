@@ -13,6 +13,7 @@ import {
     limit,
     DocumentData,
     QueryConstraint,
+    writeBatch,
     serverTimestamp
 } from "firebase/firestore";
 import { db, isFirebaseInitialized } from "@/lib/firebase";
@@ -181,6 +182,38 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
                 ...data,
                 updatedAt: serverTimestamp(),
             });
+        },
+
+        // Batch update documents
+        updateBatch: async (updates: { id: string; data: Partial<T> }[]): Promise<void> => {
+            if (!isFirebaseInitialized) {
+                const list = getDemoData();
+                let paramsChanged = false;
+
+                updates.forEach(({ id, data }) => {
+                    const item = list.find((i) => (i as any).id === id);
+                    if (item) {
+                        Object.assign(item, { ...data, updatedAt: new Date() });
+                        paramsChanged = true;
+                    }
+                });
+
+                if (paramsChanged) {
+                    saveToStorage();
+                }
+                return;
+            }
+
+            const batch = writeBatch(db);
+            updates.forEach(({ id, data }) => {
+                const docRef = doc(db, collectionName, id);
+                batch.update(docRef, {
+                    ...data,
+                    updatedAt: serverTimestamp(),
+                });
+            });
+
+            await batch.commit();
         },
 
         // Delete document

@@ -15,6 +15,7 @@ import {
 import { Sidebar } from "./Sidebar"; // Reuse sidebar content for mobile
 import { useAuth } from "@/context/AuthContext";
 import { ModeToggle } from "@/components/mode-toggle";
+import { NotificationBell } from "@/components/notifications/NotificationBell";
 
 import { isFirebaseInitialized } from "@/lib/firebase";
 import Link from "next/link";
@@ -68,6 +69,7 @@ export function Header({ }: HeaderProps) {
                     </div>
                 </form>
             </div>
+            <NotificationBell />
             <ModeToggle />
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -94,3 +96,4 @@ export function Header({ }: HeaderProps) {
         </header>
     );
 }
+

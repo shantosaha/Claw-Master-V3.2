@@ -21,9 +21,10 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { StockCheckSettingsForm } from "@/components/stock-check/StockCheckSettingsForm";
 
 export default function SettingsPage() {
-    const { user } = useAuth();
+    const { user, canConfigureStockCheckSettings } = useAuth();
 
     // --- State Definitions ---
     // General
@@ -435,6 +436,9 @@ export default function SettingsPage() {
                         <TabsTrigger value="privacy">Privacy</TabsTrigger>
                         <TabsTrigger value="data">Data</TabsTrigger>
                         <TabsTrigger value="automation">Automation</TabsTrigger>
+                        {canConfigureStockCheckSettings() && (
+                            <TabsTrigger value="stock-check">Stock Check</TabsTrigger>
+                        )}
                         <TabsTrigger value="presets">Presets</TabsTrigger>
                         <TabsTrigger value="system">System</TabsTrigger>
                         <TabsTrigger value="integrations">Integrations</TabsTrigger>
@@ -817,6 +821,24 @@ export default function SettingsPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
+
+                    {/* Stock Check Tab */}
+                    {canConfigureStockCheckSettings() && (
+                        <TabsContent value="stock-check" className="space-y-4">
+                            <Card>
+                                <CardHeader>
+                                    <CardTitle className="flex items-center gap-2">
+                                        <ShieldCheck className="h-5 w-5" />
+                                        Stock Check Submission Rules
+                                    </CardTitle>
+                                    <CardDescription>Configure how stock check submissions are queued and processed.</CardDescription>
+                                </CardHeader>
+                                <CardContent>
+                                    <StockCheckSettingsForm />
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    )}
 
                     {/* Presets Tab */}
                     <TabsContent value="presets" className="space-y-4">

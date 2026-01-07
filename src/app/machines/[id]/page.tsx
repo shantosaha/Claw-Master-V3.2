@@ -57,9 +57,12 @@ export default function MachineDetailsPage() {
     const params = useParams();
     const router = useRouter();
     const searchParams = useSearchParams();
-    const { user } = useAuth();
+    const { user, hasPermission } = useAuth();
     const id = params.id as string;
     const slotId = searchParams.get('slotId');
+
+    // POC: Custom Permission Check
+    const canEditMachineName = hasPermission("edit_machine_name") || hasPermission("editMachines");
 
     // Use global data context
     const { machines, items, machinesLoading, itemsLoading, refreshMachines } = useData();
@@ -328,7 +331,7 @@ export default function MachineDetailsPage() {
                                 type="text"
                                 label="Machine Name"
                                 value={enrichedMachine.name}
-                                disabled={!isEditMode}
+                                disabled={!isEditMode || !canEditMachineName}
                                 onSave={(val) => handleFieldUpdate("name", "Machine Name", val, enrichedMachine.name)}
                             />
                             <InlineEditField

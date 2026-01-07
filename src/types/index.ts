@@ -1,4 +1,7 @@
-export type Role = 'crew' | 'tech' | 'manager' | 'admin';
+export type Role = string;
+
+// System role IDs (built-in, cannot be deleted)
+export const SYSTEM_ROLES = ['crew', 'claw_staff', 'tech', 'supervisor', 'manager', 'admin'] as const;
 
 export interface UserProfile {
     uid: string;
@@ -10,6 +13,62 @@ export interface UserProfile {
         theme?: 'light' | 'dark' | 'system';
         layout?: Record<string, unknown>;
     };
+    permissions?: {
+        // Stock Check
+        stockCheckSubmit?: boolean;      // Can submit stock checks for review
+        stockCheckApprove?: boolean;     // Can approve/reject pending submissions
+        stockCheckSettings?: boolean;    // Can configure queue settings
+        // Inventory
+        viewInventory?: boolean;
+        editInventory?: boolean;
+        // Machines
+        viewMachines?: boolean;
+        editMachines?: boolean;
+        // Maintenance
+        viewMaintenance?: boolean;
+        editMaintenance?: boolean;
+        // Admin
+        viewRevenue?: boolean;
+        viewAnalytics?: boolean;
+        viewTeam?: boolean;
+        editTeam?: boolean;
+        editRoles?: boolean;        // Can create/edit/delete custom roles
+    };
+}
+
+/**
+ * Custom role definition with default permissions
+ */
+export interface CustomRole {
+    id: string;                    // Unique slug ID (e.g., "claw_staff")
+    name: string;                  // Display name (e.g., "Claw Staff")
+    description: string;           // Role description
+    icon?: string;                 // Lucide icon name (e.g., "Shield", "Wrench")
+    color?: 'default' | 'destructive' | 'secondary' | 'outline';
+    isSystem?: boolean;            // true for built-in roles (cannot delete)
+    permissions: UserProfile['permissions'];  // Default permissions for this role
+    sortOrder: number;             // Display order (lower = first)
+    createdAt: Date | string;
+    updatedAt: Date | string;
+}
+
+/**
+ * Custom permission definition
+ */
+export interface PermissionDef {
+    id: string;                    // Key used in code (e.g. 'edit_machine_name')
+    name: string;                  // Display name (e.g. 'Edit Machine Name')
+    description: string;           // Helper text
+    isSystem: boolean;             // Cannot be deleted if true
+
+    // Technical Configuration (for custom permissions)
+    targetEntity?: 'machine' | 'inventory' | 'user' | 'maintenance' | 'revenue' | 'settings' | 'stockCheck' | 'custom';
+    actionType?: 'create' | 'read' | 'update' | 'delete' | 'approve' | 'configure' | 'custom';
+    targetField?: string;          // Specific field being controlled (e.g., "name", "status", "settings")
+    customAction?: string;         // For 'custom' action type, describe the specific action
+
+    createdAt: Date | string;
+    updatedAt: Date | string;
 }
 
 // ============================================================================
@@ -529,3 +588,114 @@ export interface Snapshot {
     createdBy: string;
     createdAt: Date | string;
 }
+
+// ============================================================================
+// Stock Check Approval Workflow Types
+// ============================================================================
+
+/**
+ * System state snapshot at time of stock check submission
+ * Used for before/after comparison in approval view
+ */
+export interface SystemSnapshot {
+    machines: {
+        id: string;
+        name: string;
+        status: 'Online' | 'Offline' | 'Maintenance' | 'Error';
+    }[];
+    items: {
+        id: string;
+        name: string;
+        quantity: number;
+        assignedMachineId?: string | null;
+    }[];
+    capturedAt: Date | string;
+}
+
+/**
+ * Pending stock check submission awaiting approval
+ */
+export interface PendingStockCheck {
+    id: string;
+    status: 'pending' | 'approved' | 'discarded';
+
+    // Submission data (from StockCheckForm)
+    report: {
+        machineChecks: Record<string, {
+            checked: boolean;
+            note: string;
+            status?: 'Online' | 'Offline' | 'Maintenance' | 'Error';
+        }>;
+        itemChecks: Record<string, Record<string, {
+            verified: boolean;
+            actualQty: number | null;
+            issue: string;
+            slotName: string;
+            itemName: string;
+            itemId: string;
+            systemQty: number;
+            itemImage?: string;
+        }>>;
+        replacementItemChecks: Record<string, {
+            verified: boolean;
+            actualQty: number | null;
+            issue: string;
+            itemName: string;
+            itemId: string;
+            systemQty: number;
+        }>;
+        stats: {
+            checkedMachines: number;
+            totalMachines: number;
+            verifiedItems: number;
+            totalItems: number;
+            issuesFound: number;
+        };
+    };
+
+    // Snapshot of system state at submission time
+    snapshotBefore: SystemSnapshot;
+
+    // Submission metadata
+    submittedBy: string;
+    submittedByName: string;
+    submittedAt: Date | string;
+
+    // Review data (populated on approve/discard)
+    reviewedBy?: string;
+    reviewedByName?: string;
+    reviewedAt?: Date | string;
+    rejectionReason?: string;
+
+    // For 12-hour restore window
+    discardedAt?: Date | string;
+}
+
+/**
+ * In-app notification
+ */
+export interface AppNotification {
+    id: string;
+    userId: string;                    // Recipient
+    type: 'stock_check_approved' | 'stock_check_rejected' | 'stock_check_pending' | 'general';
+    title: string;
+    message: string;
+    data?: {
+        submissionId?: string;
+        link?: string;
+    };
+    read: boolean;
+    createdAt: Date | string;
+}
+
+/**
+ * App-wide settings for stock check queue behavior
+ */
+export interface StockCheckSettings {
+    queueMode: 'allow_multiple' | 'block_until_resolved' | 'block_for_duration';
+    blockDurationMinutes?: number;     // If mode is 'block_for_duration' (30, 60, 120, 240, 1440)
+    lastSubmissionAt?: Date | string;  // Track for duration blocking
+    updatedBy?: string;
+    updatedAt?: Date | string;
+}
+

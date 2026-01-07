@@ -110,6 +110,27 @@ export const mockInventoryService = {
         }
     },
 
+    updateBatch: async (updates: { id: string; data: Partial<StockItem> }[]) => {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        let changed = false;
+
+        updates.forEach(({ id, data }) => {
+            const index = inMemoryItems.findIndex(i => i.id === id);
+            if (index !== -1) {
+                inMemoryItems[index] = {
+                    ...inMemoryItems[index],
+                    ...data,
+                    updatedAt: new Date()
+                };
+                changed = true;
+            }
+        });
+
+        if (changed) {
+            notifyListeners();
+        }
+    },
+
     remove: async (id: string) => {
         await new Promise(resolve => setTimeout(resolve, 500));
         inMemoryItems = inMemoryItems.filter(i => i.id !== id);
