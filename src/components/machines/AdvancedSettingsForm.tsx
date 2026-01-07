@@ -52,7 +52,7 @@ export function AdvancedSettingsForm({ settings, onChange, disabled }: AdvancedS
                         </div>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="space-y-2">
-                                <Label htmlFor="mainCategory" className="text-xs">Main Category</Label>
+                                <Label htmlFor="mainCategory" className="text-xs">Group (Direct)</Label>
                                 <Select
                                     value={settings.mainCategory || "Group 4-Cranes"}
                                     onValueChange={(val) => handleChange("mainCategory", val)}
@@ -69,14 +69,14 @@ export function AdvancedSettingsForm({ settings, onChange, disabled }: AdvancedS
                                 </Select>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="subCategory" className="text-xs">Sub Category</Label>
+                                <Label htmlFor="subCategory" className="text-xs">Sub Group (Direct)</Label>
                                 <Input
                                     id="subCategory"
                                     className="h-8 text-sm"
                                     value={settings.subCategory || ""}
                                     onChange={(e) => handleChange("subCategory", e.target.value)}
                                     disabled={disabled}
-                                    placeholder="e.g. Medium"
+                                    placeholder="e.g. Small"
                                 />
                             </div>
                         </div>
@@ -463,6 +463,68 @@ export function AdvancedSettingsForm({ settings, onChange, disabled }: AdvancedS
                                 value={settings.coinsDispensedPerPulse ?? 1}
                                 onChange={(e) => handleChange("coinsDispensedPerPulse", parseInt(e.target.value))}
                                 disabled={disabled}
+                            />
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* API Sync Stats */}
+            <Card>
+                <CardHeader className="pb-3 px-4">
+                    <CardTitle className="text-base">API Sync Stats</CardTitle>
+                    <CardDescription className="text-xs">Data synced from Intercard API</CardDescription>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                        <div className="space-y-2">
+                            <Label htmlFor="cashDebitBonus" className="text-[10px] truncate block" title="Cash Debit Bonus">Cash Debit Bonus</Label>
+                            <div className="relative">
+                                <span className="absolute left-2 top-2 text-muted-foreground text-xs">$</span>
+                                <Input
+                                    id="cashDebitBonus"
+                                    type="number"
+                                    step="0.01"
+                                    className="pl-5 h-8 text-sm"
+                                    value={settings.cashDebitBonus ?? 0}
+                                    onChange={(e) => handleChange("cashDebitBonus", parseFloat(e.target.value))}
+                                    disabled={disabled}
+                                />
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="pointsPerPlay" className="text-[10px] truncate block" title="Points Per Play">Points/Play</Label>
+                            <Input
+                                id="pointsPerPlay"
+                                type="number"
+                                className="h-8 text-sm"
+                                value={settings.pointsPerPlay ?? 0}
+                                onChange={(e) => handleChange("pointsPerPlay", parseInt(e.target.value))}
+                                disabled={disabled}
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="standardPlays" className="text-[10px] truncate block" title="Standard Plays (API Sync)">Standard Plays</Label>
+                            <Input
+                                id="standardPlays"
+                                type="number"
+                                className="h-8 text-sm bg-muted/50"
+                                value={settings.standardPlays ?? 0}
+                                onChange={(e) => handleChange("standardPlays", parseInt(e.target.value))}
+                                disabled={disabled}
+                                title="Synced from API"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="empPlays" className="text-[10px] truncate block" title="Employee Plays (API Sync)">Emp Plays</Label>
+                            <Input
+                                id="empPlays"
+                                type="number"
+                                className="h-8 text-sm bg-muted/50"
+                                value={settings.empPlays ?? 0}
+                                onChange={(e) => handleChange("empPlays", parseInt(e.target.value))}
+                                disabled={disabled}
+                                title="Synced from API"
                             />
                         </div>
                     </div>

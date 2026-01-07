@@ -268,7 +268,7 @@ export default function MachineDetailsPage() {
     if (!enrichedMachine) return <div>Machine not found</div>;
 
     const currentSlot = slotId ? enrichedMachine.slots.find(s => s.id === slotId) : null;
-    const displayTitle = currentSlot ? `${enrichedMachine.name} - ${currentSlot.name}` : enrichedMachine.name;
+    const displayTitle = currentSlot && currentSlot.name !== "Main" ? `${enrichedMachine.name} - ${currentSlot.name}` : enrichedMachine.name;
     const displayStatus = currentSlot ? currentSlot.status : enrichedMachine.status;
 
     return (
@@ -364,6 +364,13 @@ export default function MachineDetailsPage() {
                                         value={enrichedMachine.tag || ""}
                                         disabled={!isEditMode}
                                         onSave={(val) => handleFieldUpdate("tag", "API Tag", val, enrichedMachine.tag)}
+                                    />
+                                    <InlineEditField
+                                        type="text"
+                                        label="Store Location"
+                                        value={enrichedMachine.storeLocation || ""}
+                                        disabled={!isEditMode}
+                                        onSave={(val) => handleFieldUpdate("storeLocation", "Store Location", val, enrichedMachine.storeLocation)}
                                     />
                                     <InlineEditField
                                         type="select"

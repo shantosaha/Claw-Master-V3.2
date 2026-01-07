@@ -48,6 +48,8 @@ import { DatePickerWithRange } from "@/components/analytics/DateRangePicker";
 import { GlobalServiceHistoryTable } from "@/components/machines/GlobalServiceHistoryTable";
 import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
 import { MachineComparisonTable } from "@/components/machines/MachineComparisonTable";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 // Custom hook for monitoring data
 function useMonitoring() {
@@ -165,22 +167,48 @@ function MachineStatusCard({ machine, onAction }: { machine: ExtendedMachineStat
                 <div className="space-y-3">
                     {/* Header with Image */}
                     <div className="flex gap-3">
-                        {/* Machine Image (Small) */}
-                        <div className="h-16 w-16 bg-muted rounded-md flex-shrink-0 overflow-hidden border">
-                            {machine.imageUrl ? (
-                                <img src={machine.imageUrl} alt={machine.name} className="h-full w-full object-cover" />
-                            ) : (
-                                <div className="h-full w-full flex items-center justify-center bg-secondary">
-                                    <View className="h-6 w-6 text-muted-foreground opacity-20" />
+                        {/* Machine Image (Small) - Click to Zoom */}
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <div className="h-16 w-16 bg-muted rounded-md flex-shrink-0 overflow-hidden border cursor-pointer hover:opacity-80 transition-opacity">
+                                    {machine.imageUrl ? (
+                                        <img src={machine.imageUrl} alt={machine.name} className="h-full w-full object-cover" />
+                                    ) : (
+                                        <div className="h-full w-full flex items-center justify-center bg-secondary">
+                                            <View className="h-6 w-6 text-muted-foreground opacity-20" />
+                                        </div>
+                                    )}
                                 </div>
-                            )}
-                        </div>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-3xl w-full p-0 overflow-hidden bg-transparent border-none shadow-none">
+                                <VisuallyHidden>
+                                    <DialogTitle>{machine.name} Image</DialogTitle>
+                                </VisuallyHidden>
+                                <div className="relative w-full h-full flex items-center justify-center">
+                                    {machine.imageUrl ? (
+                                        <img
+                                            src={machine.imageUrl}
+                                            alt={machine.name}
+                                            className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                                        />
+                                    ) : (
+                                        <div className="w-64 h-64 bg-background rounded-lg flex items-center justify-center">
+                                            <View className="h-16 w-16 text-muted-foreground opacity-20" />
+                                        </div>
+                                    )}
+                                </div>
+                            </DialogContent>
+                        </Dialog>
 
                         {/* Name and Info */}
                         <div className="flex-1 min-w-0">
-                            <h3 className="font-semibold text-sm truncate w-full" title={machine.name}>
+                            <Link
+                                href={`/machines/${machine.id}`}
+                                className="font-bold text-xs leading-none hover:underline hover:text-primary block mb-1 line-clamp-2"
+                                title={machine.name}
+                            >
                                 {machine.name}
-                            </h3>
+                            </Link>
                             <p className="text-xs text-muted-foreground truncate mb-1">
                                 {machine.location}
                             </p>

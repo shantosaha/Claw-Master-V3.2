@@ -390,6 +390,7 @@ export interface ArcadeMachine {
     group?: string;
     subGroup?: string;
     tag?: string;
+    storeLocation?: string;  // Store ID from API (e.g., "KOKO 614")
 
     physicalConfig: 'single' | 'multi_4_slot' | 'dual_module' | 'multi_dual_stack';
     status: 'Online' | 'Offline' | 'Maintenance' | 'Error';
@@ -460,6 +461,12 @@ export interface AdvancedMachineSettings {
     touchEnabled?: boolean;
     eclipseFeature?: boolean;
     enableMobileIReader?: boolean;
+
+    // API Sync Stats (from Intercard)
+    cashDebitBonus?: number;    // Bonus cash debit amount
+    pointsPerPlay?: number;     // Points earned per play
+    standardPlays?: number;     // Synced: standard plays count
+    empPlays?: number;          // Synced: employee plays count
 }
 
 // ============================================================================
