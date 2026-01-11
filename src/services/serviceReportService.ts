@@ -1,11 +1,104 @@
 import { ServiceReport } from "@/types";
+import { appSettingsService } from "./appSettingsService";
 
 class ServiceReportService {
     // In a real app, this would fetch from a database or the JotForm API (if available via proxy)
     // For now, we simulate fetching stored reports
     async getReports(machineId: string): Promise<ServiceReport[]> {
-        // Simulate delay
-        await new Promise(resolve => setTimeout(resolve, 800));
+        // Get the configured API endpoint
+        const apiSettings = await appSettingsService.getApiSettings();
+
+        if (!apiSettings.isEnabled) {
+            console.log("[ServiceReport] JotForm API is disabled, using mock data");
+            return this.getMockReports();
+        }
+
+        // Try to fetch from the local mock API via our Next.js proxy
+        try {
+            const endpoint = `/api/jotform/${apiSettings.jotformFormId}`;
+            console.log(`[ServiceReport] Fetching from: ${endpoint}`);
+
+            const response = await fetch(endpoint, {
+                cache: 'no-store' // Disable caching for fresh data
+            });
+
+            if (response.ok) {
+                const rawData = await response.json();
+                console.log("Data received from API:", rawData);
+
+                // The API returns { status: "success", response: [...] }
+                // Extract the actual data array from the nested structure
+                let dataArray: any[] = [];
+                if (rawData && rawData.response && Array.isArray(rawData.response)) {
+                    dataArray = rawData.response;
+                } else if (Array.isArray(rawData)) {
+                    dataArray = rawData;
+                } else if (rawData && !rawData.status) {
+                    dataArray = [rawData];
+                }
+
+                console.log("Extracted data array length:", dataArray.length);
+
+                if (dataArray.length > 0) {
+                    return dataArray.map((item: any, index: number) => {
+                        // Very flexible field finder
+                        const val = (keys: string[]) => {
+                            for (const k of keys) {
+                                // Try exact match
+                                if (item[k] !== undefined) return item[k];
+                                // Try case-insensitive and stripped match
+                                const foundKey = Object.keys(item).find(ik =>
+                                    ik.toLowerCase().replace(/[\s_-]/g, '') === k.toLowerCase()
+                                );
+                                if (foundKey) return item[foundKey];
+                            }
+                            return undefined;
+                        };
+
+                        // Specific mapping based on curl output provided by user
+                        // { submissionDate, tag, location, firstName, lastName, payoutSettings, C1...C4, imageUrl[], remarks }
+
+                        // ID generation: no unique ID in response, so composite key
+                        const tag = String(val(['tag', 'Tag', 'machineId', 'assetTag']) || "");
+                        const dateStr = val(['submissionDate', 'timestamp', 'date', 'CreatedAt', 'Time']) as string;
+                        const dateObj = dateStr ? new Date(dateStr) : new Date();
+
+                        const id = val(['id', '_id', 'SubmissionID']) || `${tag}_${dateObj.getTime()}_${Math.floor(Math.random() * 1000)}`;
+
+                        return {
+                            id: String(id),
+                            machineId: tag || machineId || "unknown",
+                            machineName: tag ? `Machine ${tag}` : (String(val(['machineName', 'machine_name', 'Description', 'Name']) || "Unknown Machine")),
+                            location: String(val(['location', 'StoreLocation', 'Store']) || "614"),
+                            staffName: `${val(['firstName', 'first_name']) || ''} ${val(['lastName', 'last_name']) || ''}`.trim() || String(val(['staffName', 'staff_name', 'Staff']) || "Staff"),
+                            c1: Number(val(['C1', 'c1', 'Catch']) || 0),
+                            c2: Number(val(['C2', 'c2', 'Top']) || 0),
+                            c3: Number(val(['C3', 'c3', 'Move']) || 0),
+                            c4: Number(val(['C4', 'c4', 'MaxPower', 'Strength']) || 0),
+                            playsPerWin: Number(val(['payoutSettings', 'playsPerWin', 'plays_per_win', 'Target']) || 0),
+                            inflowSku: tag,
+                            remarks: String(val(['remarks', 'notes', 'Review', 'Comment', 'Notes']) || ""),
+                            // Handle imageUrl being an array or string
+                            imageUrl: Array.isArray(val(['imageUrl', 'image_url', 'Image', 'Photo']))
+                                ? val(['imageUrl', 'image_url', 'Image', 'Photo'])[0]
+                                : val(['imageUrl', 'image_url', 'Image', 'Photo']) || null,
+                            photo1: Array.isArray(val(['photo1', 'Photo', 'TakeaPhoto', 'FileUpload', 'Image']))
+                                ? val(['photo1', 'Photo', 'TakeaPhoto', 'FileUpload', 'Image'])[0]
+                                : val(['photo1', 'Photo', 'TakeaPhoto', 'FileUpload', 'Image']) || undefined,
+                            timestamp: dateObj
+                        };
+                    });
+                }
+            } else {
+                console.warn("JotForm API returned error status:", response.status);
+            }
+        } catch (error) {
+            console.error("Fetch Error:", error);
+        }
+
+        // FALLBACK: Only if API fails or returns no data
+        console.log("Using fallback mock data");
+        await new Promise(resolve => setTimeout(resolve, 500));
 
         // Mock Data Generation
         if (machineId === "GLOBAL_FETCH") {
@@ -62,10 +155,17 @@ class ServiceReportService {
             ] as any[];
         }
 
-        const mockReports: ServiceReport[] = [
+        return this.getMockReports();
+    }
+
+    /**
+     * Returns mock data when API is disabled or unavailable
+     */
+    getMockReports(): ServiceReport[] {
+        return [
             {
                 id: "rep_001",
-                machineId: machineId,
+                machineId: "mock",
                 machineName: "CLAW-001",
                 location: "Burwood",
                 staffName: "John Doe",
@@ -74,14 +174,14 @@ class ServiceReportService {
                 c3: 10,
                 c4: 30,
                 playsPerWin: 20,
-                inflowSku: machineId,
+                inflowSku: "mock",
                 remarks: "Adjusted C1 strength due to weak grip complaints.",
                 imageUrl: "https://picsum.photos/seed/claw1/200/200",
                 timestamp: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
             },
             {
                 id: "rep_002",
-                machineId: machineId,
+                machineId: "mock",
                 machineName: "CLAW-001",
                 location: "Burwood",
                 staffName: "Jane Smith",
@@ -90,23 +190,197 @@ class ServiceReportService {
                 c3: 10,
                 c4: 30,
                 playsPerWin: 20,
-                inflowSku: machineId,
+                inflowSku: "mock",
                 remarks: "Routine cleaning and sensor check. All good.",
                 timestamp: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 7 days ago
             }
         ];
-        return mockReports;
     }
 
-    async submitReport(data: Omit<ServiceReport, "id" | "timestamp">): Promise<boolean> {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1500));
+    async submitReport(data: FormData | Omit<ServiceReport, "id" | "timestamp">): Promise<boolean> {
+        console.log("[ServiceReport] Submitting report...");
 
-        // In a real app, this would be:
-        // await axios.post('/api/integrations/jotform/submit', data);
-        console.log("Submitting to JotForm Backend Proxy:", data);
+        try {
+            const isFormData = data instanceof FormData;
+            const response = await fetch('/api/jotform/submit', {
+                method: 'POST',
+                headers: isFormData ? {} : {
+                    'Content-Type': 'application/json',
+                },
+                body: isFormData ? data : JSON.stringify(data),
+            });
 
-        return true;
+            const result = await response.json();
+
+            if (result.success) {
+                console.log("[ServiceReport] Submission successful:", result.message);
+                return true;
+            } else {
+                console.error("[ServiceReport] Submission failed:", result.error);
+                throw new Error(result.error || "Submission failed");
+            }
+        } catch (error) {
+            console.error("[ServiceReport] Error submitting report:", error);
+            throw error;
+        }
+    }
+
+    /**
+     * Syncs the latest C1-C4 and payout settings from JotForm submissions to machines.
+     * For each unique machine tag, finds the most recent submission and updates PlayfieldSettings.
+     * @returns Object with sync statistics
+     */
+    async syncLatestSettingsToMachines(): Promise<{ synced: number; errors: string[] }> {
+        const errors: string[] = [];
+        let synced = 0;
+
+        try {
+            // Import services dynamically to avoid circular dependencies
+            const { machineService, settingsService, stockService, itemMachineSettingsService } = await import("@/services");
+
+            // Fetch all reports
+            const reports = await this.getReports("GLOBAL_FETCH");
+            console.log(`[Sync] Fetched ${reports.length} reports`);
+
+            if (reports.length === 0) {
+                console.log("[Sync] No reports to sync");
+                return { synced: 0, errors: [] };
+            }
+
+            // Fetch all items for stock assignment info
+            const items = await stockService.getAll();
+
+            // Sort by timestamp descending to get latest first
+            const sortedReports = reports.sort((a, b) =>
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            );
+
+            // Group by tag (inflowSku) and keep only the latest for each
+            const latestByTag = new Map<string, ServiceReport>();
+            for (const report of sortedReports) {
+                const tag = report.inflowSku || report.machineId;
+                if (tag && tag !== "unknown" && !latestByTag.has(tag)) {
+                    latestByTag.set(tag, report);
+                }
+            }
+
+            console.log(`[Sync] Found ${latestByTag.size} unique machine tags:`, Array.from(latestByTag.keys()));
+
+            // Get all machines to match tags
+            const machines = await machineService.getAll();
+            console.log(`[Sync] Found ${machines.length} machines in system`);
+
+            const tagToMachinesMap = new Map<string, { id: string; name: string }[]>();
+
+            for (const machine of machines) {
+                const addMachineToTag = (tag: string) => {
+                    const existing = tagToMachinesMap.get(tag) || [];
+                    tagToMachinesMap.set(tag, [...existing, { id: machine.id, name: machine.name }]);
+                };
+
+                if (machine.tag !== undefined) {
+                    addMachineToTag(String(machine.tag));
+                }
+                if (machine.assetTag) {
+                    addMachineToTag(machine.assetTag);
+                }
+            }
+
+            console.log(`[Sync] Machine tag lookup map has ${tagToMachinesMap.size} unique keys`);
+
+            // Track unmatched tags for debugging
+            const unmatchedTags: string[] = [];
+
+            // Sync each machine's settings
+            for (const [tag, report] of latestByTag) {
+                const machinesToUpdate = tagToMachinesMap.get(tag);
+                if (!machinesToUpdate || machinesToUpdate.length === 0) {
+                    unmatchedTags.push(tag);
+                    continue;
+                }
+
+                for (const machine of machinesToUpdate) {
+                    try {
+                        // Get full machine data for assetTag and active stock
+                        const fullMachine = machines.find(m => m.id === machine.id);
+                        const assetTag = fullMachine?.assetTag || tag;
+
+                        // Find active stock for this machine
+                        const machineItems = items.filter((item: any) => item.assignedMachineId === machine.id);
+                        const activeItem = machineItems.find((item: any) => item.assignedStatus === 'Assigned');
+
+                        // 1. ALWAYS ADD to History (PlayfieldSettings)
+                        const historyEntry = {
+                            machineId: machine.id,
+                            machineName: machine.name,
+                            assetTag,
+                            c1: isNaN(report.c1) ? undefined : report.c1,
+                            c2: isNaN(report.c2) ? undefined : report.c2,
+                            c3: isNaN(report.c3) ? undefined : report.c3,
+                            c4: isNaN(report.c4) ? undefined : report.c4,
+                            payoutRate: isNaN(report.playsPerWin) ? undefined : report.playsPerWin,
+                            imageUrl: report.photo1 || report.imageUrl,
+                            stockItemId: activeItem?.id,
+                            stockItemName: activeItem?.name,
+                            timestamp: new Date(),
+                            setBy: report.staffName || "JotForm Sync"
+                        };
+
+                        await settingsService.add(historyEntry);
+                        console.log(`Added history setting for ${machine.name} (tag: ${tag})`);
+
+                        // 2. UPSERT ItemMachineSettings if active stock exists
+                        if (activeItem?.id) {
+                            const allItemSettings = await itemMachineSettingsService.getAll();
+                            const existingItemSettings = allItemSettings.find(
+                                (s: any) => s.itemId === activeItem.id && s.machineId === machine.id
+                            );
+
+                            const itemSettingsData = {
+                                itemId: activeItem.id,
+                                itemName: activeItem.name,
+                                machineId: machine.id,
+                                machineName: machine.name,
+                                c1: historyEntry.c1,
+                                c2: historyEntry.c2,
+                                c3: historyEntry.c3,
+                                c4: historyEntry.c4,
+                                playPrice: 0, // Preserve or default? (0 means unchanged usually)
+                                playPerWin: historyEntry.payoutRate,
+                                lastUpdatedBy: "JotForm Sync",
+                                lastUpdatedAt: new Date().toISOString(),
+                                createdAt: existingItemSettings?.createdAt || new Date().toISOString(),
+                            };
+
+                            if (existingItemSettings) {
+                                await itemMachineSettingsService.update(existingItemSettings.id, itemSettingsData);
+                                console.log(`Updated ItemMachineSettings for ${machine.name} / ${activeItem.name}`);
+                            } else {
+                                await itemMachineSettingsService.add(itemSettingsData as any);
+                                console.log(`Created ItemMachineSettings for ${machine.name} / ${activeItem.name}`);
+                            }
+                        }
+
+                        synced++;
+                    } catch (err) {
+                        const errorMsg = `Failed to sync ${machine.name}: ${err}`;
+                        console.error(errorMsg);
+                        errors.push(errorMsg);
+                    }
+                }
+            }
+
+            if (unmatchedTags.length > 0) {
+                console.log(`[Sync] ${unmatchedTags.length} JotForm tags had no matching machine:`, unmatchedTags.slice(0, 10));
+            }
+
+            console.log(`[Sync] Complete: ${synced} machines updated`);
+        } catch (error) {
+            errors.push(`Sync failed: ${error}`);
+            console.error("[Sync] Error:", error);
+        }
+
+        return { synced, errors };
     }
 }
 

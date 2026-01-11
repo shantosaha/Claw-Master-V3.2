@@ -211,8 +211,8 @@ export function InlineEditField(props: InlineEditFieldProps) {
 
     // Display mode with edit trigger
     const displayValue = props.type === "select"
-        ? (props as SelectFieldProps).options.find(o => o.value === String(value))?.label || value
-        : value;
+        ? ((props as SelectFieldProps).options.find(o => o.value === String(value))?.label || value)
+        : (typeof value === 'number' && isNaN(value) ? '-' : value);
 
     return (
         <div className={`flex flex-col gap-1 ${className}`}>

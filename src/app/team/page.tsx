@@ -63,52 +63,6 @@ const DEMO_USERS: UserProfile[] = [
             viewAnalytics: true,
         },
     },
-    {
-        uid: "demo-manager",
-        email: "manager@clawmaster.demo",
-        displayName: "Demo Supervisor",
-        role: "supervisor",
-        photoURL: "",
-        permissions: {
-            stockCheckSubmit: true,
-            stockCheckApprove: true,
-            stockCheckSettings: false,
-            viewInventory: true,
-            editInventory: true,
-            viewMachines: true,
-            editMachines: true,
-            viewMaintenance: true,
-            editMaintenance: true,
-            viewRevenue: true,
-            viewTeam: true,
-            editTeam: false,
-            editRoles: false,
-            viewAnalytics: true,
-        },
-    },
-    {
-        uid: "demo-tech",
-        email: "tech@clawmaster.demo",
-        displayName: "Demo Technician",
-        role: "tech",
-        photoURL: "",
-        permissions: {
-            stockCheckSubmit: true,
-            stockCheckApprove: false,
-            stockCheckSettings: false,
-            viewInventory: true,
-            editInventory: false,
-            viewMachines: true,
-            editMachines: true,
-            viewMaintenance: true,
-            editMaintenance: true,
-            viewRevenue: false,
-            viewTeam: false,
-            editTeam: false,
-            editRoles: false,
-            viewAnalytics: false,
-        },
-    },
 ];
 
 let demoUsersData = [...DEMO_USERS];
@@ -155,7 +109,9 @@ export default function TeamPage() {
         targetField: "",
         customAction: "",
     });
+    const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
     const [permNameError, setPermNameError] = useState<string | null>(null);
+    const [permWarning, setPermWarning] = useState<string | null>(null);
     const [savingPerm, setSavingPerm] = useState(false);
     const [deletingPerm, setDeletingPerm] = useState<PermissionDef | null>(null);
 
@@ -364,7 +320,9 @@ export default function TeamPage() {
             targetField: "",
             customAction: "",
         });
+        setSelectedRoles([]);
         setPermNameError(null);
+        setPermWarning(null);
     };
 
     const handlePermNameChange = async (name: string) => {
@@ -375,11 +333,22 @@ export default function TeamPage() {
             return;
         }
 
-        const result = await permissionService.checkDuplicate(name);
+        // Check for duplicates/warnings
+        const result = await permissionService.checkDuplicate(
+            name,
+            undefined,
+            permForm.targetEntity,
+            permForm.actionType
+        );
         if (result.isDuplicate) {
-            setPermNameError(`A permission named "${result.similar?.name}" already exists or is too similar.`);
+            setPermNameError(result.reason || `Permission already exists.`);
+            setPermWarning(null);
+        } else if (result.isWarning) {
+            setPermNameError(null);
+            setPermWarning(result.reason || `Similar permission exists.`);
         } else {
             setPermNameError(null);
+            setPermWarning(null);
         }
     };
 
@@ -389,15 +358,20 @@ export default function TeamPage() {
             return;
         }
 
-        const dupCheck = await permissionService.checkDuplicate(permForm.name);
+        const dupCheck = await permissionService.checkDuplicate(
+            permForm.name,
+            undefined,
+            permForm.targetEntity,
+            permForm.actionType
+        );
         if (dupCheck.isDuplicate) {
-            toast.error(`A permission named "${dupCheck.similar?.name}" already exists or is too similar.`);
+            toast.error(dupCheck.reason || "Permission already exists.");
             return;
         }
 
         setSavingPerm(true);
         try {
-            await permissionService.create({
+            const newPerm = await permissionService.create({
                 name: permForm.name,
                 description: permForm.description,
                 targetEntity: permForm.targetEntity,
@@ -405,13 +379,42 @@ export default function TeamPage() {
                 targetField: permForm.targetField || undefined,
                 customAction: permForm.customAction || undefined,
                 isSystem: false,
+            }, !!permWarning); // Skip warning if user already saw it
+
+            // Auto-add to admin roles
+            const adminRoles = roles.filter(r => r.id === 'admin' || r.name.toLowerCase().includes('admin'));
+            const rolesToUpdate = [...new Set([...selectedRoles, ...adminRoles.map(r => r.id)])];
+
+            // Update selected roles with this permission
+            for (const roleId of rolesToUpdate) {
+                const role = roles.find(r => r.id === roleId);
+                if (role) {
+                    await roleService.update(roleId, {
+                        permissions: {
+                            ...role.permissions,
+                            [newPerm.id]: true
+                        }
+                    });
+                }
+            }
+
+            toast.success("Permission created", {
+                description: rolesToUpdate.length > 0
+                    ? `Added to ${rolesToUpdate.length} role(s)`
+                    : undefined
             });
-            toast.success("Permission created");
             await refreshData();
             setIsCreatingPerm(false);
-        } catch (error) {
+        } catch (error: any) {
             console.error("Failed to save permission:", error);
-            toast.error("Failed to save permission");
+            if (error.message?.startsWith('WARNING:')) {
+                setPermWarning(error.message.replace('WARNING:', ''));
+                toast.warning("Similar permission exists", {
+                    description: "Click Create again to proceed anyway."
+                });
+            } else {
+                toast.error(error.message || "Failed to save permission");
+            }
         } finally {
             setSavingPerm(false);
         }
@@ -930,6 +933,59 @@ export default function TeamPage() {
                                         <code className="text-sm font-mono">{permForm.name.toLowerCase().replace(/\s+/g, "_").replace(/[^a-z0-9_]/g, "")}</code>
                                     </div>
                                 )}
+
+                                {/* Warning Alert */}
+                                {permWarning && (
+                                    <Alert variant="default" className="border-yellow-500 bg-yellow-50 dark:bg-yellow-950">
+                                        <AlertCircle className="h-4 w-4 text-yellow-600" />
+                                        <AlertDescription className="text-xs text-yellow-800 dark:text-yellow-200">
+                                            {permWarning}
+                                            <br />
+                                            <span className="font-medium">Click "Create" again to proceed anyway.</span>
+                                        </AlertDescription>
+                                    </Alert>
+                                )}
+
+                                <Separator />
+
+                                {/* Role Selector */}
+                                <div className="space-y-2">
+                                    <Label>Assign to Roles</Label>
+                                    <p className="text-xs text-muted-foreground mb-2">
+                                        Select roles that should have this permission. Admin roles are auto-selected.
+                                    </p>
+                                    <div className="grid grid-cols-2 gap-2 max-h-32 overflow-y-auto">
+                                        {roles.map((role) => {
+                                            const isAdminRole = role.id === 'admin' || role.name.toLowerCase().includes('admin');
+                                            const isSelected = selectedRoles.includes(role.id) || isAdminRole;
+                                            return (
+                                                <div key={role.id} className="flex items-center space-x-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id={`role-${role.id}`}
+                                                        checked={isSelected}
+                                                        disabled={isAdminRole}
+                                                        onChange={(e) => {
+                                                            if (e.target.checked) {
+                                                                setSelectedRoles(prev => [...prev, role.id]);
+                                                            } else {
+                                                                setSelectedRoles(prev => prev.filter(id => id !== role.id));
+                                                            }
+                                                        }}
+                                                        className="h-4 w-4 rounded border-gray-300"
+                                                    />
+                                                    <label
+                                                        htmlFor={`role-${role.id}`}
+                                                        className={`text-sm ${isAdminRole ? 'text-muted-foreground' : ''}`}
+                                                    >
+                                                        {role.name}
+                                                        {isAdminRole && <span className="text-xs ml-1">(auto)</span>}
+                                                    </label>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
                             </div>
 
                             {/* RIGHT: Live Code Preview */}

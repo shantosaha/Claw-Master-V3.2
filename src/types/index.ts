@@ -13,28 +13,9 @@ export interface UserProfile {
         theme?: 'light' | 'dark' | 'system';
         layout?: Record<string, unknown>;
     };
-    permissions?: {
-        // Stock Check
-        stockCheckSubmit?: boolean;      // Can submit stock checks for review
-        stockCheckApprove?: boolean;     // Can approve/reject pending submissions
-        stockCheckSettings?: boolean;    // Can configure queue settings
-        // Inventory
-        viewInventory?: boolean;
-        editInventory?: boolean;
-        // Machines
-        viewMachines?: boolean;
-        editMachines?: boolean;
-        // Maintenance
-        viewMaintenance?: boolean;
-        editMaintenance?: boolean;
-        // Admin
-        viewRevenue?: boolean;
-        viewAnalytics?: boolean;
-        viewTeam?: boolean;
-        editTeam?: boolean;
-        editRoles?: boolean;        // Can create/edit/delete custom roles
-        accessMigration?: boolean;  // Can access data migration tools
-    };
+    // Dynamic permissions object - can hold any permission ID
+    // System permissions (stockCheckSubmit, viewMachines, etc.) + custom permissions
+    permissions?: Record<string, boolean>;
 }
 
 /**
@@ -546,6 +527,8 @@ export interface AdvancedMachineSettings {
 export interface PlayfieldSetting {
     id: string;
     machineId: string;
+    machineName?: string;
+    assetTag?: string;
     slotId?: string;
 
     // Claw Settings
@@ -554,6 +537,7 @@ export interface PlayfieldSetting {
     c3?: number;
     c4?: number;
     payoutRate?: number;
+    imageUrl?: string;
 
     // Legacy
     strengthSetting?: number;
@@ -571,14 +555,45 @@ export interface PlayfieldSetting {
 export interface MaintenanceTask {
     id: string;
     machineId: string;
+    slotId?: string;         // NEW: Specific slot if applicable
     description: string;
+
+    // Enhanced Type/Priority
+    type: 'scheduled' | 'emergency' | 'parts_waiting' | 'routine';  // NEW
     priority: 'low' | 'medium' | 'high' | 'critical';
-    status: 'open' | 'in-progress' | 'resolved';
+    status: 'open' | 'in-progress' | 'resolved' | 'cancelled';      // Added cancelled
+
+    // Assignment
     assignedTo?: string;
     createdBy: string;
+
+    // Timestamps
     createdAt: Date;
     resolvedAt?: Date;
+    estimatedCompletionAt?: Date;  // NEW
+
+    // Documentation
     images?: string[];
+    resolutionNotes?: string;      // NEW
+    partsRequired?: string[];      // NEW: For parts_waiting type
+
+    // Status History
+    statusHistory?: MachineStatusChange[];  // NEW
+}
+
+/**
+ * Track status changes for machines and maintenance tasks
+ */
+export interface MachineStatusChange {
+    id: string;
+    entityType: 'machine' | 'maintenance';
+    entityId: string;
+    previousStatus: string;
+    newStatus: string;
+    changedBy: string;
+    changedAt: Date | string;
+    reason?: string;
+    notes?: string;
 }
 
 export interface ReorderRequest {
@@ -843,5 +858,6 @@ export interface ServiceReport {
     inflowSku?: string;
     remarks?: string;
     imageUrl?: string;
+    photo1?: string;
     timestamp: Date;
 }

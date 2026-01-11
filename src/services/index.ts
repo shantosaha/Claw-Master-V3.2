@@ -66,6 +66,9 @@ export { permissionService } from "./permissionService";
 // Game Report Sync Service
 export { gameReportService } from "./gameReportService";
 
+// Unified Settings Service (with priority chain)
+export { unifiedSettingsService } from "./unifiedSettingsService";
+
 // Setup synchronization between services (only for mock mode)
 if (!isFirebaseInitialized) {
     interface MockStockService {

@@ -87,7 +87,17 @@ export const permissionService = {
         return perms;
     },
 
-    checkDuplicate: async (name: string, excludeId?: string): Promise<{ isDuplicate: boolean; similar?: PermissionDef }> => {
+    checkDuplicate: async (
+        name: string,
+        excludeId?: string,
+        targetEntity?: string,
+        actionType?: string
+    ): Promise<{
+        isDuplicate: boolean;
+        isWarning: boolean;
+        similar?: PermissionDef;
+        reason?: string;
+    }> => {
         const perms = await permissionService.getAll();
         const normalized = normalizeName(name);
 
@@ -97,19 +107,59 @@ export const permissionService = {
             const pNormalized = normalizeName(p.name);
             const distance = levenshteinDistance(normalized, pNormalized);
 
-            // Exact match or very close (distance <= 2)
+            // BLOCK: Exact match or very close (distance <= 2)
             if (distance <= 2) {
-                return { isDuplicate: true, similar: p };
+                return {
+                    isDuplicate: true,
+                    isWarning: false,
+                    similar: p,
+                    reason: `Name "${name}" is too similar to existing permission "${p.name}"`
+                };
+            }
+
+            // WARNING: Same entity + action combination
+            if (targetEntity && actionType && p.targetEntity === targetEntity && p.actionType === actionType) {
+                return {
+                    isDuplicate: false,
+                    isWarning: true,
+                    similar: p,
+                    reason: `Similar permission exists: "${p.name}" (same ${targetEntity} ${actionType} action)`
+                };
+            }
+
+            // WARNING: Moderate similarity (distance 3-5)
+            if (distance <= 5) {
+                return {
+                    isDuplicate: false,
+                    isWarning: true,
+                    similar: p,
+                    reason: `Name may be too similar to "${p.name}". Consider using a more distinct name.`
+                };
             }
         }
-        return { isDuplicate: false };
+        return { isDuplicate: false, isWarning: false };
     },
 
-    create: async (perm: Omit<PermissionDef, "id" | "createdAt" | "updatedAt">): Promise<PermissionDef> => {
-        // Strict blocking: Check for duplicates before creating
-        const duplicateCheck = await permissionService.checkDuplicate(perm.name);
+    create: async (
+        perm: Omit<PermissionDef, "id" | "createdAt" | "updatedAt">,
+        skipWarning?: boolean
+    ): Promise<PermissionDef> => {
+        // Check for duplicates before creating
+        const duplicateCheck = await permissionService.checkDuplicate(
+            perm.name,
+            undefined,
+            perm.targetEntity,
+            perm.actionType
+        );
+
+        // Block on exact/near-exact duplicates
         if (duplicateCheck.isDuplicate) {
-            throw new Error(`Cannot create permission: Name "${perm.name}" is too similar to existing permission "${duplicateCheck.similar?.name}"`);
+            throw new Error(duplicateCheck.reason || `Cannot create: Name is too similar to existing permission`);
+        }
+
+        // Warning can be skipped by user
+        if (duplicateCheck.isWarning && !skipWarning) {
+            throw new Error(`WARNING:${duplicateCheck.reason}`);
         }
 
         // Generate ID from name (e.g. "Edit Machine Name" -> "edit_machine_name")

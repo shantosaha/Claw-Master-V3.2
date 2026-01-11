@@ -27,13 +27,76 @@ export const machineRevenueService = {
         }
     },
 
-    // Dev Helper: Simulate data
-    async generateSimulatedReadings(machineId: string, startDate: Date, endDate: Date) {
+    /**
+     * Get revenue readings by item ID (for item-attributed revenue)
+     */
+    async getReadingsByItem(itemId: string, startDate?: Date, endDate?: Date): Promise<MachineRevenueReading[]> {
+        try {
+            const readings = await baseService.query(
+                where("itemId", "==", itemId),
+                orderBy("date", "desc")
+            );
+
+            if (startDate && endDate) {
+                return readings.filter(r => {
+                    const d = new Date(r.date);
+                    return d >= startDate && d <= endDate;
+                });
+            }
+
+            return readings;
+        } catch (error) {
+            console.error("Error fetching item revenue readings:", error);
+            return [];
+        }
+    },
+
+    /**
+     * Get revenue readings by slot ID
+     */
+    async getReadingsBySlot(slotId: string, startDate?: Date, endDate?: Date): Promise<MachineRevenueReading[]> {
+        try {
+            const readings = await baseService.query(
+                where("slotId", "==", slotId),
+                orderBy("date", "desc")
+            );
+
+            if (startDate && endDate) {
+                return readings.filter(r => {
+                    const d = new Date(r.date);
+                    return d >= startDate && d <= endDate;
+                });
+            }
+
+            return readings;
+        } catch (error) {
+            console.error("Error fetching slot revenue readings:", error);
+            return [];
+        }
+    },
+
+    /**
+     * Calculate total revenue attributed to an item across all machines
+     */
+    async getItemTotalRevenue(itemId: string, startDate?: Date, endDate?: Date): Promise<{ revenue: number; playCount: number }> {
+        const readings = await this.getReadingsByItem(itemId, startDate, endDate);
+
+        return readings.reduce((acc, r) => ({
+            revenue: acc.revenue + r.revenue,
+            playCount: acc.playCount + r.playCount,
+        }), { revenue: 0, playCount: 0 });
+    },
+
+    // Dev Helper: Simulate data with optional slotId and itemId
+    async generateSimulatedReadings(
+        machineId: string,
+        startDate: Date,
+        endDate: Date,
+        slotId?: string,
+        itemId?: string
+    ) {
         const readings: MachineRevenueReading[] = [];
         const current = new Date(startDate);
-
-        // Remove existing readings for this period to avoid duplicates? 
-        // For simplicity, we just add. API would usually be upsert.
 
         while (current <= endDate) {
             // Random revenue between $50 and $200 with some variation
@@ -47,6 +110,8 @@ export const machineRevenueService = {
             const reading: MachineRevenueReading = {
                 id: generateId(),
                 machineId,
+                slotId,
+                itemId,
                 date: current.toISOString().split('T')[0],
                 revenue,
                 playCount,

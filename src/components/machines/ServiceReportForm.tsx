@@ -1,28 +1,42 @@
 import { useState, useEffect, useRef } from "react";
 import { ArcadeMachine } from "@/types";
 import { useAuth } from "@/context/AuthContext";
+import { useData } from "@/context/DataProvider";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, Send, Save, CheckCircle, Camera, X, Image as ImageIcon, RotateCcw } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Loader2, Send, CheckCircle, Camera, X, Image as ImageIcon, ChevronsUpDown, Check, Sparkles, Maximize2 } from "lucide-react";
 import { toast } from "sonner";
 import { serviceReportService } from "@/services/serviceReportService";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { unifiedSettingsService } from "@/services/unifiedSettingsService";
+import { cn } from "@/lib/utils";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface ServiceReportFormProps {
-    machine: ArcadeMachine;
+    machine?: ArcadeMachine;
     onSuccess?: () => void;
 }
 
 const VALID_LOCATIONS = ["591", "505", "614", "Burwood", "Hornsby", "Hurstville", "Haymarket"];
 
-export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps) {
+export function ServiceReportForm({ machine: initialMachine, onSuccess }: ServiceReportFormProps) {
     const { user } = useAuth();
+    const { machines } = useData();
+    const [selectedMachine, setSelectedMachine] = useState<ArcadeMachine | null>(initialMachine || null);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [openMachineSearch, setOpenMachineSearch] = useState(false);
+    const [isAutoFilling, setIsAutoFilling] = useState(false);
+    const [autoFilledFields, setAutoFilledFields] = useState<Record<string, boolean>>({});
+    const [fetchedImageUrl, setFetchedImageUrl] = useState<string | undefined>(undefined);
+    const [lastStaffName, setLastStaffName] = useState<string | undefined>(undefined);
 
     // Camera State
     const [isCameraOpen, setIsCameraOpen] = useState(false);
@@ -31,7 +45,10 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
 
     // Form State
     const [formData, setFormData] = useState({
-        location: "",
+        machineTag: "",
+        machineName: "",
+        location: "614",
+        staffName: user?.displayName || "",
         c1: 0,
         c2: 0,
         c3: 0,
@@ -41,37 +58,113 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
         imageFile: null as File | null
     });
 
-    // Reset form when machine changes
+    // Auto-fill form when machine is selected or provided
     useEffect(() => {
-        if (machine) {
-            const m = machine as any;
-            // Try to match machine location to valid list, otherwise default to first or empty
-            const matchedLocation = VALID_LOCATIONS.find(l => l.toLowerCase() === machine.location.toLowerCase()) || machine.location;
+        const fetchAndFill = async () => {
+            if (selectedMachine) {
+                setIsAutoFilling(true);
+                try {
+                    const m = selectedMachine as any;
 
-            setFormData({
-                location: matchedLocation,
-                c1: m.c1 || 0,
-                c2: m.c2 || 0,
-                c3: m.c3 || 0,
-                c4: m.c4 || 0,
-                playsPerWin: m.payoutSettings || m.playPerWin || 0,
-                remarks: "",
-                imageFile: null
-            });
-            setIsSuccess(false);
-            stopCamera(); // Ensure camera is closed if we switch machines
-        }
-    }, [machine]);
+                    // Try to get data directly (if passed from monitoring grid)
+                    // Always fetch settings to get the latest JotForm data (including image)
+                    const [settings, reports] = await Promise.all([
+                        unifiedSettingsService.getEffectiveSettings(selectedMachine.id),
+                        serviceReportService.getReports("GLOBAL_FETCH")
+                    ]);
 
-    // Cleanup camera on unmount
-    useEffect(() => {
-        return () => {
-            stopCamera();
+                    const normalize = (s: string) => String(s || "").toLowerCase().replace(/[\s_-]/g, '');
+                    const mTag = normalize(selectedMachine.assetTag || "");
+                    const lTag = normalize(selectedMachine.tag !== undefined ? String(selectedMachine.tag) : "");
+                    const mId = normalize(selectedMachine.id);
+
+                    // Find the latest report matching this machine by any of its identifiers
+                    const latestReport = reports
+                        .filter(r => {
+                            const reportTag = normalize(r.inflowSku || r.machineId || "");
+                            if (!reportTag) return false;
+
+                            return (
+                                (mTag && reportTag === mTag) ||
+                                (lTag && reportTag === lTag) ||
+                                (mId && reportTag === mId)
+                            );
+                        })
+                        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
+
+                    // Prioritize data from the latest actual JotForm report
+                    const c1 = latestReport ? latestReport.c1 : settings.c1;
+                    const c2 = latestReport ? latestReport.c2 : settings.c2;
+                    const c3 = latestReport ? latestReport.c3 : settings.c3;
+                    const c4 = latestReport ? latestReport.c4 : settings.c4;
+                    const playsPerWin = latestReport ? latestReport.playsPerWin : settings.payoutRate;
+                    const imageUrl = latestReport?.imageUrl || settings.imageUrl;
+
+                    setFormData(prev => ({
+                        ...prev,
+                        machineTag: selectedMachine.assetTag || String(selectedMachine.tag || ""),
+                        machineName: selectedMachine.name,
+                        location: "614", // Forced default location as requested
+                        c1: Number(c1) || 0,
+                        c2: Number(c2) || 0,
+                        c3: Number(c3) || 0,
+                        c4: Number(c4) || 0,
+                        playsPerWin: Number(playsPerWin) || 0,
+                    }));
+
+                    // Record which fields were auto-filled
+                    setAutoFilledFields({
+                        machineTag: !!(mTag || lTag),
+                        location: true,
+                        c1: typeof c1 === 'number',
+                        c2: typeof c2 === 'number',
+                        c3: typeof c3 === 'number',
+                        c4: typeof c4 === 'number',
+                        playsPerWin: typeof playsPerWin === 'number',
+                    });
+
+                    setFetchedImageUrl(imageUrl);
+                    setLastStaffName(latestReport?.staffName);
+                    setIsSuccess(false);
+                } catch (err) {
+                    console.error("Auto-fill error:", err);
+                } finally {
+                    setIsAutoFilling(false);
+                }
+            } else if (!initialMachine) {
+                setFormData(prev => ({
+                    ...prev,
+                    machineTag: "",
+                    machineName: "",
+                    location: "614",
+                    c1: 0,
+                    c2: 0,
+                    c3: 0,
+                    c4: 0,
+                    playsPerWin: 0,
+                }));
+                setAutoFilledFields({});
+                setFetchedImageUrl(undefined);
+                setLastStaffName(undefined);
+            }
         };
-    }, []);
+
+        fetchAndFill();
+    }, [selectedMachine, user, initialMachine]);
+
+    // Update selected machine if prop changes
+    useEffect(() => {
+        if (initialMachine) {
+            setSelectedMachine(initialMachine);
+        }
+    }, [initialMachine]);
 
     const handleInputChange = (field: string, value: any) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        // Clear auto-filled status when user touches a field
+        if (autoFilledFields[field]) {
+            setAutoFilledFields(prev => ({ ...prev, [field]: false }));
+        }
     };
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,68 +174,28 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
     };
 
     const startCamera = async () => {
-        setIsCameraOpen(true); // Open UI first so video element exists
+        setIsCameraOpen(true);
     };
 
-    // Effect to handle camera stream when UI opens
     useEffect(() => {
-        let activeStream: MediaStream | null = null;
-
-        const initCamera = async () => {
-            if (isCameraOpen && !stream) {
+        if (isCameraOpen && !stream) {
+            const initCamera = async () => {
                 try {
-                    // Try environment facing mode first (back camera)
-                    try {
-                        activeStream = await navigator.mediaDevices.getUserMedia({
-                            video: { facingMode: "environment" }
-                        });
-                    } catch (err) {
-                        console.warn("Environment camera failed, falling back to default", err);
-                        // Fallback to any video device
-                        activeStream = await navigator.mediaDevices.getUserMedia({
-                            video: true
-                        });
-                    }
+                    const activeStream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: "environment" }
+                    }).catch(() => navigator.mediaDevices.getUserMedia({ video: true }));
 
                     setStream(activeStream);
-
-                    if (videoRef.current) {
-                        videoRef.current.srcObject = activeStream;
-                    }
-                } catch (err: any) {
-                    console.error("Error accessing camera:", err);
-                    setIsCameraOpen(false); // Close UI on error
-
-                    if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                        toast.error("Camera access denied. Please allow camera permissions in your browser and System Preferences (if on Mac).");
-                    } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                        toast.error("No camera device found.");
-                    } else {
-                        toast.error("Could not access camera. " + (err.message || "Unknown error"));
-                    }
+                    if (videoRef.current) videoRef.current.srcObject = activeStream;
+                } catch (err) {
+                    console.error("Camera error:", err);
+                    setIsCameraOpen(false);
+                    toast.error("Could not access camera");
                 }
-            }
-        };
-
-        if (isCameraOpen) {
+            };
             initCamera();
         }
-
-        // Cleanup function for when effect re-runs or component unmounts
-        return () => {
-            // We only stop tracks if we are closing the camera (handled by other effect)
-            // or if the component unmounts. 
-            // In this specific effect structure, we rely on the main cleanup effect for `stream` state changes
-            // but we can ensure local cleanup here if needed.
-        };
-    }, [isCameraOpen]);
-
-    // Ensure video ref is updated if stream changes while open
-    useEffect(() => {
-        if (isCameraOpen && stream && videoRef.current) {
-            videoRef.current.srcObject = stream;
-        }
-    }, [stream, isCameraOpen]);
+    }, [isCameraOpen, stream]);
 
     const stopCamera = () => {
         if (stream) {
@@ -176,42 +229,42 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
         e.preventDefault();
 
         if (!formData.imageFile) {
-            toast.error("Please upload or capture a photo of the machine/issue.");
+            toast.error("Photo evidence is required.");
             return;
         }
 
-        if (!formData.location) {
-            toast.error("Please select a valid location.");
+        if (!formData.machineTag) {
+            toast.error("Machine Tag/ID is required.");
             return;
         }
 
         setIsSubmitting(true);
 
         try {
-            await serviceReportService.submitReport({
-                machineId: machine.id,
-                machineName: machine.name,
-                location: formData.location, // Use selected location
-                staffName: user?.displayName || "Unknown Staff",
-                c1: Number(formData.c1),
-                c2: Number(formData.c2),
-                c3: Number(formData.c3),
-                c4: Number(formData.c4),
-                playsPerWin: Number(formData.playsPerWin),
-                inflowSku: machine.assetTag || machine.tag || "N/A",
-                remarks: formData.remarks,
-                // In a real app, we'd upload the image here and get a URL
-                imageUrl: URL.createObjectURL(formData.imageFile),
-            });
+            // Use FormData for direct upload
+            const submitData = new FormData();
+            submitData.append("machineTag", formData.machineTag);
+            submitData.append("machineName", formData.machineName);
+            submitData.append("location", formData.location);
+            submitData.append("staffName", formData.staffName);
+            submitData.append("c1", String(formData.c1));
+            submitData.append("c2", String(formData.c2));
+            submitData.append("c3", String(formData.c3));
+            submitData.append("c4", String(formData.c4));
+            submitData.append("playsPerWin", String(formData.playsPerWin));
+            submitData.append("remarks", formData.remarks);
+            submitData.append("imageFile", formData.imageFile);
 
-            toast.success("Service report submitted successfully");
-            setIsSuccess(true);
-            if (onSuccess) onSuccess();
+            const result = await serviceReportService.submitReport(submitData);
 
-            // Optional: Reset form or wait for user to navigate away
+            if (result) {
+                toast.success("Service report submitted successfully");
+                setIsSuccess(true);
+                if (onSuccess) onSuccess();
+            }
         } catch (error) {
             console.error("Submission failed", error);
-            toast.error("Failed to submit service report");
+            toast.error("Failed to submit report. Please try again.");
         } finally {
             setIsSubmitting(false);
         }
@@ -219,7 +272,7 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
 
     if (isSuccess) {
         return (
-            <Card className="max-w-2xl mx-auto border-dashed border-2 shadow-none bg-muted/30">
+            <Card className="border-dashed border-2 shadow-none bg-muted/30">
                 <CardContent className="h-[400px] flex flex-col items-center justify-center text-center space-y-4">
                     <div className="h-16 w-16 bg-green-100 rounded-full flex items-center justify-center">
                         <CheckCircle className="h-8 w-8 text-green-600" />
@@ -227,7 +280,7 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
                     <div>
                         <h3 className="text-xl font-semibold">Report Submitted!</h3>
                         <p className="text-muted-foreground mt-2 max-w-xs mx-auto">
-                            The service report for {machine.name} has been successfully sent to the backend and forwarded to JotForm.
+                            The service report for {formData.machineName || formData.machineTag} has been successfully sent to JotForm.
                         </p>
                     </div>
                     <Button onClick={() => setIsSuccess(false)} variant="outline">
@@ -239,39 +292,137 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
     }
 
     return (
-        <Card className="max-w-3xl mx-auto shadow-sm">
+        <Card className="shadow-sm">
             <CardHeader className="border-b bg-muted/20">
-                <CardTitle>New Service Report</CardTitle>
-                <CardDescription>
-                    Submit a new service entry for {machine.name}. Standard fields are auto-filled.
-                </CardDescription>
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <CardTitle>Service Report</CardTitle>
+                        <CardDescription>
+                            Submit a new service entry. Select a machine to auto-fill or enter manually.
+                        </CardDescription>
+                    </div>
+
+                    {/* Machine Search / Combobox */}
+                    <div className="flex flex-col gap-1.5 min-w-[240px]">
+                        <Label className="text-xs uppercase tracking-wider text-muted-foreground">Quick Select</Label>
+                        <Popover open={openMachineSearch} onOpenChange={setOpenMachineSearch}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openMachineSearch}
+                                    className="w-full justify-between font-normal h-9 bg-background"
+                                >
+                                    {selectedMachine
+                                        ? `${selectedMachine.name} (${selectedMachine.assetTag || selectedMachine.tag || "N/A"})`
+                                        : "Search machine..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-0" align="end">
+                                <Command>
+                                    <CommandInput placeholder="Search machine name or tag..." />
+                                    <CommandList>
+                                        <CommandEmpty>No machine found.</CommandEmpty>
+                                        <CommandGroup>
+                                            <CommandItem
+                                                onSelect={() => {
+                                                    setSelectedMachine(null);
+                                                    setOpenMachineSearch(false);
+                                                }}
+                                                className="text-red-600 font-medium"
+                                            >
+                                                Clear Selection / Manual Entry
+                                            </CommandItem>
+                                            {machines.map((m) => (
+                                                <CommandItem
+                                                    key={m.id}
+                                                    value={`${m.name} ${m.assetTag || m.tag || ""}`}
+                                                    onSelect={() => {
+                                                        setSelectedMachine(m);
+                                                        setOpenMachineSearch(false);
+                                                    }}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            selectedMachine?.id === m.id ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-sm">{m.name}</span>
+                                                        <span className="text-[10px] text-muted-foreground">Tag: {m.assetTag || m.tag || "N/A"}</span>
+                                                    </div>
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
+                </div>
             </CardHeader>
             <form onSubmit={handleSubmit}>
                 <CardContent className="space-y-6 pt-6">
-                    {/* Auto-filled Section */}
+                    {/* Identification Section */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/40 rounded-lg border border-dashed">
                         <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground uppercase tracking-wide">Staff Member</Label>
-                            <div className="font-medium text-sm">{user?.displayName || "Unknown Staff"}</div>
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground uppercase tracking-wide">Machine Tag</Label>
-                            <div className="flex items-center gap-2">
-                                <span className="font-mono bg-background px-2 py-1 rounded border text-sm">{machine.assetTag || machine.tag || "N/A"}</span>
-                                <span className="text-muted-foreground text-sm">- {machine.name}</span>
+                            <div className="flex justify-between items-center">
+                                <Label htmlFor="staffName" className="text-xs text-muted-foreground uppercase tracking-wide">Staff Member</Label>
+                                {lastStaffName && (
+                                    <Badge variant="outline" className="text-[10px] py-0 h-4 border-muted-foreground/20 text-muted-foreground">
+                                        Last: {lastStaffName}
+                                    </Badge>
+                                )}
                             </div>
+                            <Input
+                                id="staffName"
+                                value={formData.staffName}
+                                onChange={(e) => handleInputChange("staffName", e.target.value)}
+                                placeholder="Enter your name"
+                                className="h-9 text-sm"
+                                required
+                            />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground uppercase tracking-wide">Date</Label>
-                            <div className="font-medium text-sm">{new Date().toLocaleDateString()}</div>
+                            <Label htmlFor="machineTag" className="text-xs text-muted-foreground uppercase tracking-wide flex justify-between items-center">
+                                Machine Tag / ID
+                                {autoFilledFields.machineTag && (
+                                    <span className="flex items-center gap-1 text-[10px] text-blue-500 font-bold bg-blue-50 px-1 rounded animate-in fade-in duration-300">
+                                        <Sparkles className="h-3 w-3" /> PRE-FILLED
+                                    </span>
+                                )}
+                            </Label>
+                            <Input
+                                id="machineTag"
+                                value={formData.machineTag}
+                                onChange={(e) => handleInputChange("machineTag", e.target.value)}
+                                placeholder="e.g. 591A or MAC-101"
+                                className={cn(
+                                    "h-9 text-sm font-mono transition-colors duration-500",
+                                    autoFilledFields.machineTag && "bg-blue-50 border-blue-200"
+                                )}
+                                required
+                            />
                         </div>
                         <div className="space-y-2">
-                            <Label className="text-xs text-muted-foreground uppercase tracking-wide">Location</Label>
+                            <Label htmlFor="location" className="text-xs text-muted-foreground uppercase tracking-wide flex justify-between items-center">
+                                Location
+                                {autoFilledFields.location && (
+                                    <span className="flex items-center gap-1 text-[10px] text-blue-500 font-bold bg-blue-50 px-1 rounded animate-in fade-in duration-300">
+                                        <Sparkles className="h-3 w-3" /> PRE-FILLED
+                                    </span>
+                                )}
+                            </Label>
                             <Select
                                 value={formData.location}
                                 onValueChange={(val) => handleInputChange("location", val)}
                             >
-                                <SelectTrigger className="h-8 text-xs">
+                                <SelectTrigger className={cn(
+                                    "h-9 text-sm transition-colors duration-500",
+                                    autoFilledFields.location && "bg-blue-50 border-blue-200"
+                                )}>
                                     <SelectValue placeholder="Select Location" />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -281,129 +432,196 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
                                 </SelectContent>
                             </Select>
                         </div>
+                        <div className="space-y-2">
+                            <Label className="text-xs text-muted-foreground uppercase tracking-wide">Submission Date</Label>
+                            <div className="h-9 flex items-center px-3 border rounded-md bg-background/50 text-sm">
+                                {new Date().toLocaleDateString()}
+                            </div>
+                        </div>
                     </div>
 
                     {/* Claw Settings */}
                     <div className="space-y-4">
-                        <Label className="text-base">Claw Strength Settings</Label>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            <div className="space-y-2">
-                                <Label htmlFor="c1" className="text-xs">C1 (Catch)</Label>
-                                <Input
-                                    id="c1"
-                                    type="number"
-                                    value={formData.c1}
-                                    onChange={(e) => handleInputChange("c1", e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="c2" className="text-xs">C2 (Top)</Label>
-                                <Input
-                                    id="c2"
-                                    type="number"
-                                    value={formData.c2}
-                                    onChange={(e) => handleInputChange("c2", e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="c3" className="text-xs">C3 (Move)</Label>
-                                <Input
-                                    id="c3"
-                                    type="number"
-                                    value={formData.c3}
-                                    onChange={(e) => handleInputChange("c3", e.target.value)}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="c4" className="text-xs">C4 (Max Power)</Label>
-                                <Input
-                                    id="c4"
-                                    type="number"
-                                    value={formData.c4}
-                                    onChange={(e) => handleInputChange("c4", e.target.value)}
-                                />
-                            </div>
+                        <Label className="text-base font-semibold">Claw Strength settings</Label>
+                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                            {["c1", "c2", "c3", "c4"].map((field) => (
+                                <div key={field} className="space-y-2">
+                                    <Label htmlFor={field} className="text-xs text-muted-foreground flex justify-between items-center">
+                                        <span>{field.toUpperCase()} {field === "c1" ? "(Catch)" : field === "c2" ? "(Top)" : field === "c3" ? "(Move)" : "(Max)"}</span>
+                                        {autoFilledFields[field] && (
+                                            <Sparkles className="h-3 w-3 text-blue-500 animate-pulse" />
+                                        )}
+                                    </Label>
+                                    <Input
+                                        id={field}
+                                        type="number"
+                                        value={formData[field as keyof typeof formData] as number}
+                                        onChange={(e) => handleInputChange(field, Number(e.target.value))}
+                                        className={cn(
+                                            "h-9 transition-colors duration-500",
+                                            autoFilledFields[field] && "bg-blue-50 border-blue-200"
+                                        )}
+                                    />
+                                </div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Payout Settings */}
+                    {/* Payout Targets */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="playsPerWin">Plays Per Win Target</Label>
+                            <Label htmlFor="playsPerWin" className="font-semibold flex justify-between items-center">
+                                Plays Per Win Target
+                                {autoFilledFields.playsPerWin && (
+                                    <span className="flex items-center gap-1 text-[10px] text-blue-500 font-bold bg-blue-50 px-1 rounded animate-in fade-in duration-300">
+                                        <Sparkles className="h-3 w-3" /> PRE-FILLED
+                                    </span>
+                                )}
+                            </Label>
                             <Input
                                 id="playsPerWin"
                                 type="number"
                                 value={formData.playsPerWin}
-                                onChange={(e) => handleInputChange("playsPerWin", e.target.value)}
+                                onChange={(e) => handleInputChange("playsPerWin", Number(e.target.value))}
+                                className={cn(
+                                    "h-10 text-lg font-bold transition-colors duration-500",
+                                    autoFilledFields.playsPerWin && "bg-blue-50 border-blue-200"
+                                )}
                             />
-                            <p className="text-[0.8rem] text-muted-foreground">The target win rate setting on the machine.</p>
+                            <p className="text-xs text-muted-foreground">Target win rate configured on the machine motherboard.</p>
                         </div>
 
-                        {/* Photo Input with Camera Option */}
+                        {/* Image Evidence */}
                         <div className="space-y-2">
-                            <Label className="flex items-center gap-2">
+                            <Label className="font-semibold flex items-center gap-2">
                                 Photo Evidence <span className="text-red-500">*</span>
                             </Label>
 
                             {!isCameraOpen ? (
                                 <div className="space-y-3">
-                                    {formData.imageFile && (
-                                        <div className="relative aspect-video w-full max-w-[200px] bg-muted rounded-md overflow-hidden border">
-                                            <img
-                                                src={URL.createObjectURL(formData.imageFile)}
-                                                alt="Preview"
-                                                className="w-full h-full object-cover"
-                                            />
-                                            <Button
-                                                variant="destructive"
-                                                size="icon"
-                                                className="absolute top-1 right-1 h-6 w-6"
-                                                onClick={() => setFormData(p => ({ ...p, imageFile: null }))}
-                                                type="button"
-                                            >
-                                                <X className="h-4 w-4" />
-                                            </Button>
+                                    {formData.imageFile ? (
+                                        <div className="relative aspect-video w-full max-w-[200px] bg-muted rounded-md overflow-hidden border group">
+                                            <Dialog>
+                                                <DialogTrigger asChild>
+                                                    <div className="w-full h-full cursor-pointer">
+                                                        <img
+                                                            src={URL.createObjectURL(formData.imageFile)}
+                                                            alt="Preview"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                            <Maximize2 className="h-6 w-6 text-white" />
+                                                        </div>
+                                                    </div>
+                                                </DialogTrigger>
+                                                <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/95">
+                                                    <VisuallyHidden>
+                                                        <DialogTitle>Image Preview</DialogTitle>
+                                                    </VisuallyHidden>
+                                                    <div className="relative w-full h-full min-h-[50vh] flex items-center justify-center">
+                                                        <img
+                                                            src={URL.createObjectURL(formData.imageFile)}
+                                                            alt="Captured evidence"
+                                                            className="max-w-full max-h-[85vh] object-contain"
+                                                        />
+                                                    </div>
+                                                </DialogContent>
+                                            </Dialog>
+                                            <div className="absolute top-1 right-1">
+                                                <Button
+                                                    variant="destructive"
+                                                    size="icon"
+                                                    className="h-7 w-7 rounded-full shadow-lg"
+                                                    onClick={() => setFormData(p => ({ ...p, imageFile: null }))}
+                                                    type="button"
+                                                >
+                                                    <X className="h-4 w-4" />
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {isAutoFilling ? (
+                                                <div className="aspect-video w-full max-w-[200px] bg-muted animate-pulse rounded-md flex items-center justify-center border">
+                                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                                </div>
+                                            ) : (fetchedImageUrl || selectedMachine?.imageUrl) && (
+                                                <div className="relative aspect-video w-full max-w-[200px] bg-muted rounded-md overflow-hidden border group">
+                                                    <Dialog>
+                                                        <DialogTrigger asChild>
+                                                            <div className="w-full h-full cursor-pointer">
+                                                                <img
+                                                                    src={fetchedImageUrl || selectedMachine?.imageUrl}
+                                                                    alt="Machine"
+                                                                    className="w-full h-full object-cover opacity-80"
+                                                                    onError={(e) => {
+                                                                        const target = e.target as HTMLImageElement;
+                                                                        if (fetchedImageUrl && target.src === fetchedImageUrl && selectedMachine?.imageUrl) {
+                                                                            target.src = selectedMachine.imageUrl;
+                                                                            const label = target.parentElement?.querySelector('.image-label');
+                                                                            if (label) label.textContent = "Machine Photo (Fallback)";
+                                                                        }
+                                                                    }}
+                                                                />
+                                                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                                    <Maximize2 className="h-6 w-6 text-white" />
+                                                                </div>
+                                                                <div className="absolute inset-0 flex items-end justify-center p-2">
+                                                                    <span className="image-label bg-black/50 text-[10px] text-white px-2 py-0.5 rounded uppercase font-bold tracking-wider">
+                                                                        {fetchedImageUrl ? "Last Report Photo" : "Current Machine Photo"}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+                                                        </DialogTrigger>
+                                                        <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/95">
+                                                            <VisuallyHidden>
+                                                                <DialogTitle>Machine Reference Image</DialogTitle>
+                                                            </VisuallyHidden>
+                                                            <div className="relative w-full h-full min-h-[50vh] flex items-center justify-center">
+                                                                <img
+                                                                    src={fetchedImageUrl || selectedMachine?.imageUrl}
+                                                                    alt="Machine Reference"
+                                                                    className="max-w-full max-h-[85vh] object-contain"
+                                                                />
+                                                                <div className="absolute bottom-4 left-4">
+                                                                    <Badge className="bg-white/10 text-white border-white/20 backdrop-blur-md">
+                                                                        {fetchedImageUrl ? "Reference Photo from Last Report" : "Current System Machine Photo"}
+                                                                    </Badge>
+                                                                </div>
+                                                            </div>
+                                                        </DialogContent>
+                                                    </Dialog>
+                                                </div>
+                                            )}
+                                            <div className="flex gap-2">
+                                                <Button variant="outline" className="flex-1 justify-start h-10" type="button" onClick={() => document.getElementById('image-upload')?.click()}>
+                                                    <ImageIcon className="mr-2 h-4 w-4" />
+                                                    Upload Photo
+                                                </Button>
+                                                <Input
+                                                    id="image-upload"
+                                                    type="file"
+                                                    accept="image/*"
+                                                    onChange={handleFileChange}
+                                                    className="hidden"
+                                                />
+                                                <Button variant="secondary" className="h-10 px-4" type="button" onClick={startCamera}>
+                                                    <Camera className="mr-2 h-4 w-4" />
+                                                    Camera
+                                                </Button>
+                                            </div>
                                         </div>
                                     )}
-
-                                    <div className="flex gap-2">
-                                        <div className="relative flex-1">
-                                            <Button variant="outline" className="w-full justify-start text-muted-foreground" type="button" onClick={() => document.getElementById('image-upload')?.click()}>
-                                                <ImageIcon className="mr-2 h-4 w-4" />
-                                                {formData.imageFile ? "Change File" : "Upload File"}
-                                            </Button>
-                                            <Input
-                                                id="image-upload"
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleFileChange}
-                                                className="hidden"
-                                            />
-                                        </div>
-                                        <Button variant="outline" type="button" onClick={startCamera}>
-                                            <Camera className="mr-2 h-4 w-4" />
-                                            Camera
-                                        </Button>
-                                    </div>
                                 </div>
                             ) : (
-                                <div className="space-y-2 bg-black rounded-md p-2">
+                                <div className="space-y-2 bg-black rounded-lg p-2">
                                     <div className="relative aspect-video bg-black rounded overflow-hidden">
-                                        <video
-                                            ref={videoRef}
-                                            autoPlay
-                                            playsInline
-                                            muted
-                                            className="w-full h-full object-cover"
-                                        />
+                                        <video ref={videoRef} autoPlay playsInline muted className="w-full h-full object-cover" />
                                     </div>
                                     <div className="flex gap-2 justify-center">
-                                        <Button variant="destructive" size="sm" onClick={stopCamera} type="button">
-                                            Cancel
-                                        </Button>
+                                        <Button variant="ghost" className="text-white hover:bg-white/10" size="sm" onClick={stopCamera} type="button">Cancel</Button>
                                         <Button variant="default" size="sm" onClick={capturePhoto} type="button">
-                                            <Camera className="mr-2 h-4 w-4" />
-                                            Capture
+                                            <Camera className="mr-2 h-4 w-4" /> Capture Photo
                                         </Button>
                                     </div>
                                 </div>
@@ -413,21 +631,21 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
 
                     {/* Remarks */}
                     <div className="space-y-2">
-                        <Label htmlFor="remarks">Remarks / Notes</Label>
+                        <Label htmlFor="remarks" className="font-semibold">Remarks & Notes</Label>
                         <Textarea
                             id="remarks"
-                            placeholder="Enter any maintenance notes, adjustments made, or issues found..."
-                            className="min-h-[100px]"
+                            placeholder="Detail any hardware adjustments, cleanings, or parts replaced..."
+                            className="min-h-[80px]"
                             value={formData.remarks}
                             onChange={(e) => handleInputChange("remarks", e.target.value)}
                         />
                     </div>
                 </CardContent>
-                <CardFooter className="flex justify-between border-t bg-muted/10 px-6 py-4">
-                    <Button variant="ghost" type="button" onClick={() => setIsSuccess(false)} disabled={isSubmitting}>
-                        Reset Form
+                <CardFooter className="flex justify-between border-t bg-muted/5 px-6 py-4">
+                    <Button variant="ghost" type="button" onClick={() => setSelectedMachine(null)} disabled={isSubmitting}>
+                        Clear Form
                     </Button>
-                    <Button type="submit" disabled={isSubmitting}>
+                    <Button type="submit" disabled={isSubmitting} className="min-w-[140px]">
                         {isSubmitting ? (
                             <>
                                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -445,3 +663,4 @@ export function ServiceReportForm({ machine, onSuccess }: ServiceReportFormProps
         </Card>
     );
 }
+
