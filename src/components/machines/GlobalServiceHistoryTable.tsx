@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { OptimizedImage } from "@/components/ui/OptimizedImage";
-import { getOptimizedUrl } from "@/lib/utils/imageProxy";
+import Image from "next/image";
 import { format } from "date-fns";
 import {
     Table,
@@ -465,13 +464,14 @@ export function GlobalServiceHistoryTable() {
                                         {report.imageUrl ? (
                                             <Dialog>
                                                 <DialogTrigger asChild>
-                                                    <div className="w-10 h-10 mx-auto cursor-pointer hover:opacity-80 transition-opacity">
-                                                        <OptimizedImage
+                                                    <div className="flex justify-center cursor-pointer hover:opacity-80 transition-opacity">
+                                                        <Image
                                                             src={report.imageUrl}
                                                             alt="Thumb"
-                                                            width={80}
-                                                            aspectRatio="1 / 1"
-                                                            className="rounded-sm border"
+                                                            width={40}
+                                                            height={40}
+                                                            className="w-10 h-10 object-cover rounded-sm border"
+                                                            placeholder="empty"
                                                         />
                                                     </div>
                                                 </DialogTrigger>
@@ -480,12 +480,13 @@ export function GlobalServiceHistoryTable() {
                                                         <DialogTitle>Service Image - {format(new Date(report.timestamp), "MMM dd, yyyy HH:mm")}</DialogTitle>
                                                     </DialogHeader>
                                                     <div className="relative w-full overflow-hidden bg-muted rounded-md" style={{ height: 'calc(90vh - 100px)' }}>
-                                                        <img
-                                                            src={getOptimizedUrl(report.imageUrl, { width: 1200, quality: 85 })}
+                                                        <Image
+                                                            src={report.imageUrl}
                                                             alt="Service Report"
-                                                            loading="eager"
-                                                            decoding="async"
-                                                            className="w-full h-full object-contain"
+                                                            fill
+                                                            className="object-contain"
+                                                            sizes="(max-width: 1200px) 100vw, 1200px"
+                                                            priority
                                                         />
                                                     </div>
                                                 </DialogContent>
