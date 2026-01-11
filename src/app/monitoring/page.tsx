@@ -67,6 +67,7 @@ import {
     LineChart,
     Line
 } from "recharts";
+import { getThumbnailUrl } from "@/lib/utils/imageUtils";
 
 // Custom hook for monitoring data
 function useMonitoring() {
@@ -192,7 +193,13 @@ function MachineQuickViewDialog({
                     <div className="space-y-4">
                         <div className="aspect-video relative rounded-lg overflow-hidden border bg-muted">
                             {machine.imageUrl ? (
-                                <img src={machine.imageUrl} alt={machine.name} className="w-full h-full object-cover" />
+                                <img
+                                    src={getThumbnailUrl(machine.imageUrl, 600)}
+                                    alt={machine.name}
+                                    loading="lazy"
+                                    decoding="async"
+                                    className="w-full h-full object-cover"
+                                />
                             ) : (
                                 <div className="w-full h-full flex items-center justify-center">
                                     <View className="h-12 w-12 text-muted-foreground opacity-20" />
@@ -372,7 +379,13 @@ function MachineStatusCard({ machine, onAction }: { machine: ExtendedMachineStat
                             <DialogTrigger asChild>
                                 <div className="h-16 w-16 bg-muted rounded-md flex-shrink-0 overflow-hidden border cursor-pointer hover:opacity-80 transition-opacity">
                                     {machine.imageUrl ? (
-                                        <img src={machine.imageUrl} alt={machine.name} className="h-full w-full object-cover" />
+                                        <img
+                                            src={getThumbnailUrl(machine.imageUrl, 128)}
+                                            alt={machine.name}
+                                            loading="lazy"
+                                            decoding="async"
+                                            className="h-full w-full object-cover"
+                                        />
                                     ) : (
                                         <div className="h-full w-full flex items-center justify-center bg-secondary">
                                             <View className="h-6 w-6 text-muted-foreground opacity-20" />
@@ -387,8 +400,10 @@ function MachineStatusCard({ machine, onAction }: { machine: ExtendedMachineStat
                                 <div className="relative w-full h-full flex items-center justify-center">
                                     {machine.imageUrl ? (
                                         <img
-                                            src={machine.imageUrl}
+                                            src={getThumbnailUrl(machine.imageUrl, 1024)}
                                             alt={machine.name}
+                                            loading="lazy"
+                                            decoding="async"
                                             className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
                                         />
                                     ) : (
@@ -819,8 +834,10 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                                 </VisuallyHidden>
                                                 <div className="relative w-full h-full flex items-center justify-center">
                                                     <img
-                                                        src={item.imageUrl}
+                                                        src={getThumbnailUrl(item.imageUrl, 1024)}
                                                         alt={item.description}
+                                                        loading="lazy"
+                                                        decoding="async"
                                                         className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
                                                     />
                                                 </div>
