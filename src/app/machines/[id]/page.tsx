@@ -379,7 +379,11 @@ export default function MachineDetailsPage() {
                                     </div>
                                     <div className="flex flex-col gap-1.5 p-2 rounded-md bg-emerald-50/50 border border-emerald-100/50">
                                         <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-700">Card Play Price</span>
-                                        <span className="text-sm font-semibold">${enrichedMachine.advancedSettings?.cardCashPlayPrice?.toFixed(2) || "1.80"}</span>
+                                        <span className="text-sm font-semibold">${
+                                            (enrichedMachine.advancedSettings?.cardCashPlayPrice && !isNaN(enrichedMachine.advancedSettings.cardCashPlayPrice))
+                                                ? enrichedMachine.advancedSettings.cardCashPlayPrice.toFixed(2)
+                                                : "1.80"
+                                        }</span>
                                     </div>
                                     <InlineEditField
                                         type="select"
@@ -450,14 +454,14 @@ export default function MachineDetailsPage() {
                                     <InlineEditField
                                         type="number"
                                         label="Play Count"
-                                        value={enrichedMachine.playCount ?? 0}
+                                        value={typeof enrichedMachine.playCount === 'number' && !isNaN(enrichedMachine.playCount) ? enrichedMachine.playCount : 0}
                                         disabled={!isEditMode}
                                         onSave={(val) => handleFieldUpdate("playCount", "Play Count", val, enrichedMachine.playCount)}
                                     />
                                     <InlineEditField
                                         type="number"
                                         label="Revenue"
-                                        value={enrichedMachine.revenue ?? 0}
+                                        value={typeof enrichedMachine.revenue === 'number' && !isNaN(enrichedMachine.revenue) ? enrichedMachine.revenue : 0}
                                         disabled={!isEditMode}
                                         onSave={(val) => handleFieldUpdate("revenue", "Revenue", val, enrichedMachine.revenue)}
                                     />
@@ -567,7 +571,9 @@ export default function MachineDetailsPage() {
                             <SettingsPanel
                                 machineId={enrichedMachine.id}
                                 machineName={enrichedMachine.name}
+                                assetTag={enrichedMachine.assetTag}
                                 activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
+                                supervisorOverride={supervisorOverride}
                             />
                         </div>
                         <div className="space-y-6">

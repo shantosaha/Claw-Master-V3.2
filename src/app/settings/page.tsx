@@ -22,6 +22,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { StockCheckSettingsForm } from "@/components/stock-check/StockCheckSettingsForm";
+import { ApiSettingsPanel } from "@/components/settings/ApiSettingsPanel";
 
 export default function SettingsPage() {
     const { user, canConfigureStockCheckSettings, canAccessMigration } = useAuth();
@@ -934,9 +935,13 @@ export default function SettingsPage() {
 
                     {/* Integrations Tab */}
                     <TabsContent value="integrations" className="space-y-4">
+                        {/* JotForm API Settings - Admin Only */}
+                        <ApiSettingsPanel />
+
+                        {/* Other Integrations */}
                         <Card>
                             <CardHeader>
-                                <CardTitle>Integrations</CardTitle>
+                                <CardTitle>Third-Party Integrations</CardTitle>
                                 <CardDescription>Connect with third-party services and tools.</CardDescription>
                             </CardHeader>
                             <CardContent className="space-y-6">

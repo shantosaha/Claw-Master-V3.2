@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Image from "next/image";
 import { format } from "date-fns";
 import {
     Table,
@@ -74,11 +75,11 @@ export function ServiceHistoryTable({ machineId }: ServiceHistoryTableProps) {
                             </TableCell>
                             <TableCell>{report.inflowSku || report.machineName}</TableCell>
                             <TableCell>{report.staffName}</TableCell>
-                            <TableCell className="text-right">{report.c1}</TableCell>
-                            <TableCell className="text-right">{report.c2}</TableCell>
-                            <TableCell className="text-right">{report.c3}</TableCell>
-                            <TableCell className="text-right">{report.c4}</TableCell>
-                            <TableCell className="text-right">1/{report.playsPerWin}</TableCell>
+                            <TableCell className="text-right">{isNaN(report.c1) ? '-' : report.c1}</TableCell>
+                            <TableCell className="text-right">{isNaN(report.c2) ? '-' : report.c2}</TableCell>
+                            <TableCell className="text-right">{isNaN(report.c3) ? '-' : report.c3}</TableCell>
+                            <TableCell className="text-right">{isNaN(report.c4) ? '-' : report.c4}</TableCell>
+                            <TableCell className="text-right">1/{isNaN(report.playsPerWin) ? '-' : report.playsPerWin}</TableCell>
                             <TableCell className="text-center">
                                 {report.imageUrl ? (
                                     <Dialog>
@@ -92,11 +93,11 @@ export function ServiceHistoryTable({ machineId }: ServiceHistoryTableProps) {
                                                 <DialogTitle>Service Image - {format(report.timestamp, "MMM dd")}</DialogTitle>
                                             </DialogHeader>
                                             <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
-                                                {/* Using standard img for simplicity with external URLs */}
-                                                <img
+                                                <Image
                                                     src={report.imageUrl}
                                                     alt="Service Report"
-                                                    className="object-contain w-full h-full"
+                                                    fill
+                                                    className="object-contain"
                                                 />
                                             </div>
                                         </DialogContent>

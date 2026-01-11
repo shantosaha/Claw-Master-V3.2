@@ -111,11 +111,19 @@ export async function importGameReport(
                 await machineService.update(machine.id, updateData);
                 result.machinesUpdated++;
 
-                // Create revenue reading
+                // Create revenue reading with slot and item attribution
                 const revenue = calculateRevenue(entry);
+
+                // Get the first slot and its current item for attribution
+                const slot = machine.slots?.[0];
+                const slotId = slot?.id;
+                const itemId = slot?.currentItemId || (slot?.currentItem?.id);
+
                 const reading: MachineRevenueReading = {
                     id: generateId(),
                     machineId: machine.id,
+                    slotId,
+                    itemId,
                     date: report.date,
                     revenue,
                     playCount: entry.standardPlays,

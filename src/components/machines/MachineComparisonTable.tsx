@@ -173,7 +173,7 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                                             <TableCell key={stat.date.toISOString()} className="text-right">
                                                 {metric.format
                                                     ? metric.format(stat[metric.key])
-                                                    : stat[metric.key]}
+                                                    : (typeof stat[metric.key] === 'number' && isNaN(stat[metric.key]) ? '-' : stat[metric.key])}
                                             </TableCell>
                                         ))}
                                     </TableRow>
