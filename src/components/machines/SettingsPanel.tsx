@@ -16,16 +16,27 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { useData } from "@/context/DataProvider";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Save, Lock } from "lucide-react";
+import { RefreshCw, Save, Lock, Info } from "lucide-react";
 import { PermissionGate } from "@/components/auth/PermissionGate";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import Image from "next/image";
 
 interface SettingsPanelProps {
     machineId: string;
     machineName?: string;
+    assetTag?: string;
     activeStockItem?: { id: string; name: string } | null;
+    supervisorOverride?: boolean;
 }
 
-export function SettingsPanel({ machineId, machineName, activeStockItem }: SettingsPanelProps) {
+export function SettingsPanel({
+    machineId,
+    machineName,
+    assetTag,
+    activeStockItem,
+    supervisorOverride = false
+}: SettingsPanelProps) {
     const { user } = useAuth();
     const { refreshMachines } = useData();
     const [activeTab, setActiveTab] = useState("playfield");
@@ -49,13 +60,15 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
 
     // New advanced settings state
     const [advancedSettings, setAdvancedSettings] = useState<AdvancedMachineSettings>({});
+    const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [syncing, setSyncing] = useState(false);
 
     useEffect(() => {
         loadSettings();
-    }, [machineId, activeStockItem?.id]);
+    }, [machineId, assetTag, activeStockItem?.id]);
 
     const loadSettings = async () => {
         setLoading(true);
@@ -66,11 +79,15 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                 setAdvancedSettings(machine.advancedSettings || {});
             }
 
-            // 2. Load playfield settings history from settingsService
+            // 2. Load playfield settings history
+            // Aggregated by assetTag if available, matching machine unit history
+            const filterField = assetTag ? "assetTag" : "machineId";
+            const filterValue = assetTag || machineId;
+
             const data = await settingsService.query(
-                where("machineId", "==", machineId),
+                where(filterField, "==", filterValue),
                 orderBy("timestamp", "desc"),
-                limit(5)
+                limit(10)
             );
             setSettings(data);
 
@@ -113,6 +130,30 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
         }
     };
 
+    const handleSync = async () => {
+        setSyncing(true);
+        try {
+            const { serviceReportService } = await import("@/services/serviceReportService");
+            const result = await serviceReportService.syncLatestSettingsToMachines();
+
+            if (result.errors.length > 0) {
+                toast.error("Sync partial failure", {
+                    description: `${result.errors.length} errors occurred during sync.`
+                });
+            } else {
+                toast.success("JotForm Sync Complete", {
+                    description: `Successfully updated ${result.synced} machine settings.`
+                });
+            }
+            await loadSettings();
+        } catch (error) {
+            console.error("Failed to sync with JotForm:", error);
+            toast.error("Sync Failed");
+        } finally {
+            setSyncing(false);
+        }
+    };
+
     // Helper to safely parse input to number
     const parseValue = (val: string | number | undefined): number => {
         if (val === "" || val === undefined || val === null) return 0;
@@ -133,6 +174,8 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
             // 1. Save to playfield settings (history/log)
             await settingsService.add({
                 machineId,
+                machineName,
+                assetTag,
                 c1,
                 c2,
                 c3,
@@ -252,15 +295,32 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
             <TabsContent value="playfield" className="space-y-6">
                 <div className="grid gap-4 p-4 border rounded-md bg-muted/20">
                     <div className="flex justify-between items-center">
-                        <h3 className="font-medium">Current Configuration</h3>
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-col gap-1">
+                            <h3 className="font-medium">Current Configuration</h3>
                             {activeStockItem && (
-                                <div className="text-sm text-muted-foreground">
-                                    Active Stock: <span className="font-medium text-foreground">{activeStockItem.name}</span>
+                                <div className="text-[11px] text-muted-foreground flex items-center gap-1">
+                                    <Info className="h-3 w-3" />
+                                    Active Stock: <span className="font-semibold text-foreground">{activeStockItem.name}</span>
                                 </div>
                             )}
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleSync}
+                                disabled={syncing}
+                                className="h-7 text-xs"
+                            >
+                                {syncing ? (
+                                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
+                                ) : (
+                                    <RefreshCw className="h-3 w-3 mr-1" />
+                                )}
+                                Sync JotForm
+                            </Button>
                             {itemSettings && (
-                                <Badge variant="outline" className="text-xs">Synced</Badge>
+                                <Badge variant="secondary" className="text-[10px] h-5">Synced</Badge>
                             )}
                         </div>
                     </div>
@@ -302,6 +362,14 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                         }
                     >
                         <div className="space-y-4">
+                            {!supervisorOverride && (
+                                <div className="flex items-center gap-2 p-2 bg-blue-50/50 border border-blue-100 rounded text-blue-700">
+                                    <Lock className="h-3.5 w-3.5" />
+                                    <p className="text-[11px]">
+                                        Read-only mode (Synced from JotForm). Enable <b>Supervisor Override</b> to make changes.
+                                    </p>
+                                </div>
+                            )}
                             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
                                 <div className="space-y-2">
                                     <Label title="First Stage / Grabbing Power" className="text-[11px] truncate block">C1 (Catch)</Label>
@@ -311,6 +379,7 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                                         max="64"
                                         className="h-8 text-sm"
                                         value={currentSetting.c1}
+                                        disabled={!supervisorOverride}
                                         onChange={(e) => setCurrentSetting({ ...currentSetting, c1: e.target.value })}
                                     />
                                 </div>
@@ -322,6 +391,7 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                                         max="64"
                                         className="h-8 text-sm"
                                         value={currentSetting.c2}
+                                        disabled={!supervisorOverride}
                                         onChange={(e) => setCurrentSetting({ ...currentSetting, c2: e.target.value })}
                                     />
                                 </div>
@@ -333,6 +403,7 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                                         max="64"
                                         className="h-8 text-sm"
                                         value={currentSetting.c3}
+                                        disabled={!supervisorOverride}
                                         onChange={(e) => setCurrentSetting({ ...currentSetting, c3: e.target.value })}
                                     />
                                 </div>
@@ -343,6 +414,7 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                                         min="0"
                                         className="h-8 text-sm"
                                         value={currentSetting.payoutRate}
+                                        disabled={!supervisorOverride}
                                         onChange={(e) => setCurrentSetting({ ...currentSetting, payoutRate: e.target.value })}
                                     />
                                 </div>
@@ -354,23 +426,27 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                                         max="64"
                                         className="h-8 text-sm"
                                         value={currentSetting.c4}
+                                        disabled={!supervisorOverride}
                                         onChange={(e) => setCurrentSetting({ ...currentSetting, c4: e.target.value })}
                                     />
                                 </div>
                             </div>
-                            <Button onClick={handleSave} disabled={saving}>
-                                {saving ? (
-                                    <>
-                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                        Saving...
-                                    </>
-                                ) : (
-                                    <>
-                                        <Save className="h-4 w-4 mr-2" />
-                                        Update Settings
-                                    </>
-                                )}
-                            </Button>
+
+                            {supervisorOverride && (
+                                <Button onClick={handleSave} disabled={saving} size="sm">
+                                    {saving ? (
+                                        <>
+                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                            Saving...
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Save className="h-4 w-4 mr-2" />
+                                            Update Settings
+                                        </>
+                                    )}
+                                </Button>
+                            )}
                         </div>
                     </PermissionGate>
                 </div>
@@ -385,11 +461,11 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                                 <div key={setting.id} className="text-sm p-3 border rounded-md bg-card hover:bg-muted/10 transition-colors">
                                     <div className="flex justify-between items-start mb-2">
                                         <div className="flex flex-col">
-                                            <span className="font-medium">
+                                            <span className="font-medium text-xs sm:text-sm">
                                                 {formatDate(setting.timestamp, "MMM d, yyyy 'at' HH:mm")}
                                             </span>
                                             {setting.stockItemName ? (
-                                                <span className="text-xs text-muted-foreground mt-0.5">
+                                                <span className="text-[10px] text-muted-foreground mt-0.5">
                                                     Active Stock: {setting.stockItemId ? (
                                                         <Link href={`/inventory/${setting.stockItemId}`} className="text-primary hover:underline">
                                                             {setting.stockItemName}
@@ -399,33 +475,47 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                                                     )}
                                                 </span>
                                             ) : (
-                                                <span className="text-xs text-muted-foreground mt-0.5">No stock linked</span>
+                                                <span className="text-[10px] text-muted-foreground mt-0.5">No stock linked</span>
                                             )}
                                         </div>
-                                        <div className="text-xs text-muted-foreground">
+                                        {setting.imageUrl && (
+                                            <div
+                                                className="h-10 w-10 sm:h-12 sm:w-12 rounded-md overflow-hidden bg-muted border flex-shrink-0 cursor-zoom-in hover:opacity-80 transition-opacity"
+                                                onClick={() => setZoomedImage(setting.imageUrl || null)}
+                                            >
+                                                <Image
+                                                    src={setting.imageUrl}
+                                                    alt="Submission"
+                                                    width={48}
+                                                    height={48}
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        )}
+                                        <div className="text-[10px] text-muted-foreground">
                                             By: {setting.setBy?.substring(0, 8)}...
                                         </div>
                                     </div>
                                     <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center bg-muted/30 p-2 rounded">
                                         <div className="flex flex-col">
                                             <span className="text-[9px] uppercase text-muted-foreground">C1</span>
-                                            <span className="font-semibold text-xs">{setting.c1 ?? setting.strengthSetting ?? '-'}</span>
+                                            <span className="font-semibold text-xs">{(setting.c1 !== undefined && !isNaN(setting.c1)) ? setting.c1 : (setting.strengthSetting ?? '-')}</span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[9px] uppercase text-muted-foreground">C2</span>
-                                            <span className="font-semibold text-xs">{setting.c2 ?? '-'}</span>
+                                            <span className="font-semibold text-xs">{(setting.c2 !== undefined && !isNaN(setting.c2)) ? setting.c2 : '-'}</span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[9px] uppercase text-muted-foreground">C3</span>
-                                            <span className="font-semibold text-xs">{setting.c3 ?? '-'}</span>
+                                            <span className="font-semibold text-xs">{(setting.c3 !== undefined && !isNaN(setting.c3)) ? setting.c3 : '-'}</span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[9px] uppercase text-muted-foreground">Payout</span>
-                                            <span className="font-semibold text-xs">{setting.payoutRate ?? setting.payoutPercentage ?? '-'}</span>
+                                            <span className="font-semibold text-xs">{(setting.payoutRate !== undefined && !isNaN(setting.payoutRate)) ? setting.payoutRate : (setting.payoutPercentage ?? '-')}</span>
                                         </div>
                                         <div className="flex flex-col">
                                             <span className="text-[9px] uppercase text-muted-foreground">C4</span>
-                                            <span className="font-semibold text-xs">{setting.c4 ?? '-'}</span>
+                                            <span className="font-semibold text-xs">{(setting.c4 !== undefined && !isNaN(setting.c4)) ? setting.c4 : '-'}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -472,6 +562,25 @@ export function SettingsPanel({ machineId, machineName, activeStockItem }: Setti
                     </div>
                 </PermissionGate>
             </TabsContent>
-        </Tabs>
+            <Dialog open={!!zoomedImage} onOpenChange={(open) => !open && setZoomedImage(null)}>
+                <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/90 border-none">
+                    <VisuallyHidden>
+                        <DialogTitle>Image Preview</DialogTitle>
+                    </VisuallyHidden>
+                    {zoomedImage && (
+                        <div className="relative flex items-center justify-center min-h-[50vh]" style={{ height: '80vh' }}>
+                            <Image
+                                src={zoomedImage}
+                                alt="Zoomed Submission"
+                                fill
+                                className="object-contain"
+                                sizes="(max-width: 1200px) 100vw, 1200px"
+                                priority
+                            />
+                        </div>
+                    )}
+                </DialogContent>
+            </Dialog>
+        </Tabs >
     );
 }

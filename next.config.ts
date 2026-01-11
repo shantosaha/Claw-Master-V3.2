@@ -63,8 +63,26 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'image.pollinations.ai',
       },
+      {
+        protocol: 'https',
+        hostname: 'www.jotform.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'jotform.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'files.jotform.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'widget-uploads.jotform.io',
+      },
     ],
   },
+  // JotForm API is now handled by the dynamic API route at /api/jotform/[...path]
+  // which reads the configured URL from appSettings
 };
 
 

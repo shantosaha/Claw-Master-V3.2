@@ -42,6 +42,7 @@ import {
     ShieldAlert
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ArcadeMachine } from "@/types";
 import { monitoringService, MachineStatus, MonitoringAlert, MonitoringReportItem } from "@/services/monitoringService";
 import { LoadingSkeleton } from "@/components/common/LoadingSkeleton";
 import Link from "next/link";
@@ -1409,37 +1410,13 @@ export default function MonitoringPage() {
 
                 <TabsContent value="submit">
                     <div className="max-w-4xl mx-auto">
-                        <div className="mb-4 bg-muted/30 p-4 rounded-lg border">
-                            <h2 className="text-sm font-medium mb-2">Select Machine to Auto-fill</h2>
-                            <Select
-                                value={selectedMachineForAction?.id || ""}
-                                onValueChange={(val) => setSelectedMachineForAction(mergedMachines.find(m => m.id === val) || null)}
-                            >
-                                <SelectTrigger className="w-full md:w-[400px]">
-                                    <SelectValue placeholder="Search or select a machine..." />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {mergedMachines.map(m => (
-                                        <SelectItem key={m.id} value={m.id}>
-                                            {m.name} ({m.assetTag || "No Tag"})
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        {selectedMachineForAction ? (
-                            <ServiceReportForm
-                                machine={selectedMachineForAction as ExtendedMachineStatus}
-                                onSuccess={() => {
-                                    setSelectedMachineForAction(null);
-                                    setSelectedTab("monitor");
-                                }}
-                            />
-                        ) : (
-                            <div className="text-center py-12 text-muted-foreground border rounded-md bg-muted/10">
-                                Please select a machine to submit a report
-                            </div>
-                        )}
+                        <ServiceReportForm
+                            machine={(selectedMachineForAction as unknown as ArcadeMachine) || undefined}
+                            onSuccess={() => {
+                                setSelectedMachineForAction(null);
+                                setSelectedTab("monitor");
+                            }}
+                        />
                     </div>
                 </TabsContent>
 

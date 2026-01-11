@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, { createContext, useContext, useEffect, useState, useMemo, useCallback } from "react";
 import { User, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth, db, isFirebaseInitialized } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
@@ -57,7 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     // Load roles and permissions on mount
-    const loadData = async () => {
+    const loadData = useCallback(async () => {
         try {
             const [loadedRoles, loadedPerms] = await Promise.all([
                 roleService.getAll(),
@@ -68,25 +68,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error) {
             console.error("Failed to load auth data:", error);
         }
-    };
+    }, []);
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [loadData]);
 
     useEffect(() => {
         if (!isFirebaseInitialized) {
             console.warn("Firebase not initialized. Using Mock Auth.");
-            // Mock User for Demo
-            const mockUser: Partial<User> & { uid: string } = {
-                uid: "mock-user-123",
-                email: "demo@clawmaster.app",
+
+            // Revert to single mock admin
+            const mockUser = {
+                uid: "mock-admin",
+                email: "admin@clawmaster.demo",
                 displayName: "Demo Admin",
-                photoURL: "https://github.com/shadcn.png",
+                photoURL: "https://github.com/shadcn.png"
             };
             const mockProfile: UserProfile = {
-                uid: "mock-user-123",
-                email: "demo@clawmaster.app",
+                uid: "mock-admin",
+                email: "admin@clawmaster.demo",
                 displayName: "Demo Admin",
                 photoURL: "https://github.com/shadcn.png",
                 role: "admin",
@@ -108,6 +109,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     accessMigration: true,
                 },
             };
+
             setUser(mockUser as User);
             setUserProfile(mockProfile);
             setLoading(false);
@@ -156,7 +158,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }, []);
 
 
-    const signInWithGoogle = async () => {
+    const signInWithGoogle = useCallback(async () => {
         if (!isFirebaseInitialized) {
             alert("Demo Mode: You are already logged in as Admin.");
             return;
@@ -167,9 +169,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error) {
             console.error("Error signing in with Google", error);
         }
-    };
+    }, []);
 
-    const logout = async () => {
+    const logout = useCallback(async () => {
         if (!isFirebaseInitialized) {
             alert("Demo Mode: Logout disabled.");
             return;
@@ -179,67 +181,94 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         } catch (error) {
             console.error("Error signing out", error);
         }
-    };
+    }, []);
 
 
-    const hasRole = (allowedRoles: Role[]) => {
+    const hasRole = useCallback((allowedRoles: Role[]) => {
         if (!userProfile) return false;
         return allowedRoles.includes(userProfile.role);
-    };
+    }, [userProfile]);
 
     // Permission helpers
-    const hasPermission = (permission: PermissionKey | string): boolean => {
+    const hasPermission = useCallback((permission: PermissionKey | string): boolean => {
         if (!userProfile) return false;
         // Admins always have all permissions
         if (userProfile.role === 'admin') return true;
-        // Check exact match in permissions object
-        const permissions = userProfile.permissions as Record<string, boolean>;
-        return permissions?.[permission] ?? false;
-    };
 
-    const canSubmitStockCheck = (): boolean => {
+        // 1. Check direct user permissions
+        const userPermissions = userProfile.permissions as Record<string, boolean> | undefined;
+        if (userPermissions?.[permission]) return true;
+
+        // 2. Check role-based permissions
+        const userRole = roles.find(r => r.id === userProfile.role);
+        if (userRole?.permissions?.[permission]) return true;
+
+        return false;
+    }, [userProfile, roles]);
+
+    const canSubmitStockCheck = useCallback((): boolean => {
         return hasPermission('stockCheckSubmit');
-    };
+    }, [hasPermission]);
 
-    const canApproveStockCheck = (): boolean => {
+    const canApproveStockCheck = useCallback((): boolean => {
         return hasPermission('stockCheckApprove');
-    };
+    }, [hasPermission]);
 
-    const canConfigureStockCheckSettings = (): boolean => {
+    const canConfigureStockCheckSettings = useCallback((): boolean => {
         return hasPermission('stockCheckSettings');
-    };
+    }, [hasPermission]);
 
-    const canEditRoles = (): boolean => {
+    const canEditRoles = useCallback((): boolean => {
         return hasPermission('editRoles');
-    };
+    }, [hasPermission]);
 
-    const canAccessMigration = (): boolean => {
+    const canAccessMigration = useCallback((): boolean => {
         return hasPermission('accessMigration');
-    };
+    }, [hasPermission]);
 
-    const getRoleById = (id: string): CustomRole | undefined => {
+    const getRoleById = useCallback((id: string): CustomRole | undefined => {
         return roles.find(r => r.id === id);
-    };
+    }, [roles]);
+
+    // Memoize the context value to prevent unnecessary re-renders
+    const value = useMemo(() => ({
+        user,
+        userProfile,
+        roles,
+        permissions,
+        loading,
+        signInWithGoogle,
+        logout,
+        hasRole,
+        hasPermission,
+        canApproveStockCheck,
+        canSubmitStockCheck,
+        canConfigureStockCheckSettings,
+        canEditRoles,
+        canAccessMigration,
+        getRoleById,
+        refreshData: loadData,
+    }), [
+        user,
+        userProfile,
+        roles,
+        permissions,
+        loading,
+        signInWithGoogle,
+        logout,
+        hasRole,
+        hasPermission,
+        canApproveStockCheck,
+        canSubmitStockCheck,
+        canConfigureStockCheckSettings,
+        canEditRoles,
+        canAccessMigration,
+        getRoleById,
+        loadData
+    ]);
 
     return (
-        <AuthContext.Provider value={{
-            user,
-            userProfile,
-            roles,
-            permissions,
-            loading,
-            signInWithGoogle,
-            logout,
-            hasRole,
-            hasPermission,
-            canApproveStockCheck,
-            canSubmitStockCheck,
-            canConfigureStockCheckSettings,
-            canEditRoles,
-            canAccessMigration,
-            getRoleById,
-            refreshData: loadData,
-        }}>
+        <AuthContext.Provider value={value}>
             {children}
         </AuthContext.Provider>
     );

@@ -174,9 +174,146 @@ async function isSubmissionBlocked(): Promise<{ blocked: boolean; reason?: strin
     return { blocked: false };
 }
 
+// ============================================================================
+// API Integration Settings
+// ============================================================================
+
+const API_SETTINGS_DOC_ID = "apiIntegrationSettings";
+
+export interface ApiIntegrationSettings {
+    jotformApiUrl: string;
+    jotformFormId: string;
+    isEnabled: boolean;
+    lastSyncAt?: Date | string;
+    lastSyncStatus?: 'success' | 'error';
+    lastSyncMessage?: string;
+    updatedBy?: string;
+    updatedAt?: Date;
+}
+
+const DEFAULT_API_SETTINGS: ApiIntegrationSettings = {
+    jotformApiUrl: "http://claw.kokoamusement.com.au",
+    jotformFormId: "614",
+    isEnabled: true,
+    lastSyncAt: undefined,
+    lastSyncStatus: undefined,
+    lastSyncMessage: undefined,
+    updatedBy: undefined,
+    updatedAt: undefined,
+};
+
+// Demo data for API settings
+let demoApiSettings: ApiIntegrationSettings = { ...DEFAULT_API_SETTINGS };
+
+function getApiSettingsDocRef() {
+    if (!isFirebaseInitialized || !db) {
+        throw new Error("Firebase not initialized");
+    }
+    return doc(db, COLLECTION_NAME, API_SETTINGS_DOC_ID);
+}
+
+/**
+ * Get API integration settings
+ */
+async function getApiSettings(): Promise<ApiIntegrationSettings> {
+    if (!isFirebaseInitialized || !db) {
+        return demoApiSettings;
+    }
+
+    try {
+        const docSnap = await getDoc(getApiSettingsDocRef());
+        if (!docSnap.exists()) {
+            return DEFAULT_API_SETTINGS;
+        }
+        const data = docSnap.data();
+        return {
+            ...data,
+            lastSyncAt: data.lastSyncAt?.toDate?.() || data.lastSyncAt,
+            updatedAt: data.updatedAt?.toDate?.() || data.updatedAt,
+        } as ApiIntegrationSettings;
+    } catch (error) {
+        console.error("Failed to get API settings:", error);
+        return DEFAULT_API_SETTINGS;
+    }
+}
+
+/**
+ * Update API integration settings (admin only)
+ */
+async function updateApiSettings(
+    settings: Partial<ApiIntegrationSettings>,
+    updatedBy: string
+): Promise<ApiIntegrationSettings> {
+    const current = await getApiSettings();
+    const updated: ApiIntegrationSettings = {
+        ...current,
+        ...settings,
+        updatedBy,
+        updatedAt: new Date(),
+    };
+
+    if (!isFirebaseInitialized || !db) {
+        demoApiSettings = updated;
+        console.log("[AppSettings] Updated API settings (demo mode):", updated);
+        return updated;
+    }
+
+    await setDoc(getApiSettingsDocRef(), {
+        ...updated,
+        updatedAt: Timestamp.now(),
+        lastSyncAt: updated.lastSyncAt
+            ? Timestamp.fromDate(
+                typeof updated.lastSyncAt === "string"
+                    ? new Date(updated.lastSyncAt)
+                    : updated.lastSyncAt
+            )
+            : null,
+    });
+
+    console.log("[AppSettings] Updated API settings in Firestore");
+    return updated;
+}
+
+/**
+ * Record a sync event
+ */
+async function recordApiSync(status: 'success' | 'error', message: string): Promise<void> {
+    const current = await getApiSettings();
+    const updated = {
+        ...current,
+        lastSyncAt: new Date(),
+        lastSyncStatus: status,
+        lastSyncMessage: message,
+    };
+
+    if (!isFirebaseInitialized || !db) {
+        demoApiSettings = updated;
+        return;
+    }
+
+    await setDoc(getApiSettingsDocRef(), {
+        ...updated,
+        lastSyncAt: Timestamp.now(),
+    }, { merge: true });
+}
+
+/**
+ * Get the full JotForm API URL for fetching data
+ */
+async function getJotformApiEndpoint(): Promise<string> {
+    const settings = await getApiSettings();
+    // Return the proxied path for the Next.js rewrite
+    return `/api/jotform/${settings.jotformFormId}`;
+}
+
 export const appSettingsService = {
     getStockCheckSettings,
     updateStockCheckSettings,
     recordSubmission,
     isSubmissionBlocked,
+    // API Settings
+    getApiSettings,
+    updateApiSettings,
+    recordApiSync,
+    getJotformApiEndpoint,
 };

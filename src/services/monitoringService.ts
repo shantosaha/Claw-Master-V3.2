@@ -267,10 +267,35 @@ class MonitoringService {
 
     async fetchMonitoringReport(startDate: Date, endDate: Date): Promise<MonitoringReportItem[]> {
         // In a real implementation, this would likely be an aggregated backend call.
-        // For now, we will simulate this aggregation by fetching machines and combining with mock stats.
+        // For now, we will simulate this aggregation by fetching machines and combining with real settings.
 
         try {
             const machines = await this.fetchMachineStatuses();
+
+            // Import settingsService to get real C1-C4 values
+            const { settingsService } = await import('@/services');
+            const allSettings = await settingsService.getAll();
+
+            // Create a map of machineId -> latest settings
+            const settingsByMachine = new Map<string, { c1: number; c2: number; c3: number; c4: number; payoutRate: number; imageUrl?: string }>();
+
+            // Settings are already sorted by timestamp desc in most cases, but let's be safe
+            const sortedSettings = [...allSettings].sort((a, b) =>
+                new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+            );
+
+            for (const setting of sortedSettings) {
+                if (!settingsByMachine.has(setting.machineId)) {
+                    settingsByMachine.set(setting.machineId, {
+                        c1: setting.c1 ?? setting.strengthSetting ?? 0,
+                        c2: setting.c2 ?? 0,
+                        c3: setting.c3 ?? 0,
+                        c4: setting.c4 ?? 0,
+                        payoutRate: setting.payoutRate ?? setting.payoutPercentage ?? 0,
+                        imageUrl: setting.imageUrl
+                    });
+                }
+            }
 
             return machines.map(machine => {
                 // Simulate data based on machine hash/id for consistency
@@ -280,19 +305,25 @@ class MonitoringService {
                     return x - Math.floor(x);
                 };
 
+                // Get real settings if available, otherwise use defaults
+                const machineSettings = settingsByMachine.get(machine.id);
+                const c1 = machineSettings?.c1 ?? 0;
+                const c2 = machineSettings?.c2 ?? 0;
+                const c3 = machineSettings?.c3 ?? 0;
+                const c4 = machineSettings?.c4 ?? 0;
+                const payoutSettings = machineSettings?.payoutRate ?? 0;
+
                 const customerPlays = Math.floor(random(1) * 500) + 50;
                 const payouts = Math.floor(customerPlays / (random(2) * 20 + 10)); // ~1/10 to 1/30 win rate
                 const staffPlays = Math.floor(random(3) * 15);
-                const payoutSettings = 10 + Math.floor(random(4) * 40); // Target plays
 
                 // Calculate plays per payout
                 const playsPerPayout = payouts > 0 ? Math.round((customerPlays + staffPlays) / payouts) : 0;
 
                 // Calculate Payout Accuracy % (Target / Actual)
-                // If Actual is 0 (no payouts), accuracy is effectively 0 for now (or handle as special case)
-                // Use formula: (Target / Actual) * 100. 
-                // Ex: Target 10, Actual 5 => 200%. Target 10, Actual 20 => 50%.
-                const payoutAccuracy = playsPerPayout > 0 ? Math.round((payoutSettings / playsPerPayout) * 100) : 0;
+                const payoutAccuracy = playsPerPayout > 0 && payoutSettings > 0
+                    ? Math.round((payoutSettings / playsPerPayout) * 100)
+                    : 0;
 
                 // Determine status using the new logic
                 const payoutStatus = this.determinePayoutStatus(playsPerPayout, payoutSettings);
@@ -310,11 +341,11 @@ class MonitoringService {
                     payoutAccuracy,
                     settingsDate: new Date(Date.now() - random(5) * 30 * 24 * 60 * 60 * 1000), // Random date in last 30 days
                     staffName: ['Daniel Valix', 'Shanto Saha', 'Tommy Wong'][Math.floor(random(6) * 3)],
-                    c1: 15 + Math.floor(random(7) * 40),
-                    c2: 10 + Math.floor(random(8) * 30),
-                    c3: 5 + Math.floor(random(9) * 20),
-                    c4: 20 + Math.floor(random(10) * 40),
-                    imageUrl: machine.imageUrl,
+                    c1,
+                    c2,
+                    c3,
+                    c4,
+                    imageUrl: machineSettings?.imageUrl || machine.imageUrl,
                     remarks: random(11) > 0.8 ? (random(12) > 0.5 ? "Update settings" : "Low stock") : undefined,
                     payoutStatus,
                     lastUpdated: new Date()
