@@ -26,6 +26,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MachineComparisonTable } from "@/components/machines/MachineComparisonTable";
 import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
 import { ServiceHistoryTable } from "@/components/machines/ServiceHistoryTable";
+import { getThumbnailUrl } from "@/lib/utils/imageUtils";
 
 // Constants for select field options
 const STATUS_OPTIONS = [
@@ -522,8 +523,10 @@ export default function MachineDetailsPage() {
                                 <div className="aspect-video bg-muted rounded-lg overflow-hidden relative group">
                                     {enrichedMachine.imageUrl ? (
                                         <img
-                                            src={enrichedMachine.imageUrl}
+                                            src={getThumbnailUrl(enrichedMachine.imageUrl, 400)}
                                             alt={enrichedMachine.name}
+                                            loading="lazy"
+                                            decoding="async"
                                             className="w-full h-full object-cover"
                                         />
                                     ) : (

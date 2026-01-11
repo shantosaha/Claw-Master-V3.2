@@ -15,6 +15,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { getThumbnailUrl } from "@/lib/utils/imageUtils";
 
 interface MachineCardProps {
     machine: ArcadeMachine;
@@ -81,8 +82,10 @@ export function MachineCard({
             <div className="relative h-28 w-full bg-muted">
                 {machine.imageUrl ? (
                     <img
-                        src={machine.imageUrl}
+                        src={getThumbnailUrl(machine.imageUrl, 200)}
                         alt={machine.name}
+                        loading="lazy"
+                        decoding="async"
                         className="absolute inset-0 w-full h-full object-cover"
                     />
                 ) : (
@@ -160,8 +163,10 @@ export function MachineCard({
                         {/* Item Image */}
                         {currentItem.imageUrl && (
                             <img
-                                src={currentItem.imageUrl}
+                                src={getThumbnailUrl(currentItem.imageUrl, 48)}
                                 alt={currentItem.name}
+                                loading="lazy"
+                                decoding="async"
                                 className="w-6 h-6 rounded object-cover border bg-muted flex-shrink-0"
                             />
                         )}

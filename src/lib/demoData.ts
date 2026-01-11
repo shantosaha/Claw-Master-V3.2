@@ -134,6 +134,7 @@ export const DEMO_MAINTENANCE: MaintenanceTask[] = [
         status: "open",
         assignedTo: "Tech 1",
         createdBy: "Staff 1",
+        type: "emergency",
         createdAt: new Date(),
     }
 ];

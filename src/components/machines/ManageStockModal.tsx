@@ -28,6 +28,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getThumbnailUrl } from "@/lib/utils/imageUtils";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -458,8 +459,10 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
                                             <div className="h-12 w-12 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
                                                 {pendingItem.imageUrl ? (
                                                     <img
-                                                        src={pendingItem.imageUrl}
+                                                        src={getThumbnailUrl(pendingItem.imageUrl, 48)}
                                                         alt={pendingItem.name}
+                                                        loading="lazy"
+                                                        decoding="async"
                                                         className="h-full w-full object-cover"
                                                     />
                                                 ) : (
@@ -494,8 +497,10 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
                                             <div className="h-12 w-12 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
                                                 {targetSlot.currentItem.imageUrl ? (
                                                     <img
-                                                        src={targetSlot.currentItem.imageUrl}
+                                                        src={getThumbnailUrl(targetSlot.currentItem.imageUrl, 48)}
                                                         alt={targetSlot.currentItem.name}
+                                                        loading="lazy"
+                                                        decoding="async"
                                                         className="h-full w-full object-cover"
                                                     />
                                                 ) : (
@@ -673,7 +678,7 @@ function StockItemRow({
             <div className="flex items-center gap-4">
                 <div className="h-14 w-14 rounded-md overflow-hidden bg-muted border border-border/50 flex-shrink-0">
                     {item.imageUrl ? (
-                        <img src={item.imageUrl} alt={item.name} className="h-full w-full object-cover" />
+                        <img src={getThumbnailUrl(item.imageUrl, 56)} alt={item.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                     ) : (
                         <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground">No Img</div>
                     )}

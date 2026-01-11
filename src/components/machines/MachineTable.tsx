@@ -30,6 +30,7 @@ import {
 import { formatDate } from "@/lib/utils/date";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { getThumbnailUrl } from "@/lib/utils/imageUtils";
 
 interface MachineTableProps {
     machines: MachineDisplayItem[];
@@ -280,8 +281,10 @@ export function MachineTable({
                                         >
                                             {item.imageUrl ? (
                                                 <img
-                                                    src={item.imageUrl}
+                                                    src={getThumbnailUrl(item.imageUrl, 64)}
                                                     alt={item.name}
+                                                    loading="lazy"
+                                                    decoding="async"
                                                     className="w-8 h-8 rounded object-cover flex-shrink-0 hidden sm:block"
                                                 />
                                             ) : (
@@ -304,8 +307,10 @@ export function MachineTable({
                                             >
                                                 {currentSlot.currentItem.imageUrl ? (
                                                     <img
-                                                        src={currentSlot.currentItem.imageUrl}
+                                                        src={getThumbnailUrl(currentSlot.currentItem.imageUrl, 48)}
                                                         alt={currentSlot.currentItem.name}
+                                                        loading="lazy"
+                                                        decoding="async"
                                                         className="w-6 h-6 rounded object-cover flex-shrink-0 bg-muted group-hover:ring-1 group-hover:ring-primary/20 transition-all hidden sm:block"
                                                     />
                                                 ) : (
@@ -381,8 +386,10 @@ export function MachineTable({
                                                     >
                                                         {queueItem.imageUrl ? (
                                                             <img
-                                                                src={queueItem.imageUrl}
+                                                                src={getThumbnailUrl(queueItem.imageUrl, 48)}
                                                                 alt={queueItem.name}
+                                                                loading="lazy"
+                                                                decoding="async"
                                                                 className="w-6 h-6 rounded object-cover flex-shrink-0 bg-muted hidden sm:block"
                                                             />
                                                         ) : (

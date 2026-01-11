@@ -56,18 +56,8 @@ export function getOptimizedUrl(
     const encodedUrl = encodeURIComponent(trimmedUrl);
 
     // Build the proxy URL with optimization parameters
-    const params = new URLSearchParams({
-        url: trimmedUrl, // wsrv.nl handles encoding internally
-        w: String(width),
-        q: String(quality),
-        output: "webp",
-        il: "", // Interlace/Progressive loading (flag, no value)
-        we: "", // Force cache-control headers (flag, no value)
-        v: String(version),
-    });
-
-    // Reconstruct to handle flag parameters correctly
-    return `${PROXY_BASE}${encodedUrl}&w=${width}&q=${quality}&output=webp&il&we&v=${version}`;
+    // Note: Removed &il (interlace) to prevent blur effect during loading
+    return `${PROXY_BASE}${encodedUrl}&w=${width}&q=${quality}&output=webp&we&v=${version}`;
 }
 
 /**

@@ -15,6 +15,7 @@ import { promoteFirstQueueItem } from "@/utils/promoteQueueItem";
 import Link from "next/link";
 import { StockItemDetailsDialog } from "../inventory/StockItemDetailsDialog";
 import { ClawSettingsDialog } from "../inventory/ClawSettingsDialog";
+import { getThumbnailUrl } from "@/lib/utils/imageUtils";
 import {
     migrateToMachineAssignments,
     removeMachineAssignment,
@@ -256,7 +257,7 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                         <div className="flex items-center gap-5">
                             <div className="h-20 w-20 bg-muted rounded-lg overflow-hidden flex-shrink-0 border border-border/50">
                                 {fullCurrentItem.imageUrl ? (
-                                    <img src={fullCurrentItem.imageUrl} alt={fullCurrentItem.name} className="h-full w-full object-cover" />
+                                    <img src={getThumbnailUrl(fullCurrentItem.imageUrl, 80)} alt={fullCurrentItem.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                                 ) : (
                                     <div className="h-full w-full flex items-center justify-center text-muted-foreground bg-secondary/30">
                                         <Package className="h-8 w-8 opacity-40" />
@@ -385,7 +386,7 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
 
                                     <div className="h-16 w-16 bg-muted rounded-lg overflow-hidden flex-shrink-0 border border-border/50">
                                         {queueItem.imageUrl ? (
-                                            <img src={queueItem.imageUrl} alt={queueItem.name} className="h-full w-full object-cover" />
+                                            <img src={getThumbnailUrl(queueItem.imageUrl, 64)} alt={queueItem.name} loading="lazy" decoding="async" className="h-full w-full object-cover" />
                                         ) : (
                                             <div className="h-full w-full flex items-center justify-center text-xs text-muted-foreground bg-secondary/30">IMG</div>
                                         )}

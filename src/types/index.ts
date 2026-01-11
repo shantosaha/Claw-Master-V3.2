@@ -205,6 +205,7 @@ export interface ItemMachineSettings {
     notes?: string;
     lastUpdatedBy: string;
     lastUpdatedAt: Date | string;
+    imageUrl?: string;
     createdAt: Date | string;
 }
 
@@ -435,7 +436,7 @@ export interface ArcadeMachine {
     subGroup?: string;
 
     // API Sync Fields
-    tag?: number;            // API machine tag ID (numeric)
+    tag?: string;            // API machine tag ID (string)
     storeLocation?: string;  // Store code from API (e.g., "KOKO 614")
 
     // NEW: Foreign Key References

@@ -51,6 +51,7 @@ export function GlobalServiceHistoryTable() {
     const [searchQuery, setSearchQuery] = useState('');
     const [staffFilter, setStaffFilter] = useState<string>('all');
     const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+    const [searchAllData, setSearchAllData] = useState(false);
     const [isSyncing, setIsSyncing] = useState(false);
     const [prefetchedImages, setPrefetchedImages] = useState<Set<string>>(new Set());
 
@@ -136,8 +137,8 @@ export function GlobalServiceHistoryTable() {
             result = result.filter(r => r.staffName === staffFilter);
         }
 
-        // Apply date range filter
-        if (dateRange?.from && dateRange?.to) {
+        // Apply date range filter (skip if searchAllData is checked)
+        if (!searchAllData && dateRange?.from && dateRange?.to) {
             const start = startOfDay(dateRange.from);
             const end = endOfDay(dateRange.to);
             result = result.filter(r => {
@@ -181,7 +182,7 @@ export function GlobalServiceHistoryTable() {
         });
 
         return result;
-    }, [reports, searchQuery, staffFilter, dateRange, sortField, sortDirection]);
+    }, [reports, searchQuery, staffFilter, dateRange, searchAllData, sortField, sortDirection]);
 
     // Pagination on filtered results
     const totalPages = Math.ceil(filteredAndSortedReports.length / pageSize);
@@ -243,26 +244,35 @@ export function GlobalServiceHistoryTable() {
 
             {/* Search and Filter Bar */}
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
-                <div className="relative flex-1 max-w-sm">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                        placeholder={dateRange?.from && dateRange?.to
-                            ? `Search within ${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd")}...`
-                            : "Search all data..."}
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9 pr-8"
-                    />
-                    {searchQuery && (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
-                            onClick={() => setSearchQuery('')}
-                        >
-                            <X className="h-3 w-3" />
-                        </Button>
-                    )}
+                <div className="flex-1 max-w-sm">
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                            placeholder="Search machine, staff, tag..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="pl-9 pr-8"
+                        />
+                        {searchQuery && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="absolute right-1 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                                onClick={() => setSearchQuery('')}
+                            >
+                                <X className="h-3 w-3" />
+                            </Button>
+                        )}
+                    </div>
+                    <label
+                        className="flex items-center gap-1.5 mt-1 text-[10px] text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none"
+                        onClick={() => setSearchAllData(!searchAllData)}
+                    >
+                        <div className={`w-3 h-3 rounded-sm border flex items-center justify-center transition-colors ${searchAllData ? 'bg-primary border-primary' : 'border-muted-foreground/40 hover:border-muted-foreground'}`}>
+                            {searchAllData && <span className="text-primary-foreground text-[8px]">✓</span>}
+                        </div>
+                        <span>Search all data (ignore date filter)</span>
+                    </label>
                 </div>
 
                 <div className="flex items-center gap-2">

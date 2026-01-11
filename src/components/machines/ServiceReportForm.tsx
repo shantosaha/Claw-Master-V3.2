@@ -18,6 +18,8 @@ import { serviceReportService } from "@/services/serviceReportService";
 import { unifiedSettingsService } from "@/services/unifiedSettingsService";
 import { cn } from "@/lib/utils";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { OptimizedImage } from "@/components/ui/OptimizedImage";
+import { getThumbnailUrl, getLightboxUrl } from "@/lib/utils/imageUtils";
 
 interface ServiceReportFormProps {
     machine?: ArcadeMachine;
@@ -48,7 +50,8 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
         machineTag: "",
         machineName: "",
         location: "614",
-        staffName: user?.displayName || "",
+        firstName: user?.displayName?.split(' ')[0] || "",
+        lastName: user?.displayName?.split(' ').slice(1).join(' ') || "",
         c1: 0,
         c2: 0,
         c3: 0,
@@ -246,7 +249,8 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
             submitData.append("machineTag", formData.machineTag);
             submitData.append("machineName", formData.machineName);
             submitData.append("location", formData.location);
-            submitData.append("staffName", formData.staffName);
+            submitData.append("firstName", formData.firstName);
+            submitData.append("lastName", formData.lastName);
             submitData.append("c1", String(formData.c1));
             submitData.append("c2", String(formData.c2));
             submitData.append("c3", String(formData.c3));
@@ -369,21 +373,31 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/40 rounded-lg border border-dashed">
                         <div className="space-y-2">
                             <div className="flex justify-between items-center">
-                                <Label htmlFor="staffName" className="text-xs text-muted-foreground uppercase tracking-wide">Staff Member</Label>
+                                <Label className="text-xs text-muted-foreground uppercase tracking-wide">Staff Name</Label>
                                 {lastStaffName && (
                                     <Badge variant="outline" className="text-[10px] py-0 h-4 border-muted-foreground/20 text-muted-foreground">
                                         Last: {lastStaffName}
                                     </Badge>
                                 )}
                             </div>
-                            <Input
-                                id="staffName"
-                                value={formData.staffName}
-                                onChange={(e) => handleInputChange("staffName", e.target.value)}
-                                placeholder="Enter your name"
-                                className="h-9 text-sm"
-                                required
-                            />
+                            <div className="grid grid-cols-2 gap-2">
+                                <Input
+                                    id="firstName"
+                                    value={formData.firstName}
+                                    onChange={(e) => handleInputChange("firstName", e.target.value)}
+                                    placeholder="First Name"
+                                    className="h-9 text-sm"
+                                    required
+                                />
+                                <Input
+                                    id="lastName"
+                                    value={formData.lastName}
+                                    onChange={(e) => handleInputChange("lastName", e.target.value)}
+                                    placeholder="Last Name"
+                                    className="h-9 text-sm"
+                                    required
+                                />
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="machineTag" className="text-xs text-muted-foreground uppercase tracking-wide flex justify-between items-center">
@@ -551,13 +565,15 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                                                         <DialogTrigger asChild>
                                                             <div className="w-full h-full cursor-pointer">
                                                                 <img
-                                                                    src={fetchedImageUrl || selectedMachine?.imageUrl}
+                                                                    src={getThumbnailUrl(fetchedImageUrl || selectedMachine?.imageUrl, 200)}
                                                                     alt="Machine"
+                                                                    loading="lazy"
+                                                                    decoding="async"
                                                                     className="w-full h-full object-cover opacity-80"
                                                                     onError={(e) => {
                                                                         const target = e.target as HTMLImageElement;
-                                                                        if (fetchedImageUrl && target.src === fetchedImageUrl && selectedMachine?.imageUrl) {
-                                                                            target.src = selectedMachine.imageUrl;
+                                                                        if (fetchedImageUrl && selectedMachine?.imageUrl) {
+                                                                            target.src = getThumbnailUrl(selectedMachine.imageUrl, 200);
                                                                             const label = target.parentElement?.querySelector('.image-label');
                                                                             if (label) label.textContent = "Machine Photo (Fallback)";
                                                                         }
@@ -579,8 +595,10 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                                                             </VisuallyHidden>
                                                             <div className="relative w-full h-full min-h-[50vh] flex items-center justify-center">
                                                                 <img
-                                                                    src={fetchedImageUrl || selectedMachine?.imageUrl}
+                                                                    src={getLightboxUrl(fetchedImageUrl || selectedMachine?.imageUrl, 1200)}
                                                                     alt="Machine Reference"
+                                                                    loading="eager"
+                                                                    decoding="async"
                                                                     className="max-w-full max-h-[85vh] object-contain"
                                                                 />
                                                                 <div className="absolute bottom-4 left-4">

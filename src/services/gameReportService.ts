@@ -41,7 +41,7 @@ export interface DailyGameReport {
  */
 function mapReportToMachineUpdate(entry: GameReportEntry): Partial<ArcadeMachine> {
     return {
-        tag: entry.tag,
+        tag: String(entry.tag),
         storeLocation: entry.location,
         group: entry.group,
         subGroup: entry.subGroup,
@@ -85,7 +85,7 @@ export async function importGameReport(
     try {
         // Get all machines to match by tag or description
         const machines = await machineService.getAll();
-        const machineByTag = new Map<number, ArcadeMachine>();
+        const machineByTag = new Map<string, ArcadeMachine>();
         const machineByName = new Map<string, ArcadeMachine>();
 
         machines.forEach(m => {
@@ -96,7 +96,7 @@ export async function importGameReport(
         for (const entry of report.entries) {
             try {
                 // Find matching machine
-                let machine = machineByTag.get(entry.tag);
+                let machine = machineByTag.get(String(entry.tag));
                 if (!machine) {
                     machine = machineByName.get(entry.description.toLowerCase());
                 }
