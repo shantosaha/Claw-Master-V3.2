@@ -20,7 +20,8 @@ import { RefreshCw, Save, Lock, Info } from "lucide-react";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import Image from "next/image";
+import { OptimizedThumbnail } from "@/components/ui/OptimizedImage";
+import { getLightboxUrl } from "@/lib/utils/imageUtils";
 
 interface SettingsPanelProps {
     machineId: string;
@@ -479,18 +480,13 @@ export function SettingsPanel({
                                             )}
                                         </div>
                                         {setting.imageUrl && (
-                                            <div
-                                                className="h-10 w-10 sm:h-12 sm:w-12 rounded-md overflow-hidden bg-muted border flex-shrink-0 cursor-zoom-in hover:opacity-80 transition-opacity"
+                                            <OptimizedThumbnail
+                                                src={setting.imageUrl}
+                                                alt="Submission"
+                                                size={48}
+                                                className="h-10 w-10 sm:h-12 sm:w-12 rounded-md border flex-shrink-0"
                                                 onClick={() => setZoomedImage(setting.imageUrl || null)}
-                                            >
-                                                <Image
-                                                    src={setting.imageUrl}
-                                                    alt="Submission"
-                                                    width={48}
-                                                    height={48}
-                                                    className="w-full h-full object-cover"
-                                                />
-                                            </div>
+                                            />
                                         )}
                                         <div className="text-[10px] text-muted-foreground">
                                             By: {setting.setBy?.substring(0, 8)}...
@@ -569,13 +565,12 @@ export function SettingsPanel({
                     </VisuallyHidden>
                     {zoomedImage && (
                         <div className="relative flex items-center justify-center min-h-[50vh]" style={{ height: '80vh' }}>
-                            <Image
-                                src={zoomedImage}
+                            <img
+                                src={getLightboxUrl(zoomedImage, 1200)}
                                 alt="Zoomed Submission"
-                                fill
-                                className="object-contain"
-                                sizes="(max-width: 1200px) 100vw, 1200px"
-                                priority
+                                loading="eager"
+                                decoding="async"
+                                className="max-w-full max-h-full object-contain"
                             />
                         </div>
                     )}

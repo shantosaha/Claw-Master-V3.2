@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, format } from "date-fns"
+import { subDays, subMonths, subYears, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, format } from "date-fns"
 import { Calendar as CalendarIcon, ChevronLeft, ChevronRight } from "lucide-react"
 import { DateRange } from "react-day-picker"
 
@@ -54,6 +54,21 @@ const presets = [
         label: "This month",
         value: "thismonth",
         getValue: () => ({ from: startOfMonth(new Date()), to: endOfMonth(new Date()) })
+    },
+    {
+        label: "Last 6 months",
+        value: "last6m",
+        getValue: () => ({ from: subMonths(new Date(), 6), to: new Date() })
+    },
+    {
+        label: "Last year",
+        value: "last1y",
+        getValue: () => ({ from: subYears(new Date(), 1), to: new Date() })
+    },
+    {
+        label: "All Time",
+        value: "all",
+        getValue: () => ({ from: new Date(2020, 0, 1), to: new Date() })
     }
 ];
 

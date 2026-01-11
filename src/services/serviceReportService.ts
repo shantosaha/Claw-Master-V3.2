@@ -4,7 +4,10 @@ import { appSettingsService } from "./appSettingsService";
 class ServiceReportService {
     // In a real app, this would fetch from a database or the JotForm API (if available via proxy)
     // For now, we simulate fetching stored reports
-    async getReports(machineId: string): Promise<ServiceReport[]> {
+    /**
+     * Fetches service reports, optionally filtered by date range
+     */
+    async getReports(machineId: string, options?: { from?: Date; to?: Date }): Promise<ServiceReport[]> {
         // Get the configured API endpoint
         const apiSettings = await appSettingsService.getApiSettings();
 
@@ -15,7 +18,23 @@ class ServiceReportService {
 
         // Try to fetch from the local mock API via our Next.js proxy
         try {
-            const endpoint = `/api/jotform/${apiSettings.jotformFormId}`;
+            let endpoint = `/api/jotform/${apiSettings.jotformFormId}`;
+
+            // Add date filters if provided (JotForm filter syntax)
+            if (options?.from || options?.to) {
+                const filters: any = {};
+                if (options.from) {
+                    // Format: YYYY-MM-DD HH:MM:SS
+                    const fromStr = options.from.toISOString().split('T')[0] + " 00:00:00";
+                    filters["created_at:gt"] = fromStr;
+                }
+                if (options.to) {
+                    const toStr = options.to.toISOString().split('T')[0] + " 23:59:59";
+                    filters["created_at:lt"] = toStr;
+                }
+                endpoint += `?filter=${encodeURIComponent(JSON.stringify(filters))}`;
+            }
+
             console.log(`[ServiceReport] Fetching from: ${endpoint}`);
 
             const response = await fetch(endpoint, {
@@ -270,6 +289,10 @@ class ServiceReportService {
             const machines = await machineService.getAll();
             console.log(`[Sync] Found ${machines.length} machines in system`);
 
+            // Fetch all current settings once to avoid repeated calls in the loop
+            const existingSettings = await settingsService.getAll();
+            const allItemSettings = await itemMachineSettingsService.getAll();
+
             const tagToMachinesMap = new Map<string, { id: string; name: string }[]>();
 
             for (const machine of machines) {
@@ -309,29 +332,38 @@ class ServiceReportService {
                         const machineItems = items.filter((item: any) => item.assignedMachineId === machine.id);
                         const activeItem = machineItems.find((item: any) => item.assignedStatus === 'Assigned');
 
-                        // 1. ALWAYS ADD to History (PlayfieldSettings)
-                        const historyEntry = {
-                            machineId: machine.id,
-                            machineName: machine.name,
-                            assetTag,
-                            c1: isNaN(report.c1) ? undefined : report.c1,
-                            c2: isNaN(report.c2) ? undefined : report.c2,
-                            c3: isNaN(report.c3) ? undefined : report.c3,
-                            c4: isNaN(report.c4) ? undefined : report.c4,
-                            payoutRate: isNaN(report.playsPerWin) ? undefined : report.playsPerWin,
-                            imageUrl: report.photo1 || report.imageUrl,
-                            stockItemId: activeItem?.id,
-                            stockItemName: activeItem?.name,
-                            timestamp: new Date(),
-                            setBy: report.staffName || "JotForm Sync"
-                        };
+                        // 0. Check if this specific report has already been synced for this machine
+                        const isAlreadySynced = existingSettings.some(s =>
+                            (s as any).externalId === report.id && s.machineId === machine.id
+                        );
 
-                        await settingsService.add(historyEntry);
-                        console.log(`Added history setting for ${machine.name} (tag: ${tag})`);
+                        if (isAlreadySynced) {
+                            console.log(`[Sync] Report ${report.id} already synced for ${machine.name}, skipping history entry.`);
+                        } else {
+                            // 1. ADD to History (PlayfieldSettings) if new
+                            const historyEntry = {
+                                machineId: machine.id,
+                                machineName: machine.name,
+                                assetTag,
+                                externalId: report.id, // Track unique source ID
+                                c1: isNaN(report.c1) ? undefined : report.c1,
+                                c2: isNaN(report.c2) ? undefined : report.c2,
+                                c3: isNaN(report.c3) ? undefined : report.c3,
+                                c4: isNaN(report.c4) ? undefined : report.c4,
+                                payoutRate: isNaN(report.playsPerWin) ? undefined : report.playsPerWin,
+                                imageUrl: report.photo1 || report.imageUrl,
+                                stockItemId: activeItem?.id,
+                                stockItemName: activeItem?.name,
+                                timestamp: new Date(),
+                                setBy: report.staffName || "JotForm Sync"
+                            };
+
+                            await settingsService.add(historyEntry);
+                            console.log(`Added history setting for ${machine.name} (tag: ${tag})`);
+                        }
 
                         // 2. UPSERT ItemMachineSettings if active stock exists
                         if (activeItem?.id) {
-                            const allItemSettings = await itemMachineSettingsService.getAll();
                             const existingItemSettings = allItemSettings.find(
                                 (s: any) => s.itemId === activeItem.id && s.machineId === machine.id
                             );
@@ -341,12 +373,12 @@ class ServiceReportService {
                                 itemName: activeItem.name,
                                 machineId: machine.id,
                                 machineName: machine.name,
-                                c1: historyEntry.c1,
-                                c2: historyEntry.c2,
-                                c3: historyEntry.c3,
-                                c4: historyEntry.c4,
+                                c1: isNaN(report.c1) ? undefined : report.c1,
+                                c2: isNaN(report.c2) ? undefined : report.c2,
+                                c3: isNaN(report.c3) ? undefined : report.c3,
+                                c4: isNaN(report.c4) ? undefined : report.c4,
                                 playPrice: 0, // Preserve or default? (0 means unchanged usually)
-                                playPerWin: historyEntry.payoutRate,
+                                playPerWin: isNaN(report.playsPerWin) ? undefined : report.playsPerWin,
                                 lastUpdatedBy: "JotForm Sync",
                                 lastUpdatedAt: new Date().toISOString(),
                                 createdAt: existingItemSettings?.createdAt || new Date().toISOString(),

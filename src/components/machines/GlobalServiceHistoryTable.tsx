@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import Image from "next/image";
+import { OptimizedImage, OptimizedThumbnail } from "@/components/ui/OptimizedImage";
+import { getLightboxUrl } from "@/lib/utils/imageUtils";
 import { format } from "date-fns";
 import {
     Table,
@@ -22,6 +23,9 @@ import { serviceReportService } from "@/services/serviceReportService";
 import { machineService } from "@/services";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { DatePickerWithRange } from "@/components/analytics/DateRangePicker";
+import { DateRange } from "react-day-picker";
+import { isWithinInterval, startOfDay, endOfDay } from "date-fns";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
@@ -46,6 +50,7 @@ export function GlobalServiceHistoryTable() {
     // Search & Filter state
     const [searchQuery, setSearchQuery] = useState('');
     const [staffFilter, setStaffFilter] = useState<string>('all');
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
     const [isSyncing, setIsSyncing] = useState(false);
     const [prefetchedImages, setPrefetchedImages] = useState<Set<string>>(new Set());
 
@@ -56,7 +61,10 @@ export function GlobalServiceHistoryTable() {
             setIsLoading(true);
             try {
                 const [rawReports, machines] = await Promise.all([
-                    serviceReportService.getReports("GLOBAL_FETCH"),
+                    serviceReportService.getReports("GLOBAL_FETCH", {
+                        from: dateRange?.from,
+                        to: dateRange?.to
+                    }),
                     machineService.getAll()
                 ]);
 
@@ -100,7 +108,7 @@ export function GlobalServiceHistoryTable() {
 
         fetchData();
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []);
+    }, [dateRange]);
 
     // Get unique staff names for filter dropdown
     const uniqueStaffNames = useMemo(() => {
@@ -126,6 +134,16 @@ export function GlobalServiceHistoryTable() {
         // Apply staff filter
         if (staffFilter !== 'all') {
             result = result.filter(r => r.staffName === staffFilter);
+        }
+
+        // Apply date range filter
+        if (dateRange?.from && dateRange?.to) {
+            const start = startOfDay(dateRange.from);
+            const end = endOfDay(dateRange.to);
+            result = result.filter(r => {
+                const reportDate = new Date(r.timestamp);
+                return isWithinInterval(reportDate, { start, end });
+            });
         }
 
         // Apply sorting
@@ -163,7 +181,7 @@ export function GlobalServiceHistoryTable() {
         });
 
         return result;
-    }, [reports, searchQuery, staffFilter, sortField, sortDirection]);
+    }, [reports, searchQuery, staffFilter, dateRange, sortField, sortDirection]);
 
     // Pagination on filtered results
     const totalPages = Math.ceil(filteredAndSortedReports.length / pageSize);
@@ -175,7 +193,7 @@ export function GlobalServiceHistoryTable() {
     // Reset page when filters change
     useEffect(() => {
         setCurrentPage(1);
-    }, [searchQuery, staffFilter, sortField, sortDirection]);
+    }, [searchQuery, staffFilter, dateRange, sortField, sortDirection]);
 
     const handlePageSizeChange = (newSize: string) => {
         setPageSize(Number(newSize));
@@ -208,46 +226,19 @@ export function GlobalServiceHistoryTable() {
 
     return (
         <div className="space-y-4">
-            {/* Header with Sync Button */}
-            <div className="flex justify-between items-center">
-                <h3 className="text-lg font-medium">Service History</h3>
-                <TooltipProvider>
-                    <Tooltip>
-                        <TooltipTrigger asChild>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={async () => {
-                                    setIsSyncing(true);
-                                    try {
-                                        const result = await serviceReportService.syncLatestSettingsToMachines();
-                                        toast({
-                                            title: "Settings Synced",
-                                            description: `Updated ${result.synced} machine(s) with latest C1-C4 and payout settings.`,
-                                        });
-                                        if (result.errors.length > 0) {
-                                            console.warn("Sync errors:", result.errors);
-                                        }
-                                    } catch (error) {
-                                        toast({
-                                            title: "Sync Failed",
-                                            description: "Could not sync settings. Check console for details.",
-                                            variant: "destructive",
-                                        });
-                                    }
-                                    setIsSyncing(false);
-                                }}
-                                disabled={isSyncing}
-                            >
-                                <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-                                {isSyncing ? 'Syncing...' : 'Sync to Machines'}
-                            </Button>
-                        </TooltipTrigger>
-                        <TooltipContent side="left" className="max-w-[280px]">
-                            <p className="text-xs">Updates each machine's C1-C4 and Payout Rate settings with the latest values from JotForm submissions (matched by tag).</p>
-                        </TooltipContent>
-                    </Tooltip>
-                </TooltipProvider>
+            <div className="flex justify-between items-center h-9">
+                <div className="flex items-center gap-3">
+                    <h3 className="text-lg font-medium">Service History</h3>
+                    {isSyncing && (
+                        <div className="flex items-center text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded-full animate-pulse">
+                            <RefreshCw className="h-3 w-3 mr-1.5 animate-spin" />
+                            Auto-syncing machine settings...
+                        </div>
+                    )}
+                </div>
+                <div className="text-[10px] text-muted-foreground hidden sm:block">
+                    Settings are automatically synced with JotForm submissions
+                </div>
             </div>
 
             {/* Search and Filter Bar */}
@@ -255,7 +246,9 @@ export function GlobalServiceHistoryTable() {
                 <div className="relative flex-1 max-w-sm">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
-                        placeholder="Search machine, staff, tag..."
+                        placeholder={dateRange?.from && dateRange?.to
+                            ? `Search within ${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd")}...`
+                            : "Search all data..."}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         className="pl-9 pr-8"
@@ -289,11 +282,24 @@ export function GlobalServiceHistoryTable() {
                     </Select>
                 </div>
 
-                {(searchQuery || staffFilter !== 'all') && (
+                <div className="flex items-center gap-2">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">Date:</span>
+                    <DatePickerWithRange
+                        date={dateRange}
+                        onDateChange={setDateRange}
+                        className="w-[260px]"
+                    />
+                </div>
+
+                {(searchQuery || staffFilter !== 'all' || dateRange) && (
                     <Button
                         variant="ghost"
                         size="sm"
-                        onClick={() => { setSearchQuery(''); setStaffFilter('all'); }}
+                        onClick={() => {
+                            setSearchQuery('');
+                            setStaffFilter('all');
+                            setDateRange(undefined);
+                        }}
                         className="text-muted-foreground"
                     >
                         Clear filters
@@ -464,14 +470,12 @@ export function GlobalServiceHistoryTable() {
                                         {report.imageUrl ? (
                                             <Dialog>
                                                 <DialogTrigger asChild>
-                                                    <div className="flex justify-center cursor-pointer hover:opacity-80 transition-opacity">
-                                                        <Image
+                                                    <div className="flex justify-center">
+                                                        <OptimizedThumbnail
                                                             src={report.imageUrl}
                                                             alt="Thumb"
-                                                            width={40}
-                                                            height={40}
-                                                            className="w-10 h-10 object-cover rounded-sm border"
-                                                            placeholder="empty"
+                                                            size={40}
+                                                            className="w-10 h-10 rounded-sm border"
                                                         />
                                                     </div>
                                                 </DialogTrigger>
@@ -480,13 +484,12 @@ export function GlobalServiceHistoryTable() {
                                                         <DialogTitle>Service Image - {format(new Date(report.timestamp), "MMM dd, yyyy HH:mm")}</DialogTitle>
                                                     </DialogHeader>
                                                     <div className="relative w-full overflow-hidden bg-muted rounded-md" style={{ height: 'calc(90vh - 100px)' }}>
-                                                        <Image
-                                                            src={report.imageUrl}
+                                                        <img
+                                                            src={getLightboxUrl(report.imageUrl, 1200)}
                                                             alt="Service Report"
-                                                            fill
-                                                            className="object-contain"
-                                                            sizes="(max-width: 1200px) 100vw, 1200px"
-                                                            priority
+                                                            loading="eager"
+                                                            decoding="async"
+                                                            className="w-full h-full object-contain"
                                                         />
                                                     </div>
                                                 </DialogContent>
