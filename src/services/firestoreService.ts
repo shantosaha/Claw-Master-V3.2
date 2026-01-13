@@ -34,7 +34,30 @@ export const createFirestoreService = <T extends DocumentData>(collectionName: s
             try {
                 localStorage.setItem(`demo_${collectionName}`, JSON.stringify(_localCache));
             } catch (e) {
-                console.error("Failed to persist demo data", e);
+                // Handle Quota Exceeded
+                if (e instanceof Error && (e.name === 'QuotaExceededError' || e.name === 'NS_ERROR_DOM_QUOTA_REACHED')) {
+                    console.warn(`[FirestoreService] Storage quota exceeded for ${collectionName}. Pruning old data...`);
+                    
+                    if (Array.isArray(_localCache) && _localCache.length > 50) {
+                        // Keep the newest 80% of data (assuming append-only logs)
+                        // This assumes data is pushed to the end, so we remove from the start
+                        const keepCount = Math.floor(_localCache.length * 0.8);
+                        const removeCount = _localCache.length - keepCount;
+                        
+                        _localCache.splice(0, removeCount);
+                        
+                        try {
+                            localStorage.setItem(`demo_${collectionName}`, JSON.stringify(_localCache));
+                             console.log(`[FirestoreService] Pruned ${removeCount} items from ${collectionName} and saved.`);
+                        } catch (retryE) {
+                            console.error(`[FirestoreService] Failed to save ${collectionName} even after pruning:`, retryE);
+                        }
+                    } else {
+                         console.error(`[FirestoreService] Cannot prune ${collectionName} (size: ${_localCache.length}), data may be lost.`);
+                    }
+                } else {
+                    console.error("Failed to persist demo data", e);
+                }
             }
         }
     };

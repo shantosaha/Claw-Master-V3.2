@@ -23,8 +23,9 @@ import {
 import { StockItem, ArcadeMachine, RevenueEntry } from "@/types";
 import { revenueService } from "@/services";
 import { toast } from "sonner";
-import { DollarSign, Calendar, Hash, StickyNote } from "lucide-react";
+import { DollarSign, Hash, StickyNote } from "lucide-react";
 import { generateId } from "@/lib/utils";
+import { SingleDatePicker } from "@/components/analytics/SingleDatePicker";
 
 interface LogRevenueDialogProps {
     isOpen: boolean;
@@ -46,7 +47,7 @@ export function LogRevenueDialog({
     const [amount, setAmount] = useState("");
     const [playCount, setPlayCount] = useState("");
     const [machineId, setMachineId] = useState<string>("");
-    const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
+    const [date, setDate] = useState<Date | undefined>(new Date());
     const [notes, setNotes] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -68,7 +69,7 @@ export function LogRevenueDialog({
                 machineName: selectedMachine?.name,
                 amount: parsedAmount,
                 playCount: playCount ? parseInt(playCount) : undefined,
-                date: new Date(date),
+                date: date || new Date(),
                 notes: notes || undefined,
                 createdBy: userId,
                 createdAt: new Date()
@@ -85,7 +86,7 @@ export function LogRevenueDialog({
             setPlayCount("");
             setMachineId("");
             setNotes("");
-            setDate(new Date().toISOString().split("T")[0]);
+            setDate(new Date());
 
             onOpenChange(false);
             onSuccess?.();
@@ -170,15 +171,13 @@ export function LogRevenueDialog({
 
                     {/* Date */}
                     <div className="space-y-2">
-                        <Label htmlFor="date" className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
+                        <Label className="flex items-center gap-1">
                             Date
                         </Label>
-                        <Input
-                            id="date"
-                            type="date"
-                            value={date}
-                            onChange={(e) => setDate(e.target.value)}
+                        <SingleDatePicker
+                            date={date}
+                            onDateChange={setDate}
+                            className="w-full"
                         />
                     </div>
 

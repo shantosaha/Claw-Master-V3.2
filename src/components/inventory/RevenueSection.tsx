@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
+import { SingleDatePicker } from "@/components/analytics/SingleDatePicker";
 
 interface RevenueSectionProps {
     item: StockItem;
@@ -33,8 +34,8 @@ export function RevenueSection({ item, machines = [], userId }: RevenueSectionPr
 
     // Filters
     const [filterMachine, setFilterMachine] = useState<string>("all");
-    const [startDate, setStartDate] = useState<string>("");
-    const [endDate, setEndDate] = useState<string>("");
+    const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+    const [endDate, setEndDate] = useState<Date | undefined>(undefined);
 
     // Identify machines the item has history with (for filter dropdown)
     // We could parse this from audit logs or just use the passed machines list. 
@@ -46,8 +47,8 @@ export function RevenueSection({ item, machines = [], userId }: RevenueSectionPr
         try {
             const filters = {
                 machineId: filterMachine === "all" ? undefined : filterMachine,
-                startDate: startDate || undefined,
-                endDate: endDate || undefined
+                startDate: startDate ? format(startDate, 'yyyy-MM-dd') : undefined,
+                endDate: endDate ? format(endDate, 'yyyy-MM-dd') : undefined
             };
 
             const [fetchedEntries, fetchedAggregates, fetchedAttributed] = await Promise.all([
@@ -193,20 +194,18 @@ export function RevenueSection({ item, machines = [], userId }: RevenueSectionPr
                         </div>
 
                         <div className="flex items-center gap-2">
-                            <Input
-                                type="date"
-                                className="h-8 w-auto text-xs"
-                                value={startDate}
-                                onChange={(e) => setStartDate(e.target.value)}
+                            <SingleDatePicker
+                                date={startDate}
+                                onDateChange={setStartDate}
                                 placeholder="Start Date"
+                                className="h-8 w-auto min-w-[130px]"
                             />
                             <span className="text-muted-foreground">-</span>
-                            <Input
-                                type="date"
-                                className="h-8 w-auto text-xs"
-                                value={endDate}
-                                onChange={(e) => setEndDate(e.target.value)}
+                            <SingleDatePicker
+                                date={endDate}
+                                onDateChange={setEndDate}
                                 placeholder="End Date"
+                                className="h-8 w-auto min-w-[130px]"
                             />
                         </div>
 
@@ -217,8 +216,8 @@ export function RevenueSection({ item, machines = [], userId }: RevenueSectionPr
                                 className="h-8 px-2 ml-auto text-xs"
                                 onClick={() => {
                                     setFilterMachine("all");
-                                    setStartDate("");
-                                    setEndDate("");
+                                    setStartDate(undefined);
+                                    setEndDate(undefined);
                                 }}
                             >
                                 Reset
