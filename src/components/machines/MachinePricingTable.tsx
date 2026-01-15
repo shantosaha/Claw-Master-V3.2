@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { MachineDisplayItem } from "@/types";
 import {
     Table,
@@ -107,6 +107,16 @@ export function MachinePricingTable({ machines }: MachinePricingTableProps) {
             let valA: any;
             let valB: any;
 
+            // Get live revenue if available, fallback to 0
+            const machineTagA = a.tag || a.originalMachine?.tag || "";
+            const machineTagB = b.tag || b.originalMachine?.tag || "";
+
+            const dailyRevA = dailyRevenueMap[machineTagA] ?? 0;
+            const dailyRevB = dailyRevenueMap[machineTagB] ?? 0;
+
+            const customRevA = customRevenueMap[machineTagA] ?? 0;
+            const customRevB = customRevenueMap[machineTagB] ?? 0;
+
             switch (sortField) {
                 case 'assetTag':
                     const numA = parseInt(a.assetTag);
@@ -126,8 +136,12 @@ export function MachinePricingTable({ machines }: MachinePricingTableProps) {
                     valB = (b.location || "").toLowerCase();
                     break;
                 case 'revenue':
-                    valA = a.revenue || 0;
-                    valB = b.revenue || 0;
+                    valA = dailyRevA;
+                    valB = dailyRevB;
+                    break;
+                case 'customRevenue':
+                    valA = customRevA;
+                    valB = customRevB;
                     break;
                 case 'standardPrice':
                     valA = a.advancedSettings?.cardCashPlayPrice ?? 0;
@@ -150,7 +164,7 @@ export function MachinePricingTable({ machines }: MachinePricingTableProps) {
             const res = valA > valB ? 1 : -1;
             return sortDirection === 'asc' ? res : -res;
         });
-    }, [machines, sortField, sortDirection]);
+    }, [machines, sortField, sortDirection, dailyRevenueMap, customRevenueMap]);
 
     const SortIcon = ({ field, className }: { field: SortField, className?: string }) => {
         if (sortField !== field) return <ArrowUpDown className={cn("h-3 w-3 opacity-30", className)} />;
@@ -191,16 +205,76 @@ export function MachinePricingTable({ machines }: MachinePricingTableProps) {
                                 <SortIcon field="location" />
                             </div>
                         </TableHead>
+
+                        {/* Daily Revenue Column (Today) */}
                         <TableHead
-                            className="text-right font-bold cursor-pointer hover:text-primary transition-colors"
+                            className="text-right font-bold cursor-pointer hover:text-primary transition-colors border-l"
                             onClick={() => toggleSort('revenue')}
                         >
                             <div className="flex items-center justify-end gap-2">
-                                <TrendingUp className="h-3 w-3 text-emerald-600" />
-                                Revenue
+                                {loadingDaily ? <Loader2 className="h-3 w-3 animate-spin" /> : <TrendingUp className="h-3 w-3 text-emerald-600" />}
+                                Daily Rev
                                 <SortIcon field="revenue" />
                             </div>
                         </TableHead>
+
+                        {/* Custom Date Range Revenue Column */}
+                        <TableHead className="text-right font-bold border-r bg-blue-50/30">
+                            <div className="flex flex-col items-end gap-1 py-1">
+                                <div
+                                    className="flex items-center gap-2 cursor-pointer hover:text-primary"
+                                    onClick={() => toggleSort('customRevenue')}
+                                >
+                                    {loadingCustom ? <Loader2 className="h-3 w-3 animate-spin" /> : <Calendar className="h-3 w-3 text-blue-600" />}
+                                    Period Rev
+                                    <SortIcon field="customRevenue" />
+                                </div>
+
+                                <Popover open={dateRangeOpen} onOpenChange={setDateRangeOpen}>
+                                    <PopoverTrigger asChild>
+                                        <Button variant="outline" size="sm" className="h-6 text-[10px] px-2 gap-1 border-blue-200 hover:bg-blue-50 text-blue-700">
+                                            {startDate === endDate ? format(new Date(startDate), 'MMM d') : `${format(new Date(startDate), 'MMM d')} - ${format(new Date(endDate), 'MMM d')}`}
+                                            <ChevronDown className="h-3 w-3 opacity-50" />
+                                        </Button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-auto p-3" align="end">
+                                        <div className="flex flex-col gap-3">
+                                            <div className="grid gap-1">
+                                                <label className="text-xs font-medium">Start Date</label>
+                                                <Input
+                                                    type="date"
+                                                    value={startDate}
+                                                    onChange={(e) => setStartDate(e.target.value)}
+                                                    className="h-8 text-xs"
+                                                />
+                                            </div>
+                                            <div className="grid gap-1">
+                                                <label className="text-xs font-medium">End Date</label>
+                                                <Input
+                                                    type="date"
+                                                    value={endDate}
+                                                    onChange={(e) => setEndDate(e.target.value)}
+                                                    className="h-8 text-xs"
+                                                />
+                                            </div>
+                                            <div className="flex gap-2 justify-end pt-2">
+                                                <Button size="sm" variant="outline" className="h-7 text-xs" onClick={() => {
+                                                    setStartDate(format(subDays(new Date(), 1), 'yyyy-MM-dd'));
+                                                    setEndDate(format(subDays(new Date(), 1), 'yyyy-MM-dd'));
+                                                    setDateRangeOpen(false);
+                                                }}>Yesterday</Button>
+                                                <Button size="sm" className="h-7 text-xs" onClick={() => {
+                                                    setStartDate(format(new Date(), 'yyyy-MM-dd'));
+                                                    setEndDate(format(new Date(), 'yyyy-MM-dd'));
+                                                    setDateRangeOpen(false);
+                                                }}>Today</Button>
+                                            </div>
+                                        </div>
+                                    </PopoverContent>
+                                </Popover>
+                            </div>
+                        </TableHead>
+
                         <TableHead
                             className="text-right font-bold cursor-pointer hover:text-primary transition-colors"
                             onClick={() => toggleSort('standardPrice')}
@@ -235,7 +309,7 @@ export function MachinePricingTable({ machines }: MachinePricingTableProps) {
                 <TableBody>
                     {sortedMachines.length === 0 ? (
                         <TableRow>
-                            <TableCell colSpan={7} className="text-center h-32 text-muted-foreground">
+                            <TableCell colSpan={8} className="text-center h-32 text-muted-foreground">
                                 No machines found.
                             </TableCell>
                         </TableRow>
@@ -244,7 +318,13 @@ export function MachinePricingTable({ machines }: MachinePricingTableProps) {
                             const standardPrice = item.advancedSettings?.cardCashPlayPrice ?? 0;
                             const vipPrice = item.advancedSettings?.vipDiscountedPrice ?? 0;
                             const status = item.slotStatus || item.status;
-                            const revenue = item.revenue ?? 0;
+
+                            // Correct Tag Mapping
+                            const machineTag = item.tag || item.originalMachine?.tag || "";
+
+                            // Get Fresh Data
+                            const dailyRevenue = dailyRevenueMap[machineTag] ?? 0;
+                            const customRevenue = customRevenueMap[machineTag] ?? 0;
 
                             return (
                                 <TableRow
@@ -252,7 +332,7 @@ export function MachinePricingTable({ machines }: MachinePricingTableProps) {
                                     className="hover:bg-slate-50/50 transition-colors group"
                                 >
                                     <TableCell className="font-mono font-medium py-4">
-                                        <span className="text-blue-600 font-bold group-hover:underline decoration-blue-400 underline-offset-4">
+                                        <span className="text-blue-600 font-bold decoration-blue-400 underline-offset-4">
                                             {item.assetTag}
                                         </span>
                                     </TableCell>
@@ -293,17 +373,39 @@ export function MachinePricingTable({ machines }: MachinePricingTableProps) {
                                             {item.location || "N/A"}
                                         </div>
                                     </TableCell>
-                                    <TableCell className="text-right py-4">
-                                        <div className="inline-flex flex-col items-end">
-                                            <span className="font-bold text-slate-900">
-                                                ${revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                                            </span>
-                                            <span className="text-[9px] text-emerald-600 font-bold uppercase mt-1 flex items-center gap-0.5">
-                                                <TrendingUp className="h-2 w-2" />
-                                                Daily Rev
-                                            </span>
+
+                                    {/* Daily Revenue Cell */}
+                                    <TableCell className="text-right py-4 border-l bg-slate-50/30">
+                                        <div className="inline-flex flex-col items-end min-w-[60px]">
+                                            {loadingDaily ? (
+                                                <div className="h-4 w-12 bg-slate-200 animate-pulse rounded" />
+                                            ) : (
+                                                <span className={cn(
+                                                    "font-bold",
+                                                    dailyRevenue > 0 ? "text-emerald-700" : "text-slate-400"
+                                                )}>
+                                                    ${dailyRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </span>
+                                            )}
                                         </div>
                                     </TableCell>
+
+                                    {/* Custom Revenue Cell */}
+                                    <TableCell className="text-right py-4 border-r bg-blue-50/10">
+                                        <div className="inline-flex flex-col items-end min-w-[60px]">
+                                            {loadingCustom ? (
+                                                <div className="h-4 w-12 bg-slate-200 animate-pulse rounded" />
+                                            ) : (
+                                                <span className={cn(
+                                                    "font-bold",
+                                                    customRevenue > 0 ? "text-blue-700" : "text-slate-400"
+                                                )}>
+                                                    ${customRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </TableCell>
+
                                     <TableCell className="text-right py-4">
                                         <div className="inline-flex flex-col items-end">
                                             <span className="font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-100">
