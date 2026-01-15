@@ -41,7 +41,7 @@ export function NotificationBell() {
     useEffect(() => {
         loadNotifications();
         // Refresh every 30 seconds
-        const interval = setInterval(loadNotifications, 30000);
+        const interval = setInterval(loadNotifications, 300000);
         return () => clearInterval(interval);
     }, [user]);
 

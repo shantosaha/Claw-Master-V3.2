@@ -75,6 +75,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { getMachineStockItems } from "@/utils/machineAssignmentUtils";
 import { PendingReviewsTab } from "./PendingReviewsTab";
 import { pendingStockCheckService } from "@/services";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
 
 // Types
 interface ItemCheckData {
@@ -513,23 +514,28 @@ export function StockCheckForm() {
         return allClawSettings[`${itemId}-${machineId}`] || null;
     };
 
+    // Only show crane machines for stock checking
+    const craneMachines = useMemo(() => {
+        return machines.filter(m => isCraneMachine(m));
+    }, [machines]);
+
     const filteredMachines = useMemo(() => {
-        return machines.filter(m =>
+        return craneMachines.filter(m =>
             m.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
             m.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
             m.assetTag.toLowerCase().includes(searchQuery.toLowerCase())
         );
-    }, [machines, searchQuery]);
+    }, [craneMachines, searchQuery]);
 
     const stats = useMemo(() => {
-        const totalMachines = machines.length;
+        const totalMachines = craneMachines.length;
         const checkedMachines = Object.values(machineChecks).filter(m => m.checked).length;
 
         let totalItems = 0;
         let verifiedItems = 0;
         let issuesFound = 0;
 
-        machines.forEach(m => {
+        craneMachines.forEach(m => {
             totalItems += m.slots.length;
             if (itemChecks[m.id]) {
                 Object.values(itemChecks[m.id]).forEach(check => {
@@ -554,7 +560,7 @@ export function StockCheckForm() {
             totalItems,
             issuesFound
         };
-    }, [machines, machineChecks, itemChecks, replacementItems, replacementItemChecks]);
+    }, [craneMachines, machineChecks, itemChecks, replacementItems, replacementItemChecks]);
 
     const handleMachineCheck = (machineId: string, checked: boolean) => {
         setMachineChecks(prev => ({

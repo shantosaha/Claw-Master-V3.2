@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from "@/context/AuthContext";
 import { PermissionGate } from "@/components/auth/PermissionGate";
@@ -20,7 +19,9 @@ import {
     Link2,
     Shield,
     Info,
-    Globe
+    Globe,
+    BarChart3,
+    DollarSign
 } from "lucide-react";
 import {
     Select,
@@ -39,13 +40,21 @@ interface ApiSettings {
     jotformApiUrl: string;
     jotformFormId: string;
     isEnabled: boolean;
+    gameReportEnabled: boolean;
+    gameReportApiUrl: string;
+    gameReportSiteId: string;
+    revenueEnabled: boolean;
+    revenueApiUrl: string;
+    revenueSiteId: string;
+    apiKey?: string;
+    apiToken?: string;
     urlPresets?: ApiUrlPreset[];
     updatedAt?: string;
     updatedBy?: string;
 }
 
 const DEFAULT_PRESETS: ApiUrlPreset[] = [
-    { label: "Production (Remote)", value: "http://claw.kokoamusement.com.au" },
+    { label: "Production (Remote)", value: "https://claw.kokoamusement.com.au" },
     { label: "Local Server (127.0.0.1)", value: "http://127.0.0.1:8000" },
     { label: "Local Server (localhost)", value: "http://localhost:8000" },
 ];
@@ -53,14 +62,29 @@ const DEFAULT_PRESETS: ApiUrlPreset[] = [
 export function ApiSettingsPanel() {
     const { user } = useAuth();
     const [loading, setLoading] = useState(true);
-    const [saving, setSaving] = useState(false);
-    const [testing, setTesting] = useState(false);
-    const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [savingJotform, setSavingJotform] = useState(false);
+    const [savingGameReport, setSavingGameReport] = useState(false);
+    const [savingRevenue, setSavingRevenue] = useState(false);
+    const [savingAll, setSavingAll] = useState(false);
+    const [testingJotform, setTestingJotform] = useState(false);
+    const [testingGameReport, setTestingGameReport] = useState(false);
+    const [testingRevenue, setTestingRevenue] = useState(false);
+    const [jotformTestResult, setJotformTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [gameReportTestResult, setGameReportTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [revenueTestResult, setRevenueTestResult] = useState<{ success: boolean; message: string } | null>(null);
     const [newPresetName, setNewPresetName] = useState("");
     const [formData, setFormData] = useState<ApiSettings>({
         jotformApiUrl: "",
         jotformFormId: "",
         isEnabled: true,
+        gameReportEnabled: true,
+        gameReportApiUrl: "",
+        gameReportSiteId: "614",
+        revenueEnabled: true,
+        revenueApiUrl: "",
+        revenueSiteId: "614",
+        apiKey: "",
+        apiToken: "",
         urlPresets: DEFAULT_PRESETS,
     });
 
@@ -74,7 +98,15 @@ export function ApiSettingsPanel() {
             const response = await fetch('/api/settings/api-integration');
             if (response.ok) {
                 const data = await response.json();
-                setFormData(data);
+                // Merge with defaults to ensure new fields exist
+                setFormData({
+                    ...formData,
+                    ...data,
+                    gameReportApiUrl: data.gameReportApiUrl || data.jotformApiUrl || "",
+                    gameReportSiteId: data.gameReportSiteId || data.jotformFormId || "614",
+                    revenueApiUrl: data.revenueApiUrl || data.jotformApiUrl || "",
+                    revenueSiteId: data.revenueSiteId || data.jotformFormId || "614",
+                });
             }
         } catch (error) {
             console.error("Failed to load API settings:", error);
@@ -82,10 +114,8 @@ export function ApiSettingsPanel() {
         setLoading(false);
     };
 
-    const handleSave = async (updatedData?: Partial<ApiSettings>) => {
-        if (!user) return;
-        setSaving(true);
-        setTestResult(null);
+    const handleSaveAll = async (updatedData?: Partial<ApiSettings>) => {
+        if (!user) return false;
 
         const dataToSave = {
             ...formData,
@@ -102,20 +132,55 @@ export function ApiSettingsPanel() {
 
             if (response.ok) {
                 const updated = await response.json();
-                setFormData(updated);
-                toast.success("API Settings Saved", {
-                    description: updatedData?.urlPresets
-                        ? "Presets updated successfully."
-                        : "Settings will be used immediately for all API requests."
-                });
+                setFormData(prev => ({ ...prev, ...updated }));
+                return true;
             } else {
                 throw new Error("Failed to save");
             }
         } catch (error) {
             console.error("Failed to save API settings:", error);
             toast.error("Failed to save settings");
+            return false;
         }
-        setSaving(false);
+    };
+
+    const handleSaveEverything = async () => {
+        setSavingAll(true);
+        const success = await handleSaveAll();
+        if (success) {
+            toast.success("All API Settings Saved Successfully");
+        }
+        setSavingAll(false);
+    };
+
+    const handleSaveJotform = async () => {
+        setSavingJotform(true);
+        setJotformTestResult(null);
+        const success = await handleSaveAll();
+        if (success) {
+            toast.success("JotForm API Settings Saved");
+        }
+        setSavingJotform(false);
+    };
+
+    const handleSaveGameReport = async () => {
+        setSavingGameReport(true);
+        setGameReportTestResult(null);
+        const success = await handleSaveAll();
+        if (success) {
+            toast.success("Game Report API Settings Saved");
+        }
+        setSavingGameReport(false);
+    };
+
+    const handleSaveRevenue = async () => {
+        setSavingRevenue(true);
+        setRevenueTestResult(null);
+        const success = await handleSaveAll();
+        if (success) {
+            toast.success("Revenue API Settings Saved");
+        }
+        setSavingRevenue(false);
     };
 
     const addCurrentAsPreset = () => {
@@ -135,22 +200,21 @@ export function ApiSettingsPanel() {
             { label: newPresetName, value: formData.jotformApiUrl }
         ];
 
-        handleSave({ urlPresets: newPresets });
+        handleSaveAll({ urlPresets: newPresets });
         setNewPresetName("");
     };
 
     const removePreset = (value: string) => {
         const presets = formData.urlPresets || DEFAULT_PRESETS;
         const newPresets = presets.filter(p => p.value !== value);
-        handleSave({ urlPresets: newPresets });
+        handleSaveAll({ urlPresets: newPresets });
     };
 
-    const testConnection = async () => {
-        setTesting(true);
-        setTestResult(null);
+    const testJotformConnection = async () => {
+        setTestingJotform(true);
+        setJotformTestResult(null);
 
-        // First save the current settings
-        await handleSave();
+        await handleSaveAll();
 
         try {
             const endpoint = `/api/jotform/${formData.jotformFormId}`;
@@ -159,33 +223,109 @@ export function ApiSettingsPanel() {
             if (response.ok) {
                 const data = await response.json();
                 const count = data?.response?.length || (Array.isArray(data) ? data.length : 0);
-                setTestResult({
+                setJotformTestResult({
                     success: true,
                     message: `Connected successfully! Found ${count} records.`
                 });
-                toast.success("Connection Successful", {
-                    description: `Found ${count} records from ${formData.jotformApiUrl}`
-                });
+                toast.success("JotForm Connection Successful");
             } else {
                 const error = await response.json();
-                setTestResult({
+                setJotformTestResult({
                     success: false,
                     message: `Error: ${error.error || response.status}`
                 });
-                toast.error("Connection Failed", {
-                    description: error.error || `Status ${response.status}`
-                });
+                toast.error("JotForm Connection Failed");
             }
         } catch (error) {
-            setTestResult({
+            setJotformTestResult({
                 success: false,
                 message: `Error: ${String(error)}`
             });
-            toast.error("Connection Failed", {
-                description: "Could not connect to the API"
-            });
+            toast.error("JotForm Connection Failed");
         }
-        setTesting(false);
+        setTestingJotform(false);
+    };
+
+    const testGameReportConnection = async () => {
+        setTestingGameReport(true);
+        setGameReportTestResult(null);
+
+        await handleSaveAll();
+
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const endpoint = `/api/game_report/${formData.gameReportSiteId}`;
+            const response = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    startDate: today,
+                    endDate: today,
+                    aggregated: true
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const count = Array.isArray(data) ? data.length : (data?.response?.length || 0);
+                setGameReportTestResult({
+                    success: true,
+                    message: `Connected successfully! Found ${count} machine records.`
+                });
+                toast.success("Game Report Connection Successful");
+            } else {
+                const error = await response.json().catch(() => ({}));
+                setGameReportTestResult({
+                    success: false,
+                    message: `Error: ${error.error || response.status}`
+                });
+                toast.error("Game Report Connection Failed");
+            }
+        } catch (error) {
+            setGameReportTestResult({
+                success: false,
+                message: `Error: ${String(error)}`
+            });
+            toast.error("Game Report Connection Failed");
+        }
+        setTestingGameReport(false);
+    };
+
+    const testRevenueConnection = async () => {
+        setTestingRevenue(true);
+        setRevenueTestResult(null);
+
+        await handleSaveAll();
+
+        try {
+            const today = new Date().toISOString().split('T')[0];
+            const endpoint = `/api/revenue/${formData.revenueSiteId}?startDate=${today}&endDate=${today}`;
+            const response = await fetch(endpoint);
+
+            if (response.ok) {
+                const data = await response.json();
+                const count = Array.isArray(data) ? data.length : (data?.response?.length || 0);
+                setRevenueTestResult({
+                    success: true,
+                    message: `Connected successfully! Found ${count} revenue entries.`
+                });
+                toast.success("Revenue API Connection Successful");
+            } else {
+                const error = await response.json().catch(() => ({}));
+                setRevenueTestResult({
+                    success: false,
+                    message: `Error: ${error.error || response.status}`
+                });
+                toast.error("Revenue API Connection Failed");
+            }
+        } catch (error) {
+            setRevenueTestResult({
+                success: false,
+                message: `Error: ${String(error)}`
+            });
+            toast.error("Revenue API Connection Failed");
+        }
+        setTestingRevenue(false);
     };
 
     if (loading) {
@@ -205,6 +345,7 @@ export function ApiSettingsPanel() {
             }
         >
             <div className="space-y-6">
+                {/* JotForm API Configuration */}
                 <Card>
                     <CardHeader>
                         <div className="flex items-center justify-between">
@@ -257,7 +398,7 @@ export function ApiSettingsPanel() {
                                         <Input
                                             id="api-url"
                                             className="pl-9"
-                                            placeholder="http://claw.kokoamusement.com.au"
+                                            placeholder="https://claw.kokoamusement.com.au"
                                             value={formData.jotformApiUrl}
                                             onChange={(e) => setFormData({ ...formData, jotformApiUrl: e.target.value })}
                                         />
@@ -336,20 +477,20 @@ export function ApiSettingsPanel() {
                         </Alert>
 
                         {/* Test Result */}
-                        {testResult && (
-                            <Alert className={testResult.success ? "border-green-500" : "border-red-500"}>
-                                {testResult.success ? (
+                        {jotformTestResult && (
+                            <Alert className={jotformTestResult.success ? "border-green-500" : "border-red-500"}>
+                                {jotformTestResult.success ? (
                                     <CheckCircle2 className="h-4 w-4 text-green-500" />
                                 ) : (
                                     <XCircle className="h-4 w-4 text-red-500" />
                                 )}
-                                <AlertDescription>{testResult.message}</AlertDescription>
+                                <AlertDescription>{jotformTestResult.message}</AlertDescription>
                             </Alert>
                         )}
 
                         <div className="flex gap-2">
-                            <Button onClick={() => handleSave()} disabled={saving}>
-                                {saving ? (
+                            <Button onClick={handleSaveJotform} disabled={savingJotform}>
+                                {savingJotform ? (
                                     <>
                                         <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                                         Saving...
@@ -361,8 +502,8 @@ export function ApiSettingsPanel() {
                                     </>
                                 )}
                             </Button>
-                            <Button variant="outline" onClick={testConnection} disabled={testing}>
-                                {testing ? (
+                            <Button variant="outline" onClick={testJotformConnection} disabled={testingJotform}>
+                                {testingJotform ? (
                                     <>
                                         <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
                                         Testing...
@@ -375,14 +516,336 @@ export function ApiSettingsPanel() {
                                 )}
                             </Button>
                         </div>
-
-                        {formData.updatedAt && (
-                            <p className="text-xs text-muted-foreground">
-                                Last updated: {new Date(formData.updatedAt).toLocaleString()}
-                            </p>
-                        )}
                     </CardContent>
                 </Card>
+
+                {/* Game Report API Configuration */}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <BarChart3 className="h-5 w-5 text-blue-500" />
+                                    Game Report API Configuration
+                                </CardTitle>
+                                <CardDescription>
+                                    Configure the API endpoint for machine plays and revenue data
+                                </CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="game-report-enabled" className="text-sm">Enabled</Label>
+                                <Switch
+                                    id="game-report-enabled"
+                                    checked={formData.gameReportEnabled}
+                                    onCheckedChange={(checked) => setFormData({ ...formData, gameReportEnabled: checked })}
+                                />
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="game-report-url">API Base URL</Label>
+                                <div className="flex flex-col lg:flex-row gap-2">
+                                    <Select
+                                        value={(formData.urlPresets || DEFAULT_PRESETS).find(p => p.value === formData.gameReportApiUrl) ? formData.gameReportApiUrl : "custom"}
+                                        onValueChange={(value) => {
+                                            if (value !== "custom") {
+                                                setFormData({ ...formData, gameReportApiUrl: value });
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger className="w-full lg:w-[220px]">
+                                            <SelectValue placeholder="Select Environment" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {(formData.urlPresets || DEFAULT_PRESETS).map((preset) => (
+                                                <SelectItem key={preset.value} value={preset.value}>
+                                                    {preset.label}
+                                                </SelectItem>
+                                            ))}
+                                            <SelectItem value="custom">Custom URL</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <div className="flex-1 relative">
+                                        <Globe className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="game-report-url"
+                                            className="pl-9"
+                                            placeholder="https://claw.kokoamusement.com.au"
+                                            value={formData.gameReportApiUrl}
+                                            onChange={(e) => setFormData({ ...formData, gameReportApiUrl: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    The base URL for the Game Report API
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="game-report-site-id">Site ID</Label>
+                                <Input
+                                    id="game-report-site-id"
+                                    placeholder="614"
+                                    value={formData.gameReportSiteId}
+                                    onChange={(e) => setFormData({ ...formData, gameReportSiteId: e.target.value })}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    The site identifier (e.g., 614)
+                                </p>
+                            </div>
+                        </div>
+
+                        <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
+                            <Info className="h-4 w-4 text-blue-500" />
+                            <AlertDescription>
+                                <strong>Current endpoint:</strong>{' '}
+                                <code className="text-xs bg-muted px-1 rounded">
+                                    {formData.gameReportApiUrl}/game_report/{formData.gameReportSiteId}
+                                </code>
+                            </AlertDescription>
+                        </Alert>
+
+                        {/* Test Result */}
+                        {gameReportTestResult && (
+                            <Alert className={gameReportTestResult.success ? "border-green-500" : "border-red-500"}>
+                                {gameReportTestResult.success ? (
+                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                ) : (
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                )}
+                                <AlertDescription>{gameReportTestResult.message}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        <div className="flex gap-2">
+                            <Button onClick={handleSaveGameReport} disabled={savingGameReport}>
+                                {savingGameReport ? (
+                                    <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4 mr-2" />
+                                        Save Settings
+                                    </>
+                                )}
+                            </Button>
+                            <Button variant="outline" onClick={testGameReportConnection} disabled={testingGameReport}>
+                                {testingGameReport ? (
+                                    <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        Testing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link2 className="h-4 w-4 mr-2" />
+                                        Test Connection
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Revenue API Configuration */}
+                <Card>
+                    <CardHeader>
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <CardTitle className="flex items-center gap-2">
+                                    <DollarSign className="h-5 w-5 text-green-500" />
+                                    Revenue API Configuration
+                                </CardTitle>
+                                <CardDescription>
+                                    Configure the API endpoint for store POS and iTeller data
+                                </CardDescription>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Label htmlFor="revenue-enabled" className="text-sm">Enabled</Label>
+                                <Switch
+                                    id="revenue-enabled"
+                                    checked={formData.revenueEnabled}
+                                    onCheckedChange={(checked) => setFormData({ ...formData, revenueEnabled: checked })}
+                                />
+                            </div>
+                        </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="revenue-url">API Base URL</Label>
+                                <div className="flex flex-col lg:flex-row gap-2">
+                                    <Select
+                                        value={(formData.urlPresets || DEFAULT_PRESETS).find(p => p.value === formData.revenueApiUrl) ? formData.revenueApiUrl : "custom"}
+                                        onValueChange={(value) => {
+                                            if (value !== "custom") {
+                                                setFormData({ ...formData, revenueApiUrl: value });
+                                            }
+                                        }}
+                                    >
+                                        <SelectTrigger className="w-full lg:w-[220px]">
+                                            <SelectValue placeholder="Select Environment" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {(formData.urlPresets || DEFAULT_PRESETS).map((preset) => (
+                                                <SelectItem key={preset.value} value={preset.value}>
+                                                    {preset.label}
+                                                </SelectItem>
+                                            ))}
+                                            <SelectItem value="custom">Custom URL</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <div className="flex-1 relative">
+                                        <Globe className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                        <Input
+                                            id="revenue-url"
+                                            className="pl-9"
+                                            placeholder="https://claw.kokoamusement.com.au"
+                                            value={formData.revenueApiUrl}
+                                            onChange={(e) => setFormData({ ...formData, revenueApiUrl: e.target.value })}
+                                        />
+                                    </div>
+                                </div>
+                                <p className="text-xs text-muted-foreground">
+                                    The base URL for the Revenue API
+                                </p>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="revenue-site-id">Site ID</Label>
+                                <Input
+                                    id="revenue-site-id"
+                                    placeholder="614"
+                                    value={formData.revenueSiteId}
+                                    onChange={(e) => setFormData({ ...formData, revenueSiteId: e.target.value })}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    The site identifier (e.g., 614)
+                                </p>
+                            </div>
+                        </div>
+
+                        <Alert className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
+                            <Info className="h-4 w-4 text-green-500" />
+                            <AlertDescription>
+                                <strong>Current endpoint:</strong>{' '}
+                                <code className="text-xs bg-muted px-1 rounded">
+                                    {formData.revenueApiUrl}/revenue/{formData.revenueSiteId}
+                                </code>
+                            </AlertDescription>
+                        </Alert>
+
+                        {/* Test Result */}
+                        {revenueTestResult && (
+                            <Alert className={revenueTestResult.success ? "border-green-500" : "border-red-500"}>
+                                {revenueTestResult.success ? (
+                                    <CheckCircle2 className="h-4 w-4 text-green-500" />
+                                ) : (
+                                    <XCircle className="h-4 w-4 text-red-500" />
+                                )}
+                                <AlertDescription>{revenueTestResult.message}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        <div className="flex gap-2">
+                            <Button onClick={handleSaveRevenue} disabled={savingRevenue}>
+                                {savingRevenue ? (
+                                    <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Save className="h-4 w-4 mr-2" />
+                                        Save Settings
+                                    </>
+                                )}
+                            </Button>
+                            <Button variant="outline" onClick={testRevenueConnection} disabled={testingRevenue}>
+                                {testingRevenue ? (
+                                    <>
+                                        <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                        Testing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Link2 className="h-4 w-4 mr-2" />
+                                        Test Connection
+                                    </>
+                                )}
+                            </Button>
+                        </div>
+                    </CardContent>
+                </Card>
+
+                {/* Optional Authentication (Shared) */}
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Shield className="h-5 w-5 text-amber-500" />
+                            Shared Authentication
+                        </CardTitle>
+                        <CardDescription>
+                            Optional authentication credentials shared across all APIs
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <div className="grid gap-4 md:grid-cols-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="api-key">API Key</Label>
+                                <Input
+                                    id="api-key"
+                                    type="password"
+                                    placeholder="Enter API key (optional)"
+                                    value={formData.apiKey || ""}
+                                    onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="api-token">API Token</Label>
+                                <Input
+                                    id="api-token"
+                                    type="password"
+                                    placeholder="Enter bearer token (optional)"
+                                    value={formData.apiToken || ""}
+                                    onChange={(e) => setFormData({ ...formData, apiToken: e.target.value })}
+                                />
+                            </div>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                            Authentication credentials for future API requirements. Leave blank if not needed.
+                        </p>
+                    </CardContent>
+                </Card>
+
+                {/* Save All Button */}
+                <div className="flex justify-end pt-4 border-t">
+                    <Button
+                        size="lg"
+                        onClick={handleSaveEverything}
+                        disabled={savingAll || loading}
+                        className="w-full md:w-auto min-w-[200px]"
+                    >
+                        {savingAll ? (
+                            <>
+                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                Saving All Settings...
+                            </>
+                        ) : (
+                            <>
+                                <Save className="h-4 w-4 mr-2" />
+                                Save All API Settings
+                            </>
+                        )}
+                    </Button>
+                </div>
+
+                {formData.updatedAt && (
+                    <p className="text-xs text-muted-foreground text-center">
+                        Last updated: {new Date(formData.updatedAt).toLocaleString()}
+                    </p>
+                )}
             </div>
         </PermissionGate >
     );

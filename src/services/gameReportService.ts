@@ -173,4 +173,44 @@ export const gameReportService = {
     parseGameReportJSON,
     mapReportToMachineUpdate,
     calculateRevenue,
+    createMachineFromEntry,
 };
+
+/**
+ * Create a new ArcadeMachine from a game report entry
+ */
+export function createMachineFromEntry(entry: GameReportEntry): Omit<ArcadeMachine, "createdAt" | "updatedAt"> {
+    const id = generateId();
+    return {
+        id,
+        name: entry.description,
+        assetTag: String(entry.tag), // Map tag to assetTag as requested
+        tag: String(entry.tag),
+        location: "Basement", // Default location as requested
+        storeLocation: entry.location || "Unknown", // Map location to storeLocation
+        group: entry.group,
+        subGroup: entry.subGroup,
+        physicalConfig: "single", // Default to single
+        status: "Online", // Default to Online
+        slots: [
+            {
+                id: generateId(),
+                name: "Slot 1",
+                gameType: entry.subGroup || "Standard",
+                status: "online",
+                upcomingQueue: [],
+                stockLevel: "Good"
+            }
+        ],
+        playCount: 0,
+        revenue: 0,
+        advancedSettings: {
+            cardCashPlayPrice: entry.cashDebit,
+            cashDebitBonus: entry.cashDebitBonus,
+            pointsPerPlay: entry.points,
+            standardPlays: entry.standardPlays,
+            empPlays: entry.empPlays,
+        },
+        lastSyncedAt: new Date()
+    };
+}

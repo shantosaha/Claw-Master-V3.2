@@ -181,9 +181,29 @@ async function isSubmissionBlocked(): Promise<{ blocked: boolean; reason?: strin
 const API_SETTINGS_DOC_ID = "apiIntegrationSettings";
 
 export interface ApiIntegrationSettings {
+    // JotForm API
     jotformApiUrl: string;
-    jotformFormId: string;
+    jotformFormId: string; // Actually site_id (e.g., "614")
     isEnabled: boolean;
+
+    // Game Report API
+    gameReportEnabled: boolean;
+    gameReportApiUrl: string;
+    gameReportSiteId: string;
+
+    // Revenue API
+    revenueEnabled: boolean;
+    revenueApiUrl: string;
+    revenueSiteId: string;
+
+    // Authentication (future use)
+    apiKey?: string;
+    apiToken?: string;
+
+    // URL Presets
+    urlPresets?: { label: string; value: string }[];
+
+    // Sync tracking
     lastSyncAt?: Date | string;
     lastSyncStatus?: 'success' | 'error';
     lastSyncMessage?: string;
@@ -192,9 +212,18 @@ export interface ApiIntegrationSettings {
 }
 
 const DEFAULT_API_SETTINGS: ApiIntegrationSettings = {
-    jotformApiUrl: "http://claw.kokoamusement.com.au",
+    jotformApiUrl: "https://claw.kokoamusement.com.au",
     jotformFormId: "614",
     isEnabled: true,
+    gameReportEnabled: true,
+    gameReportApiUrl: "https://claw.kokoamusement.com.au",
+    gameReportSiteId: "614",
+    revenueEnabled: true,
+    revenueApiUrl: "https://claw.kokoamusement.com.au",
+    revenueSiteId: "614",
+    apiKey: undefined,
+    apiToken: undefined,
+    urlPresets: undefined,
     lastSyncAt: undefined,
     lastSyncStatus: undefined,
     lastSyncMessage: undefined,

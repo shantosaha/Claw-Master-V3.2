@@ -1,5 +1,6 @@
 import { ServiceReport } from "@/types";
 import { appSettingsService } from "./appSettingsService";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
 
 class ServiceReportService {
     // In a real app, this would fetch from a database or the JotForm API (if available via proxy)
@@ -285,9 +286,10 @@ class ServiceReportService {
 
             console.log(`[Sync] Found ${latestByTag.size} unique machine tags:`, Array.from(latestByTag.keys()));
 
-            // Get all machines to match tags
-            const machines = await machineService.getAll();
-            console.log(`[Sync] Found ${machines.length} machines in system`);
+            // Get all machines to match tags - only sync settings to crane machines
+            const allMachines = await machineService.getAll();
+            const machines = allMachines.filter(m => isCraneMachine(m));
+            console.log(`[Sync] Found ${machines.length} crane machines (out of ${allMachines.length} total)`);
 
             // Fetch all current settings once to avoid repeated calls in the loop
             const existingSettings = await settingsService.getAll();

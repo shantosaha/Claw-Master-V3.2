@@ -77,6 +77,7 @@ import { MoreHorizontal, Edit, Trash2, Settings2, History, ChevronLeft, ChevronR
 
 import { cn, generateId } from "@/lib/utils";
 import { usePageState } from "@/hooks/usePageState";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
 
 // Define state shape for persistence
 interface InventoryPageState {
@@ -1862,8 +1863,9 @@ export function StockList() {
 
                         <ScrollArea className="h-[400px] pr-4">
                             {(() => {
-                                // Base filtering (search + type)
+                                // Base filtering (search + type) - only crane machines can have stock assigned
                                 const baseFiltered = machines.filter(m =>
+                                    isCraneMachine(m) &&
                                     (m.name.toLowerCase().includes(machineSearch.toLowerCase()) ||
                                         m.location.toLowerCase().includes(machineSearch.toLowerCase())) &&
                                     (machineFilter === "All" || m.type === machineFilter || (!m.type && machineFilter === "Other"))

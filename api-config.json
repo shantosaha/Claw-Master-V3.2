@@ -1,12 +1,8 @@
 {
-  "jotformApiUrl": "http://claw.kokoamusement.com.au",
+  "jotformApiUrl": "http://localhost:8000",
   "jotformFormId": "614",
   "isEnabled": true,
   "urlPresets": [
-    {
-      "label": "Production (Remote)",
-      "value": "http://claw.kokoamusement.com.au"
-    },
     {
       "label": "Local Server (127.0.0.1)",
       "value": "http://127.0.0.1:8000"
@@ -14,8 +10,12 @@
     {
       "label": "Local Server (localhost)",
       "value": "http://localhost:8000"
+    },
+    {
+      "label": "Production",
+      "value": "https://claw.kokoamusement.com.au"
     }
   ],
-  "updatedAt": "2026-01-13T07:18:35.186Z",
+  "updatedAt": "2026-01-13T13:47:43.592Z",
   "updatedBy": "mock-admin"
 }

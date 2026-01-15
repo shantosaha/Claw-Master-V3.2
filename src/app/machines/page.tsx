@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { machineService, apiService, auditService } from "@/services";
 import { ArcadeMachine, ArcadeMachineSlot, MachineDisplayItem, StockItem, AuditLog } from "@/types";
@@ -19,6 +19,7 @@ import { Plus, RefreshCw, Search, Archive } from "lucide-react";
 import { format } from "date-fns";
 import { MachineCard } from "@/components/machines/MachineCard";
 import { MachineTable } from "@/components/machines/MachineTable";
+import { MachinePricingTable } from "@/components/machines/MachinePricingTable";
 import { ViewSwitcher, ViewMode } from "@/components/machines/ViewSwitcher";
 import { AddMachineDialog } from "@/components/machines/AddMachineDialog";
 import { ManageStockModal } from "@/components/machines/ManageStockModal";
@@ -38,6 +39,8 @@ interface MachinesPageState {
     prizeSizeFilter: string;
     stockLevelFilter: string;
     assignmentFilter: string;
+    categoryFilter: string;
+    subCategoryFilter: string;
 }
 
 export default function MachinesPage() {
@@ -59,6 +62,8 @@ export default function MachinesPage() {
             prizeSizeFilter: 'all',
             stockLevelFilter: 'all',
             assignmentFilter: 'all',
+            categoryFilter: 'all',
+            subCategoryFilter: 'all',
         },
         persistScroll: true,
         isReady: !loading,
@@ -66,7 +71,7 @@ export default function MachinesPage() {
     });
 
     // Destructure for easier access
-    const { viewMode, searchTerm, statusFilter, typeFilter, locationFilter, prizeSizeFilter, stockLevelFilter, assignmentFilter } = pageState;
+    const { viewMode, searchTerm, statusFilter, typeFilter, locationFilter, prizeSizeFilter, stockLevelFilter, assignmentFilter, categoryFilter, subCategoryFilter } = pageState;
 
     // State update helpers
     const setViewMode = (value: ViewMode) => updateState('viewMode', value);
@@ -77,6 +82,12 @@ export default function MachinesPage() {
     const setPrizeSizeFilter = (value: string) => updateState('prizeSizeFilter', value);
     const setStockLevelFilter = (value: string) => updateState('stockLevelFilter', value);
     const setAssignmentFilter = (value: string) => updateState('assignmentFilter', value);
+    const setCategoryFilter = (value: string) => {
+        updateState('categoryFilter', value);
+        // Reset sub-category when category changes
+        updateState('subCategoryFilter', 'all');
+    };
+    const setSubCategoryFilter = (value: string) => updateState('subCategoryFilter', value);
 
     // Dialog State
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -93,20 +104,61 @@ export default function MachinesPage() {
     const [pendingStockLevel, setPendingStockLevel] = useState("");
     const [showArchived, setShowArchived] = useState(false);
 
-    const handleSync = async () => {
+    const handleSync = useCallback(async () => {
         setSyncing(true);
         try {
             const endDate = format(new Date(), "yyyy-MM-dd");
             const startDate = format(new Date(Date.now() - 30 * 24 * 60 * 60 * 1000), "yyyy-MM-dd");
             await apiService.syncMachines(startDate, endDate);
             await Promise.all([refreshMachines(), refreshItems()]);
-            toast.success("Machines synced successfully");
+            lastSyncRef.current = Date.now();
         } catch (error) {
             console.error("Sync failed:", error);
         } finally {
             setSyncing(false);
         }
-    };
+    }, [refreshMachines, refreshItems]);
+
+    // Track last sync time to avoid over-polling
+    const lastSyncRef = useRef<number>(0);
+    const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
+
+    // Auto-sync on page load
+    useEffect(() => {
+        // Only sync if we haven't synced recently (within 5 minutes)
+        const timeSinceLastSync = Date.now() - lastSyncRef.current;
+        if (timeSinceLastSync >= SYNC_INTERVAL_MS) {
+            handleSync();
+        }
+    }, []); // Run once on mount
+
+    // Auto-sync every 5 minutes while page is open
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            // Only sync if not already syncing
+            if (!syncing) {
+                handleSync();
+            }
+        }, SYNC_INTERVAL_MS);
+
+        return () => clearInterval(intervalId);
+    }, [syncing, handleSync]);
+
+    // Sync when tab becomes visible (after being hidden)
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                const timeSinceLastSync = Date.now() - lastSyncRef.current;
+                // Only sync if more than 5 minutes since last sync
+                if (timeSinceLastSync >= SYNC_INTERVAL_MS && !syncing) {
+                    handleSync();
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, [syncing, handleSync]);
 
     const handleDelete = async () => {
         if (!machineToDelete) return;
@@ -370,6 +422,31 @@ export default function MachinesPage() {
 
     // Get unique values for filters
     const uniqueTypes = Array.from(new Set(machines.map(m => m.type).filter(type => type && type.trim() !== "")));
+    // Sort categories: Group 1-11 numerically, then others alphabetically, "Not Assigned" last
+    const uniqueCategories = Array.from(new Set(machines.map(m => m.group).filter(g => g && g.trim() !== ""))).sort((a, b) => {
+        // Extract group numbers for comparison
+        const matchA = a?.match(/Group\s+(\d+)/);
+        const matchB = b?.match(/Group\s+(\d+)/);
+        const numA = matchA ? parseInt(matchA[1]) : Infinity;
+        const numB = matchB ? parseInt(matchB[1]) : Infinity;
+
+        // "Not Assigned" or similar should go last
+        if (a?.toLowerCase().includes('not assigned')) return 1;
+        if (b?.toLowerCase().includes('not assigned')) return -1;
+
+        // Compare by group number
+        if (numA !== numB) return numA - numB;
+
+        // Fallback to alphabetical
+        return (a || '').localeCompare(b || '');
+    });
+    // Sub-categories are filtered based on selected category
+    const uniqueSubCategories = Array.from(new Set(
+        machines
+            .filter(m => categoryFilter === 'all' || m.group === categoryFilter)
+            .map(m => m.subGroup)
+            .filter(sg => sg && sg.trim() !== "")
+    )).sort();
     const uniqueLocations = Array.from(new Set(machines.map(m => m.location).filter(loc => loc && loc.trim() !== "")));
 
     // Normalize prize sizes to eliminate duplicates (e.g., "Extra Small" vs "Extra-Small" vs "extra small")
@@ -412,6 +489,8 @@ export default function MachinesPage() {
         const matchesType = typeFilter === "all" || machine.type === typeFilter;
         const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
         const matchesPrizeSize = prizeSizeFilter === "all" || (machine.prizeSize && normalizePrizeSize(machine.prizeSize) === prizeSizeFilter);
+        const matchesCategory = categoryFilter === "all" || machine.group === categoryFilter;
+        const matchesSubCategory = subCategoryFilter === "all" || machine.subGroup === subCategoryFilter;
 
         // Stock level filter
         let matchesStockLevel = true;
@@ -430,7 +509,7 @@ export default function MachinesPage() {
         // Archive filter
         const matchesArchive = showArchived || !machine.isArchived;
 
-        return matchesSearch && matchesStatus && matchesType && matchesLocation && matchesPrizeSize && matchesStockLevel && matchesAssignment && matchesArchive;
+        return matchesSearch && matchesStatus && matchesType && matchesLocation && matchesPrizeSize && matchesStockLevel && matchesAssignment && matchesArchive && matchesCategory && matchesSubCategory;
     });
 
     const flattenedFilteredMachines = flattenMachinesToSlots(filteredMachines);
@@ -447,10 +526,13 @@ export default function MachinesPage() {
                     </p>
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" onClick={handleSync} disabled={syncing}>
-                        <RefreshCw className={`mr-2 h-4 w-4 ${syncing ? "animate-spin" : ""}`} />
-                        {syncing ? "Syncing..." : "Sync Data"}
-                    </Button>
+                    {/* Sync indicator - replaces manual button */}
+                    {syncing && (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                            <RefreshCw className="h-4 w-4 animate-spin" />
+                            <span>Syncing...</span>
+                        </div>
+                    )}
                     <Button onClick={() => {
                         setIsAddDialogOpen(true);
                     }}>
@@ -488,19 +570,6 @@ export default function MachinesPage() {
                         </SelectContent>
                     </Select>
 
-                    {/* Type Filter */}
-                    <Select value={typeFilter} onValueChange={setTypeFilter}>
-                        <SelectTrigger className="w-full sm:w-auto sm:min-w-[100px]">
-                            <SelectValue placeholder="Type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Types</SelectItem>
-                            {uniqueTypes.map(type => (
-                                <SelectItem key={type} value={type as string}>{type}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
                     {/* Location Filter */}
                     <Select value={locationFilter} onValueChange={setLocationFilter}>
                         <SelectTrigger className="w-full sm:w-auto sm:min-w-[100px]">
@@ -511,33 +580,6 @@ export default function MachinesPage() {
                             {uniqueLocations.map(loc => (
                                 <SelectItem key={loc} value={loc as string}>{loc}</SelectItem>
                             ))}
-                        </SelectContent>
-                    </Select>
-
-                    {/* Prize Size Filter */}
-                    <Select value={prizeSizeFilter} onValueChange={setPrizeSizeFilter}>
-                        <SelectTrigger className="w-full sm:w-auto sm:min-w-[100px]">
-                            <SelectValue placeholder="Size" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Sizes</SelectItem>
-                            {uniquePrizeSizes.map(size => (
-                                <SelectItem key={size} value={size as string}>{size}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-
-                    {/* Stock Level Filter */}
-                    <Select value={stockLevelFilter} onValueChange={setStockLevelFilter}>
-                        <SelectTrigger className="w-full sm:w-auto sm:min-w-[110px]">
-                            <SelectValue placeholder="Stock" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Stock</SelectItem>
-                            <SelectItem value="In Stock">In Stock</SelectItem>
-                            <SelectItem value="Limited Stock">Limited</SelectItem>
-                            <SelectItem value="Low Stock">Low Stock</SelectItem>
-                            <SelectItem value="Out of Stock">Out of Stock</SelectItem>
                         </SelectContent>
                     </Select>
 
@@ -552,12 +594,84 @@ export default function MachinesPage() {
                             <SelectItem value="unassigned">Unassigned</SelectItem>
                         </SelectContent>
                     </Select>
+
+                    {/* Category (Group) Filter */}
+                    <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+                        <SelectTrigger className="w-full sm:w-auto sm:min-w-[130px]">
+                            <SelectValue placeholder="Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Categories</SelectItem>
+                            {uniqueCategories.map(cat => (
+                                <SelectItem key={cat} value={cat as string}>{cat}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    {/* Sub Category Filter */}
+                    <Select value={subCategoryFilter} onValueChange={setSubCategoryFilter}>
+                        <SelectTrigger className="w-full sm:w-auto sm:min-w-[120px]">
+                            <SelectValue placeholder="Sub Category" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Sub Categories</SelectItem>
+                            {uniqueSubCategories.map(sub => (
+                                <SelectItem key={sub} value={sub as string}>{sub}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+
+                    {/* Type Filter - Only for Group 4-Cranes (after Sub Category) */}
+                    {categoryFilter === 'Group 4-Cranes' && (
+                        <Select value={typeFilter} onValueChange={setTypeFilter}>
+                            <SelectTrigger className="w-full sm:w-auto sm:min-w-[100px]">
+                                <SelectValue placeholder="Type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Types</SelectItem>
+                                {uniqueTypes.map(type => (
+                                    <SelectItem key={type} value={type as string}>{type}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+
+                    {/* Prize Size Filter - Only for Group 4-Cranes */}
+                    {categoryFilter === 'Group 4-Cranes' && (
+                        <Select value={prizeSizeFilter} onValueChange={setPrizeSizeFilter}>
+                            <SelectTrigger className="w-full sm:w-auto sm:min-w-[100px]">
+                                <SelectValue placeholder="Size" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Sizes</SelectItem>
+                                {uniquePrizeSizes.map(size => (
+                                    <SelectItem key={size} value={size as string}>{size}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+
+                    {/* Stock Level Filter - Only for Group 4-Cranes */}
+                    {categoryFilter === 'Group 4-Cranes' && (
+                        <Select value={stockLevelFilter} onValueChange={setStockLevelFilter}>
+                            <SelectTrigger className="w-full sm:w-auto sm:min-w-[110px]">
+                                <SelectValue placeholder="Stock" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">All Stock</SelectItem>
+                                <SelectItem value="In Stock">In Stock</SelectItem>
+                                <SelectItem value="Limited Stock">Limited</SelectItem>
+                                <SelectItem value="Low Stock">Low Stock</SelectItem>
+                                <SelectItem value="Out of Stock">Out of Stock</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    )}
                 </div>
 
                 {/* Row 3: View Style + Reset (always visible) */}
                 <div className="flex items-center justify-between gap-2">
                     {/* Reset Button */}
-                    {(statusFilter !== "all" || typeFilter !== "all" || locationFilter !== "all" || prizeSizeFilter !== "all" || stockLevelFilter !== "all" || assignmentFilter !== "all" || searchTerm) ? (
+                    {(statusFilter !== "all" || typeFilter !== "all" || locationFilter !== "all" || prizeSizeFilter !== "all" || stockLevelFilter !== "all" || assignmentFilter !== "all" || categoryFilter !== "all" || subCategoryFilter !== "all" || searchTerm) ? (
                         <Button
                             variant="outline"
                             size="sm"
@@ -570,6 +684,8 @@ export default function MachinesPage() {
                                     prizeSizeFilter: "all",
                                     stockLevelFilter: "all",
                                     assignmentFilter: "all",
+                                    categoryFilter: "all",
+                                    subCategoryFilter: "all",
                                     searchTerm: ""
                                 });
                             }}
@@ -618,6 +734,8 @@ export default function MachinesPage() {
                     onStockLevelChange={handleStockLevelChange}
                     onRestore={handleRestore}
                 />
+            ) : viewMode === 'pricing' ? (
+                <MachinePricingTable machines={flattenedFilteredMachines} />
             ) : (
                 <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
                     {/* For card view, we need to inject the items into the machines similar to flattened view logic but preserving machine structure */}

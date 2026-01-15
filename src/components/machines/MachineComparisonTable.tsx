@@ -21,6 +21,8 @@ import { Badge } from "@/components/ui/badge";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { serviceReportService } from "@/services/serviceReportService";
+import { gameReportApiService, GameReportItem } from "@/services/gameReportApiService";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
 
 interface MachineComparisonTableProps {
     machines: MachineStatus[];
@@ -57,6 +59,7 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
 
     const selectedMachine = machines.find(m => m.id === selectedMachineId);
     const fullMachine = allMachines.find(m => m.id === selectedMachineId);
+    const isSelectedCrane = isCraneMachine(fullMachine);
 
     const [recentReportImage, setRecentReportImage] = useState<string | null>(null);
     const [lightboxImage, setLightboxImage] = useState<string | null>(null);
@@ -154,26 +157,59 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                 }
 
                 for (const date of dates) {
-                    // Simulate fetching daily stats
-                    const seed = selectedMachine.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0) + date.getTime();
-                    const random = (offset: number) => {
-                        const x = Math.sin(seed + offset) * 10000;
-                        return x - Math.floor(x);
-                    };
+                    // Fetch real data from Game Report API for this specific day
+                    const targetTag = selectedMachine.assetTag || fullMachine?.tag || (selectedMachine as any)?.tag;
 
-                    newStats.push({
-                        date,
-                        customerPlays: Math.floor(random(1) * 200) + 20,
-                        staffPlays: Math.floor(random(2) * 10),
-                        payouts: Math.floor(random(3) * 5),
-                        playsPerPayout: Math.floor(random(1) * 200 / (Math.floor(random(3) * 5) || 1)),
-                        payoutSettings: 20 + Math.floor(random(4) * 10),
-                        c1: 20 + Math.floor(random(5) * 5),
-                        c2: 15 + Math.floor(random(6) * 5),
-                        c3: 10 + Math.floor(random(7) * 5),
-                        c4: 25 + Math.floor(random(8) * 5),
-                        revenue: (Math.floor(random(1) * 200) + 20) * 2
+                    // Fetch data for this day (same start/end for single day)
+                    const dayData = await gameReportApiService.fetchGameReport({
+                        startDate: date,
+                        endDate: date,
+                        aggregate: false, // Get raw data
                     });
+
+                    // Find the entry matching this machine's tag
+                    let machineData: GameReportItem | undefined;
+                    if (targetTag) {
+                        const normalizedTag = String(targetTag).trim().toLowerCase();
+                        machineData = dayData.find(item => {
+                            const itemTag = String(item.assetTag || item.tag).trim().toLowerCase();
+                            return itemTag === normalizedTag;
+                        });
+                    }
+
+                    if (machineData) {
+                        // Use real API data
+                        const plays = machineData.standardPlays || 0;
+                        const payouts = machineData.points || 0;
+                        newStats.push({
+                            date,
+                            customerPlays: plays,
+                            staffPlays: machineData.empPlays || 0,
+                            payouts: payouts,
+                            playsPerPayout: payouts > 0 ? Math.round(plays / payouts) : 0,
+                            payoutSettings: 20, // Default, could come from settings
+                            c1: 0, // C1-C4 come from JotForm settings, not game report
+                            c2: 0,
+                            c3: 0,
+                            c4: 0,
+                            revenue: machineData.totalRev || 0,
+                        });
+                    } else {
+                        // No data for this day, show zeros
+                        newStats.push({
+                            date,
+                            customerPlays: 0,
+                            staffPlays: 0,
+                            payouts: 0,
+                            playsPerPayout: 0,
+                            payoutSettings: 0,
+                            c1: 0,
+                            c2: 0,
+                            c3: 0,
+                            c4: 0,
+                            revenue: 0,
+                        });
+                    }
                 }
                 setStats(newStats.sort((a, b) => b.date.getTime() - a.date.getTime()));
             } catch (e) {
@@ -185,18 +221,24 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
         fetchStats();
     }, [dateRange, selectedMachine, selectionMode, specificDates]);
 
-    const metrics: { label: string, key: MetricKey, format?: (v: number) => string }[] = [
+    // Only show C1-C4 metrics for crane machines
+    const metrics: { label: string, key: MetricKey, format?: (v: number) => string, craneOnly?: boolean }[] = [
         { label: "Customer Plays", key: "customerPlays" },
         { label: "Staff Plays", key: "staffPlays" },
         { label: "Total Revenue", key: "revenue", format: (v: number) => `$${v}` },
         { label: "Payouts", key: "payouts" },
         { label: "Plays Per Payout", key: "playsPerPayout" },
-        { label: "Target Plays/Win", key: "payoutSettings" },
-        { label: "Claw Strength C1", key: "c1" },
-        { label: "Claw Strength C2", key: "c2" },
-        { label: "Claw Strength C3", key: "c3" },
-        { label: "Claw Strength C4", key: "c4" },
+        { label: "Target Plays/Win", key: "payoutSettings", craneOnly: true },
+        { label: "Claw Strength C1", key: "c1", craneOnly: true },
+        { label: "Claw Strength C2", key: "c2", craneOnly: true },
+        { label: "Claw Strength C3", key: "c3", craneOnly: true },
+        { label: "Claw Strength C4", key: "c4", craneOnly: true },
     ];
+
+    // Filter metrics based on machine type
+    const visibleMetrics = isSelectedCrane
+        ? metrics
+        : metrics.filter(m => !m.craneOnly);
 
     return (
         <div className="space-y-4">
@@ -411,7 +453,7 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    metrics.map((metric) => (
+                                    visibleMetrics.map((metric) => (
                                         <TableRow key={metric.label}>
                                             <TableCell className="font-medium text-muted-foreground">
                                                 {metric.label}

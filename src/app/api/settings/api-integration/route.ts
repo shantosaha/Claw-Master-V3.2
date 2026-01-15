@@ -23,11 +23,11 @@ interface ApiSettings {
 
 // Default settings
 const DEFAULT_SETTINGS: ApiSettings = {
-    jotformApiUrl: "http://claw.kokoamusement.com.au",
+    jotformApiUrl: "https://claw.kokoamusement.com.au",
     jotformFormId: "614",
     isEnabled: true,
     urlPresets: [
-        { label: "Production (Remote)", value: "http://claw.kokoamusement.com.au" },
+        { label: "Production (Remote)", value: "https://claw.kokoamusement.com.au" },
         { label: "Local Server (127.0.0.1)", value: "http://127.0.0.1:8000" },
         { label: "Local Server (localhost)", value: "http://localhost:8000" },
     ]

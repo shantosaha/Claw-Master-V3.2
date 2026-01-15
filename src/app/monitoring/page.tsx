@@ -91,7 +91,7 @@ function useMonitoring() {
             setAlerts(alertData);
         });
 
-        monitoringService.startPolling(30000);
+        monitoringService.startPolling(300000);
 
         return () => {
             unsubscribeMachines();

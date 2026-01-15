@@ -27,6 +27,7 @@ import { MachineComparisonTable } from "@/components/machines/MachineComparisonT
 import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
 import { ServiceHistoryTable } from "@/components/machines/ServiceHistoryTable";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
 
 // Constants for select field options
 const STATUS_OPTIONS = [
@@ -271,6 +272,7 @@ export default function MachineDetailsPage() {
     const currentSlot = slotId ? enrichedMachine.slots.find(s => s.id === slotId) : null;
     const displayTitle = currentSlot && currentSlot.name !== "Main" ? `${enrichedMachine.name} - ${currentSlot.name}` : enrichedMachine.name;
     const displayStatus = currentSlot ? currentSlot.status : enrichedMachine.status;
+    const isCrane = isCraneMachine(enrichedMachine);
 
     return (
         <div className="space-y-6">
@@ -329,7 +331,7 @@ export default function MachineDetailsPage() {
             <Tabs defaultValue={searchParams.get("tab") || "overview"} className="w-full">
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
-                    <TabsTrigger value="settings">Settings</TabsTrigger>
+                    {isCrane && <TabsTrigger value="settings">Settings</TabsTrigger>}
                     <TabsTrigger value="comparison">Comparison Analytics</TabsTrigger>
                     <TabsTrigger value="service">Service Reports</TabsTrigger>
                 </TabsList>
@@ -506,13 +508,15 @@ export default function MachineDetailsPage() {
                                 />
                             </div>
 
-                            {/* Stock Details */}
-                            <div className="rounded-lg border p-4">
-                                <StockDetailsPanel
-                                    machine={enrichedMachine}
-                                    slotId={slotId || undefined}
-                                />
-                            </div>
+                            {/* Stock Details - Only for Crane Machines */}
+                            {isCrane && (
+                                <div className="rounded-lg border p-4">
+                                    <StockDetailsPanel
+                                        machine={enrichedMachine}
+                                        slotId={slotId || undefined}
+                                    />
+                                </div>
+                            )}
                         </div>
 
                         {/* Right Column - Settings, History, Image */}
@@ -544,13 +548,15 @@ export default function MachineDetailsPage() {
                             </div>
 
 
-                            {/* Stock Assignment History */}
-                            <div className="rounded-lg border p-4">
-                                <StockAssignmentHistory
-                                    machine={enrichedMachine}
-                                    logs={activityLogs}
-                                />
-                            </div>
+                            {/* Stock Assignment History - Only for Crane Machines */}
+                            {isCrane && (
+                                <div className="rounded-lg border p-4">
+                                    <StockAssignmentHistory
+                                        machine={enrichedMachine}
+                                        logs={activityLogs}
+                                    />
+                                </div>
+                            )}
 
                             {/* Version History */}
                             <SnapshotHistory
@@ -568,28 +574,31 @@ export default function MachineDetailsPage() {
                     </div>
                 </TabsContent>
 
-                <TabsContent value="settings" className="mt-6">
-                    <div className="grid gap-6 lg:grid-cols-3">
-                        <div className="lg:col-span-2">
-                            <SettingsPanel
-                                machineId={enrichedMachine.id}
-                                machineName={enrichedMachine.name}
-                                assetTag={enrichedMachine.assetTag}
-                                activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
-                                supervisorOverride={supervisorOverride}
-                            />
-                        </div>
-                        <div className="space-y-6">
-                            <div className="rounded-lg border p-4">
-                                <h2 className="text-lg font-semibold mb-2">Configuration Guide</h2>
-                                <p className="text-sm text-muted-foreground">
-                                    Adjust claw strength stages (C1-C4) and payout rates to optimize machine performance.
-                                    Settings are automatically synced to the active stock item.
-                                </p>
+                {/* Settings Tab - Only for Crane Machines */}
+                {isCrane && (
+                    <TabsContent value="settings" className="mt-6">
+                        <div className="grid gap-6 lg:grid-cols-3">
+                            <div className="lg:col-span-2">
+                                <SettingsPanel
+                                    machineId={enrichedMachine.id}
+                                    machineName={enrichedMachine.name}
+                                    assetTag={enrichedMachine.assetTag}
+                                    activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
+                                    supervisorOverride={supervisorOverride}
+                                />
+                            </div>
+                            <div className="space-y-6">
+                                <div className="rounded-lg border p-4">
+                                    <h2 className="text-lg font-semibold mb-2">Configuration Guide</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        Adjust claw strength stages (C1-C4) and payout rates to optimize machine performance.
+                                        Settings are automatically synced to the active stock item.
+                                    </p>
+                                </div>
                             </div>
                         </div>
-                    </div>
-                </TabsContent>
+                    </TabsContent>
+                )}
 
 
 

@@ -52,12 +52,10 @@ export const apiService = {
 
             const tagString = String(item.Tag);
 
-            // Check if machine exists by Tag
+            // Check if machines exist by Tag - get ALL matching machines (handles duplicates like Trend Top/Bottom)
             const existingMachines = await machineService.query(where("tag", "==", tagString));
-            const existingMachine = existingMachines[0];
 
             const machineData: Partial<ArcadeMachine> = {
-                name: item.Description || "Unknown Machine",
                 location: item.Location,
                 group: item.Group,
                 subGroup: item.SubGroup,
@@ -68,15 +66,17 @@ export const apiService = {
                 lastSyncedAt: new Date(),
             };
 
-            if (existingMachine) {
-                // Update
-                await machineService.update(existingMachine.id, machineData);
-                syncedCount++;
+            if (existingMachines.length > 0) {
+                // Update ALL machines with this tag (handles Trend #1 Top, Trend #1 Bottom, etc.)
+                for (const existingMachine of existingMachines) {
+                    await machineService.update(existingMachine.id, machineData);
+                    syncedCount++;
+                }
             } else {
-                // Create
+                // Create new machine only if none exist with this tag
                 await machineService.add({
                     ...machineData,
-                    name: machineData.name || "Unknown Machine",
+                    name: item.Description || "Unknown Machine",
                     assetTag: `TAG-${tagString}`, // Temporary asset tag
                     physicalConfig: 'single' as const,
                     status: machineData.status || 'Online',

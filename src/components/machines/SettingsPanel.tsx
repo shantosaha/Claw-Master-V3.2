@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { settingsService, itemMachineSettingsService, machineService } from "@/services";
 import { PlayfieldSetting, ItemMachineSettings, AdvancedMachineSettings } from "@/types";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,12 +16,13 @@ import { toast } from "sonner";
 import Link from "next/link";
 import { useData } from "@/context/DataProvider";
 import { Badge } from "@/components/ui/badge";
-import { RefreshCw, Save, Lock, Info } from "lucide-react";
+import { RefreshCw, Save, Lock, Info, Gift, Clock, CheckCircle2, Users, DollarSign, Trophy, TrendingUp, Gamepad2, Award } from "lucide-react";
 import { PermissionGate } from "@/components/auth/PermissionGate";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { OptimizedThumbnail } from "@/components/ui/OptimizedImage";
 import { getLightboxUrl } from "@/lib/utils/imageUtils";
+import { gameReportApiService, GameReportItem } from "@/services/gameReportApiService";
 
 interface SettingsPanelProps {
     machineId: string;
@@ -61,12 +62,16 @@ export function SettingsPanel({
 
     // New advanced settings state
     const [advancedSettings, setAdvancedSettings] = useState<AdvancedMachineSettings>({});
+    const [performanceData, setPerformanceData] = useState<GameReportItem | null>(null);
     const [zoomedImage, setZoomedImage] = useState<string | null>(null);
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [syncing, setSyncing] = useState(false);
+    const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
+    const hasSyncedRef = useRef(false);
 
+    // Initial load
     useEffect(() => {
         loadSettings();
     }, [machineId, assetTag, activeStockItem?.id]);
@@ -74,25 +79,84 @@ export function SettingsPanel({
     const loadSettings = async () => {
         setLoading(true);
         try {
-            // 1. Load Machine Advanced Settings
+            // 1. Load Machine Performance Data (Today)
+            if (assetTag) {
+                const today = new Date();
+                const reports = await gameReportApiService.fetchGameReport({
+                    startDate: today,
+                    endDate: today,
+                    tag: parseInt(assetTag), // User confirmed web assetTag = api tag
+                    aggregate: true
+                });
+
+                if (reports && reports.length > 0) {
+                    setPerformanceData(reports[0]);
+                    setLastSyncedAt(new Date());
+                } else {
+                    setPerformanceData(null);
+                }
+            }
+
+            // 2. Load Machine Advanced Settings
             const machine = await machineService.getById(machineId);
             if (machine) {
                 setAdvancedSettings(machine.advancedSettings || {});
             }
 
-            // 2. Load playfield settings history
-            // Aggregated by assetTag if available, matching machine unit history
-            const filterField = assetTag ? "assetTag" : "machineId";
-            const filterValue = assetTag || machineId;
+            // 3. Load playfield settings history directly from JotForm as requested
+            try {
+                const { serviceReportService } = await import("@/services/serviceReportService");
+                const allReports = await serviceReportService.getReports("GLOBAL_FETCH");
+                const sanitizedTag = assetTag?.trim();
 
-            const data = await settingsService.query(
-                where(filterField, "==", filterValue),
-                orderBy("timestamp", "desc"),
-                limit(10)
-            );
-            setSettings(data);
+                if (sanitizedTag) {
+                    console.log(`[SettingsPanel] Filtering ${allReports.length} JotForm reports for tag: "${sanitizedTag}"`);
 
-            // 3. If there's an active stock item, also load from itemMachineSettingsService
+                    const filteredData = allReports
+                        .filter(report => {
+                            const reportTag = String(report.inflowSku || report.machineId || "").trim();
+                            return reportTag === sanitizedTag;
+                        })
+                        .map(report => ({
+                            id: report.id,
+                            machineId: machineId,
+                            machineName: machineName || report.machineName,
+                            assetTag: report.inflowSku,
+                            externalId: report.id,
+                            c1: report.c1,
+                            c2: report.c2,
+                            c3: report.c3,
+                            c4: report.c4,
+                            payoutRate: report.playsPerWin,
+                            imageUrl: report.imageUrl,
+                            timestamp: report.timestamp,
+                            setBy: report.staffName,
+                            remarks: report.remarks
+                        }))
+                        .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+
+                    setSettings(filteredData);
+
+                    // Fallback to latest playfield settings for the current configuration display
+                    if (filteredData.length > 0 && !activeStockItem?.id) {
+                        const latest = filteredData[0];
+                        setCurrentSetting({
+                            c1: latest.c1 || 0,
+                            c2: latest.c2 || 0,
+                            c3: latest.c3 || 0,
+                            c4: latest.c4 || 0,
+                            payoutRate: latest.payoutRate || 0,
+                        });
+                    }
+                } else {
+                    setSettings([]);
+                }
+            } catch (err) {
+                console.error("Failed to load JotForm history:", err);
+                setSettings([]);
+            }
+
+            // 4. If there's an active stock item, also load from itemMachineSettingsService
             if (activeStockItem?.id) {
                 const allItemSettings = await itemMachineSettingsService.getAll();
                 const existingItemSettings = allItemSettings.find(
@@ -113,45 +177,11 @@ export function SettingsPanel({
                 }
             }
 
-            // Fallback to latest playfield settings
-            if (data.length > 0) {
-                const latest = data[0];
-                setCurrentSetting({
-                    c1: latest.c1 ?? latest.strengthSetting ?? 0,
-                    c2: latest.c2 ?? 0,
-                    c3: latest.c3 ?? 0,
-                    c4: latest.c4 ?? 0,
-                    payoutRate: latest.payoutRate ?? latest.payoutPercentage ?? 0,
-                });
-            }
+
         } catch (error) {
             console.error("Failed to load settings:", error);
         } finally {
             setLoading(false);
-        }
-    };
-
-    const handleSync = async () => {
-        setSyncing(true);
-        try {
-            const { serviceReportService } = await import("@/services/serviceReportService");
-            const result = await serviceReportService.syncLatestSettingsToMachines();
-
-            if (result.errors.length > 0) {
-                toast.error("Sync partial failure", {
-                    description: `${result.errors.length} errors occurred during sync.`
-                });
-            } else {
-                toast.success("JotForm Sync Complete", {
-                    description: `Successfully updated ${result.synced} machine settings.`
-                });
-            }
-            await loadSettings();
-        } catch (error) {
-            console.error("Failed to sync with JotForm:", error);
-            toast.error("Sync Failed");
-        } finally {
-            setSyncing(false);
         }
     };
 
@@ -294,228 +324,282 @@ export function SettingsPanel({
             </TabsList>
 
             <TabsContent value="playfield" className="space-y-6">
-                <div className="grid gap-4 p-4 border rounded-md bg-muted/20">
-                    <div className="flex justify-between items-center">
-                        <div className="flex flex-col gap-1">
-                            <h3 className="font-medium">Current Configuration</h3>
-                            {activeStockItem && (
-                                <div className="text-[11px] text-muted-foreground flex items-center gap-1">
-                                    <Info className="h-3 w-3" />
-                                    Active Stock: <span className="font-semibold text-foreground">{activeStockItem.name}</span>
+                {/* Performance Stats & Current Config Grid */}
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    {/* Today's Performance Card */}
+                    <div className="rounded-xl border overflow-hidden shadow-sm flex flex-col">
+                        <div className="bg-gradient-to-r from-emerald-600 to-teal-600 p-4">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <TrendingUp className="h-5 w-5 text-white" />
+                                    <h3 className="text-lg font-semibold text-white">Today's Performance</h3>
                                 </div>
-                            )}
+                                <div className="text-white/80 text-xs font-medium bg-white/10 px-2 py-1 rounded">
+                                    Live from API
+                                </div>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleSync}
-                                disabled={syncing}
-                                className="h-7 text-xs"
-                            >
-                                {syncing ? (
-                                    <RefreshCw className="h-3 w-3 mr-1 animate-spin" />
-                                ) : (
-                                    <RefreshCw className="h-3 w-3 mr-1" />
-                                )}
-                                Sync JotForm
-                            </Button>
-                            {itemSettings && (
-                                <Badge variant="secondary" className="text-[10px] h-5">Synced</Badge>
-                            )}
+                        <div className="p-4 bg-card flex-1">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                                        <Gamepad2 className="h-3.5 w-3.5" />
+                                        <span className="text-[11px] font-medium uppercase tracking-wider">Customer Plays</span>
+                                    </div>
+                                    <div className="text-2xl font-bold">{performanceData?.standardPlays ?? 0}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                                        <Users className="h-3.5 w-3.5" />
+                                        <span className="text-[11px] font-medium uppercase tracking-wider">Staff Plays</span>
+                                    </div>
+                                    <div className="text-2xl font-bold">{performanceData?.empPlays ?? 0}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                                        <TrendingUp className="h-3.5 w-3.5" />
+                                        <span className="text-[11px] font-medium uppercase tracking-wider">Total Plays</span>
+                                    </div>
+                                    <div className="text-2xl font-bold">{(performanceData?.standardPlays ?? 0) + (performanceData?.empPlays ?? 0)}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                                        <Award className="h-3.5 w-3.5" />
+                                        <span className="text-[11px] font-medium uppercase tracking-wider">Payouts (Wins)</span>
+                                    </div>
+                                    <div className="text-2xl font-bold">{performanceData?.points ?? 0}</div>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                                        <Trophy className="h-3.5 w-3.5" />
+                                        <span className="text-[11px] font-medium uppercase tracking-wider">Win Rate</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">
+                                        {performanceData && (performanceData.standardPlays + performanceData.empPlays) > 0
+                                            ? `${((performanceData.points / (performanceData.standardPlays + performanceData.empPlays)) * 100).toFixed(1)}%`
+                                            : '0.0%'}
+                                    </div>
+                                </div>
+                                <div className="space-y-1">
+                                    <div className="flex items-center gap-1.5 text-muted-foreground">
+                                        <DollarSign className="h-3.5 w-3.5" />
+                                        <span className="text-[11px] font-medium uppercase tracking-wider">Revenue</span>
+                                    </div>
+                                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                                        ${performanceData?.totalRev?.toFixed(2) ?? '0.00'}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <PermissionGate
-                        permission="editMachines"
-                        fallback={
-                            <div className="space-y-4">
-                                <div className="flex items-center gap-2 p-3 bg-muted rounded-md border border-dashed">
-                                    <Lock className="h-4 w-4 text-muted-foreground" />
-                                    <p className="text-sm text-muted-foreground">
-                                        You don't have permission to edit machine settings. Contact an administrator to request access.
-                                    </p>
+                    {/* Current Claw Settings Card */}
+                    <div className="rounded-xl border overflow-hidden shadow-sm flex flex-col">
+                        <div className="bg-gradient-to-r from-violet-600 via-purple-600 to-indigo-600 p-4">
+                            <div className="flex justify-between items-center">
+                                <div className="flex items-center gap-2">
+                                    <Info className="h-5 w-5 text-white" />
+                                    <h3 className="text-lg font-semibold text-white">Claw Settings</h3>
                                 </div>
-                                {/* Show read-only values */}
-                                <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 opacity-60">
-                                    <div className="space-y-2">
-                                        <Label>C1 (Catch)</Label>
-                                        <Input type="number" value={currentSetting.c1} disabled />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>C2 (Pickup)</Label>
-                                        <Input type="number" value={currentSetting.c2} disabled />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>C3 (Carry)</Label>
-                                        <Input type="number" value={currentSetting.c3} disabled />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>Payout Rate</Label>
-                                        <Input type="number" value={currentSetting.payoutRate} disabled />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label>C4 (Prize)</Label>
-                                        <Input type="number" value={currentSetting.c4} disabled />
-                                    </div>
-                                </div>
+                                {lastSyncedAt && (
+                                    <Badge variant="secondary" className="bg-white/20 text-white border-0 text-[10px] items-center gap-1">
+                                        <CheckCircle2 className="h-2.5 w-2.5" />
+                                        Synced
+                                    </Badge>
+                                )}
                             </div>
-                        }
-                    >
-                        <div className="space-y-4">
-                            {!supervisorOverride && (
-                                <div className="flex items-center gap-2 p-2 bg-blue-50/50 border border-blue-100 rounded text-blue-700">
-                                    <Lock className="h-3.5 w-3.5" />
-                                    <p className="text-[11px]">
-                                        Read-only mode (Synced from JotForm). Enable <b>Supervisor Override</b> to make changes.
-                                    </p>
-                                </div>
-                            )}
-                            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3">
-                                <div className="space-y-2">
-                                    <Label title="First Stage / Grabbing Power" className="text-[11px] truncate block">C1 (Catch)</Label>
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        max="64"
-                                        className="h-8 text-sm"
-                                        value={currentSetting.c1}
-                                        disabled={!supervisorOverride}
-                                        onChange={(e) => setCurrentSetting({ ...currentSetting, c1: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label title="Second Stage / Carry Power" className="text-[11px] truncate block">C2 (Pickup)</Label>
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        max="64"
-                                        className="h-8 text-sm"
-                                        value={currentSetting.c2}
-                                        disabled={!supervisorOverride}
-                                        onChange={(e) => setCurrentSetting({ ...currentSetting, c2: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label title="Third Stage / Carry to Chute" className="text-[11px] truncate block">C3 (Carry)</Label>
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        max="64"
-                                        className="h-8 text-sm"
-                                        value={currentSetting.c3}
-                                        disabled={!supervisorOverride}
-                                        onChange={(e) => setCurrentSetting({ ...currentSetting, c3: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label title="Plays per Prize" className="text-[11px] truncate block">Payout Rate</Label>
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        className="h-8 text-sm"
-                                        value={currentSetting.payoutRate}
-                                        disabled={!supervisorOverride}
-                                        onChange={(e) => setCurrentSetting({ ...currentSetting, payoutRate: e.target.value })}
-                                    />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label title="Max Strength at Payout" className="text-[11px] truncate block">C4 (Prize)</Label>
-                                    <Input
-                                        type="number"
-                                        min="0"
-                                        max="64"
-                                        className="h-8 text-sm"
-                                        value={currentSetting.c4}
-                                        disabled={!supervisorOverride}
-                                        onChange={(e) => setCurrentSetting({ ...currentSetting, c4: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-
-                            {supervisorOverride && (
-                                <Button onClick={handleSave} disabled={saving} size="sm">
-                                    {saving ? (
-                                        <>
-                                            <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
-                                            Saving...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Save className="h-4 w-4 mr-2" />
-                                            Update Settings
-                                        </>
-                                    )}
-                                </Button>
-                            )}
                         </div>
-                    </PermissionGate>
+                        <div className="p-4 bg-card flex-1 flex flex-col">
+                            {activeStockItem && (
+                                <div className="flex items-center gap-1.5 mb-4 text-sm font-medium">
+                                    <Gift className="h-4 w-4 text-violet-500" />
+                                    <span>Active: {activeStockItem.name}</span>
+                                </div>
+                            )}
+
+                            <PermissionGate
+                                permission="editMachines"
+                                fallback={
+                                    <div className="grid grid-cols-3 md:grid-cols-5 gap-3 mt-auto opacity-70">
+                                        {[
+                                            { label: 'C1', value: currentSetting.c1 },
+                                            { label: 'C2', value: currentSetting.c2 },
+                                            { label: 'C3', value: currentSetting.c3 },
+                                            { label: 'C4', value: currentSetting.c4 },
+                                            { label: 'Payout', value: currentSetting.payoutRate },
+                                        ].map((s) => (
+                                            <div key={s.label} className="text-center p-2 bg-muted rounded-lg">
+                                                <div className="text-[9px] uppercase text-muted-foreground font-bold">{s.label}</div>
+                                                <div className="text-sm font-bold">{s.value}</div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                }
+                            >
+                                <div className="flex-1 flex flex-col">
+                                    {!supervisorOverride && (
+                                        <div className="flex items-center gap-2 p-2 mb-4 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg text-blue-700 dark:text-blue-300">
+                                            <Lock className="h-3.5 w-3.5 flex-shrink-0" />
+                                            <p className="text-[11px]">
+                                                Synced from JotForm. Enable <b>Supervisor Override</b> to edit.
+                                            </p>
+                                        </div>
+                                    )}
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3 mt-auto">
+                                        <div className="space-y-1.5">
+                                            <Label className="text-[10px] font-bold uppercase text-muted-foreground">C1 (Catch)</Label>
+                                            <Input
+                                                type="number"
+                                                className="h-9 font-bold"
+                                                value={currentSetting.c1}
+                                                disabled={!supervisorOverride}
+                                                onChange={(e) => setCurrentSetting({ ...currentSetting, c1: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-[10px] font-bold uppercase text-muted-foreground">C2 (Pickup)</Label>
+                                            <Input
+                                                type="number"
+                                                className="h-9 font-bold"
+                                                value={currentSetting.c2}
+                                                disabled={!supervisorOverride}
+                                                onChange={(e) => setCurrentSetting({ ...currentSetting, c2: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-[10px] font-bold uppercase text-muted-foreground">C3 (Carry)</Label>
+                                            <Input
+                                                type="number"
+                                                className="h-9 font-bold"
+                                                value={currentSetting.c3}
+                                                disabled={!supervisorOverride}
+                                                onChange={(e) => setCurrentSetting({ ...currentSetting, c3: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-[10px] font-bold uppercase text-muted-foreground">Payout</Label>
+                                            <Input
+                                                type="number"
+                                                className="h-9 font-bold"
+                                                value={currentSetting.payoutRate}
+                                                disabled={!supervisorOverride}
+                                                onChange={(e) => setCurrentSetting({ ...currentSetting, payoutRate: e.target.value })}
+                                            />
+                                        </div>
+                                        <div className="space-y-1.5">
+                                            <Label className="text-[10px] font-bold uppercase text-muted-foreground">C4 (Prize)</Label>
+                                            <Input
+                                                type="number"
+                                                className="h-9 font-bold"
+                                                value={currentSetting.c4}
+                                                disabled={!supervisorOverride}
+                                                onChange={(e) => setCurrentSetting({ ...currentSetting, c4: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    {supervisorOverride && (
+                                        <Button onClick={handleSave} disabled={saving} size="sm" className="mt-4 w-full">
+                                            {saving ? (
+                                                <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                                            ) : (
+                                                <Save className="h-4 w-4 mr-2" />
+                                            )}
+                                            {saving ? "Saving..." : "Update Settings"}
+                                        </Button>
+                                    )}
+                                </div>
+                            </PermissionGate>
+                        </div>
+                    </div>
                 </div>
 
-                <div className="rounded-lg border p-4">
-                    <h3 className="font-medium mb-4">Settings History</h3>
-                    <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2">
+                {/* Settings History - Timeline Style */}
+                <div className="rounded-xl border overflow-hidden shadow-sm mt-6">
+                    <div className="bg-gradient-to-r from-slate-100 to-slate-50 dark:from-slate-800 dark:to-slate-900 p-4 border-b">
+                        <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4 text-muted-foreground" />
+                            <h3 className="font-semibold">Settings History</h3>
+                            <Badge variant="outline" className="text-[10px] ml-auto">{settings.length} entries</Badge>
+                        </div>
+                    </div>
+                    <div className="p-4 max-h-[400px] overflow-y-auto">
                         {settings.length === 0 ? (
-                            <div className="text-sm text-muted-foreground text-center py-4">No history recorded</div>
+                            <div className="text-sm text-muted-foreground text-center py-8">
+                                <Clock className="h-8 w-8 mx-auto mb-2 opacity-30" />
+                                No history recorded yet
+                            </div>
                         ) : (
-                            settings.map((setting) => (
-                                <div key={setting.id} className="text-sm p-3 border rounded-md bg-card hover:bg-muted/10 transition-colors">
-                                    <div className="flex justify-between items-start mb-2">
-                                        <div className="flex flex-col">
-                                            <span className="font-medium text-xs sm:text-sm">
-                                                {formatDate(setting.timestamp, "MMM d, yyyy 'at' HH:mm")}
-                                            </span>
-                                            {setting.stockItemName ? (
-                                                <span className="text-[10px] text-muted-foreground mt-0.5">
-                                                    Active Stock: {setting.stockItemId ? (
-                                                        <Link href={`/inventory/${setting.stockItemId}`} className="text-primary hover:underline">
-                                                            {setting.stockItemName}
-                                                        </Link>
+                            <div className="relative pl-6 border-l-2 border-muted space-y-4">
+                                {settings.map((setting, index) => (
+                                    <div key={setting.id} className="relative">
+                                        {/* Timeline dot */}
+                                        <div className={`absolute -left-[25px] top-2 w-3 h-3 rounded-full border-2 bg-background ${index === 0 ? 'border-violet-500 bg-violet-500' : 'border-muted-foreground/30'}`} />
+
+                                        {/* Card */}
+                                        <div className={`p-4 rounded-lg border bg-card transition-all hover:shadow-md ${index === 0 ? 'ring-1 ring-violet-200 dark:ring-violet-900' : ''}`}>
+                                            <div className="flex justify-between items-start gap-3 mb-3">
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center gap-2 flex-wrap">
+                                                        <span className="font-medium text-sm">
+                                                            {formatDate(setting.timestamp, "MMM d, yyyy")}
+                                                        </span>
+                                                        <span className="text-xs text-muted-foreground">
+                                                            {formatDate(setting.timestamp, "HH:mm")}
+                                                        </span>
+                                                        {index === 0 && (
+                                                            <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 text-[10px]">Latest</Badge>
+                                                        )}
+                                                    </div>
+                                                    {setting.stockItemName ? (
+                                                        <div className="text-xs text-muted-foreground mt-1">
+                                                            Stock: {setting.stockItemId ? (
+                                                                <Link href={`/inventory/${setting.stockItemId}`} className="text-primary hover:underline">
+                                                                    {setting.stockItemName}
+                                                                </Link>
+                                                            ) : setting.stockItemName}
+                                                        </div>
                                                     ) : (
-                                                        setting.stockItemName
+                                                        <div className="text-xs text-muted-foreground/60 mt-1">No stock linked</div>
                                                     )}
-                                                </span>
-                                            ) : (
-                                                <span className="text-[10px] text-muted-foreground mt-0.5">No stock linked</span>
-                                            )}
-                                        </div>
-                                        {setting.imageUrl && (
-                                            <OptimizedThumbnail
-                                                src={setting.imageUrl}
-                                                alt="Submission"
-                                                size={48}
-                                                className="h-10 w-10 sm:h-12 sm:w-12 rounded-md border flex-shrink-0"
-                                                onClick={() => setZoomedImage(setting.imageUrl || null)}
-                                            />
-                                        )}
-                                        <div className="text-[10px] text-muted-foreground">
-                                            By: {setting.setBy?.substring(0, 8)}...
-                                        </div>
-                                    </div>
-                                    <div className="grid grid-cols-3 sm:grid-cols-5 gap-2 text-center bg-muted/30 p-2 rounded">
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] uppercase text-muted-foreground">C1</span>
-                                            <span className="font-semibold text-xs">{(setting.c1 !== undefined && !isNaN(setting.c1)) ? setting.c1 : (setting.strengthSetting ?? '-')}</span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] uppercase text-muted-foreground">C2</span>
-                                            <span className="font-semibold text-xs">{(setting.c2 !== undefined && !isNaN(setting.c2)) ? setting.c2 : '-'}</span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] uppercase text-muted-foreground">C3</span>
-                                            <span className="font-semibold text-xs">{(setting.c3 !== undefined && !isNaN(setting.c3)) ? setting.c3 : '-'}</span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] uppercase text-muted-foreground">Payout</span>
-                                            <span className="font-semibold text-xs">{(setting.payoutRate !== undefined && !isNaN(setting.payoutRate)) ? setting.payoutRate : (setting.payoutPercentage ?? '-')}</span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-[9px] uppercase text-muted-foreground">C4</span>
-                                            <span className="font-semibold text-xs">{(setting.c4 !== undefined && !isNaN(setting.c4)) ? setting.c4 : '-'}</span>
+                                                    <div className="text-[10px] text-muted-foreground/60 mt-0.5">
+                                                        By: {setting.setBy || 'Unknown'}
+                                                    </div>
+                                                </div>
+
+                                                {/* Image thumbnail */}
+                                                {setting.imageUrl && (
+                                                    <OptimizedThumbnail
+                                                        src={setting.imageUrl}
+                                                        alt="Submission"
+                                                        size={56}
+                                                        className="h-14 w-14 rounded-lg border shadow-sm flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                                                        onClick={() => setZoomedImage(setting.imageUrl || null)}
+                                                    />
+                                                )}
+                                            </div>
+
+                                            {/* Values Grid */}
+                                            <div className="grid grid-cols-5 gap-2">
+                                                {[
+                                                    { label: 'C1', value: setting.c1, fallback: setting.strengthSetting },
+                                                    { label: 'C2', value: setting.c2 },
+                                                    { label: 'C3', value: setting.c3 },
+                                                    { label: 'Payout', value: setting.payoutRate, fallback: setting.payoutPercentage },
+                                                    { label: 'C4', value: setting.c4 },
+                                                ].map((item) => (
+                                                    <div key={item.label} className="text-center p-2 bg-muted/40 rounded-md">
+                                                        <div className="text-[9px] uppercase text-muted-foreground font-medium">{item.label}</div>
+                                                        <div className="font-bold text-sm">
+                                                            {(item.value !== undefined && !isNaN(Number(item.value))) ? item.value : (item.fallback ?? '-')}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                            ))
+                                ))}
+                            </div>
                         )}
                     </div>
                 </div>
@@ -558,6 +642,7 @@ export function SettingsPanel({
                     </div>
                 </PermissionGate>
             </TabsContent>
+
             <Dialog open={!!zoomedImage} onOpenChange={(open) => !open && setZoomedImage(null)}>
                 <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/90 border-none">
                     <VisuallyHidden>
@@ -579,3 +664,4 @@ export function SettingsPanel({
         </Tabs >
     );
 }
+

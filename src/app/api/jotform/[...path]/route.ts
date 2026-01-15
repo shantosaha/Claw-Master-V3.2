@@ -9,7 +9,7 @@ const CONFIG_PATH = path.join(process.cwd(), 'api-config.json');
 
 // Default settings
 const DEFAULT_SETTINGS = {
-    jotformApiUrl: "http://claw.kokoamusement.com.au",
+    jotformApiUrl: "https://claw.kokoamusement.com.au",
     jotformFormId: "614",
     isEnabled: true,
 };

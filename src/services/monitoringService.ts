@@ -1,5 +1,6 @@
 import { machineService } from './index';
 import { ArcadeMachine } from '@/types';
+import { gameReportApiService } from './gameReportApiService';
 
 export interface MachineStatus {
     id: string;
@@ -9,10 +10,8 @@ export interface MachineStatus {
     status: 'online' | 'offline' | 'error' | 'maintenance';
     lastPing: Date;
     telemetry: {
-        voltage: number;
         playCountToday: number;
-        winRate: number;
-        temperature?: number;
+        payoutAccuracy: number; // Calculated from settings vs actual
         errorCode?: string;
     };
     imageUrl?: string;
@@ -65,7 +64,7 @@ class MonitoringService {
         try {
             // Get from machine service
             const machines = await machineService.getAll();
-            return this.transformMachineData(machines);
+            return await this.transformMachineData(machines);
         } catch (error) {
             console.error('Failed to fetch machine statuses:', error);
             throw error;
@@ -81,30 +80,46 @@ class MonitoringService {
             status: this.determineStatus(item),
             lastPing: new Date((item.lastUpdate as string) || Date.now()),
             telemetry: {
-                voltage: (item.voltage as number) || 0,
-                playCountToday: (item.playsToday as number) || Math.floor(Math.random() * 100),
-                winRate: (item.winRate as number) || Math.floor(Math.random() * 30) + 10,
-                temperature: item.temperature as number | undefined,
+                playCountToday: (item.playsToday as number) || 0,
+                payoutAccuracy: (item.payoutAccuracy as number) || 0,
                 errorCode: item.errorCode as string | undefined,
             },
         }));
     }
 
-    private transformMachineData(machines: ArcadeMachine[]): MachineStatus[] {
-        return machines.map(machine => ({
-            id: machine.id,
-            assetTag: machine.assetTag || '',
-            name: machine.name,
-            location: machine.location,
-            status: this.determineStatusFromMachine(machine),
-            lastPing: new Date(),
-            imageUrl: machine.slots?.[0]?.currentItem?.imageUrl,
-            telemetry: {
-                voltage: 115 + Math.random() * 10,
-                playCountToday: Math.floor(Math.random() * 150),
-                winRate: Math.floor(Math.random() * 30) + 10,
-            },
-        }));
+    private async transformMachineData(machines: ArcadeMachine[]): Promise<MachineStatus[]> {
+        // Fetch today's game report data for real play counts
+        let gameDataByTag = new Map<string, number>();
+        try {
+            const gameReportData = await gameReportApiService.fetchTodayReport();
+            for (const item of gameReportData) {
+                const tag = String(item.assetTag || item.tag).trim().toLowerCase();
+                if (tag) {
+                    gameDataByTag.set(tag, item.standardPlays || 0);
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to fetch game report data for monitoring:', error);
+        }
+
+        return machines.map(machine => {
+            const machineTag = String(machine.assetTag || '').trim().toLowerCase();
+            const playCountToday = gameDataByTag.get(machineTag) || 0;
+
+            return {
+                id: machine.id,
+                assetTag: machine.assetTag || '',
+                name: machine.name,
+                location: machine.location,
+                status: this.determineStatusFromMachine(machine),
+                lastPing: new Date(),
+                imageUrl: machine.slots?.[0]?.currentItem?.imageUrl,
+                telemetry: {
+                    playCountToday,
+                    payoutAccuracy: 0, // Will be calculated in report view
+                },
+            };
+        });
     }
 
     private determineStatus(item: Record<string, unknown>): MachineStatus['status'] {
@@ -125,7 +140,7 @@ class MonitoringService {
         return 'online';
     }
 
-    startPolling(intervalMs: number = 30000): void {
+    startPolling(intervalMs: number = 300000): void {
         if (this.pollingInterval) return;
 
         // Initial fetch
@@ -176,24 +191,6 @@ class MonitoringService {
                         machineName: machine.name,
                         type: machine.status === 'error' ? 'error' : 'warning',
                         message: `Machine ${machine.name} is now ${machine.status}`,
-                        timestamp: new Date(),
-                        acknowledged: false,
-                    });
-                }
-            }
-
-            // Check for low voltage
-            if (machine.telemetry.voltage < 100 && machine.telemetry.voltage > 0) {
-                const existingAlert = this.alerts.find(
-                    a => a.machineId === machine.id && a.message.includes('voltage')
-                );
-                if (!existingAlert) {
-                    this.alerts.push({
-                        id: Date.now().toString() + machine.id + 'voltage',
-                        machineId: machine.id,
-                        machineName: machine.name,
-                        type: 'warning',
-                        message: `Low voltage detected: ${machine.telemetry.voltage.toFixed(1)}V`,
                         timestamp: new Date(),
                         acknowledged: false,
                     });
@@ -266,20 +263,38 @@ class MonitoringService {
     }
 
     async fetchMonitoringReport(startDate: Date, endDate: Date): Promise<MonitoringReportItem[]> {
-        // In a real implementation, this would likely be an aggregated backend call.
-        // For now, we will simulate this aggregation by fetching machines and combining with real settings.
+        // Fetch real data from Game Report API and combine with machine/settings data
 
         try {
             const machines = await this.fetchMachineStatuses();
 
-            // Import settingsService to get real C1-C4 values
+            // Import services
             const { settingsService } = await import('@/services');
+            const { gameReportApiService } = await import('@/services/gameReportApiService');
+
+            // Fetch real game report data for the date range
+            const gameReportData = await gameReportApiService.fetchAggregatedReport(startDate, endDate);
+
+            // Create a map of assetTag -> game report data
+            const gameDataByTag = new Map<string, { standardPlays: number; empPlays: number; points: number; totalRev: number }>();
+            for (const item of gameReportData) {
+                const tag = String(item.assetTag || item.tag).trim().toLowerCase();
+                if (tag) {
+                    gameDataByTag.set(tag, {
+                        standardPlays: item.standardPlays || 0,
+                        empPlays: item.empPlays || 0,
+                        points: item.points || 0,
+                        totalRev: item.totalRev || 0,
+                    });
+                }
+            }
+
+            // Fetch settings for C1-C4 values
             const allSettings = await settingsService.getAll();
 
             // Create a map of machineId -> latest settings
-            const settingsByMachine = new Map<string, { c1: number; c2: number; c3: number; c4: number; payoutRate: number; imageUrl?: string }>();
+            const settingsByMachine = new Map<string, { c1: number; c2: number; c3: number; c4: number; payoutRate: number; imageUrl?: string; staffName?: string; timestamp?: Date }>();
 
-            // Settings are already sorted by timestamp desc in most cases, but let's be safe
             const sortedSettings = [...allSettings].sort((a, b) =>
                 new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
             );
@@ -292,20 +307,15 @@ class MonitoringService {
                         c3: setting.c3 ?? 0,
                         c4: setting.c4 ?? 0,
                         payoutRate: setting.payoutRate ?? setting.payoutPercentage ?? 0,
-                        imageUrl: setting.imageUrl
+                        imageUrl: setting.imageUrl,
+                        staffName: setting.setBy,
+                        timestamp: new Date(setting.timestamp),
                     });
                 }
             }
 
             return machines.map(machine => {
-                // Simulate data based on machine hash/id for consistency
-                const seed = machine.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
-                const random = (offset: number) => {
-                    const x = Math.sin(seed + offset) * 10000;
-                    return x - Math.floor(x);
-                };
-
-                // Get real settings if available, otherwise use defaults
+                // Get real settings if available
                 const machineSettings = settingsByMachine.get(machine.id);
                 const c1 = machineSettings?.c1 ?? 0;
                 const c2 = machineSettings?.c2 ?? 0;
@@ -313,9 +323,13 @@ class MonitoringService {
                 const c4 = machineSettings?.c4 ?? 0;
                 const payoutSettings = machineSettings?.payoutRate ?? 0;
 
-                const customerPlays = Math.floor(random(1) * 500) + 50;
-                const payouts = Math.floor(customerPlays / (random(2) * 20 + 10)); // ~1/10 to 1/30 win rate
-                const staffPlays = Math.floor(random(3) * 15);
+                // Get real game data by matching asset tag
+                const machineTag = String(machine.assetTag || '').trim().toLowerCase();
+                const gameData = gameDataByTag.get(machineTag);
+
+                const customerPlays = gameData?.standardPlays ?? 0;
+                const staffPlays = gameData?.empPlays ?? 0;
+                const payouts = gameData?.points ?? 0;
 
                 // Calculate plays per payout
                 const playsPerPayout = payouts > 0 ? Math.round((customerPlays + staffPlays) / payouts) : 0;
@@ -325,7 +339,7 @@ class MonitoringService {
                     ? Math.round((payoutSettings / playsPerPayout) * 100)
                     : 0;
 
-                // Determine status using the new logic
+                // Determine status using the logic
                 const payoutStatus = this.determinePayoutStatus(playsPerPayout, payoutSettings);
 
                 return {
@@ -339,14 +353,14 @@ class MonitoringService {
                     playsPerPayout,
                     payoutSettings,
                     payoutAccuracy,
-                    settingsDate: new Date(Date.now() - random(5) * 30 * 24 * 60 * 60 * 1000), // Random date in last 30 days
-                    staffName: ['Daniel Valix', 'Shanto Saha', 'Tommy Wong'][Math.floor(random(6) * 3)],
+                    settingsDate: machineSettings?.timestamp || new Date(),
+                    staffName: machineSettings?.staffName || 'Unknown',
                     c1,
                     c2,
                     c3,
                     c4,
                     imageUrl: machineSettings?.imageUrl || machine.imageUrl,
-                    remarks: random(11) > 0.8 ? (random(12) > 0.5 ? "Update settings" : "Low stock") : undefined,
+                    remarks: undefined,
                     payoutStatus,
                     lastUpdated: new Date()
                 };
