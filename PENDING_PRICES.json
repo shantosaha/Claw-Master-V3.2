@@ -1,0 +1,1358 @@
+[
+  {
+    "id": "mac_migrated_220_em7uh",
+    "tag": "220",
+    "name": "Andamiro Redeemer BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1384_crrrv",
+    "tag": "1384",
+    "name": "Asphalt 9 P5 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1385_5ftcg",
+    "tag": "1385",
+    "name": "Asphalt 9 P6 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1386_k9n7i",
+    "tag": "1386",
+    "name": "Asphalt 9 P7 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1397_2n8oq",
+    "tag": "1397",
+    "name": "Asphalt 9 P8 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1347_35p38",
+    "tag": "1347",
+    "name": "Ball Mania P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_496_dzkv7",
+    "tag": "496",
+    "name": "Basketball Pro P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_497_erexw",
+    "tag": "497",
+    "name": "Basketball Pro P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1083_2v7hn",
+    "tag": "1083",
+    "name": "Beatmania IIDX L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1423_g4sj3",
+    "tag": "1423",
+    "name": "Bonus Match BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1515_103xa",
+    "tag": "1515",
+    "name": "Bowling Champ P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_571_af4iy",
+    "tag": "571",
+    "name": "Brick Stacker G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1341_2m6xx",
+    "tag": "1341",
+    "name": "Burger Mania P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1611_lbd61",
+    "tag": "1611",
+    "name": "Burger Mania P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1696_wxuoq",
+    "tag": "1696",
+    "name": "Cannon Paradise P1",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1697_nqmf0",
+    "tag": "1697",
+    "name": "Cannon Paradise P2",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1698_f2y12",
+    "tag": "1698",
+    "name": "Cannon Paradise P3",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_237_vm95d",
+    "tag": "237",
+    "name": "Check Balance Swiper BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_925_z4nhz",
+    "tag": "925",
+    "name": "Chunithm LHS L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_470_6lw29",
+    "tag": "470",
+    "name": "Color Match G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1387_efanu",
+    "tag": "1387",
+    "name": "Colorful Air P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1388_dfnb6",
+    "tag": "1388",
+    "name": "Colorful Air P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_673_3frg7",
+    "tag": "673",
+    "name": "Cosmo Games P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_674_ptdju",
+    "tag": "674",
+    "name": "Cosmo Games P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_129_cyo2b",
+    "tag": "129",
+    "name": "Crazy Capsule Toys BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1471_l2zcd",
+    "tag": "1471",
+    "name": "Dance Rush LHS BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1517_r3a76",
+    "tag": "1517",
+    "name": "DDR LHS L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1516_1qr0n",
+    "tag": "1516",
+    "name": "DDR RHS L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1470_alq73",
+    "tag": "1470",
+    "name": "Demolition King LHS BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1468_5atx0",
+    "tag": "1468",
+    "name": "Demolition King RHS BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1335_nko3i",
+    "tag": "1335",
+    "name": "Elastic Planet P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1336_2t7sq",
+    "tag": "1336",
+    "name": "Elastic Planet P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1974_y1qdc",
+    "tag": "1974",
+    "name": "Elaut Card Kiosk",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1424_5lm3u",
+    "tag": "1424",
+    "name": "Emoji Frenzy P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1425_bpvak",
+    "tag": "1425",
+    "name": "Emoji Frenzy P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1426_00jlo",
+    "tag": "1426",
+    "name": "Emoji Frenzy P3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1427_z556f",
+    "tag": "1427",
+    "name": "Emoji Frenzy P4 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1389_vdqbd",
+    "tag": "1389",
+    "name": "Final Shot BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1496_bzbh8",
+    "tag": "1496",
+    "name": "Football Pro BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1476_3iknk",
+    "tag": "1476",
+    "name": "Forerunner Max Pusher G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1474_zu3gm",
+    "tag": "1474",
+    "name": "Gitadora L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1629_7ny91",
+    "tag": "1629",
+    "name": "Gold Railroad P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1626_gw6b4",
+    "tag": "1626",
+    "name": "Gold Railroad P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1628_b674i",
+    "tag": "1628",
+    "name": "Gold Railroad P3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1630_d9uhk",
+    "tag": "1630",
+    "name": "Gold Railroad P4 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1631_yo0lu",
+    "tag": "1631",
+    "name": "Gold Railroad Redeemer #1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1632_re61s",
+    "tag": "1632",
+    "name": "Gold Railroad Redeemer #2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1101_na6od",
+    "tag": "1101",
+    "name": "Hitty Mouse 1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1102_ygiq8",
+    "tag": "1102",
+    "name": "Hitty Mouse 2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_592_hy6cw",
+    "tag": "592",
+    "name": "Initial D P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_593_102h9",
+    "tag": "593",
+    "name": "Initial D P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_594_96af8",
+    "tag": "594",
+    "name": "Initial D P3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_595_vv4bp",
+    "tag": "595",
+    "name": "Initial D P4 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1551_j0ebt",
+    "tag": "1551",
+    "name": "Iron Legion P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1552_eih9x",
+    "tag": "1552",
+    "name": "Iron Legion P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1553_vrjw5",
+    "tag": "1553",
+    "name": "Iron Legion P3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1554_oskxc",
+    "tag": "1554",
+    "name": "Iron Legion P4 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1383_cw58g",
+    "tag": "1383",
+    "name": "Jetski Madness P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1382_uatgb",
+    "tag": "1382",
+    "name": "Jetski Madness P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1693_vv8p9",
+    "tag": "1693",
+    "name": "Karaoke Box",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1409_11pcb",
+    "tag": "1409",
+    "name": "Let's Cola L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_41_zk4tg",
+    "tag": "41",
+    "name": "Magic Drop L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1497_zb3fg",
+    "tag": "1497",
+    "name": "Magic House G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1546_xcw3l",
+    "tag": "1546",
+    "name": "maimai DX #1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_166_rta9p",
+    "tag": "166",
+    "name": "maimai DX #2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1396_xn7kj",
+    "tag": "1396",
+    "name": "maimai DX #3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1391_6djla",
+    "tag": "1391",
+    "name": "Mini Pinball P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1392_bv3ct",
+    "tag": "1392",
+    "name": "Mini Pinball P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1401_9wnry",
+    "tag": "1401",
+    "name": "Monster Catcher L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1378_2pcds",
+    "tag": "1378",
+    "name": "Moto Blitz P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1379_wl2h1",
+    "tag": "1379",
+    "name": "Moto Blitz P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_711_65f95",
+    "tag": "711",
+    "name": "MT6 BLU #2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_715_dz5zh",
+    "tag": "715",
+    "name": "MT6 BLU #3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_716_yzgib",
+    "tag": "716",
+    "name": "MT6 BLU #4 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_712_d8nah",
+    "tag": "712",
+    "name": "MT6 RED #3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_718_5jc6h",
+    "tag": "718",
+    "name": "MT6 Terminal #3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1511_fgsl4",
+    "tag": "1511",
+    "name": "Naughty Beans L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1428_mwjth",
+    "tag": "1428",
+    "name": "Over The Edge P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1439_6at3v",
+    "tag": "1439",
+    "name": "Over The Edge P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1429_khc2l",
+    "tag": "1429",
+    "name": "Over The Edge P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1440_kic8a",
+    "tag": "1440",
+    "name": "Over The Edge P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1344_x21kw",
+    "tag": "1344",
+    "name": "Parallel Universe P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1345_91023",
+    "tag": "1345",
+    "name": "Parallel Universe P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1577_6wl2o",
+    "tag": "1577",
+    "name": "Photo Booth LHS BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1578_doc6h",
+    "tag": "1578",
+    "name": "Photo Booth RHS BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1519_no1g9",
+    "tag": "1519",
+    "name": "Pinball Godzilla BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1735_ys6d4",
+    "tag": "1735",
+    "name": "Pinball King Kong",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1488_ttriu",
+    "tag": "1488",
+    "name": "Pinball Stranger Things BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1486_mo5zb",
+    "tag": "1486",
+    "name": "Pinball X-Men BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1334_f3rej",
+    "tag": "1334",
+    "name": "Pop And Win G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1555_3bas9",
+    "tag": "1555",
+    "name": "Prize Safari BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1543_zuyrn",
+    "tag": "1543",
+    "name": "Pump It Up G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1411_bmhgd",
+    "tag": "1411",
+    "name": "Rainbow P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_649_dmt7f",
+    "tag": "649",
+    "name": "Road Trip BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_511_4houz",
+    "tag": "511",
+    "name": "Roller Ball LHS BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_512_k06fe",
+    "tag": "512",
+    "name": "Roller Ball RHS BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_499_cowzv",
+    "tag": "499",
+    "name": "Slide Up P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_500_no4s7",
+    "tag": "500",
+    "name": "Slide Up P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1972_n4bm3",
+    "tag": "1972",
+    "name": "Smurf Pusher P1",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1973_zywfz",
+    "tag": "1973",
+    "name": "Smurf Pusher P2",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_872_btnso",
+    "tag": "872",
+    "name": "Solo Cutter E BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1509_l1n7k",
+    "tag": "1509",
+    "name": "Sound Voltex LHS L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1510_tyc6u",
+    "tag": "1510",
+    "name": "Sound Voltex RHS L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1447_mxs5f",
+    "tag": "1447",
+    "name": "Spiderman Pusher P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1448_c2huo",
+    "tag": "1448",
+    "name": "Spiderman Pusher P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_758_z02vi",
+    "tag": "758",
+    "name": "Spongebob Pineapple P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_759_u9emp",
+    "tag": "759",
+    "name": "Spongebob Pineapple P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_68_tezhn",
+    "tag": "68",
+    "name": "Street Fighter #1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_683_er716",
+    "tag": "683",
+    "name": "Subway Surfers L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1376_qt40s",
+    "tag": "1376",
+    "name": "Super Drill P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1375_vu0t0",
+    "tag": "1375",
+    "name": "Super Drill P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1374_vtgvi",
+    "tag": "1374",
+    "name": "Super Drill P3 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1377_dqroo",
+    "tag": "1377",
+    "name": "Super Drill P4 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1666_1h41x",
+    "tag": "1666",
+    "name": "Super MVP #1",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1667_n53yc",
+    "tag": "1667",
+    "name": "Super MVP #2",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1668_odmk1",
+    "tag": "1668",
+    "name": "Super MVP #3",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1669_qyhvc",
+    "tag": "1669",
+    "name": "Super MVP #4",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1311_rihpt",
+    "tag": "1311",
+    "name": "Supreme Marbles P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1312_awow0",
+    "tag": "1312",
+    "name": "Supreme Marbles P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1403_ikulu",
+    "tag": "1403",
+    "name": "Sync Pong BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1528_ww5xa",
+    "tag": "1528",
+    "name": "Taiko Drum #1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1523_31bjt",
+    "tag": "1523",
+    "name": "Taiko Drum #2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1525_ubf8i",
+    "tag": "1525",
+    "name": "Taiko Drum L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1542_jxa0h",
+    "tag": "1542",
+    "name": "Taj Mahal Mini G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1072_uxx35",
+    "tag": "1072",
+    "name": "Tekken A L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1073_243q1",
+    "tag": "1073",
+    "name": "Tekken B L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1661_hv1xp",
+    "tag": "1661",
+    "name": "test c",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1659_urfch",
+    "tag": "1659",
+    "name": "test d",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1414_jogrf",
+    "tag": "1414",
+    "name": "The Hand L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1484_bml9g",
+    "tag": "1484",
+    "name": "The King Punch L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1322_57yq5",
+    "tag": "1322",
+    "name": "Thunderbolt Shot L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1493_u80bm",
+    "tag": "1493",
+    "name": "Ticket Monster BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1420_iwbno",
+    "tag": "1420",
+    "name": "Time Out G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_1065_50l53",
+    "tag": "1065",
+    "name": "TOILET DOOR BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1633_7yzj7",
+    "tag": "1633",
+    "name": "Tornado P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1634_k0xbd",
+    "tag": "1634",
+    "name": "Tornado P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1402_9pcvu",
+    "tag": "1402",
+    "name": "Tower Crane G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_migrated_393_x3oyy",
+    "tag": "393",
+    "name": "Transformers L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1483_nb8o8",
+    "tag": "1483",
+    "name": "Typhoon BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1094_vk3ob",
+    "tag": "1094",
+    "name": "Whachem Funky Gators L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1416_9etu2",
+    "tag": "1416",
+    "name": "Wicked Tuna LHS L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1417_e6c06",
+    "tag": "1417",
+    "name": "Wicked Tuna RHS L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1699_4gg6k",
+    "tag": "1699",
+    "name": "Wild Things Wipe Out P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1700_4na06",
+    "tag": "1700",
+    "name": "Wild Things Wipe Out P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1701_091wo",
+    "tag": "1701",
+    "name": "Wild Things Wipe Out P3 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1702_3qjub",
+    "tag": "1702",
+    "name": "Wild Things Wipe Out P4 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_migrated_1975_bttua",
+    "tag": "1975",
+    "name": "Wizard of OZ P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1976_0rx57",
+    "tag": "1976",
+    "name": "Wizard of OZ P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1977_70h96",
+    "tag": "1977",
+    "name": "Wizard of OZ P3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1978_06rbn",
+    "tag": "1978",
+    "name": "Wizard of OZ P4 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1979_sp390",
+    "tag": "1979",
+    "name": "Wizard of OZ P5 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_1980_ff9y1",
+    "tag": "1980",
+    "name": "Wizard of OZ P6 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_300_d1x0s",
+    "tag": "300",
+    "name": "Wizard of OZ Redeemer #1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_migrated_301_xgbqe",
+    "tag": "301",
+    "name": "Wizard of OZ Redeemer #2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_tc_01_p1_top",
+    "tag": "1431",
+    "name": "Trend #1 P1 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_01_p1_btm",
+    "tag": "1431",
+    "name": "Trend #1 P1 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_01_p2_top",
+    "tag": "1432",
+    "name": "Trend #1 P2 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_01_p2_btm",
+    "tag": "1432",
+    "name": "Trend #1 P2 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_02_p1_top",
+    "tag": "1433",
+    "name": "Trend #2 P1 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_02_p1_btm",
+    "tag": "1433",
+    "name": "Trend #2 P1 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_02_p2_top",
+    "tag": "1434",
+    "name": "Trend #2 P2 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_02_p2_btm",
+    "tag": "1434",
+    "name": "Trend #2 P2 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_03_p1_top",
+    "tag": "1435",
+    "name": "Trend #3 P1 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_03_p1_btm",
+    "tag": "1435",
+    "name": "Trend #3 P1 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_03_p2_top",
+    "tag": "1436",
+    "name": "Trend #3 P2 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_03_p2_btm",
+    "tag": "1436",
+    "name": "Trend #3 P2 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_04_p1_top",
+    "tag": "1437",
+    "name": "Trend #4 P1 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_04_p1_btm",
+    "tag": "1437",
+    "name": "Trend #4 P1 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_04_p2_top",
+    "tag": "1438",
+    "name": "Trend #4 P2 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_04_p2_btm",
+    "tag": "1438",
+    "name": "Trend #4 P2 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_05_p1_top",
+    "tag": "1443",
+    "name": "Trend #5 P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_05_p1_btm",
+    "tag": "1443",
+    "name": "Trend #5 P1 - Bottom",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_05_p2_top",
+    "tag": "1444",
+    "name": "Trend #5 P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_05_p2_btm",
+    "tag": "1444",
+    "name": "Trend #5 P2 - Bottom",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_06_p1_top",
+    "tag": "1445",
+    "name": "Trend #6 P1 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_06_p1_btm",
+    "tag": "1445",
+    "name": "Trend #6 P1 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_06_p2_top",
+    "tag": "1446",
+    "name": "Trend #6 P2 - Top",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_06_p2_btm",
+    "tag": "1446",
+    "name": "Trend #6 P2 - Bottom",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_tc_07_p1_top",
+    "tag": "1451",
+    "name": "Trend #7 P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_07_p1_btm",
+    "tag": "1451",
+    "name": "Trend #7 P1 - Bottom",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_07_p2_top",
+    "tag": "1452",
+    "name": "Trend #7 P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_07_p2_btm",
+    "tag": "1452",
+    "name": "Trend #7 P2 - Bottom",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_08_p1_top",
+    "tag": "1482",
+    "name": "Trend #8 P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_08_p1_btm",
+    "tag": "1482",
+    "name": "Trend #8 P1 - Bottom",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_08_p2_top",
+    "tag": "1481",
+    "name": "Trend #8 P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_tc_08_p2_btm",
+    "tag": "1481",
+    "name": "Trend #8 P2 - Bottom",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_color_star_p2_g",
+    "tag": "1530",
+    "name": "Color Star P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_crazy_stars_3_p2_bm",
+    "tag": "1531",
+    "name": "Crazy Stars 3 P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_crazy_toy_2_bm",
+    "tag": "1271",
+    "name": "Crazy Toy 2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_crazy_toy_l1",
+    "tag": "1545",
+    "name": "Crazy Toy L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_doll_castle_1_bm",
+    "tag": "1110",
+    "name": "Doll Castle # 1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_doll_castle_6_bm",
+    "tag": "1635",
+    "name": "Doll Castle 6 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_doll_castle_lhs_bm",
+    "tag": "1111",
+    "name": "Doll Castle LHS BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_eclaw_lhs_g",
+    "tag": "492",
+    "name": "Eclaw LHS G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_eclaw_rhs_g",
+    "tag": "544",
+    "name": "Eclaw RHS G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_future_fields_l1",
+    "tag": "1430",
+    "name": "Future Fields L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_hexclaw_p1_g",
+    "tag": "1535",
+    "name": "Hexclaw P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_hexclaw_p2_g",
+    "tag": "1534",
+    "name": "Hexclaw P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_hexclaw_p3_g",
+    "tag": "1533",
+    "name": "Hexclaw P3 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_hexclaw_p4_g",
+    "tag": "1536",
+    "name": "Hexclaw P4 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_hexclaw_p5_g",
+    "tag": "1537",
+    "name": "Hexclaw P5 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_hexclaw_p6_g",
+    "tag": "1540",
+    "name": "Hexclaw P6 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_innis_4_p1_l1",
+    "tag": "1502",
+    "name": "Innis 4 P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_innis_4_p2_l1",
+    "tag": "1503",
+    "name": "Innis 4 P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_innis_4_p3_l1",
+    "tag": "1504",
+    "name": "Innis 4 P3 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_innis_4_p4_l1",
+    "tag": "1506",
+    "name": "Innis 4 P4 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_ins_balloon_1_l1",
+    "tag": "1441",
+    "name": "Ins Balloon #1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_ins_balloon_2_l1",
+    "tag": "1442",
+    "name": "Ins Balloon #2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_party_plus_p1_bm",
+    "tag": "1349",
+    "name": "Party Plus P1 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_party_plus_p2_bm",
+    "tag": "1350",
+    "name": "Party Plus P2 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_party_plus_p3_bm",
+    "tag": "1351",
+    "name": "Party Plus P3 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_party_plus_p4_bm",
+    "tag": "1352",
+    "name": "Party Plus P4 BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_skewb_p1_l1",
+    "tag": "686",
+    "name": "SKEWB P1 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_skewb_p2_l1",
+    "tag": "687",
+    "name": "SKEWB P2 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_skewb_p3_l1",
+    "tag": "688",
+    "name": "SKEWB P3 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_skewb_p4_l1",
+    "tag": "689",
+    "name": "SKEWB P4 L1",
+    "location": "Level-1"
+  },
+  {
+    "id": "mac_the_big_one_claw_bm",
+    "tag": "1532",
+    "name": "The Big One Claw BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_the_clena_p1_g",
+    "tag": "1449",
+    "name": "The Clena P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_the_clena_p2_g",
+    "tag": "1450",
+    "name": "The Clena P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_ufo_catcher_p1_g",
+    "tag": "1406",
+    "name": "UFO Catcher P1 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_ufo_catcher_p2_g",
+    "tag": "1408",
+    "name": "UFO Catcher P2 G",
+    "location": "Ground"
+  },
+  {
+    "id": "mac_virgo_bm",
+    "tag": "1125",
+    "name": "Virgo BM",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_trendboxp1g_367",
+    "tag": "1498",
+    "name": "Trend Box P1 G",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_trendboxp2g_998",
+    "tag": "1499",
+    "name": "Trend Box P2 G",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_trendboxp3g_980",
+    "tag": "1500",
+    "name": "Trend Box P3 G",
+    "location": "Basement"
+  },
+  {
+    "id": "mac_trendboxp4g_455",
+    "tag": "1501",
+    "name": "Trend Box P4 G",
+    "location": "Basement"
+  }
+]

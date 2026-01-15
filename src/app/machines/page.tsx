@@ -123,13 +123,9 @@ export default function MachinesPage() {
     const lastSyncRef = useRef<number>(0);
     const SYNC_INTERVAL_MS = 5 * 60 * 1000; // 5 minutes
 
-    // Auto-sync on page load
+    // Auto-sync on page load/refresh - always sync immediately
     useEffect(() => {
-        // Only sync if we haven't synced recently (within 5 minutes)
-        const timeSinceLastSync = Date.now() - lastSyncRef.current;
-        if (timeSinceLastSync >= SYNC_INTERVAL_MS) {
-            handleSync();
-        }
+        handleSync();
     }, []); // Run once on mount
 
     // Auto-sync every 5 minutes while page is open
