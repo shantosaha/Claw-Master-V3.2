@@ -68,6 +68,7 @@ import {
     Line
 } from "recharts";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
 
 // Custom hook for monitoring data
 function useMonitoring() {
@@ -723,11 +724,11 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
     };
 
     const renderSortableHeader = (label: string, key: keyof MonitoringReportItem, className?: string) => (
-        <TableHead className={cn("px-1 py-1 h-12 text-center", className)}>
+        <TableHead className={className}>
             <Button
                 variant="ghost"
                 size="sm"
-                className="-ml-2 h-auto py-1 px-1 text-xs font-bold uppercase tracking-wider whitespace-normal text-center leading-tight hover:bg-muted"
+                className="-ml-3 h-8 data-[state=open]:bg-accent"
                 onClick={() => requestSort(key)}
             >
                 {label}
@@ -747,26 +748,26 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
     return (
         <div className="flex flex-col gap-4">
             <div className="rounded-md border bg-card">
-                <Table className="relative min-w-[1200px]">
+                <Table>
                     <TableHeader>
-                        <TableRow className="bg-muted/50 border-b">
-                            {renderSortableHeader("Payout Status", "payoutStatus", "w-[120px]")}
-                            {renderSortableHeader("Tag", "tag", "w-[60px]")}
-                            {renderSortableHeader("Description", "description", "min-w-[180px]")}
-                            {renderSortableHeader("Customer Plays", "customerPlays", "text-right px-1")}
-                            {renderSortableHeader("Staff Plays", "staffPlays", "text-right px-1")}
-                            {renderSortableHeader("Payouts", "payouts", "text-right px-1")}
-                            {renderSortableHeader("Plays/ Payout", "playsPerPayout", "text-right px-1")}
-                            {renderSortableHeader("Target Plays", "payoutSettings", "text-right px-1")}
-                            {renderSortableHeader("Accuracy %", "payoutAccuracy", "text-right px-1")}
-                            {renderSortableHeader("Settings Date", "settingsDate", "w-[120px]")}
-                            {renderSortableHeader("Staff Name", "staffName", "w-[100px]")}
-                            {renderSortableHeader("C1", "c1", "w-[45px] text-right")}
-                            {renderSortableHeader("C2", "c2", "w-[45px] text-right")}
-                            {renderSortableHeader("C3", "c3", "w-[45px] text-right")}
-                            {renderSortableHeader("C4", "c4", "w-[45px] text-right")}
-                            <TableHead className="px-1 py-1 h-12 text-xs font-bold uppercase tracking-wider text-center">Image</TableHead>
-                            {renderSortableHeader("Remarks", "remarks", "min-w-[120px]")}
+                        <TableRow className="bg-muted/50">
+                            {renderSortableHeader("Payout Status", "payoutStatus", "w-[140px]")}
+                            {renderSortableHeader("Tag", "tag")}
+                            {renderSortableHeader("Description", "description", "min-w-[200px]")}
+                            {renderSortableHeader("Customer Plays", "customerPlays", "text-right justify-end")}
+                            {renderSortableHeader("Staff Plays", "staffPlays", "text-right justify-end")}
+                            {renderSortableHeader("Payouts", "payouts", "text-right justify-end")}
+                            {renderSortableHeader("Plays/Payout", "playsPerPayout", "text-right justify-end")}
+                            {renderSortableHeader("Target", "payoutSettings", "text-right justify-end")}
+                            {renderSortableHeader("Accuracy %", "payoutAccuracy", "text-right justify-end")}
+                            {renderSortableHeader("Settings Date", "settingsDate")}
+                            {renderSortableHeader("Staff Name", "staffName")}
+                            {renderSortableHeader("C1", "c1", "text-right justify-end")}
+                            {renderSortableHeader("C2", "c2", "text-right justify-end")}
+                            {renderSortableHeader("C3", "c3", "text-right justify-end")}
+                            {renderSortableHeader("C4", "c4", "text-right justify-end")}
+                            <TableHead>Image</TableHead>
+                            {renderSortableHeader("Remarks", "remarks")}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -777,10 +778,10 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                     item.payoutStatus === 'Very High' && "border-2 border-red-600 bg-red-50/10 animate-pulse"
                                 )}
                             >
-                                <TableCell className="py-2 px-1">
+                                <TableCell>
                                     <Badge
                                         className={cn(
-                                            "w-full justify-center text-[11px] h-5 py-0 px-1 font-bold",
+                                            "w-full justify-center text-white",
                                             item.payoutStatus === 'Very High' && "bg-red-700 hover:bg-red-800 border-red-800",
                                             item.payoutStatus === 'High' && "bg-red-400 hover:bg-red-500 border-red-500",
                                             item.payoutStatus === 'OK' && "bg-green-500 hover:bg-green-600 border-green-600",
@@ -791,18 +792,18 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                         {item.payoutStatus}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="py-2 px-1 font-mono text-xs">{item.tag}</TableCell>
-                                <TableCell className="py-2 px-1">
-                                    <Link href={`/machines/${item.machineId}`} className="hover:underline text-primary font-bold text-xs truncate block max-w-[200px]">
+                                <TableCell className="font-mono text-xs">{item.tag}</TableCell>
+                                <TableCell>
+                                    <Link href={`/machines/${item.machineId}`} className="hover:underline text-primary font-medium">
                                         {item.description}
                                     </Link>
                                 </TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs font-medium">{item.customerPlays}</TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs text-blue-500">{item.staffPlays}</TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs text-green-600 font-medium">{item.payouts}</TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs font-bold">{item.playsPerPayout?.toFixed(1) || item.playsPerPayout}</TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs text-muted-foreground">{item.payoutSettings}</TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs font-bold">
+                                <TableCell className="text-right">{item.customerPlays}</TableCell>
+                                <TableCell className="text-right">{item.staffPlays}</TableCell>
+                                <TableCell className="text-right">{item.payouts}</TableCell>
+                                <TableCell className="text-right font-medium">{item.playsPerPayout}</TableCell>
+                                <TableCell className="text-right text-muted-foreground">{item.payoutSettings}</TableCell>
+                                <TableCell className="text-right font-medium">
                                     {item.payoutAccuracy > 0 ? (
                                         <span className={cn(
                                             item.payoutAccuracy > 100 ? "text-red-500" : "text-green-500"
@@ -810,46 +811,44 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                             {item.payoutAccuracy}%
                                         </span>
                                     ) : (
-                                        <span className="text-muted-foreground">N/A</span>
+                                        <span className="text-muted-foreground text-xs">N/A</span>
                                     )}
                                 </TableCell>
-                                <TableCell className="py-2 px-1 text-xs leading-tight min-w-[110px]">
-                                    <span className="font-medium">{format(item.settingsDate, 'MMM dd, yyyy')}</span>
-                                    <span className="text-muted-foreground block text-[10px]">{format(item.settingsDate, 'hh:mm a')}</span>
+                                <TableCell className="text-xs text-muted-foreground">
+                                    {format(item.settingsDate, 'M/d/yyyy')}<br />
+                                    {format(item.settingsDate, 'h:mm:ss a')}
                                 </TableCell>
-                                <TableCell className="py-2 px-1 text-xs font-medium truncate max-w-[100px]">{item.staffName}</TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs font-mono">{item.c1}</TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs font-mono">{item.c2}</TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs font-mono">{item.c3}</TableCell>
-                                <TableCell className="py-2 px-1 text-right text-xs font-mono font-bold text-blue-600">{item.c4}</TableCell>
-                                <TableCell className="py-2 px-1">
+                                <TableCell className="text-xs">{item.staffName}</TableCell>
+                                <TableCell className="text-right text-xs">{item.c1}</TableCell>
+                                <TableCell className="text-right text-xs">{item.c2}</TableCell>
+                                <TableCell className="text-right text-xs">{item.c3}</TableCell>
+                                <TableCell className="text-right text-xs">{item.c4}</TableCell>
+                                <TableCell>
                                     {item.imageUrl ? (
                                         <Dialog>
                                             <DialogTrigger asChild>
-                                                <button className="h-8 w-10 bg-muted rounded flex items-center justify-center hover:bg-accent transition-colors overflow-hidden border">
-                                                    <img src={getThumbnailUrl(item.imageUrl, 80)} className="w-full h-full object-cover" />
-                                                </button>
+                                                <span className="text-xs text-blue-500 cursor-pointer hover:underline">Show Image</span>
                                             </DialogTrigger>
-                                            <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/90 border-none">
+                                            <DialogContent className="max-w-3xl w-full p-0 overflow-hidden bg-transparent border-none shadow-none">
                                                 <VisuallyHidden>
                                                     <DialogTitle>{item.description} Image</DialogTitle>
                                                 </VisuallyHidden>
-                                                <div className="relative w-full h-full min-h-[50vh] flex items-center justify-center p-4">
+                                                <div className="relative w-full h-full flex items-center justify-center">
                                                     <img
-                                                        src={getThumbnailUrl(item.imageUrl, 1200)}
+                                                        src={getThumbnailUrl(item.imageUrl, 1024)}
                                                         alt={item.description}
-                                                        className="max-w-full max-h-[85vh] object-contain shadow-2xl"
+                                                        loading="lazy"
+                                                        decoding="async"
+                                                        className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
                                                     />
                                                 </div>
                                             </DialogContent>
                                         </Dialog>
                                     ) : (
-                                        <div className="h-8 w-10 bg-muted/30 rounded border border-dashed flex items-center justify-center">
-                                            <Eye className="h-4 w-4 text-muted-foreground/30" />
-                                        </div>
+                                        <span className="text-xs text-muted-foreground italic">No image</span>
                                     )}
                                 </TableCell>
-                                <TableCell className="py-2 px-1 text-xs text-muted-foreground italic truncate max-w-[150px]">{item.remarks}</TableCell>
+                                <TableCell className="text-xs text-muted-foreground">{item.remarks}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -1393,26 +1392,130 @@ export default function MonitoringPage() {
                         </div>
 
                         {viewMode === "grid" ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                {sortedMachines.map((machine) => (
-                                    <MachineStatusCard
-                                        key={machine.id}
-                                        machine={machine}
-                                        onAction={(action, machine) => {
-                                            setSelectedMachineForAction(machine);
-                                            if (action === 'submit_report') {
-                                                setSelectedTab("submit");
-                                            } else if (action === 'compare') {
-                                                setSelectedTab("comparison");
-                                            } else if (action === 'quick_view') {
-                                                setQuickViewMachine(machine);
-                                            }
-                                        }}
-                                    />
-                                ))}
+                            <div className="space-y-8">
+                                {/* Group 4-Cranes Section */}
+                                {sortedMachines.filter(m => isCraneMachine(m)).length > 0 && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-bold">Claw Machines</h3>
+                                            <Badge variant="secondary" className="text-xs">
+                                                {sortedMachines.filter(m => isCraneMachine(m)).length} machines
+                                            </Badge>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                                            {sortedMachines.filter(m => isCraneMachine(m)).map((machine) => (
+                                                <MachineStatusCard
+                                                    key={machine.id}
+                                                    machine={machine}
+                                                    onAction={(action, machine) => {
+                                                        setSelectedMachineForAction(machine);
+                                                        if (action === 'submit_report') {
+                                                            setSelectedTab("submit");
+                                                        } else if (action === 'compare') {
+                                                            setSelectedTab("comparison");
+                                                        } else if (action === 'quick_view') {
+                                                            setQuickViewMachine(machine);
+                                                        }
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* Other Games Section */}
+                                {sortedMachines.filter(m => !isCraneMachine(m)).length > 0 && (
+                                    <div className="space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <h3 className="text-lg font-bold text-muted-foreground">Other Games</h3>
+                                            <Badge variant="outline" className="text-xs">
+                                                {sortedMachines.filter(m => !isCraneMachine(m)).length} machines
+                                            </Badge>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                                            {sortedMachines.filter(m => !isCraneMachine(m)).map((machine) => (
+                                                <Card key={machine.id} className={cn(
+                                                    "relative overflow-hidden transition-all duration-200 hover:shadow-lg",
+                                                    machine.status === 'error' && "border-red-300 bg-red-50/50",
+                                                    machine.status === 'offline' && "opacity-60"
+                                                )}>
+                                                    {/* Status indicator */}
+                                                    <div className="absolute top-3 right-3">
+                                                        <div className={cn(
+                                                            "h-3 w-3 rounded-full",
+                                                            machine.status === 'online' && "bg-green-500",
+                                                            machine.status === 'offline' && "bg-gray-400",
+                                                            machine.status === 'error' && "bg-red-500",
+                                                            machine.status === 'maintenance' && "bg-yellow-500"
+                                                        )} />
+                                                    </div>
+                                                    <CardContent className="p-3">
+                                                        <div className="space-y-3">
+                                                            {/* Header */}
+                                                            <div className="flex gap-3">
+                                                                <div className="h-12 w-12 bg-muted rounded-md flex-shrink-0 overflow-hidden border">
+                                                                    {machine.imageUrl ? (
+                                                                        <img
+                                                                            src={getThumbnailUrl(machine.imageUrl, 96)}
+                                                                            alt={machine.name}
+                                                                            loading="lazy"
+                                                                            className="h-full w-full object-cover"
+                                                                        />
+                                                                    ) : (
+                                                                        <div className="h-full w-full flex items-center justify-center bg-secondary">
+                                                                            <View className="h-5 w-5 text-muted-foreground opacity-20" />
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                <div className="flex-1 min-w-0">
+                                                                    <Link
+                                                                        href={`/machines/${machine.id}`}
+                                                                        className="font-bold text-xs leading-none hover:underline hover:text-primary block mb-1 line-clamp-2"
+                                                                    >
+                                                                        {machine.name}
+                                                                    </Link>
+                                                                    <p className="text-xs text-muted-foreground truncate mb-1">
+                                                                        {machine.location}
+                                                                    </p>
+                                                                    <Badge variant="outline" className="text-[10px] h-5 px-1 capitalize">
+                                                                        {machine.status}
+                                                                    </Badge>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Simplified Metrics */}
+                                                            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs border-t pt-2">
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Cust. Plays:</span>
+                                                                    <span className="font-medium">{machine.customerPlays ?? '-'}</span>
+                                                                </div>
+                                                                <div className="flex justify-between">
+                                                                    <span className="text-muted-foreground">Group:</span>
+                                                                    <span className="font-medium text-muted-foreground">{(machine as any).group || '-'}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            {/* Action Button */}
+                                                            <Button
+                                                                variant="outline"
+                                                                size="sm"
+                                                                className="w-full h-7 text-xs"
+                                                                asChild
+                                                            >
+                                                                <Link href={`/machines/${machine.id}`}>
+                                                                    View Details
+                                                                </Link>
+                                                            </Button>
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         ) : (
-                            <MonitoringReportTable data={sortedMachines as any} />
+                            <MonitoringReportTable data={sortedMachines.filter(m => isCraneMachine(m)) as any} />
                         )}
                     </div>
 
