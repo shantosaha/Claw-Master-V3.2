@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { OptimizedImage } from "@/components/ui/OptimizedImage";
 import { getThumbnailUrl, getLightboxUrl } from "@/lib/utils/imageUtils";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
 
 interface ServiceReportFormProps {
     machine?: ArcadeMachine;
@@ -349,7 +350,7 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                                             >
                                                 Clear Selection / Manual Entry
                                             </CommandItem>
-                                            {machines.map((m) => (
+                                            {machines.filter(m => isCraneMachine(m)).map((m) => (
                                                 <CommandItem
                                                     key={m.id}
                                                     value={`${m.name} ${m.assetTag || m.tag || ""}`}
