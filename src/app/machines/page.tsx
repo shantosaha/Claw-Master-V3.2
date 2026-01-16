@@ -22,6 +22,7 @@ import { MachineTable } from "@/components/machines/MachineTable";
 import { MachinePricingTable } from "@/components/machines/MachinePricingTable";
 import { ViewSwitcher, ViewMode } from "@/components/machines/ViewSwitcher";
 import { AddMachineDialog } from "@/components/machines/AddMachineDialog";
+import { ArchivedMachinesDialog } from "@/components/machines/ArchivedMachinesDialog";
 import { ManageStockModal } from "@/components/machines/ManageStockModal";
 import { StockLevelChangeDialog } from "@/components/machines/StockLevelChangeDialog";
 import { ConfirmDialog } from "@/components/common/ConfirmDialog";
@@ -102,7 +103,7 @@ export default function MachinesPage() {
     const [stockLevelDialogOpen, setStockLevelDialogOpen] = useState(false);
     const [pendingStockItem, setPendingStockItem] = useState<StockItem | null>(null);
     const [pendingStockLevel, setPendingStockLevel] = useState("");
-    const [showArchived, setShowArchived] = useState(false);
+    const [isArchiveDialogOpen, setIsArchiveDialogOpen] = useState(false);
 
     const handleSync = useCallback(async () => {
         setSyncing(true);
@@ -502,13 +503,17 @@ export default function MachinesPage() {
         } else if (assignmentFilter === "unassigned") {
             matchesAssignment = !machineHasAssignment(machine);
         }
-        // Archive filter
-        const matchesArchive = showArchived || !machine.isArchived;
+        // Archive filter - main view only shows non-archived
+        const matchesArchive = !machine.isArchived;
 
         return matchesSearch && matchesStatus && matchesType && matchesLocation && matchesPrizeSize && matchesStockLevel && matchesAssignment && matchesArchive && matchesCategory && matchesSubCategory;
     });
 
     const flattenedFilteredMachines = flattenMachinesToSlots(filteredMachines);
+
+    // Get archived machines for the dialog
+    const archivedMachinesData = machines.filter(m => m.isArchived);
+    const flattenedArchivedMachines = flattenMachinesToSlots(archivedMachinesData);
 
     if (loading) return <div className="p-8 text-center flex flex-col items-center justify-center h-64"><RefreshCw className="h-8 w-8 animate-spin mb-4" />Loading machines and inventory...</div>;
 
@@ -529,6 +534,22 @@ export default function MachinesPage() {
                             <span>Syncing...</span>
                         </div>
                     )}
+                    <div className="flex bg-amber-50 rounded-lg p-1 mr-1">
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-amber-700 hover:text-amber-800 hover:bg-amber-100 gap-2 h-9"
+                            onClick={() => setIsArchiveDialogOpen(true)}
+                        >
+                            <Archive className="h-4 w-4" />
+                            <span className="hidden sm:inline">Archive</span>
+                            {archivedMachinesData.length > 0 && (
+                                <span className="flex items-center justify-center bg-amber-200 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[20px]">
+                                    {archivedMachinesData.length}
+                                </span>
+                            )}
+                        </Button>
+                    </div>
                     <Button onClick={() => {
                         setIsAddDialogOpen(true);
                     }}>
@@ -698,24 +719,7 @@ export default function MachinesPage() {
                 </div>
             </div>
 
-            {/* Show Archived Toggle */}
-            <div className="flex items-center gap-2 mb-4 px-1">
-                <label className="flex items-center gap-2 text-sm text-muted-foreground cursor-pointer">
-                    <input
-                        type="checkbox"
-                        checked={showArchived}
-                        onChange={(e) => setShowArchived(e.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300"
-                    />
-                    <Archive className="h-4 w-4" />
-                    Show Archived Machines
-                    {machines.filter(m => m.isArchived).length > 0 && (
-                        <span className="text-xs bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-300 px-1.5 py-0.5 rounded">
-                            {machines.filter(m => m.isArchived).length}
-                        </span>
-                    )}
-                </label>
-            </div>
+
 
             {viewMode === 'list' ? (
                 <MachineTable
@@ -798,6 +802,26 @@ export default function MachinesPage() {
                 onSuccess={() => {
                     refreshMachines();
                     toast.success("Machine updated");
+                }}
+            />
+
+            {/* Archived Machines Popup */}
+            <ArchivedMachinesDialog
+                open={isArchiveDialogOpen}
+                onOpenChange={setIsArchiveDialogOpen}
+                archivedMachines={flattenedArchivedMachines}
+                onEdit={handleEdit}
+                onDelete={(m) => {
+                    setMachineToDelete(m);
+                    setIsDeleteDialogOpen(true);
+                }}
+                onStatusUpdate={handleStatusChange}
+                onAssignStock={handleAssignStock}
+                onStockLevelChange={handleStockLevelChange}
+                onRestore={(m) => {
+                    handleRestore(m);
+                    // Close dialog if no more archived machines or keep it open?
+                    // if (archivedMachinesData.length <= 1) setIsArchiveDialogOpen(false);
                 }}
             />
 

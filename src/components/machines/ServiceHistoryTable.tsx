@@ -21,9 +21,10 @@ import { serviceReportService } from "@/services/serviceReportService";
 
 interface ServiceHistoryTableProps {
     machineId: string;
+    assetTag?: string;
 }
 
-export function ServiceHistoryTable({ machineId }: ServiceHistoryTableProps) {
+export function ServiceHistoryTable({ machineId, assetTag }: ServiceHistoryTableProps) {
     const [reports, setReports] = useState<ServiceReport[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -31,8 +32,19 @@ export function ServiceHistoryTable({ machineId }: ServiceHistoryTableProps) {
         const fetchReports = async () => {
             setIsLoading(true);
             try {
-                const data = await serviceReportService.getReports(machineId);
-                setReports(data.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
+                // Fetch all reports and filter by assetTag if provided
+                const data = await serviceReportService.getReports("GLOBAL_FETCH");
+
+                // Filter by assetTag (which corresponds to inflowSku in reports)
+                const filtered = assetTag
+                    ? data.filter(report => {
+                        const reportTag = String(report.inflowSku || '').trim().toLowerCase();
+                        const machineTag = String(assetTag).trim().toLowerCase();
+                        return reportTag === machineTag;
+                    })
+                    : data;
+
+                setReports(filtered.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()));
             } catch (error) {
                 console.error("Failed to fetch service reports", error);
             }
@@ -40,7 +52,7 @@ export function ServiceHistoryTable({ machineId }: ServiceHistoryTableProps) {
         };
 
         fetchReports();
-    }, [machineId]);
+    }, [machineId, assetTag]);
 
     if (isLoading) {
         return <div className="p-8 text-center text-muted-foreground">Loading service history...</div>;
@@ -79,7 +91,7 @@ export function ServiceHistoryTable({ machineId }: ServiceHistoryTableProps) {
                             <TableCell className="text-right">{isNaN(report.c2) ? '-' : report.c2}</TableCell>
                             <TableCell className="text-right">{isNaN(report.c3) ? '-' : report.c3}</TableCell>
                             <TableCell className="text-right">{isNaN(report.c4) ? '-' : report.c4}</TableCell>
-                            <TableCell className="text-right">1/{isNaN(report.playsPerWin) ? '-' : report.playsPerWin}</TableCell>
+                            <TableCell className="text-right">1/{isNaN(report.playPerWin) ? '-' : report.playPerWin}</TableCell>
                             <TableCell className="text-center">
                                 {report.imageUrl ? (
                                     <Dialog>

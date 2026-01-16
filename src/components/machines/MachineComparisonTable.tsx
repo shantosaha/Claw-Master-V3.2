@@ -33,6 +33,7 @@ interface DailyStats {
     date: Date;
     customerPlays: number;
     staffPlays: number;
+    totalPlays: number;
     payouts: number;
     playsPerPayout: number;
     payoutSettings: number;
@@ -41,6 +42,10 @@ interface DailyStats {
     c3: number;
     c4: number;
     revenue: number;
+    cashRev: number;
+    bonusRev: number;
+    strongTime: number;
+    weakTime: number;
 }
 
 type MetricKey = Exclude<keyof DailyStats, 'date'>;
@@ -180,19 +185,25 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                     if (machineData) {
                         // Use real API data
                         const plays = machineData.standardPlays || 0;
+                        const staffPlays = machineData.empPlays || 0;
                         const payouts = machineData.points || 0;
                         newStats.push({
                             date,
                             customerPlays: plays,
-                            staffPlays: machineData.empPlays || 0,
+                            staffPlays: staffPlays,
+                            totalPlays: plays + staffPlays,
                             payouts: payouts,
-                            playsPerPayout: payouts > 0 ? Math.round(plays / payouts) : 0,
+                            playsPerPayout: payouts > 0 ? Math.round((plays + staffPlays) / payouts) : 0,
                             payoutSettings: 20, // Default, could come from settings
                             c1: 0, // C1-C4 come from JotForm settings, not game report
                             c2: 0,
                             c3: 0,
                             c4: 0,
                             revenue: machineData.totalRev || 0,
+                            cashRev: machineData.cashDebit || 0,
+                            bonusRev: machineData.cashDebitBonus || 0,
+                            strongTime: 0, // Would come from JotForm settings
+                            weakTime: 0,
                         });
                     } else {
                         // No data for this day, show zeros
@@ -200,6 +211,7 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                             date,
                             customerPlays: 0,
                             staffPlays: 0,
+                            totalPlays: 0,
                             payouts: 0,
                             playsPerPayout: 0,
                             payoutSettings: 0,
@@ -208,6 +220,10 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                             c3: 0,
                             c4: 0,
                             revenue: 0,
+                            cashRev: 0,
+                            bonusRev: 0,
+                            strongTime: 0,
+                            weakTime: 0,
                         });
                     }
                 }
@@ -221,11 +237,14 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
         fetchStats();
     }, [dateRange, selectedMachine, selectionMode, specificDates]);
 
-    // Only show C1-C4 metrics for crane machines
+    // Only show C1-C4 and time metrics for crane machines
     const metrics: { label: string, key: MetricKey, format?: (v: number) => string, craneOnly?: boolean }[] = [
         { label: "Customer Plays", key: "customerPlays" },
         { label: "Staff Plays", key: "staffPlays" },
-        { label: "Total Revenue", key: "revenue", format: (v: number) => `$${v}` },
+        { label: "Total Plays", key: "totalPlays" },
+        { label: "Total Revenue", key: "revenue", format: (v: number) => `$${v.toFixed(2)}` },
+        { label: "Cash Revenue", key: "cashRev", format: (v: number) => `$${v.toFixed(2)}` },
+        { label: "Bonus Revenue", key: "bonusRev", format: (v: number) => `$${v.toFixed(2)}` },
         { label: "Payouts", key: "payouts" },
         { label: "Plays Per Payout", key: "playsPerPayout" },
         { label: "Target Plays/Win", key: "payoutSettings", craneOnly: true },
@@ -233,6 +252,8 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
         { label: "Claw Strength C2", key: "c2", craneOnly: true },
         { label: "Claw Strength C3", key: "c3", craneOnly: true },
         { label: "Claw Strength C4", key: "c4", craneOnly: true },
+        { label: "Strong Time", key: "strongTime", craneOnly: true },
+        { label: "Weak Time", key: "weakTime", craneOnly: true },
     ];
 
     // Filter metrics based on machine type

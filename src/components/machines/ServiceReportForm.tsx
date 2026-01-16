@@ -56,7 +56,7 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
         c2: 0,
         c3: 0,
         c4: 0,
-        playsPerWin: 0,
+        playPerWin: 0,
         remarks: "",
         imageFile: null as File | null
     });
@@ -100,7 +100,7 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                     const c2 = latestReport ? latestReport.c2 : settings.c2;
                     const c3 = latestReport ? latestReport.c3 : settings.c3;
                     const c4 = latestReport ? latestReport.c4 : settings.c4;
-                    const playsPerWin = latestReport ? latestReport.playsPerWin : settings.payoutRate;
+                    const playPerWin = latestReport ? latestReport.playPerWin : settings.payoutRate;
                     const imageUrl = latestReport?.imageUrl || settings.imageUrl;
 
                     setFormData(prev => ({
@@ -112,7 +112,7 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                         c2: Number(c2) || 0,
                         c3: Number(c3) || 0,
                         c4: Number(c4) || 0,
-                        playsPerWin: Number(playsPerWin) || 0,
+                        playPerWin: Number(playPerWin) || 0,
                     }));
 
                     // Record which fields were auto-filled
@@ -123,7 +123,7 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                         c2: typeof c2 === 'number',
                         c3: typeof c3 === 'number',
                         c4: typeof c4 === 'number',
-                        playsPerWin: typeof playsPerWin === 'number',
+                        playPerWin: typeof playPerWin === 'number',
                     });
 
                     setFetchedImageUrl(imageUrl);
@@ -144,7 +144,7 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                     c2: 0,
                     c3: 0,
                     c4: 0,
-                    playsPerWin: 0,
+                    playPerWin: 0,
                 }));
                 setAutoFilledFields({});
                 setFetchedImageUrl(undefined);
@@ -255,7 +255,7 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
             submitData.append("c2", String(formData.c2));
             submitData.append("c3", String(formData.c3));
             submitData.append("c4", String(formData.c4));
-            submitData.append("playsPerWin", String(formData.playsPerWin));
+            submitData.append("playPerWin", String(formData.playPerWin));
             submitData.append("remarks", formData.remarks);
             submitData.append("imageFile", formData.imageFile);
 
@@ -484,22 +484,22 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                     {/* Payout Targets */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
-                            <Label htmlFor="playsPerWin" className="font-semibold flex justify-between items-center">
+                            <Label htmlFor="playPerWin" className="font-semibold flex justify-between items-center">
                                 Plays Per Win Target
-                                {autoFilledFields.playsPerWin && (
+                                {autoFilledFields.playPerWin && (
                                     <span className="flex items-center gap-1 text-[10px] text-blue-500 font-bold bg-blue-50 px-1 rounded animate-in fade-in duration-300">
                                         <Sparkles className="h-3 w-3" /> PRE-FILLED
                                     </span>
                                 )}
                             </Label>
                             <Input
-                                id="playsPerWin"
+                                id="playPerWin"
                                 type="number"
-                                value={formData.playsPerWin}
-                                onChange={(e) => handleInputChange("playsPerWin", Number(e.target.value))}
+                                value={formData.playPerWin}
+                                onChange={(e) => handleInputChange("playPerWin", Number(e.target.value))}
                                 className={cn(
                                     "h-10 text-lg font-bold transition-colors duration-500",
-                                    autoFilledFields.playsPerWin && "bg-blue-50 border-blue-200"
+                                    autoFilledFields.playPerWin && "bg-blue-50 border-blue-200"
                                 )}
                             />
                             <p className="text-xs text-muted-foreground">Target win rate configured on the machine motherboard.</p>
@@ -565,11 +565,11 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                                                         <DialogTrigger asChild>
                                                             <div className="w-full h-full cursor-pointer">
                                                                 <img
-                                                                    src={getThumbnailUrl(fetchedImageUrl || selectedMachine?.imageUrl, 200)}
+                                                                    src={getThumbnailUrl(fetchedImageUrl || selectedMachine?.imageUrl, 400)}
                                                                     alt="Machine"
                                                                     loading="lazy"
                                                                     decoding="async"
-                                                                    className="w-full h-full object-cover opacity-80"
+                                                                    className="w-full h-full object-cover"
                                                                     onError={(e) => {
                                                                         const target = e.target as HTMLImageElement;
                                                                         if (fetchedImageUrl && selectedMachine?.imageUrl) {

@@ -34,7 +34,7 @@ interface EnrichedServiceReport extends ServiceReport {
     resolvedMachineName: string;
 }
 
-type SortField = 'timestamp' | 'resolvedMachineName' | 'staffName' | 'playsPerWin' | 'inflowSku';
+type SortField = 'timestamp' | 'resolvedMachineName' | 'staffName' | 'playPerWin' | 'inflowSku';
 type SortDirection = 'asc' | 'desc';
 
 export function GlobalServiceHistoryTable() {
@@ -164,9 +164,9 @@ export function GlobalServiceHistoryTable() {
                     aVal = a.staffName?.toLowerCase() || '';
                     bVal = b.staffName?.toLowerCase() || '';
                     break;
-                case 'playsPerWin':
-                    aVal = a.playsPerWin || 0;
-                    bVal = b.playsPerWin || 0;
+                case 'playPerWin':
+                    aVal = a.playPerWin || 0;
+                    bVal = b.playPerWin || 0;
                     break;
                 case 'inflowSku':
                     aVal = a.inflowSku || '';
@@ -419,7 +419,7 @@ export function GlobalServiceHistoryTable() {
                             </TableHead>
                             <TableHead
                                 className="text-right cursor-pointer hover:bg-muted/50 transition-colors"
-                                onClick={() => handleSort('playsPerWin')}
+                                onClick={() => handleSort('playPerWin')}
                             >
                                 <TooltipProvider>
                                     <Tooltip>
@@ -427,7 +427,7 @@ export function GlobalServiceHistoryTable() {
                                             <div className="flex items-center justify-end gap-1">
                                                 Payout Rate
                                                 <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
-                                                <SortIcon field="playsPerWin" />
+                                                <SortIcon field="playPerWin" />
                                             </div>
                                         </TooltipTrigger>
                                         <TooltipContent side="top" className="max-w-[220px]">
@@ -475,7 +475,7 @@ export function GlobalServiceHistoryTable() {
                                     <TableCell className="text-right">{isNaN(report.c2) ? '-' : report.c2}</TableCell>
                                     <TableCell className="text-right">{isNaN(report.c3) ? '-' : report.c3}</TableCell>
                                     <TableCell className="text-right">{isNaN(report.c4) ? '-' : report.c4}</TableCell>
-                                    <TableCell className="text-right">{isNaN(report.playsPerWin) ? '-' : report.playsPerWin}</TableCell>
+                                    <TableCell className="text-right">{isNaN(report.playPerWin) ? '-' : report.playPerWin}</TableCell>
                                     <TableCell className="text-center">
                                         {report.imageUrl ? (
                                             <Dialog>

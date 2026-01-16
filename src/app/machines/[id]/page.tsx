@@ -331,9 +331,11 @@ export default function MachineDetailsPage() {
             <Tabs defaultValue={searchParams.get("tab") || "overview"} className="w-full">
                 <TabsList>
                     <TabsTrigger value="overview">Overview</TabsTrigger>
-                    {isCrane && <TabsTrigger value="settings">Settings</TabsTrigger>}
+                    <TabsTrigger value="settings">Settings</TabsTrigger>
                     <TabsTrigger value="comparison">Comparison Analytics</TabsTrigger>
-                    <TabsTrigger value="service">Service Reports</TabsTrigger>
+                    {isCraneMachine(enrichedMachine) && (
+                        <TabsTrigger value="service">Service Reports</TabsTrigger>
+                    )}
                 </TabsList>
 
                 <TabsContent value="overview" className="mt-6">
@@ -574,31 +576,32 @@ export default function MachineDetailsPage() {
                     </div>
                 </TabsContent>
 
-                {/* Settings Tab - Only for Crane Machines */}
-                {isCrane && (
-                    <TabsContent value="settings" className="mt-6">
-                        <div className="grid gap-6 lg:grid-cols-3">
-                            <div className="lg:col-span-2">
-                                <SettingsPanel
-                                    machineId={enrichedMachine.id}
-                                    machineName={enrichedMachine.name}
-                                    assetTag={enrichedMachine.assetTag}
-                                    activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
-                                    supervisorOverride={supervisorOverride}
-                                />
-                            </div>
-                            <div className="space-y-6">
-                                <div className="rounded-lg border p-4">
-                                    <h2 className="text-lg font-semibold mb-2">Configuration Guide</h2>
-                                    <p className="text-sm text-muted-foreground">
-                                        Adjust claw strength stages (C1-C4) and payout rates to optimize machine performance.
-                                        Settings are automatically synced to the active stock item.
-                                    </p>
-                                </div>
+                {/* Settings Tab - Available for all machines */}
+                <TabsContent value="settings" className="mt-6">
+                    <div className="grid gap-6 lg:grid-cols-3">
+                        <div className="lg:col-span-2">
+                            <SettingsPanel
+                                machineId={enrichedMachine.id}
+                                machineName={enrichedMachine.name}
+                                assetTag={enrichedMachine.assetTag}
+                                activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
+                                supervisorOverride={supervisorOverride}
+                                isCraneMachine={isCrane}
+                            />
+                        </div>
+                        <div className="space-y-6">
+                            <div className="rounded-lg border p-4">
+                                <h2 className="text-lg font-semibold mb-2">Configuration Guide</h2>
+                                <p className="text-sm text-muted-foreground">
+                                    {isCrane
+                                        ? "Adjust claw strength stages (C1-C4) and payout rates to optimize machine performance. Settings are automatically synced to the active stock item."
+                                        : "Configure advanced machine settings including pricing and identification."
+                                    }
+                                </p>
                             </div>
                         </div>
-                    </TabsContent>
-                )}
+                    </div>
+                </TabsContent>
 
 
 
@@ -606,24 +609,26 @@ export default function MachineDetailsPage() {
                     <MachineComparisonTable machines={[enrichedMachine as any]} initialMachineId={enrichedMachine.id} />
                 </TabsContent>
 
-                <TabsContent value="service" className="mt-6">
-                    <Tabs defaultValue="history" className="w-full">
-                        <div className="flex items-center justify-between mb-4">
-                            <TabsList>
-                                <TabsTrigger value="history">History</TabsTrigger>
-                                <TabsTrigger value="new">New Report</TabsTrigger>
-                            </TabsList>
-                        </div>
+                {isCraneMachine(enrichedMachine) && (
+                    <TabsContent value="service" className="mt-6">
+                        <Tabs defaultValue="history" className="w-full">
+                            <div className="flex items-center justify-between mb-4">
+                                <TabsList>
+                                    <TabsTrigger value="history">History</TabsTrigger>
+                                    <TabsTrigger value="new">New Report</TabsTrigger>
+                                </TabsList>
+                            </div>
 
-                        <TabsContent value="history">
-                            <ServiceHistoryTable machineId={enrichedMachine.id} />
-                        </TabsContent>
+                            <TabsContent value="history">
+                                <ServiceHistoryTable machineId={enrichedMachine.id} assetTag={enrichedMachine.tag} />
+                            </TabsContent>
 
-                        <TabsContent value="new">
-                            <ServiceReportForm machine={enrichedMachine} />
-                        </TabsContent>
-                    </Tabs>
-                </TabsContent>
+                            <TabsContent value="new">
+                                <ServiceReportForm machine={enrichedMachine} />
+                            </TabsContent>
+                        </Tabs>
+                    </TabsContent>
+                )}
             </Tabs>
         </div >
     );

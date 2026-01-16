@@ -195,10 +195,12 @@ export interface ItemMachineSettings {
     c2: number;              // Stage 2: Strong grip / Pickup
     c3: number;              // Stage 3: Retention / Carry to chute
     c4: number;              // Stage 4: Max strength when winning (varies: 24, 48, 64)
+    strongTime?: number;     // Strong grip time duration
+    weakTime?: number;       // Weak grip time duration
 
     // Profit Calculation
     playPrice: number;       // Price per play on this machine (e.g., $1.80)
-    playPerWin: number;      // Target plays before a win
+    playPerWin: number; // "Plays Per" win target (e.g., 10)before a win
     expectedRevenue: number; // playPrice × playPerWin
 
     // Metadata
@@ -537,11 +539,13 @@ export interface PlayfieldSetting {
     c2?: number;
     c3?: number;
     c4?: number;
+    strongTime?: number;
+    weakTime?: number;
     payoutRate?: number;
     imageUrl?: string;
 
     // Legacy
-    strengthSetting?: number;
+    strengthSetting?: number;  // Deprecated? Match Jotform "C1"
     voltage?: number;
     payoutPercentage?: number;
 
@@ -855,7 +859,10 @@ export interface ServiceReport {
     c2: number;
     c3: number;
     c4: number;
-    playsPerWin: number; // "Plays Per"
+    strongTime?: number;
+    weakTime?: number;
+    playPrice: number;
+    playPerWin: number; // "Plays Per"
     inflowSku?: string;
     remarks?: string;
     imageUrl?: string;

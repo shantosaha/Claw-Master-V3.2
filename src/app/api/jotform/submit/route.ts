@@ -16,7 +16,7 @@ const FIELD_MAPPINGS = {
     c2: "q9_c2",                      // C2
     c3: "q10_c3",                     // C3
     c4: "q11_c4",                     // C4
-    playsPerWin: "q12_playsPer",      // Plays Per Win
+    playPerWin: "q12_playsPer",      // Plays Per Win
     inflowSku: "q22_inflowSku",       // Inflow SKU
     remarks: "q20_remarks",           // Remarks
     // Note: Image upload (q13) requires special handling with FormData
@@ -31,7 +31,7 @@ interface SubmitReportData {
     c2: number;
     c3: number;
     c4: number;
-    playsPerWin: number;
+    playPerWin: number;
     inflowSku?: string;
     remarks?: string;
     imageUrl?: string;
@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
         jotformFormData.append(FIELD_MAPPINGS.c2, incomingFormData.get("c2")?.toString() || "0");
         jotformFormData.append(FIELD_MAPPINGS.c3, incomingFormData.get("c3")?.toString() || "0");
         jotformFormData.append(FIELD_MAPPINGS.c4, incomingFormData.get("c4")?.toString() || "0");
-        jotformFormData.append(FIELD_MAPPINGS.playsPerWin, incomingFormData.get("playsPerWin")?.toString() || "0");
+        jotformFormData.append(FIELD_MAPPINGS.playPerWin, incomingFormData.get("playPerWin")?.toString() || "0");
         jotformFormData.append(FIELD_MAPPINGS.inflowSku, incomingFormData.get("inflowSku")?.toString() || "");
         jotformFormData.append(FIELD_MAPPINGS.remarks, incomingFormData.get("remarks")?.toString() || "");
 
