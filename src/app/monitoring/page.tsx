@@ -1394,16 +1394,16 @@ export default function MonitoringPage() {
                         {viewMode === "grid" ? (
                             <div className="space-y-8">
                                 {/* Group 4-Cranes Section */}
-                                {sortedMachines.filter(m => isCraneMachine(m)).length > 0 && (
+                                {sortedMachines.filter(m => isCraneMachine(m as any)).length > 0 && (
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-lg font-bold">Claw Machines</h3>
                                             <Badge variant="secondary" className="text-xs">
-                                                {sortedMachines.filter(m => isCraneMachine(m)).length} machines
+                                                {sortedMachines.filter(m => isCraneMachine(m as any)).length} machines
                                             </Badge>
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                            {sortedMachines.filter(m => isCraneMachine(m)).map((machine) => (
+                                            {sortedMachines.filter(m => isCraneMachine(m as any)).map((machine) => (
                                                 <MachineStatusCard
                                                     key={machine.id}
                                                     machine={machine}
@@ -1424,16 +1424,16 @@ export default function MonitoringPage() {
                                 )}
 
                                 {/* Other Games Section */}
-                                {sortedMachines.filter(m => !isCraneMachine(m)).length > 0 && (
+                                {sortedMachines.filter(m => !isCraneMachine(m as any)).length > 0 && (
                                     <div className="space-y-4">
                                         <div className="flex items-center gap-2">
                                             <h3 className="text-lg font-bold text-muted-foreground">Other Games</h3>
                                             <Badge variant="outline" className="text-xs">
-                                                {sortedMachines.filter(m => !isCraneMachine(m)).length} machines
+                                                {sortedMachines.filter(m => !isCraneMachine(m as any)).length} machines
                                             </Badge>
                                         </div>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                            {sortedMachines.filter(m => !isCraneMachine(m)).map((machine) => (
+                                            {sortedMachines.filter(m => !isCraneMachine(m as any)).map((machine) => (
                                                 <Card key={machine.id} className={cn(
                                                     "relative overflow-hidden transition-all duration-200 hover:shadow-lg",
                                                     machine.status === 'error' && "border-red-300 bg-red-50/50",
@@ -1515,7 +1515,7 @@ export default function MonitoringPage() {
                                 )}
                             </div>
                         ) : (
-                            <MonitoringReportTable data={sortedMachines.filter(m => isCraneMachine(m)) as any} />
+                            <MonitoringReportTable data={sortedMachines.filter(m => isCraneMachine(m as any)) as any} />
                         )}
                     </div>
 
