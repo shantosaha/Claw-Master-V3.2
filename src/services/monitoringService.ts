@@ -7,6 +7,7 @@ export interface MachineStatus {
     assetTag: string;
     name: string;
     location: string;
+    group?: string;
     status: 'online' | 'offline' | 'error' | 'maintenance';
     lastPing: Date;
     telemetry: {
@@ -77,6 +78,7 @@ class MonitoringService {
             assetTag: (item.assetTag as string) || '',
             name: (item.name as string) || 'Unknown Machine',
             location: (item.location as string) || 'Unknown',
+            group: (item.group as string) || undefined,
             status: this.determineStatus(item),
             lastPing: new Date((item.lastUpdate as string) || Date.now()),
             telemetry: {
@@ -111,6 +113,7 @@ class MonitoringService {
                 assetTag: machine.assetTag || '',
                 name: machine.name,
                 location: machine.location,
+                group: machine.group,
                 status: this.determineStatusFromMachine(machine),
                 lastPing: new Date(),
                 imageUrl: machine.slots?.[0]?.currentItem?.imageUrl,
