@@ -56,6 +56,8 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
         c2: 0,
         c3: 0,
         c4: 0,
+        strongTime: 0,
+        weakTime: 0,
         playPerWin: 0,
         remarks: "",
         imageFile: null as File | null
@@ -95,11 +97,12 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                         })
                         .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())[0];
 
-                    // Prioritize data from the latest actual JotForm report
                     const c1 = latestReport ? latestReport.c1 : settings.c1;
                     const c2 = latestReport ? latestReport.c2 : settings.c2;
                     const c3 = latestReport ? latestReport.c3 : settings.c3;
                     const c4 = latestReport ? latestReport.c4 : settings.c4;
+                    const strongTime = latestReport ? (latestReport as any).strongTime : (settings as any).strongTime;
+                    const weakTime = latestReport ? (latestReport as any).weakTime : (settings as any).weakTime;
                     const playPerWin = latestReport ? latestReport.playPerWin : settings.payoutRate;
                     const imageUrl = latestReport?.imageUrl || settings.imageUrl;
 
@@ -112,6 +115,8 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                         c2: Number(c2) || 0,
                         c3: Number(c3) || 0,
                         c4: Number(c4) || 0,
+                        strongTime: Number(strongTime) || 0,
+                        weakTime: Number(weakTime) || 0,
                         playPerWin: Number(playPerWin) || 0,
                     }));
 
@@ -123,6 +128,8 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                         c2: typeof c2 === 'number',
                         c3: typeof c3 === 'number',
                         c4: typeof c4 === 'number',
+                        strongTime: typeof strongTime === 'number',
+                        weakTime: typeof weakTime === 'number',
                         playPerWin: typeof playPerWin === 'number',
                     });
 
@@ -144,6 +151,8 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                     c2: 0,
                     c3: 0,
                     c4: 0,
+                    strongTime: 0,
+                    weakTime: 0,
                     playPerWin: 0,
                 }));
                 setAutoFilledFields({});
@@ -255,6 +264,8 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
             submitData.append("c2", String(formData.c2));
             submitData.append("c3", String(formData.c3));
             submitData.append("c4", String(formData.c4));
+            submitData.append("strongTime", String(formData.strongTime));
+            submitData.append("weakTime", String(formData.weakTime));
             submitData.append("playPerWin", String(formData.playPerWin));
             submitData.append("remarks", formData.remarks);
             submitData.append("imageFile", formData.imageFile);
@@ -478,6 +489,46 @@ export function ServiceReportForm({ machine: initialMachine, onSuccess }: Servic
                                     />
                                 </div>
                             ))}
+                        </div>
+
+                        {/* Strong Time / Weak Time Row */}
+                        <div className="grid grid-cols-2 gap-4 mt-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="strongTime" className="text-xs text-muted-foreground flex justify-between items-center">
+                                    <span>Strong Time</span>
+                                    {autoFilledFields.strongTime && (
+                                        <Sparkles className="h-3 w-3 text-blue-500 animate-pulse" />
+                                    )}
+                                </Label>
+                                <Input
+                                    id="strongTime"
+                                    type="number"
+                                    value={formData.strongTime}
+                                    onChange={(e) => handleInputChange("strongTime", Number(e.target.value))}
+                                    className={cn(
+                                        "h-9 transition-colors duration-500",
+                                        autoFilledFields.strongTime && "bg-blue-50 border-blue-200"
+                                    )}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="weakTime" className="text-xs text-muted-foreground flex justify-between items-center">
+                                    <span>Weak Time</span>
+                                    {autoFilledFields.weakTime && (
+                                        <Sparkles className="h-3 w-3 text-blue-500 animate-pulse" />
+                                    )}
+                                </Label>
+                                <Input
+                                    id="weakTime"
+                                    type="number"
+                                    value={formData.weakTime}
+                                    onChange={(e) => handleInputChange("weakTime", Number(e.target.value))}
+                                    className={cn(
+                                        "h-9 transition-colors duration-500",
+                                        autoFilledFields.weakTime && "bg-blue-50 border-blue-200"
+                                    )}
+                                />
+                            </div>
                         </div>
                     </div>
 

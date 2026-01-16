@@ -18,6 +18,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Image as ImageIcon, FileText } from "lucide-react";
 import { ServiceReport } from "@/types";
 import { serviceReportService } from "@/services/serviceReportService";
+import { OptimizedThumbnail } from "@/components/ui/OptimizedImage";
 
 interface ServiceHistoryTableProps {
     machineId: string;
@@ -96,20 +97,26 @@ export function ServiceHistoryTable({ machineId, assetTag }: ServiceHistoryTable
                                 {report.imageUrl ? (
                                     <Dialog>
                                         <DialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <ImageIcon className="h-4 w-4 text-primary" />
-                                            </Button>
+                                            <div className="cursor-pointer hover:opacity-80 transition-opacity inline-block">
+                                                <OptimizedThumbnail
+                                                    src={report.imageUrl}
+                                                    alt="Service Report"
+                                                    size={48}
+                                                    className="h-12 w-12 rounded-md border shadow-sm object-cover"
+                                                />
+                                            </div>
                                         </DialogTrigger>
-                                        <DialogContent className="max-w-3xl">
+                                        <DialogContent className="max-w-5xl max-h-[90vh]">
                                             <DialogHeader>
-                                                <DialogTitle>Service Image - {format(report.timestamp, "MMM dd")}</DialogTitle>
+                                                <DialogTitle>Service Image - {format(report.timestamp, "MMM dd, yyyy HH:mm")}</DialogTitle>
                                             </DialogHeader>
-                                            <div className="relative aspect-video w-full overflow-hidden rounded-md bg-muted">
+                                            <div className="relative w-full overflow-hidden rounded-md bg-muted" style={{ height: 'calc(90vh - 120px)' }}>
                                                 <Image
                                                     src={report.imageUrl}
                                                     alt="Service Report"
                                                     fill
                                                     className="object-contain"
+                                                    priority
                                                 />
                                             </div>
                                         </DialogContent>

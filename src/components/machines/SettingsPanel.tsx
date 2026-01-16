@@ -918,66 +918,61 @@ export function SettingsPanel({
                                             <div className={`absolute -left-[25px] top-2 w-3 h-3 rounded-full border-2 bg-background ${index === 0 ? 'border-violet-500 bg-violet-500' : 'border-muted-foreground/30'}`} />
 
                                             {/* Card */}
-                                            <div className={`p-4 rounded-lg border bg-card transition-all hover:shadow-md ${index === 0 ? 'ring-1 ring-violet-200 dark:ring-violet-900' : ''}`}>
-                                                <div className="flex justify-between items-start gap-3 mb-3">
-                                                    <div className="flex-1 min-w-0">
-                                                        <div className="flex items-center gap-2 flex-wrap">
-                                                            <span className="font-medium text-sm">
-                                                                {formatDate(setting.timestamp, "MMM d, yyyy")}
-                                                            </span>
-                                                            <span className="text-xs text-muted-foreground">
-                                                                {formatDate(setting.timestamp, "HH:mm")}
-                                                            </span>
-                                                            {index === 0 && (
-                                                                <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 text-[10px]">Latest</Badge>
-                                                            )}
-                                                        </div>
-                                                        {setting.stockItemName ? (
-                                                            <div className="text-xs text-muted-foreground mt-1">
-                                                                Stock: {setting.stockItemId ? (
-                                                                    <Link href={`/inventory/${setting.stockItemId}`} className="text-primary hover:underline">
-                                                                        {setting.stockItemName}
-                                                                    </Link>
-                                                                ) : setting.stockItemName}
+                                            <div className={`p-3 rounded-lg border bg-card transition-all hover:shadow-md ${index === 0 ? 'ring-1 ring-violet-200 dark:ring-violet-900' : ''}`}>
+                                                {/* Header row with info */}
+                                                <div className="flex items-center gap-2 flex-wrap mb-2">
+                                                    <span className="font-medium text-sm">
+                                                        {formatDate(setting.timestamp, "MMM d, yyyy")}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {formatDate(setting.timestamp, "HH:mm")}
+                                                    </span>
+                                                    {index === 0 && (
+                                                        <Badge className="bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300 text-[10px]">Latest</Badge>
+                                                    )}
+                                                    {/* Remarks in the middle */}
+                                                    {(setting as any).remarks && (
+                                                        <span className="text-[10px] text-muted-foreground italic truncate max-w-[150px]" title={(setting as any).remarks}>
+                                                            "{(setting as any).remarks}"
+                                                        </span>
+                                                    )}
+                                                    <span className="text-[10px] text-muted-foreground ml-auto">
+                                                        {setting.stockItemName || 'No stock linked'} • <span className="font-semibold text-foreground">{setting.setBy || 'Unknown'}</span>
+                                                    </span>
+                                                </div>
+
+                                                {/* Compact layout: Metrics + Image side by side */}
+                                                <div className="flex gap-3 items-stretch">
+                                                    {/* Metrics Grid - compact single row */}
+                                                    <div className="flex-1 grid grid-cols-7 gap-1">
+                                                        {[
+                                                            { label: 'C1', value: setting.c1, fallback: setting.strengthSetting },
+                                                            { label: 'C2', value: setting.c2 },
+                                                            { label: 'C3', value: setting.c3 },
+                                                            { label: 'C4', value: setting.c4 },
+                                                            { label: 'Payout', value: setting.payoutRate, fallback: setting.payoutPercentage },
+                                                            { label: 'ST', value: (setting as any).strongTime },
+                                                            { label: 'WT', value: (setting as any).weakTime },
+                                                        ].map((item) => (
+                                                            <div key={item.label} className="text-center py-1.5 px-1 bg-muted/40 rounded">
+                                                                <div className="text-[8px] uppercase text-muted-foreground font-medium">{item.label}</div>
+                                                                <div className="font-bold text-sm leading-tight">
+                                                                    {(item.value !== undefined && !isNaN(Number(item.value))) ? item.value : (item.fallback ?? '-')}
+                                                                </div>
                                                             </div>
-                                                        ) : (
-                                                            <div className="text-xs text-muted-foreground/60 mt-1">No stock linked</div>
-                                                        )}
-                                                        <div className="text-[10px] text-muted-foreground/60 mt-0.5">
-                                                            By: {setting.setBy || 'Unknown'}
-                                                        </div>
+                                                        ))}
                                                     </div>
 
-                                                    {/* Image thumbnail */}
+                                                    {/* Bigger Image */}
                                                     {setting.imageUrl && (
                                                         <OptimizedThumbnail
                                                             src={setting.imageUrl}
                                                             alt="Submission"
-                                                            size={56}
-                                                            className="h-14 w-14 rounded-lg border shadow-sm flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                                                            size={120}
+                                                            className="h-20 w-28 rounded-lg border shadow-sm flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity object-cover"
                                                             onClick={() => setZoomedImage(setting.imageUrl || null)}
                                                         />
                                                     )}
-                                                </div>
-
-                                                {/* Values Grid */}
-                                                <div className="grid grid-cols-5 gap-2">
-                                                    {[
-                                                        { label: 'C1', value: setting.c1, fallback: setting.strengthSetting },
-                                                        { label: 'C2', value: setting.c2 },
-                                                        { label: 'C3', value: setting.c3 },
-                                                        { label: 'Payout', value: setting.payoutRate, fallback: setting.payoutPercentage },
-                                                        { label: 'C4', value: setting.c4 },
-                                                        { label: 'ST', value: (setting as any).strongTime },
-                                                        { label: 'WT', value: (setting as any).weakTime },
-                                                    ].map((item) => (
-                                                        <div key={item.label} className="text-center p-2 bg-muted/40 rounded-md">
-                                                            <div className="text-[9px] uppercase text-muted-foreground font-medium">{item.label}</div>
-                                                            <div className="font-bold text-sm">
-                                                                {(item.value !== undefined && !isNaN(Number(item.value))) ? item.value : (item.fallback ?? '-')}
-                                                            </div>
-                                                        </div>
-                                                    ))}
                                                 </div>
                                             </div>
                                         </div>
@@ -1028,7 +1023,7 @@ export function SettingsPanel({
             </Tabs>
 
             <Dialog open={!!zoomedImage} onOpenChange={(open) => !open && setZoomedImage(null)}>
-                <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/90 border-none">
+                <DialogContent className="max-w-5xl p-0 overflow-hidden bg-black/90 border-none">
                     <VisuallyHidden>
                         <DialogTitle>Image Preview</DialogTitle>
                     </VisuallyHidden>

@@ -16,6 +16,8 @@ const FIELD_MAPPINGS = {
     c2: "q9_c2",                      // C2
     c3: "q10_c3",                     // C3
     c4: "q11_c4",                     // C4
+    strongTime: "q24_strongTime",     // Strong Time (verified from JotForm)
+    weakTime: "q25_weakTime",         // Weak Time (verified from JotForm)
     playPerWin: "q12_playsPer",      // Plays Per Win
     inflowSku: "q22_inflowSku",       // Inflow SKU
     remarks: "q20_remarks",           // Remarks
@@ -31,6 +33,8 @@ interface SubmitReportData {
     c2: number;
     c3: number;
     c4: number;
+    strongTime: number;
+    weakTime: number;
     playPerWin: number;
     inflowSku?: string;
     remarks?: string;
@@ -68,6 +72,8 @@ export async function POST(request: NextRequest) {
         jotformFormData.append(FIELD_MAPPINGS.c2, incomingFormData.get("c2")?.toString() || "0");
         jotformFormData.append(FIELD_MAPPINGS.c3, incomingFormData.get("c3")?.toString() || "0");
         jotformFormData.append(FIELD_MAPPINGS.c4, incomingFormData.get("c4")?.toString() || "0");
+        jotformFormData.append(FIELD_MAPPINGS.strongTime, incomingFormData.get("strongTime")?.toString() || "0");
+        jotformFormData.append(FIELD_MAPPINGS.weakTime, incomingFormData.get("weakTime")?.toString() || "0");
         jotformFormData.append(FIELD_MAPPINGS.playPerWin, incomingFormData.get("playPerWin")?.toString() || "0");
         jotformFormData.append(FIELD_MAPPINGS.inflowSku, incomingFormData.get("inflowSku")?.toString() || "");
         jotformFormData.append(FIELD_MAPPINGS.remarks, incomingFormData.get("remarks")?.toString() || "");

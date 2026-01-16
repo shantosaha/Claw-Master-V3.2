@@ -1,8 +1,9 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
-import { StockItem, ArcadeMachine } from "@/types";
+import { StockItem, ArcadeMachine, ServiceReport } from "@/types";
 import { stockService, machineService } from "@/services";
+import { serviceReportService } from "@/services/serviceReportService";
 
 interface DataContextType {
     // Stock Items
@@ -16,6 +17,12 @@ interface DataContextType {
     machinesLoading: boolean;
     getMachineById: (id: string) => ArcadeMachine | undefined;
     refreshMachines: () => Promise<void>;
+
+    // JotForm Service Reports (cached)
+    serviceReports: ServiceReport[];
+    serviceReportsLoading: boolean;
+    getReportsByMachineTag: (tag: string) => ServiceReport[];
+    refreshServiceReports: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -37,6 +44,8 @@ export function DataProvider({ children }: DataProviderProps) {
     const [itemsLoading, setItemsLoading] = useState(true);
     const [machines, setMachines] = useState<ArcadeMachine[]>([]);
     const [machinesLoading, setMachinesLoading] = useState(true);
+    const [serviceReports, setServiceReports] = useState<ServiceReport[]>([]);
+    const [serviceReportsLoading, setServiceReportsLoading] = useState(true);
 
     useEffect(() => {
         let unsubscribeStock: (() => void) | undefined;
@@ -77,6 +86,18 @@ export function DataProvider({ children }: DataProviderProps) {
                 setMachines(data);
                 setMachinesLoading(false);
             }
+
+            // Fetch JotForm service reports on startup
+            try {
+                console.log("[DataProvider] Fetching JotForm service reports on startup...");
+                const reports = await serviceReportService.getReports("GLOBAL_FETCH");
+                setServiceReports(reports);
+                console.log(`[DataProvider] Loaded ${reports.length} service reports from JotForm`);
+            } catch (error) {
+                console.error("[DataProvider] Failed to fetch JotForm reports:", error);
+            } finally {
+                setServiceReportsLoading(false);
+            }
         };
 
         initialize();
@@ -107,6 +128,23 @@ export function DataProvider({ children }: DataProviderProps) {
         setMachines(data);
     }, []);
 
+    const getReportsByMachineTag = useCallback((tag: string) => {
+        const normalizedTag = tag.trim().toLowerCase();
+        return serviceReports.filter(report => {
+            const reportTag = String(report.inflowSku || '').trim().toLowerCase();
+            return reportTag === normalizedTag;
+        });
+    }, [serviceReports]);
+
+    const refreshServiceReports = useCallback(async () => {
+        try {
+            const reports = await serviceReportService.getReports("GLOBAL_FETCH");
+            setServiceReports(reports);
+        } catch (error) {
+            console.error("[DataProvider] Failed to refresh service reports:", error);
+        }
+    }, []);
+
     const value: DataContextType = {
         items,
         itemsLoading,
@@ -116,6 +154,10 @@ export function DataProvider({ children }: DataProviderProps) {
         machinesLoading,
         getMachineById,
         refreshMachines,
+        serviceReports,
+        serviceReportsLoading,
+        getReportsByMachineTag,
+        refreshServiceReports,
     };
 
     return (
