@@ -68,7 +68,6 @@ import {
     Line
 } from "recharts";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
-import { isCraneMachine } from "@/utils/machineTypeUtils";
 
 // Custom hook for monitoring data
 function useMonitoring() {
@@ -1392,130 +1391,26 @@ export default function MonitoringPage() {
                         </div>
 
                         {viewMode === "grid" ? (
-                            <div className="space-y-8">
-                                {/* Group 4-Cranes Section */}
-                                {sortedMachines.filter(m => isCraneMachine(m as any)).length > 0 && (
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="text-lg font-bold">Claw Machines</h3>
-                                            <Badge variant="secondary" className="text-xs">
-                                                {sortedMachines.filter(m => isCraneMachine(m as any)).length} machines
-                                            </Badge>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                            {sortedMachines.filter(m => isCraneMachine(m as any)).map((machine) => (
-                                                <MachineStatusCard
-                                                    key={machine.id}
-                                                    machine={machine}
-                                                    onAction={(action, machine) => {
-                                                        setSelectedMachineForAction(machine);
-                                                        if (action === 'submit_report') {
-                                                            setSelectedTab("submit");
-                                                        } else if (action === 'compare') {
-                                                            setSelectedTab("comparison");
-                                                        } else if (action === 'quick_view') {
-                                                            setQuickViewMachine(machine);
-                                                        }
-                                                    }}
-                                                />
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* Other Games Section */}
-                                {sortedMachines.filter(m => !isCraneMachine(m as any)).length > 0 && (
-                                    <div className="space-y-4">
-                                        <div className="flex items-center gap-2">
-                                            <h3 className="text-lg font-bold text-muted-foreground">Other Games</h3>
-                                            <Badge variant="outline" className="text-xs">
-                                                {sortedMachines.filter(m => !isCraneMachine(m as any)).length} machines
-                                            </Badge>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                            {sortedMachines.filter(m => !isCraneMachine(m as any)).map((machine) => (
-                                                <Card key={machine.id} className={cn(
-                                                    "relative overflow-hidden transition-all duration-200 hover:shadow-lg",
-                                                    machine.status === 'error' && "border-red-300 bg-red-50/50",
-                                                    machine.status === 'offline' && "opacity-60"
-                                                )}>
-                                                    {/* Status indicator */}
-                                                    <div className="absolute top-3 right-3">
-                                                        <div className={cn(
-                                                            "h-3 w-3 rounded-full",
-                                                            machine.status === 'online' && "bg-green-500",
-                                                            machine.status === 'offline' && "bg-gray-400",
-                                                            machine.status === 'error' && "bg-red-500",
-                                                            machine.status === 'maintenance' && "bg-yellow-500"
-                                                        )} />
-                                                    </div>
-                                                    <CardContent className="p-3">
-                                                        <div className="space-y-3">
-                                                            {/* Header */}
-                                                            <div className="flex gap-3">
-                                                                <div className="h-12 w-12 bg-muted rounded-md flex-shrink-0 overflow-hidden border">
-                                                                    {machine.imageUrl ? (
-                                                                        <img
-                                                                            src={getThumbnailUrl(machine.imageUrl, 96)}
-                                                                            alt={machine.name}
-                                                                            loading="lazy"
-                                                                            className="h-full w-full object-cover"
-                                                                        />
-                                                                    ) : (
-                                                                        <div className="h-full w-full flex items-center justify-center bg-secondary">
-                                                                            <View className="h-5 w-5 text-muted-foreground opacity-20" />
-                                                                        </div>
-                                                                    )}
-                                                                </div>
-                                                                <div className="flex-1 min-w-0">
-                                                                    <Link
-                                                                        href={`/machines/${machine.id}`}
-                                                                        className="font-bold text-xs leading-none hover:underline hover:text-primary block mb-1 line-clamp-2"
-                                                                    >
-                                                                        {machine.name}
-                                                                    </Link>
-                                                                    <p className="text-xs text-muted-foreground truncate mb-1">
-                                                                        {machine.location}
-                                                                    </p>
-                                                                    <Badge variant="outline" className="text-[10px] h-5 px-1 capitalize">
-                                                                        {machine.status}
-                                                                    </Badge>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Simplified Metrics */}
-                                                            <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs border-t pt-2">
-                                                                <div className="flex justify-between">
-                                                                    <span className="text-muted-foreground">Cust. Plays:</span>
-                                                                    <span className="font-medium">{machine.customerPlays ?? '-'}</span>
-                                                                </div>
-                                                                <div className="flex justify-between">
-                                                                    <span className="text-muted-foreground">Group:</span>
-                                                                    <span className="font-medium text-muted-foreground">{(machine as any).group || '-'}</span>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* Action Button */}
-                                                            <Button
-                                                                variant="outline"
-                                                                size="sm"
-                                                                className="w-full h-7 text-xs"
-                                                                asChild
-                                                            >
-                                                                <Link href={`/machines/${machine.id}`}>
-                                                                    View Details
-                                                                </Link>
-                                                            </Button>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                                {sortedMachines.map((machine) => (
+                                    <MachineStatusCard
+                                        key={machine.id}
+                                        machine={machine}
+                                        onAction={(action, machine) => {
+                                            setSelectedMachineForAction(machine);
+                                            if (action === 'submit_report') {
+                                                setSelectedTab("submit");
+                                            } else if (action === 'compare') {
+                                                setSelectedTab("comparison");
+                                            } else if (action === 'quick_view') {
+                                                setQuickViewMachine(machine);
+                                            }
+                                        }}
+                                    />
+                                ))}
                             </div>
                         ) : (
-                            <MonitoringReportTable data={sortedMachines.filter(m => isCraneMachine(m as any)) as any} />
+                            <MonitoringReportTable data={sortedMachines as any} />
                         )}
                     </div>
 

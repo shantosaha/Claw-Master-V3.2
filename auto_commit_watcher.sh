@@ -47,13 +47,13 @@ generate_commit_message() {
     fi
     
     # Analyze changes for smart message generation
-    local has_components=$(echo "$staged_files" | grep -c "src/components/" || echo 0)
-    local has_pages=$(echo "$staged_files" | grep -c "src/app/" || echo 0)
-    local has_services=$(echo "$staged_files" | grep -c "src/services/" || echo 0)
-    local has_types=$(echo "$staged_files" | grep -c "src/types/" || echo 0)
-    local has_api=$(echo "$staged_files" | grep -c "api/" || echo 0)
-    local has_styles=$(echo "$staged_files" | grep -cE "\.(css|scss)$" || echo 0)
-    local has_config=$(echo "$staged_files" | grep -cE "(package|tsconfig|next\.config)" || echo 0)
+    local has_components=$(echo "$staged_files" | grep -c "src/components/" || true)
+    local has_pages=$(echo "$staged_files" | grep -c "src/app/" || true)
+    local has_services=$(echo "$staged_files" | grep -c "src/services/" || true)
+    local has_types=$(echo "$staged_files" | grep -c "src/types/" || true)
+    local has_api=$(echo "$staged_files" | grep -c "api/" || true)
+    local has_styles=$(echo "$staged_files" | grep -cE "\.(css|scss)$" || true)
+    local has_config=$(echo "$staged_files" | grep -cE "(package|tsconfig|next\.config)" || true)
     
     # Determine commit type
     local commit_type="chore"
@@ -109,10 +109,10 @@ check_and_commit() {
     # Get detailed status
     local status_output=$(git status --porcelain 2>/dev/null)
     
-    local modified_count=$(echo "$status_output" | grep -c '^ M\|^M ' || echo 0)
-    local added_count=$(echo "$status_output" | grep -c '^??' || echo 0)
-    local deleted_count=$(echo "$status_output" | grep -c '^ D\|^D ' || echo 0)
-    local renamed_count=$(echo "$status_output" | grep -c '^R' || echo 0)
+    local modified_count=$(echo "$status_output" | grep -c '^ M\|^M ' || true)
+    local added_count=$(echo "$status_output" | grep -c '^??' || true)
+    local deleted_count=$(echo "$status_output" | grep -c '^ D\|^D ' || true)
+    local renamed_count=$(echo "$status_output" | grep -c '^R' || true)
     
     local total_changes=$((modified_count + added_count + deleted_count + renamed_count))
     
