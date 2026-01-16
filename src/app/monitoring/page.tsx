@@ -723,11 +723,11 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
     };
 
     const renderSortableHeader = (label: string, key: keyof MonitoringReportItem, className?: string) => (
-        <TableHead className={className}>
+        <TableHead className={cn("px-2 py-2 h-10", className)}>
             <Button
                 variant="ghost"
                 size="sm"
-                className="-ml-3 h-8 data-[state=open]:bg-accent"
+                className="-ml-2 h-7 px-2 text-[11px] font-bold uppercase tracking-wider data-[state=open]:bg-accent"
                 onClick={() => requestSort(key)}
             >
                 {label}
@@ -747,26 +747,26 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
     return (
         <div className="flex flex-col gap-4">
             <div className="rounded-md border bg-card">
-                <Table>
+                <Table className="relative">
                     <TableHeader>
-                        <TableRow className="bg-muted/50">
-                            {renderSortableHeader("Payout Status", "payoutStatus", "w-[140px]")}
-                            {renderSortableHeader("Tag", "tag")}
-                            {renderSortableHeader("Description", "description", "min-w-[200px]")}
-                            {renderSortableHeader("Customer Plays", "customerPlays", "text-right justify-end")}
-                            {renderSortableHeader("Staff Plays", "staffPlays", "text-right justify-end")}
-                            {renderSortableHeader("Payouts", "payouts", "text-right justify-end")}
-                            {renderSortableHeader("Plays/Payout", "playsPerPayout", "text-right justify-end")}
-                            {renderSortableHeader("Target", "payoutSettings", "text-right justify-end")}
-                            {renderSortableHeader("Accuracy %", "payoutAccuracy", "text-right justify-end")}
-                            {renderSortableHeader("Settings Date", "settingsDate")}
-                            {renderSortableHeader("Staff Name", "staffName")}
-                            {renderSortableHeader("C1", "c1", "text-right justify-end")}
-                            {renderSortableHeader("C2", "c2", "text-right justify-end")}
-                            {renderSortableHeader("C3", "c3", "text-right justify-end")}
-                            {renderSortableHeader("C4", "c4", "text-right justify-end")}
-                            <TableHead>Image</TableHead>
-                            {renderSortableHeader("Remarks", "remarks")}
+                        <TableRow className="bg-muted/50 border-b">
+                            {renderSortableHeader("Status", "payoutStatus", "w-[100px]")}
+                            {renderSortableHeader("Tag", "tag", "w-[60px]")}
+                            {renderSortableHeader("Description", "description", "min-w-[150px]")}
+                            {renderSortableHeader("Cust. Plays", "customerPlays", "text-right px-2")}
+                            {renderSortableHeader("Staff", "staffPlays", "text-right px-2")}
+                            {renderSortableHeader("Payouts", "payouts", "text-right px-2")}
+                            {renderSortableHeader("P/P", "playsPerPayout", "text-right px-2")}
+                            {renderSortableHeader("Target", "payoutSettings", "text-right px-2")}
+                            {renderSortableHeader("Acc%", "payoutAccuracy", "text-right px-2")}
+                            {renderSortableHeader("Date", "settingsDate", "w-[120px]")}
+                            {renderSortableHeader("Staff Name", "staffName", "w-[100px]")}
+                            {renderSortableHeader("C1", "c1", "w-[40px] text-right")}
+                            {renderSortableHeader("C2", "c2", "w-[40px] text-right")}
+                            {renderSortableHeader("C3", "c3", "w-[40px] text-right")}
+                            {renderSortableHeader("C4", "c4", "w-[40px] text-right")}
+                            <TableHead className="px-2 py-2 h-10 text-[11px] font-bold uppercase tracking-wider">Img</TableHead>
+                            {renderSortableHeader("Remarks", "remarks", "min-w-[100px]")}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -777,10 +777,10 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                     item.payoutStatus === 'Very High' && "border-2 border-red-600 bg-red-50/10 animate-pulse"
                                 )}
                             >
-                                <TableCell>
+                                <TableCell className="py-2 px-2">
                                     <Badge
                                         className={cn(
-                                            "w-full justify-center text-white",
+                                            "w-full justify-center text-[10px] h-5 py-0 px-1 font-bold",
                                             item.payoutStatus === 'Very High' && "bg-red-700 hover:bg-red-800 border-red-800",
                                             item.payoutStatus === 'High' && "bg-red-400 hover:bg-red-500 border-red-500",
                                             item.payoutStatus === 'OK' && "bg-green-500 hover:bg-green-600 border-green-600",
@@ -791,18 +791,18 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                         {item.payoutStatus}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="font-mono text-xs">{item.tag}</TableCell>
-                                <TableCell>
-                                    <Link href={`/machines/${item.machineId}`} className="hover:underline text-primary font-medium">
+                                <TableCell className="py-2 px-2 font-mono text-[10px]">{item.tag}</TableCell>
+                                <TableCell className="py-2 px-2">
+                                    <Link href={`/machines/${item.machineId}`} className="hover:underline text-primary font-bold text-[11px] truncate block max-w-[180px]">
                                         {item.description}
                                     </Link>
                                 </TableCell>
-                                <TableCell className="text-right">{item.customerPlays}</TableCell>
-                                <TableCell className="text-right">{item.staffPlays}</TableCell>
-                                <TableCell className="text-right">{item.payouts}</TableCell>
-                                <TableCell className="text-right font-medium">{item.playsPerPayout}</TableCell>
-                                <TableCell className="text-right text-muted-foreground">{item.payoutSettings}</TableCell>
-                                <TableCell className="text-right font-medium">
+                                <TableCell className="py-2 px-2 text-right text-[11px] font-medium">{item.customerPlays}</TableCell>
+                                <TableCell className="py-2 px-2 text-right text-[11px] text-blue-500">{item.staffPlays}</TableCell>
+                                <TableCell className="py-2 px-2 text-right text-[11px] text-green-600">{item.payouts}</TableCell>
+                                <TableCell className="py-2 px-2 text-right text-[11px] font-bold">{item.playsPerPayout?.toFixed(1) || item.playsPerPayout}</TableCell>
+                                <TableCell className="py-2 px-2 text-right text-[11px] text-muted-foreground">{item.payoutSettings}</TableCell>
+                                <TableCell className="py-2 px-2 text-right text-[11px] font-bold">
                                     {item.payoutAccuracy > 0 ? (
                                         <span className={cn(
                                             item.payoutAccuracy > 100 ? "text-red-500" : "text-green-500"
@@ -810,44 +810,46 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                             {item.payoutAccuracy}%
                                         </span>
                                     ) : (
-                                        <span className="text-muted-foreground text-xs">N/A</span>
+                                        <span className="text-muted-foreground text-[10px]">N/A</span>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-xs text-muted-foreground">
-                                    {format(item.settingsDate, 'M/d/yyyy')}<br />
-                                    {format(item.settingsDate, 'h:mm:ss a')}
+                                <TableCell className="py-2 px-2 text-[10px] leading-tight min-w-[100px]">
+                                    <span className="font-medium">{format(item.settingsDate, 'MMM dd')}</span>
+                                    <span className="text-muted-foreground block text-[9px]">{format(item.settingsDate, 'HH:mm')}</span>
                                 </TableCell>
-                                <TableCell className="text-xs">{item.staffName}</TableCell>
-                                <TableCell className="text-right text-xs">{item.c1}</TableCell>
-                                <TableCell className="text-right text-xs">{item.c2}</TableCell>
-                                <TableCell className="text-right text-xs">{item.c3}</TableCell>
-                                <TableCell className="text-right text-xs">{item.c4}</TableCell>
-                                <TableCell>
+                                <TableCell className="py-2 px-2 text-[10px] truncate max-w-[80px]">{item.staffName}</TableCell>
+                                <TableCell className="py-2 px-2 text-right text-[10px] font-mono">{item.c1}</TableCell>
+                                <TableCell className="py-2 px-2 text-right text-[10px] font-mono">{item.c2}</TableCell>
+                                <TableCell className="py-2 px-2 text-right text-[10px] font-mono">{item.c3}</TableCell>
+                                <TableCell className="py-2 px-2 text-right text-[10px] font-mono font-bold text-blue-600">{item.c4}</TableCell>
+                                <TableCell className="py-2 px-2">
                                     {item.imageUrl ? (
                                         <Dialog>
                                             <DialogTrigger asChild>
-                                                <span className="text-xs text-blue-500 cursor-pointer hover:underline">Show Image</span>
+                                                <button className="h-6 w-8 bg-muted rounded flex items-center justify-center hover:bg-accent transition-colors overflow-hidden border">
+                                                    <img src={getThumbnailUrl(item.imageUrl, 50)} className="w-full h-full object-cover" />
+                                                </button>
                                             </DialogTrigger>
-                                            <DialogContent className="max-w-3xl w-full p-0 overflow-hidden bg-transparent border-none shadow-none">
+                                            <DialogContent className="max-w-4xl p-0 overflow-hidden bg-black/90 border-none">
                                                 <VisuallyHidden>
                                                     <DialogTitle>{item.description} Image</DialogTitle>
                                                 </VisuallyHidden>
-                                                <div className="relative w-full h-full flex items-center justify-center">
+                                                <div className="relative w-full h-full min-h-[50vh] flex items-center justify-center p-4">
                                                     <img
-                                                        src={getThumbnailUrl(item.imageUrl, 1024)}
+                                                        src={getThumbnailUrl(item.imageUrl, 1200)}
                                                         alt={item.description}
-                                                        loading="lazy"
-                                                        decoding="async"
-                                                        className="max-w-full max-h-[80vh] object-contain rounded-lg shadow-2xl"
+                                                        className="max-w-full max-h-[85vh] object-contain shadow-2xl"
                                                     />
                                                 </div>
                                             </DialogContent>
                                         </Dialog>
                                     ) : (
-                                        <span className="text-xs text-muted-foreground italic">No image</span>
+                                        <div className="h-6 w-8 bg-muted/30 rounded border border-dashed flex items-center justify-center">
+                                            <Eye className="h-3 w-3 text-muted-foreground/30" />
+                                        </div>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-xs text-muted-foreground">{item.remarks}</TableCell>
+                                <TableCell className="py-2 px-2 text-[10px] text-muted-foreground italic truncate max-w-[120px]">{item.remarks}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
