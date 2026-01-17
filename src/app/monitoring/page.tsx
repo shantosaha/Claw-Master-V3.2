@@ -156,10 +156,14 @@ type ExtendedMachineStatus = MachineStatus & Partial<MonitoringReportItem>;
 // New Component: Machine Quick View Dialog
 function MachineQuickViewDialog({
     machine,
+    allMachines,
+    dateRange,
     open,
     onOpenChange
 }: {
     machine: ExtendedMachineStatus | null;
+    allMachines: ExtendedMachineStatus[];
+    dateRange?: DateRange;
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
@@ -224,7 +228,8 @@ function MachineQuickViewDialog({
                         time: r.date ? format(new Date(r.date), 'MMM dd') : 'Unknown',
                         plays: customer + staff,
                         customer,
-                        staff
+                        staff,
+                        revenue: r.totalRev || 0
                     };
                 });
 
@@ -285,18 +290,55 @@ function MachineQuickViewDialog({
                 plays: customer + staff,
                 customer,
                 staff,
+                revenue: customer * (machine.group?.includes('Crane') ? 3.6 : 1.8) // Simulated revenue
             };
         });
-    }, [machine?.id, machine?.telemetry?.playCountToday, trendRange, realTrendData]);
+    }, [machine?.id, machine?.telemetry?.playCountToday, trendRange, realTrendData, machine?.group]);
 
     const chartData = realTrendData.length > 0 ? realTrendData : simulatedTrendData;
 
+    // 1. Store Rank Calculation
+    const storeStats = useMemo(() => {
+        if (!machine || !allMachines.length) return { rank: 1, total: 1 };
+        const locationMachines = allMachines.filter(m => m.location === machine.location);
+        const sorted = [...locationMachines].sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
+        const rank = sorted.findIndex(m => m.id === machine.id) + 1;
+        return { rank, total: locationMachines.length };
+    }, [machine?.id, machine?.location, allMachines]);
+
+    // 2. Momentum Calculation (Growth vs Yesterday)
+    const momentum = useMemo(() => {
+        if (!machine || !realTrendData.length) return null;
+        // Today's total plays
+        const todayPlays = machine.telemetry?.playCountToday ?? 0;
+        // Get yesterday's plays from trend data (second to last item if last is today)
+        // Or find the item that is exactly -1 day from today
+        const yesterday = subDays(new Date(), 1);
+        const yesterdayStr = format(yesterday, 'MMM dd');
+        const yesterdayData = realTrendData.find(d => d.time === yesterdayStr);
+
+        if (!yesterdayData || yesterdayData.plays === 0) return null;
+
+        const growth = ((todayPlays - yesterdayData.plays) / yesterdayData.plays) * 100;
+        return {
+            percent: Math.round(growth),
+            isPositive: growth >= 0,
+            yesterdayRevenue: yesterdayData.revenue || 0
+        };
+    }, [machine?.telemetry?.playCountToday, realTrendData, machine?.group]);
+
     if (!machine) return null;
 
-    const todayCustomer = machine.telemetry?.playCountToday ?? 0;
-    const todayStaff = machine.telemetry?.staffPlaysToday ?? 0;
-    const todayTotal = todayCustomer + todayStaff;
-    const todayPayouts = machine.telemetry?.payoutsToday ?? 0;
+    const isToday = !dateRange || (
+        dateRange.from && dateRange.to &&
+        format(dateRange.from, 'yyyyMMdd') === format(new Date(), 'yyyyMMdd') &&
+        format(dateRange.to, 'yyyyMMdd') === format(new Date(), 'yyyyMMdd')
+    );
+
+    const periodCustomer = machine.customerPlays ?? machine.telemetry?.playCountToday ?? 0;
+    const periodStaff = machine.staffPlays ?? machine.telemetry?.staffPlaysToday ?? 0;
+    const periodTotal = periodCustomer + periodStaff;
+    const periodPayouts = machine.payouts ?? machine.telemetry?.payoutsToday ?? 0;
 
     const statusColors = {
         online: "bg-green-500",
@@ -311,10 +353,15 @@ function MachineQuickViewDialog({
                 <DialogHeader>
                     <div className="flex items-center gap-3">
                         <div className={cn("h-3 w-3 rounded-full", statusColors[machine.status || 'online'])} />
-                        <DialogTitle>{machine.name} - Quick View</DialogTitle>
+                        <DialogTitle className="flex items-center gap-2">
+                            {machine.name}
+                            <Badge variant="outline" className="font-mono text-[10px] bg-muted/50 border-muted-foreground/20">
+                                #{machine.assetTag || machine.tag}
+                            </Badge>
+                        </DialogTitle>
                     </div>
                     <DialogDescription>
-                        Real-time status and performance metrics for {machine.location}
+                        {isToday ? 'Real-time staff and performance metrics' : 'Aggregated performance data for the selected period'} for {machine.location}
                     </DialogDescription>
                 </DialogHeader>
 
@@ -352,7 +399,7 @@ function MachineQuickViewDialog({
                             </Card>
                             <Card className="p-3 bg-muted/30">
                                 <div className="flex items-center justify-between">
-                                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Plays Today</p>
+                                    <p className="text-[10px] uppercase text-muted-foreground font-bold">{isToday ? 'Plays Today' : 'Plays in Period'}</p>
                                     <Dialog>
                                         <DialogTrigger asChild>
                                             <Button variant="ghost" size="icon" className="h-4 w-4 p-0">
@@ -366,24 +413,24 @@ function MachineQuickViewDialog({
                                             <div className="space-y-2 pt-2">
                                                 <div className="flex justify-between text-sm">
                                                     <span>Customer Plays:</span>
-                                                    <span className="font-bold text-green-600">{todayCustomer}</span>
+                                                    <span className="font-bold text-green-600">{periodCustomer}</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm">
                                                     <span>Staff Plays:</span>
-                                                    <span className="font-bold text-blue-600">{todayStaff}</span>
+                                                    <span className="font-bold text-blue-600">{periodStaff}</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm border-t pt-2 font-semibold">
                                                     <span>Total:</span>
-                                                    <span>{todayTotal}</span>
+                                                    <span>{periodTotal}</span>
                                                 </div>
                                             </div>
                                         </DialogContent>
                                     </Dialog>
                                 </div>
                                 <div className="flex items-baseline gap-2">
-                                    <p className="text-xl font-bold">{todayTotal}</p>
+                                    <p className="text-xl font-bold">{periodTotal}</p>
                                     <p className="text-[10px] text-muted-foreground">
-                                        ({todayCustomer} + <span className="text-blue-500">{todayStaff}</span>)
+                                        ({periodCustomer} + <span className="text-blue-500">{periodStaff}</span>)
                                     </p>
                                 </div>
                             </Card>
@@ -395,7 +442,7 @@ function MachineQuickViewDialog({
                                 <div className="space-y-1">
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground text-[11px]">Payouts:</span>
-                                        <span className="font-mono font-bold text-amber-600">{todayPayouts}</span>
+                                        <span className="font-mono font-bold text-amber-600">{periodPayouts}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground text-[11px]">Plays/Win:</span>
@@ -434,28 +481,40 @@ function MachineQuickViewDialog({
                                             <div className="p-1 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
                                                 <DollarSign className="h-3 w-3 text-blue-600 dark:text-blue-400" />
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase text-blue-600/70 dark:text-blue-400/70">Est. Revenue</span>
+                                            <span className="text-[10px] font-bold uppercase text-blue-600/70 dark:text-blue-400/70">Total Revenue</span>
                                         </div>
                                         <div className="flex items-baseline gap-1">
                                             <span className="text-xl font-bold text-blue-700 dark:text-blue-300">
                                                 ${(machine.revenue || 0).toFixed(2)}
                                             </span>
-                                            <span className="text-[10px] text-blue-600/50 font-medium">today</span>
+                                            {isToday && momentum && (
+                                                <div className="flex flex-col ml-2 border-l pl-2 border-blue-200/50">
+                                                    <span className={cn(
+                                                        "text-[10px] font-bold leading-none",
+                                                        momentum.isPositive ? "text-green-600" : "text-red-500"
+                                                    )}>
+                                                        {momentum.isPositive ? '↑' : '↓'}{Math.abs(momentum.percent)}%
+                                                    </span>
+                                                    <span className="text-[9px] text-blue-600/40 font-medium whitespace-nowrap">
+                                                        vs ${momentum.yesterdayRevenue.toFixed(0)} (yest)
+                                                    </span>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
 
                                     <div className="p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
                                         <div className="flex items-center gap-2 mb-1">
                                             <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                                <TrendingUp className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                                <Target className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase text-emerald-600/70 dark:text-emerald-400/70">Efficiency</span>
+                                            <span className="text-[10px] font-bold uppercase text-emerald-600/70 dark:text-emerald-400/70">Store Rank</span>
                                         </div>
                                         <div className="flex items-baseline gap-1">
                                             <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
-                                                {machine.payoutAccuracy && machine.payoutAccuracy > 0 ? `${machine.payoutAccuracy}%` : '98%'}
+                                                #{storeStats.rank}
                                             </span>
-                                            <span className="text-[10px] text-emerald-600/50 font-medium">optimal</span>
+                                            <span className="text-[10px] text-emerald-600/50 font-medium">of {storeStats.total} units</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1361,7 +1420,7 @@ export default function MonitoringPage() {
     const [payoutStatusFilter, setPayoutStatusFilter] = useState<string>("all");
     const [viewMode, setViewMode] = useState<"grid" | "report">("grid");
     const [dateRange, setDateRange] = useState<DateRange | undefined>({
-        from: new Date(new Date().setDate(new Date().getDate() - 7)),
+        from: new Date(),
         to: new Date(),
     });
 
@@ -1820,6 +1879,8 @@ export default function MonitoringPage() {
 
                     <MachineQuickViewDialog
                         machine={quickViewMachine}
+                        allMachines={mergedMachines as any}
+                        dateRange={dateRange}
                         open={!!quickViewMachine}
                         onOpenChange={(open) => !open && setQuickViewMachine(null)}
                     />

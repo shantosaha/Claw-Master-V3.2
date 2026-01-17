@@ -56,8 +56,8 @@ export function MachineTable({
     onRestore
 }: MachineTableProps) {
     const router = useRouter();
-    const [sortField, setSortField] = useState<SortField | null>(null);
-    const [sortDirection, setSortDirection] = useState<SortDirection>(null);
+    const [sortField, setSortField] = useState<SortField>('assetTag');
+    const [sortDirection, setSortDirection] = useState<SortDirection>('asc');
 
     const getStatusColor = (status: string) => {
         const normalized = status.toLowerCase();
@@ -91,12 +91,7 @@ export function MachineTable({
 
     const handleSort = (field: SortField) => {
         if (sortField === field) {
-            if (sortDirection === 'asc') {
-                setSortDirection('desc');
-            } else if (sortDirection === 'desc') {
-                setSortDirection(null);
-                setSortField(null);
-            }
+            setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
         } else {
             setSortField(field);
             setSortDirection('asc');
@@ -114,8 +109,6 @@ export function MachineTable({
     };
 
     const sortedMachines = [...machines].sort((a, b) => {
-        if (!sortField || !sortDirection) return 0;
-
         const getValue = (item: MachineDisplayItem, field: SortField) => {
             let currentSlot = null;
             if (item.isSlot && item.slotId) {
@@ -131,27 +124,77 @@ export function MachineTable({
                     return currentSlot?.stockLevel || '';
                 case 'queueLength':
                     return currentSlot?.upcomingQueue?.length || 0;
+                case 'status':
+                    return item.slotStatus || item.status || '';
+                case 'assetTag':
+                    return item.assetTag || (item as any).tag || '';
+                case 'name':
+                    return item.name || '';
                 default:
                     return (item as any)[field];
             }
         };
 
-        let aValue = getValue(a, sortField);
-        let bValue = getValue(b, sortField);
+        const aValue = getValue(a, sortField);
+        const bValue = getValue(b, sortField);
 
-        // Handle null/undefined values
-        if (aValue == null) aValue = '';
-        if (bValue == null) bValue = '';
+        // Natural sort helper that handles numbers correctly
+        const compareValues = (v1: any, v2: any, field: SortField): number => {
+            // Handle numeric fields first
+            const numericFields: SortField[] = ['playCount', 'revenue', 'queueLength'];
+            if (numericFields.includes(field)) {
+                const n1 = Number(v1) || 0;
+                const n2 = Number(v2) || 0;
+                return n1 - n2;
+            }
 
-        // Convert to string for comparison
-        aValue = String(aValue).toLowerCase();
-        bValue = String(bValue).toLowerCase();
+            // Priority sorting for stockLevel
+            if (field === 'stockLevel') {
+                const priority: Record<string, number> = {
+                    'Full': 0, 'In Stock': 0,
+                    'Good': 1, 'Limited Stock': 2,
+                    'Low': 3, 'Low Stock': 3,
+                    'Empty': 4, 'Out of Stock': 4
+                };
+                const p1 = priority[String(v1)] ?? 99;
+                const p2 = priority[String(v2)] ?? 99;
+                return p1 - p2;
+            }
 
-        if (sortDirection === 'asc') {
-            return aValue > bValue ? 1 : -1;
-        } else {
-            return aValue < bValue ? 1 : -1;
+            // Natural sort for strings
+            const s1 = String(v1 || '').trim();
+            const s2 = String(v2 || '').trim();
+
+            return s1.localeCompare(s2, undefined, {
+                numeric: true,
+                sensitivity: 'base'
+            });
+        };
+
+        let result = compareValues(aValue, bValue, sortField);
+
+        // Secondary sort for stability (Tag)
+        if (result === 0) {
+            const aTag = a.assetTag || (a as any).tag || '';
+            const bTag = b.assetTag || (b as any).tag || '';
+            result = aTag.localeCompare(bTag, undefined, { numeric: true });
         }
+
+        // Tertiary sort for absolute stability (Name)
+        if (result === 0) {
+            const aName = String(a.name || '');
+            const bName = String(b.name || '');
+            result = aName.localeCompare(bName, undefined, { numeric: true });
+        }
+
+        // Final fallback for multi-slot stability (Slot ID)
+        if (result === 0) {
+            const aSid = String(a.slotId || a.id);
+            const bSid = String(b.slotId || b.id);
+            result = aSid.localeCompare(bSid);
+        }
+
+        return sortDirection === 'asc' ? result : -result;
     });
 
     return (
