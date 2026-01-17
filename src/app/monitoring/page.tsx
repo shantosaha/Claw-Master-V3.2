@@ -436,6 +436,8 @@ function MachineQuickViewDialog({
 
     // 5. Weekend Forecast (renamed to Machine Forecast)
     const forecast = useMemo(() => {
+        if (!machine) return { prediction: 'Cloudy', label: 'Moderate Traffic', color: 'text-blue-400' };
+
         const baseTraffic = machine.telemetry?.playCountToday ?? 0;
         let prediction = 'Cloudy';
         let label = 'Moderate Traffic';
