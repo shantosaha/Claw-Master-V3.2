@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { View, TrendingUp, DollarSign, Target, ChevronRight, Trophy, Info } from "lucide-react";
+import { View, TrendingUp, DollarSign, Target, ChevronRight, Trophy, Info, Crown, Sun, CloudRain, Cloud, Dumbbell, Calendar, Medal } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
@@ -42,6 +42,8 @@ export function NonCraneQuickViewDialog({
     open,
     onOpenChange
 }: NonCraneQuickViewDialogProps) {
+    if (!machine) return null;
+
     const [trendRange, setTrendRange] = useState<'7d' | '14d' | '30d' | '6m'>('7d');
     const [realTrendData, setRealTrendData] = useState<any[]>([]);
     const [loadingTrend, setLoadingTrend] = useState(false);
@@ -168,7 +170,7 @@ export function NonCraneQuickViewDialog({
         };
     }, [machine?.telemetry?.playCountToday, realTrendData]);
 
-    if (!machine) return null;
+
 
     const isToday = !dateRange || (
         dateRange.from && dateRange.to &&
@@ -179,6 +181,66 @@ export function NonCraneQuickViewDialog({
     const periodCustomer = machine.customerPlays ?? machine.telemetry?.playCountToday ?? 0;
     const periodStaff = machine.staffPlays ?? machine.telemetry?.staffPlaysToday ?? 0;
     const periodTotal = periodCustomer + periodStaff;
+
+    // --- NEW INSIGHTS CALCULATIONS ---
+
+    // 1. Hall of Fame (Best Day in Period)
+    const hallOfFame = useMemo(() => {
+        if (!realTrendData.length) return null;
+        let maxRev = 0;
+        let bestDate = '';
+        realTrendData.forEach(d => {
+            if (d.revenue > maxRev) {
+                maxRev = d.revenue;
+                bestDate = d.time;
+            }
+        });
+        return { maxRev, bestDate };
+    }, [realTrendData]);
+
+    // 2. The Heavy Lifter (Store Contribution)
+    const heavyLifter = useMemo(() => {
+        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell };
+
+        // Calculate total store revenue (same location)
+        const storeTotalRev = allMachines
+            .filter(m => m.location === machine.location)
+            .reduce((sum, m) => sum + (m.revenue || 0), 0);
+
+        if (storeTotalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell };
+
+        const myRev = machine.revenue || 0;
+        const percent = (myRev / storeTotalRev) * 100;
+
+        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', icon: Crown };
+        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', icon: Dumbbell };
+        return { percent, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell };
+    }, [machine, allMachines]);
+
+    // 3. Weekend Forecast
+    const forecast = useMemo(() => {
+        // Simple heuristic: based on recent momentum
+        const baseTraffic = machine.telemetry?.playCountToday ?? 0;
+        let prediction = 'Cloudy';
+        let label = 'Moderate Traffic';
+        let Icon = Cloud;
+        let color = 'text-blue-400';
+
+        if (momentum?.isPositive && momentum.percent > 20) {
+            prediction = 'Sunny';
+            label = 'High Traffic Expected';
+            Icon = Sun;
+            color = 'text-amber-500';
+        } else if (momentum?.isPositive === false && Math.abs(momentum.percent) > 20) {
+            prediction = 'Rainy';
+            label = 'Low Turnout Likely';
+            Icon = CloudRain;
+            color = 'text-slate-400';
+        }
+
+        return { prediction, label, Icon, color };
+    }, [machine, momentum]);
+
 
     const statusColors = {
         online: "bg-green-500",
@@ -376,6 +438,57 @@ export function NonCraneQuickViewDialog({
                                         </div>
                                     </DialogContent>
                                 </Dialog>
+                            </div>
+
+                            {/* --- THE INSIGHTS DASHBOARD --- */}
+                            <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-dashed">
+
+                                {/* 1. Hall of Fame */}
+                                {hallOfFame && (
+                                    <div className="p-2.5 bg-yellow-50/50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-900/30">
+                                        <div className="flex items-center gap-1.5 mb-1.5">
+                                            <Trophy className="h-3 w-3 text-yellow-600" />
+                                            <span className="text-[9px] font-bold uppercase text-yellow-700/70">Hall of Fame</span>
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className="text-[10px] text-muted-foreground">Best Day (Period)</span>
+                                            <div className="flex items-baseline gap-1">
+                                                <span className="font-bold text-sm text-yellow-700 dark:text-yellow-400">${hallOfFame.maxRev.toFixed(0)}</span>
+                                                <span className="text-[9px] text-yellow-600/50">on {hallOfFame.bestDate}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* 2. Heavy Lifter */}
+                                <div className="p-2.5 bg-slate-50/50 dark:bg-slate-900/10 rounded-lg border border-slate-100 dark:border-slate-800/50">
+                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                        <heavyLifter.icon className={cn("h-3 w-3", heavyLifter.color)} />
+                                        <span className={cn("text-[9px] font-bold uppercase", heavyLifter.color)}>Contribution</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-muted-foreground">{heavyLifter.class}</span>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className={cn("font-bold text-sm", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</span>
+                                            <span className="text-[9px] text-muted-foreground">of Store Rev</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* 3. Weekend Forecast */}
+                                <div className="col-span-2 p-2.5 bg-blue-50/30 dark:bg-blue-900/5 rounded-lg border border-blue-50 dark:border-blue-900/20 flex items-center justify-between">
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-1.5 mb-0.5">
+                                            <Calendar className="h-3 w-3 text-blue-500" />
+                                            <span className="text-[9px] font-bold uppercase text-blue-600/70">Weekend Forecast</span>
+                                        </div>
+                                        <span className="text-[10px] font-medium text-muted-foreground">{forecast.label}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <forecast.Icon className={cn("h-8 w-8", forecast.color)} />
+                                    </div>
+                                </div>
+
                             </div>
                         </div>
                     </div>
