@@ -255,7 +255,6 @@ function MachineQuickViewDialog({
         };
 
         fetchTrend();
-        fetchTrend();
     }, [machine?.assetTag, machine?.tag, open, trendRange]);
 
     // Fetch "All Time" (1 Year) data for Hall of Fame
