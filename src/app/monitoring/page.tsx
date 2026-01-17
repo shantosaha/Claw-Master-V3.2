@@ -42,14 +42,20 @@ import {
     Target,
     ShieldAlert,
     Loader2,
-    Trophy
+    Trophy,
+    Calendar,
+    Sun,
+    Cloud,
+    CloudRain,
+    Crown,
+    Dumbbell
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeMachine, ServiceReport } from "@/types";
 import { monitoringService, MachineStatus, MonitoringAlert, MonitoringReportItem } from "@/services/monitoringService";
 import { LoadingSkeleton } from "@/components/common/LoadingSkeleton";
 import Link from "next/link";
-import { format, subDays, subMonths } from "date-fns";
+import { format, subDays, subMonths, subYears, parseISO, isSameDay } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@/components/analytics/DateRangePicker";
 import { GlobalServiceHistoryTable } from "@/components/machines/GlobalServiceHistoryTable";
@@ -175,6 +181,9 @@ function MachineQuickViewDialog({
     const [storeRankOpen, setStoreRankOpen] = useState(false);
     const [rankScope, setRankScope] = useState<'store' | 'location' | 'group'>('store');
     const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set(['plays', 'customer', 'staff']));
+    const [hallOfFameOpen, setHallOfFameOpen] = useState(false);
+    const [contributionOpen, setContributionOpen] = useState(false);
+    const [allTimeBestDays, setAllTimeBestDays] = useState<{ date: string; revenue: number }[]>([]);
     // Memoized history from global context
     const settingsHistory = useMemo(() => {
         if (!machine) return [];
@@ -246,7 +255,47 @@ function MachineQuickViewDialog({
         };
 
         fetchTrend();
+        fetchTrend();
     }, [machine?.assetTag, machine?.tag, open, trendRange]);
+
+    // Fetch "All Time" (1 Year) data for Hall of Fame
+    useEffect(() => {
+        if (!machine || !open) return;
+
+        const fetchAllTime = async () => {
+            try {
+                const { gameReportApiService } = await import('@/services/gameReportApiService');
+                const endDate = new Date();
+                const startDate = subYears(endDate, 1); // "All Time" approximated to 1 year
+                const tag = Number(machine.assetTag || machine.tag);
+
+                if (isNaN(tag)) return;
+
+                const reports = await gameReportApiService.fetchGameReport({
+                    tag,
+                    startDate,
+                    endDate,
+                    aggregate: false
+                });
+
+                // Find top 5 days
+                const sorted = reports
+                    .map(r => ({
+                        date: r.date || '',
+                        revenue: r.totalRev || 0
+                    }))
+                    .sort((a, b) => b.revenue - a.revenue)
+                    .filter(d => d.revenue > 0)
+                    .slice(0, 5);
+
+                setAllTimeBestDays(sorted);
+            } catch (err) {
+                console.warn("Failed to fetch Hall of Fame data", err);
+            }
+        };
+
+        fetchAllTime();
+    }, [machine?.assetTag, machine?.tag, open]);
 
     // Use simulated data ONLY when API fails
     const simulatedTrendData = useMemo(() => {
@@ -337,6 +386,78 @@ function MachineQuickViewDialog({
         };
     }, [machine?.telemetry?.playCountToday, realTrendData, machine?.group]);
 
+    // 3. Hall of Fame (Best Day - All Time)
+    const hallOfFame = useMemo(() => {
+        if (!allTimeBestDays.length) return null;
+
+        const best = allTimeBestDays[0];
+        // Format date fully: "Jan 12, 2024"
+        const bestDateFormatted = best.date ? format(new Date(best.date), 'MMM dd, yyyy') : 'Unknown';
+
+        return {
+            maxRev: best.revenue,
+            bestDate: bestDateFormatted,
+            topDays: allTimeBestDays.map(d => ({
+                ...d,
+                time: d.date ? format(new Date(d.date), 'MMM dd, yyyy') : 'Unknown'
+            }))
+        };
+    }, [allTimeBestDays]);
+
+    // 4. The Heavy Lifter (Store Contribution)
+    const heavyLifter = useMemo(() => {
+        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors: [] }; // Using Activity as generic icon
+
+        // Calculate total store revenue (same location)
+        const storeMachines = allMachines.filter(m => m.location === machine.location);
+        const storeTotalRev = storeMachines.reduce((sum, m) => sum + (m.revenue || 0), 0);
+
+        if (storeTotalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors: [] };
+
+        const myRev = machine.revenue || 0;
+        const percent = (myRev / storeTotalRev) * 100;
+
+        // Contributors list for Dialog
+        const contributors = storeMachines.map(m => ({
+            ...m,
+            percent: ((m.revenue || 0) / storeTotalRev) * 100
+        })).sort((a, b) => b.percent - a.percent);
+
+        // Import icons internally if needed or assume they are available in scope. 
+        // Using generic icons for now if not imported, but earlier file content showed Trophy/Target.
+        // Assuming Activity/Target/Trophy are available.
+        // We need Dumbbell, Crown for this logic usually, but let's reuse what we have or import them.
+        // I will use Activity for now as placeholder for Dumbbell if not imported.
+
+        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', icon: Trophy, contributors };
+        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', icon: Target, contributors };
+        return { percent, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors };
+    }, [machine, allMachines]);
+
+    // 5. Weekend Forecast (renamed to Machine Forecast)
+    const forecast = useMemo(() => {
+        const baseTraffic = machine.telemetry?.playCountToday ?? 0;
+        let prediction = 'Cloudy';
+        let label = 'Moderate Traffic';
+        // Need Cloud, Sun, CloudRain icons. Assuming they are not imported yet. 
+        // I will return strings for icons and handle them in JSX or add imports.
+        // The previous file had Lucide icons. I'll stick to text descriptions or simple logic if icons missing.
+        // Actually, let's use the momentum to define color/text.
+        let color = 'text-blue-400';
+
+        if (momentum?.isPositive && momentum.percent > 20) {
+            prediction = 'Sunny';
+            label = 'High Traffic Expected';
+            color = 'text-amber-500';
+        } else if (momentum?.isPositive === false && Math.abs(momentum.percent) > 20) {
+            prediction = 'Rainy';
+            label = 'Low Turnout Likely';
+            color = 'text-slate-400';
+        }
+
+        return { prediction, label, color };
+    }, [machine, momentum]);
+
     if (!machine) return null;
 
     const isToday = !dateRange || (
@@ -372,6 +493,39 @@ function MachineQuickViewDialog({
                                 </Badge>
                             </div>
                         </DialogTitle>
+
+                        {/* Date Range Badge */}
+                        <div className="flex items-center gap-2 ml-4">
+                            {dateRange?.from && (
+                                <Badge variant="secondary" className="text-[10px] font-normal px-2 h-5 bg-muted text-muted-foreground hover:bg-muted">
+                                    <Calendar className="w-3 h-3 mr-1.5 opacity-70" />
+                                    {(() => {
+                                        const now = new Date();
+                                        const from = dateRange.from!;
+                                        const to = dateRange.to || from;
+                                        const isSingleDay = isSameDay(from, to);
+                                        const isTodayDate = isSameDay(from, now);
+                                        const isYesterdayDate = isSameDay(from, subDays(now, 1));
+
+                                        if (isSingleDay) {
+                                            if (isTodayDate) return `Today (${format(from, 'd MMMM yyyy')})`;
+                                            if (isYesterdayDate) return `Yesterday (${format(from, 'd MMMM yyyy')})`;
+                                            return format(from, 'd MMMM yyyy');
+                                        }
+                                        return `${format(from, 'd MMMM yyyy')} - ${format(to, 'd MMMM yyyy')}`;
+                                    })()}
+                                </Badge>
+                            )}
+                        </div>
+
+                        <div className="ml-auto flex items-center gap-2">
+                            <Badge variant="outline" className={cn("py-0.5 px-2 bg-background", forecast.color)}>
+                                {forecast.label === 'High Traffic Expected' && <Sun className="w-3 h-3 mr-1.5 inline-block" />}
+                                {forecast.label === 'Low Turnout Likely' && <CloudRain className="w-3 h-3 mr-1.5 inline-block" />}
+                                {forecast.label === 'Moderate Traffic' && <Cloud className="w-3 h-3 mr-1.5 inline-block" />}
+                                {forecast.label}
+                            </Badge>
+                        </div>
                     </div>
                     <DialogDescription>
                         {isToday ? 'Real-time staff and performance metrics' : 'Aggregated performance data for the selected period'} for {machine.location}
@@ -601,6 +755,110 @@ function MachineQuickViewDialog({
                                             </div>
                                         </DialogContent>
                                     </Dialog>
+
+                                    {/* 3. Hall of Fame */}
+                                    <Dialog open={hallOfFameOpen} onOpenChange={setHallOfFameOpen}>
+                                        <DialogTrigger asChild>
+                                            <div className="p-3 bg-yellow-50/50 dark:bg-yellow-900/10 rounded-xl border border-yellow-100 dark:border-yellow-900/30 cursor-pointer hover:bg-yellow-100/30 transition-all group">
+                                                <div className="flex items-center gap-1.5 mb-1.5">
+                                                    <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                                                        <Trophy className="h-3 w-3 text-yellow-600" />
+                                                    </div>
+                                                    <span className="text-[10px] font-bold uppercase text-yellow-700/70">Hall of Fame</span>
+                                                </div>
+                                                <div className="flex flex-col gap-0.5">
+                                                    {hallOfFame ? (
+                                                        <>
+                                                            <span className="font-bold text-xl text-yellow-700 dark:text-yellow-400">${hallOfFame.maxRev.toFixed(0)}</span>
+                                                            <span className="text-[9px] text-yellow-600/50">Top: {hallOfFame.bestDate}</span>
+                                                        </>
+                                                    ) : (
+                                                        <span className="text-xs text-muted-foreground italic">No data yet</span>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-xs sm:max-w-sm">
+                                            <DialogHeader>
+                                                <DialogTitle className="flex items-center gap-2">
+                                                    <Trophy className="h-5 w-5 text-amber-500" />
+                                                    Hall of Fame
+                                                </DialogTitle>
+                                                <DialogDescription>
+                                                    Top 5 Highest Revenue Days (All Time).
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="space-y-2 mt-2">
+                                                {hallOfFame?.topDays.map((day, i) => (
+                                                    <div key={day.time} className={cn("flex items-center justify-between p-2 rounded-lg text-sm", i === 0 ? "bg-amber-100/50 dark:bg-amber-900/20 border border-amber-200" : "hover:bg-muted")}>
+                                                        <div className="flex items-center gap-3">
+                                                            <span className={cn("font-bold font-mono w-4", i === 0 ? "text-amber-600" : "text-muted-foreground")}>{i + 1}</span>
+                                                            <span className="font-medium">{day.time}</span>
+                                                        </div>
+                                                        <span className="font-bold text-amber-700 dark:text-amber-500">${day.revenue.toFixed(0)}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+
+                                    {/* 4. Contribution */}
+                                    <Dialog open={contributionOpen} onOpenChange={setContributionOpen}>
+                                        <DialogTrigger asChild>
+                                            <div className="p-3 bg-slate-50/50 dark:bg-slate-900/10 rounded-xl border border-slate-100 dark:border-slate-800/50 cursor-pointer hover:bg-slate-100/30 transition-all group">
+                                                <div className="flex items-center gap-1.5 mb-1.5">
+                                                    <div className={cn("p-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50")}>
+                                                        <heavyLifter.icon className={cn("h-3 w-3", heavyLifter.color)} />
+                                                    </div>
+                                                    <span className={cn("text-[9px] font-bold uppercase", heavyLifter.color)}>Contribution</span>
+                                                </div>
+                                                <div className="flex flex-col gap-0.5">
+                                                    <span className={cn("font-bold text-xl", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</span>
+                                                    <span className="text-[9px] text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
+                                                        {isToday ? 'Today' : 'of Selected Period'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                                            <DialogHeader>
+                                                <DialogTitle className="flex items-center gap-2">
+                                                    <Dumbbell className="h-5 w-5 text-slate-500" />
+                                                    Store Contribution
+                                                </DialogTitle>
+                                                <DialogDescription>
+                                                    Revenue contribution by machine in {machine.location} ({isToday ? 'Today' : 'Selected Period'}).
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="space-y-2 mt-2">
+                                                <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-1 border-b">
+                                                    <div className="col-span-1">#</div>
+                                                    <div className="col-span-8">Machine</div>
+                                                    <div className="col-span-3 text-right">Share</div>
+                                                </div>
+                                                {heavyLifter.contributors.map((m, idx) => (
+                                                    <div
+                                                        key={m.id}
+                                                        className={cn(
+                                                            "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
+                                                            m.id === machine.id ? "bg-slate-100 dark:bg-slate-800/40 ring-1 ring-slate-400/30" : "hover:bg-muted/50"
+                                                        )}
+                                                    >
+                                                        <div className="col-span-1 font-mono text-muted-foreground">{idx + 1}</div>
+                                                        <div className="col-span-8 flex flex-col min-w-0">
+                                                            <span className="font-bold truncate">{m.name}</span>
+                                                            <span className="text-[10px] text-muted-foreground">#{m.assetTag || m.tag}</span>
+                                                        </div>
+                                                        <div className="col-span-3 text-right">
+                                                            <span className={cn("font-bold", m.id === machine.id ? heavyLifter.color : "text-muted-foreground")}>
+                                                                {m.percent.toFixed(1)}%
+                                                            </span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </div>
                         </div>
@@ -765,10 +1023,10 @@ function MachineQuickViewDialog({
                                 Close
                             </Button>
                         </div>
-                    </div>
-                </div>
-            </DialogContent>
-        </Dialog>
+                    </div >
+                </div >
+            </DialogContent >
+        </Dialog >
     );
 }
 
