@@ -27,7 +27,7 @@ import { MachineComparisonTable } from "@/components/machines/MachineComparisonT
 import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
 import { ServiceHistoryTable } from "@/components/machines/ServiceHistoryTable";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
-import { isCraneMachine, GROUP_CATEGORIES, CLAW_MACHINE_GROUP } from "@/utils/machineTypeUtils";
+import { isCraneMachine, GROUP_CATEGORIES, CLAW_MACHINE_GROUP, MACHINE_GROUPS, GROUP_SUBGROUPS } from "@/utils/machineTypeUtils";
 
 // Constants for select field options
 const STATUS_OPTIONS = [
@@ -53,10 +53,9 @@ const PRIZE_SIZE_OPTIONS = [
 ];
 
 const LOCATION_OPTIONS = [
-    { label: "Arcade Floor", value: "Arcade Floor" },
-    { label: "Storage", value: "Storage" },
-    { label: "Warehouse", value: "Warehouse" },
-    { label: "Repair Shop", value: "Repair Shop" },
+    { label: "Ground", value: "Ground" },
+    { label: "Basement", value: "Basement" },
+    { label: "Level-1", value: "Level-1" },
 ];
 
 export default function MachineDetailsPage() {
@@ -398,9 +397,10 @@ export default function MachineDetailsPage() {
                                         options={[
                                             ...LOCATION_OPTIONS,
                                             // Add current location if not in options
-                                            ...(LOCATION_OPTIONS.some(o => o.value === enrichedMachine.location)
-                                                ? []
-                                                : [{ label: enrichedMachine.location, value: enrichedMachine.location }])
+                                            ...(enrichedMachine.location && !LOCATION_OPTIONS.some(o => o.value === enrichedMachine.location)
+                                                ? [{ label: enrichedMachine.location, value: enrichedMachine.location }]
+                                                : []),
+                                            { label: "Custom...", value: "__custom__" }
                                         ]}
                                         onSave={(val) => handleFieldUpdate("location", "Location", val, enrichedMachine.location)}
                                     />
@@ -417,13 +417,20 @@ export default function MachineDetailsPage() {
                                         <InlineEditField
                                             type="select"
                                             label="Machine Type"
-                                            value={enrichedMachine.category || ""}
+                                            value={enrichedMachine.category || "__none__"}
                                             disabled={!isEditMode}
                                             options={[
-                                                { label: "Not Set", value: "" },
-                                                ...(GROUP_CATEGORIES[CLAW_MACHINE_GROUP]?.map(cat => ({ label: cat, value: cat })) || [])
+                                                { label: "Not Set", value: "__none__" },
+                                                ...(GROUP_CATEGORIES[CLAW_MACHINE_GROUP]?.map(cat => ({ label: cat, value: cat })) || []),
+                                                // Include current value if it's custom
+                                                ...(enrichedMachine.category &&
+                                                    !GROUP_CATEGORIES[CLAW_MACHINE_GROUP]?.includes(enrichedMachine.category) &&
+                                                    enrichedMachine.category !== "Custom"
+                                                    ? [{ label: enrichedMachine.category, value: enrichedMachine.category }]
+                                                    : []),
+                                                { label: "Custom...", value: "__custom__" }
                                             ]}
-                                            onSave={(val) => handleFieldUpdate("category", "Machine Type", val, enrichedMachine.category)}
+                                            onSave={(val) => handleFieldUpdate("category", "Machine Type", val === "__none__" ? "" : val, enrichedMachine.category)}
                                         />
                                     )}
                                     {/* Physical Config - Only for Crane Machines */}
@@ -442,25 +449,49 @@ export default function MachineDetailsPage() {
                                         <InlineEditField
                                             type="select"
                                             label="Prize Size"
-                                            value={enrichedMachine.prizeSize || ""}
+                                            value={enrichedMachine.prizeSize || "__none__"}
                                             disabled={!isEditMode}
-                                            options={[{ label: "Not Set", value: "" }, ...PRIZE_SIZE_OPTIONS]}
-                                            onSave={(val) => handleFieldUpdate("prizeSize", "Prize Size", val, enrichedMachine.prizeSize)}
+                                            options={[{ label: "Not Set", value: "__none__" }, ...PRIZE_SIZE_OPTIONS]}
+                                            onSave={(val) => handleFieldUpdate("prizeSize", "Prize Size", val === "__none__" ? "" : val, enrichedMachine.prizeSize)}
                                         />
                                     )}
                                     <InlineEditField
-                                        type="text"
+                                        type="select"
                                         label="Group"
-                                        value={enrichedMachine.group || ""}
+                                        value={enrichedMachine.group || "__none__"}
                                         disabled={!isEditMode}
-                                        onSave={(val) => handleFieldUpdate("group", "Group", val, enrichedMachine.group)}
+                                        options={[
+                                            { label: "Not Set", value: "__none__" },
+                                            ...MACHINE_GROUPS.map(g => ({ label: g.replace("Group ", "").replace("-", " - "), value: g })),
+                                            // Include current value if it's custom
+                                            ...(enrichedMachine.group &&
+                                                !MACHINE_GROUPS.includes(enrichedMachine.group as any)
+                                                ? [{ label: enrichedMachine.group, value: enrichedMachine.group }]
+                                                : []),
+                                            { label: "Custom...", value: "__custom__" }
+                                        ]}
+                                        onSave={(val) => handleFieldUpdate("group", "Group", val === "__none__" ? "" : val, enrichedMachine.group)}
                                     />
                                     <InlineEditField
-                                        type="text"
+                                        type="select"
                                         label="Sub-Group"
-                                        value={enrichedMachine.subGroup || ""}
+                                        value={enrichedMachine.subGroup || "__none__"}
                                         disabled={!isEditMode}
-                                        onSave={(val) => handleFieldUpdate("subGroup", "Sub-Group", val, enrichedMachine.subGroup)}
+                                        options={[
+                                            { label: "Not Set", value: "__none__" },
+                                            ...(enrichedMachine.group && GROUP_SUBGROUPS[enrichedMachine.group]
+                                                ? GROUP_SUBGROUPS[enrichedMachine.group].map(sg => ({ label: sg, value: sg }))
+                                                : []),
+                                            // Include current value if it's custom
+                                            ...(enrichedMachine.subGroup &&
+                                                enrichedMachine.group &&
+                                                GROUP_SUBGROUPS[enrichedMachine.group] &&
+                                                !GROUP_SUBGROUPS[enrichedMachine.group].includes(enrichedMachine.subGroup)
+                                                ? [{ label: enrichedMachine.subGroup, value: enrichedMachine.subGroup }]
+                                                : []),
+                                            { label: "Custom...", value: "__custom__" }
+                                        ]}
+                                        onSave={(val) => handleFieldUpdate("subGroup", "Sub-Group", val === "__none__" ? "" : val, enrichedMachine.subGroup)}
                                     />
                                 </div>
                             </div>

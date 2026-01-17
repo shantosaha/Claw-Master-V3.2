@@ -15,7 +15,15 @@ import { monitoringService, MonitoringAlert } from "@/services/monitoringService
 import { MaintenanceTask } from "@/types";
 
 export default function Dashboard() {
-  const { items, machines, itemsLoading, machinesLoading } = useData();
+  const {
+    items,
+    machines,
+    itemsLoading,
+    machinesLoading,
+    todayGameReports,
+    todayRevenue,
+    apisLoading
+  } = useData();
 
   const [stats, setStats] = useState({
     totalMachines: 0,
@@ -34,12 +42,12 @@ export default function Dashboard() {
   // Calculate stats from context data and APIs
   useEffect(() => {
     const calculateStats = async () => {
+      // Don't wait for apisLoading here, we'll process data when it arrives
       if (itemsLoading || machinesLoading) return;
 
       try {
-        // Fetch Game Report data for today
-        const gameReportPromise = gameReportApiService.fetchTodayReport();
-        const revenuePromise = revenueApiService.fetchTodayRevenue();
+        const gameReportData = todayGameReports;
+        const revenueData = todayRevenue;
 
         const lowStock = items.filter(item => {
           const totalQty = item.locations.reduce((sum, loc) => sum + loc.quantity, 0);
@@ -72,9 +80,6 @@ export default function Dashboard() {
         // Get real alerts from monitoring service
         const currentAlerts = monitoringService.getAlerts();
         setAlerts(currentAlerts);
-
-        // Wait for API data
-        const [gameReportData, revenueData] = await Promise.all([gameReportPromise, revenuePromise]);
 
         // Process Game Report data
         if (gameReportData.length > 0) {
@@ -112,7 +117,7 @@ export default function Dashboard() {
     };
 
     calculateStats();
-  }, [items, machines, itemsLoading, machinesLoading]);
+  }, [items, machines, itemsLoading, machinesLoading, todayGameReports, todayRevenue]);
 
   return (
     <div className="space-y-6">

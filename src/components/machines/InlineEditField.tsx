@@ -37,6 +37,8 @@ export function InlineEditField(props: InlineEditFieldProps) {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(String(value ?? ""));
     const [isSaving, setIsSaving] = useState(false);
+    const [showCustomInput, setShowCustomInput] = useState(false);
+    const [customValue, setCustomValue] = useState("");
     const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
 
     useEffect(() => {
@@ -50,15 +52,21 @@ export function InlineEditField(props: InlineEditFieldProps) {
     }, [value]);
 
     const handleSave = async () => {
-        if (editValue === String(value ?? "")) {
+        const finalValue = showCustomInput ? customValue.trim() : editValue;
+
+        if (!finalValue && showCustomInput) return; // Don't save empty custom value
+
+        if (finalValue === String(value ?? "") && !showCustomInput) {
             setIsEditing(false);
             return;
         }
 
         setIsSaving(true);
         try {
-            await onSave(editValue);
+            await onSave(finalValue);
             setIsEditing(false);
+            setShowCustomInput(false);
+            setCustomValue("");
         } catch (error) {
             console.error("Failed to save:", error);
             // Revert on error
@@ -71,6 +79,8 @@ export function InlineEditField(props: InlineEditFieldProps) {
     const handleCancel = () => {
         setEditValue(String(value ?? ""));
         setIsEditing(false);
+        setShowCustomInput(false);
+        setCustomValue("");
     };
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -91,29 +101,56 @@ export function InlineEditField(props: InlineEditFieldProps) {
         );
     }
 
+
+
     if (isEditing) {
         if (props.type === "select") {
             return (
                 <div className={`flex flex-col gap-1 ${className}`}>
                     <span className="text-xs font-medium text-muted-foreground">{label}</span>
                     <div className="flex items-center gap-2">
-                        <Select
-                            value={editValue}
-                            onValueChange={(val) => {
-                                setEditValue(val);
-                            }}
-                        >
-                            <SelectTrigger className="h-8 w-full">
-                                <SelectValue placeholder="Select..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {props.options.map((opt) => (
-                                    <SelectItem key={opt.value} value={opt.value}>
-                                        {opt.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        {showCustomInput ? (
+                            <div className="flex items-center gap-2 flex-1">
+                                <Input
+                                    value={customValue}
+                                    onChange={(e) => setCustomValue(e.target.value)}
+                                    placeholder="Enter custom value..."
+                                    className="h-8 text-sm"
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") {
+                                            e.preventDefault();
+                                            handleSave();
+                                        } else if (e.key === "Escape") {
+                                            setShowCustomInput(false);
+                                        }
+                                    }}
+                                />
+                            </div>
+                        ) : (
+                            <Select
+                                value={editValue}
+                                onValueChange={(val) => {
+                                    if (val === "__custom__") {
+                                        setShowCustomInput(true);
+                                        setCustomValue("");
+                                    } else {
+                                        setEditValue(val);
+                                    }
+                                }}
+                            >
+                                <SelectTrigger className="h-8 w-full">
+                                    <SelectValue placeholder="Select..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {props.options.map((opt) => (
+                                        <SelectItem key={opt.value} value={opt.value}>
+                                            {opt.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        )}
                         <Button
                             size="icon"
                             variant="ghost"

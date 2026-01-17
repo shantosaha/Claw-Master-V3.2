@@ -1263,28 +1263,44 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                                         <Badge variant="secondary" className="text-[10px] ml-auto">Group 4 Only</Badge>
                                     </div>
 
-                                    {/* Machine Category (Machine Type eg: Trend Box, Doll House etc.) */}
+                                    {/* Machine Type Category */}
                                     <FormField
                                         control={form.control}
                                         name="category"
                                         render={({ field }) => (
                                             <FormItem className="mb-4">
-                                                <FormLabel>Machine Category (Type)</FormLabel>
+                                                <FormLabel>Machine Type</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value || ""}>
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Select machine category" />
+                                                            <SelectValue placeholder="Select machine type" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
                                                         {GROUP_CATEGORIES[CLAW_MACHINE_GROUP]?.map(cat => (
                                                             <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                                                         ))}
+                                                        <SelectItem value="Custom">Custom...</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </FormItem>
                                         )}
                                     />
+                                    {watchedCategory === 'Custom' && (
+                                        <FormField
+                                            control={form.control}
+                                            name="customCategory"
+                                            render={({ field }) => (
+                                                <FormItem className="mb-4">
+                                                    <FormLabel>Custom Machine Type</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="Enter custom machine type" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                    )}
 
                                     <div className="grid grid-cols-2 gap-4">
                                         {/* Physical Configuration */}

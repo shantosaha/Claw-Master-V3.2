@@ -68,7 +68,7 @@ export function AssignmentConfirmDialog({
                                         This machine already has an item:
                                     </p>
                                     <Link
-                                        href={`/inventory/${currentItem.id}`}
+                                        href={`/inventory/${currentItem.id || (currentItem as any).itemId}`}
                                         className="flex items-center gap-3 group hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
                                         onClick={(e) => e.stopPropagation()}
                                     >
@@ -104,10 +104,10 @@ export function AssignmentConfirmDialog({
                                         <div
                                             key={index}
                                             className={`flex items-start gap-2 text-sm ${warning.type === 'error'
-                                                    ? 'text-red-600'
-                                                    : warning.type === 'warning'
-                                                        ? 'text-amber-600'
-                                                        : 'text-blue-600'
+                                                ? 'text-red-600'
+                                                : warning.type === 'warning'
+                                                    ? 'text-amber-600'
+                                                    : 'text-blue-600'
                                                 }`}
                                         >
                                             <span className="flex-shrink-0">

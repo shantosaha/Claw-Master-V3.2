@@ -305,7 +305,7 @@ export function MachineTable({
                                         {isCrane ? (
                                             currentSlot?.currentItem ? (
                                                 <Link
-                                                    href={`/inventory/${currentSlot.currentItem.id}`}
+                                                    href={`/inventory/${currentSlot.currentItem.id || (currentSlot.currentItem as any).itemId}`}
                                                     className="flex items-center gap-2 hover:underline group"
                                                 >
                                                     {currentSlot.currentItem.imageUrl ? (
@@ -392,7 +392,7 @@ export function MachineTable({
                                                     const queueItem = currentSlot.upcomingQueue[0];
                                                     return (
                                                         <Link
-                                                            href={`/inventory/${queueItem.itemId}`}
+                                                            href={`/inventory/${queueItem.itemId || (queueItem as any).id}`}
                                                             className="flex items-center gap-2 hover:underline"
                                                         >
                                                             {queueItem.imageUrl ? (

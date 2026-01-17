@@ -1,6 +1,6 @@
 import { machineService } from './index';
 import { ArcadeMachine } from '@/types';
-import { gameReportApiService } from './gameReportApiService';
+import { gameReportApiService, GameReportItem } from './gameReportApiService';
 
 export interface MachineStatus {
     id: string;
@@ -63,6 +63,15 @@ class MonitoringService {
     private pollingInterval: ReturnType<typeof setInterval> | null = null;
     private lastData: MachineStatus[] = [];
     private alerts: MonitoringAlert[] = [];
+    private prefetchedGameData: GameReportItem[] | null = null;
+
+    setPrefetchedGameData(data: GameReportItem[]): void {
+        this.prefetchedGameData = data;
+        // If we have existing data, we can update it immediately
+        if (this.lastData.length > 0) {
+            this.poll();
+        }
+    }
 
     async fetchMachineStatuses(): Promise<MachineStatus[]> {
         try {
@@ -97,7 +106,7 @@ class MonitoringService {
         // Fetch today's game report data for real play counts
         let gameDataByTag = new Map<string, { standard: number; emp: number; payouts: number }>();
         try {
-            const gameReportData = await gameReportApiService.fetchTodayReport();
+            const gameReportData = this.prefetchedGameData || await gameReportApiService.fetchTodayReport();
             for (const item of gameReportData) {
                 const tag = String(item.assetTag || item.tag).trim().toLowerCase();
                 if (tag) {

@@ -490,7 +490,7 @@ export function ManageStockModal({ open, onOpenChange, machine, slotId, onStockS
                                             This will replace the current item:
                                         </p>
                                         <Link
-                                            href={`/inventory/${targetSlot.currentItem.id}`}
+                                            href={`/inventory/${targetSlot.currentItem.id || (targetSlot.currentItem as any).itemId}`}
                                             className="flex items-center gap-3 group hover:bg-muted/50 rounded-lg p-2 -m-2 transition-colors"
                                             onClick={(e) => e.stopPropagation()}
                                         >

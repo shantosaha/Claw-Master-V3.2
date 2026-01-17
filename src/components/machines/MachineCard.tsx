@@ -174,7 +174,7 @@ export function MachineCard({
                         {/* Item Name & Status */}
                         <div className="flex-1 min-w-0">
                             <Link
-                                href={`/inventory/${currentItem.id}`}
+                                href={`/inventory/${currentItem.id || (currentItem as any).itemId}`}
                                 className="text-[10px] text-blue-600 hover:underline truncate block leading-tight"
                                 onClick={(e) => e.stopPropagation()}
                             >

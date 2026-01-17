@@ -4,6 +4,9 @@ import React, { createContext, useContext, useEffect, useState, useCallback, Rea
 import { StockItem, ArcadeMachine, ServiceReport } from "@/types";
 import { stockService, machineService } from "@/services";
 import { serviceReportService } from "@/services/serviceReportService";
+import { GameReportItem, gameReportApiService } from "@/services/gameReportApiService";
+import { RevenueItem, revenueApiService } from "@/services/revenueApiService";
+import { monitoringService } from "@/services/monitoringService";
 
 interface DataContextType {
     // Stock Items
@@ -23,6 +26,12 @@ interface DataContextType {
     serviceReportsLoading: boolean;
     getReportsByMachineTag: (tag: string) => ServiceReport[];
     refreshServiceReports: () => Promise<void>;
+
+    // Today's API Data (Prefetched)
+    todayGameReports: GameReportItem[];
+    todayRevenue: RevenueItem[];
+    apisLoading: boolean;
+    refreshApis: () => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | null>(null);
@@ -46,6 +55,9 @@ export function DataProvider({ children }: DataProviderProps) {
     const [machinesLoading, setMachinesLoading] = useState(true);
     const [serviceReports, setServiceReports] = useState<ServiceReport[]>([]);
     const [serviceReportsLoading, setServiceReportsLoading] = useState(true);
+    const [todayGameReports, setTodayGameReports] = useState<GameReportItem[]>([]);
+    const [todayRevenue, setTodayRevenue] = useState<RevenueItem[]>([]);
+    const [apisLoading, setApisLoading] = useState(true);
 
     useEffect(() => {
         let unsubscribeStock: (() => void) | undefined;
@@ -87,16 +99,25 @@ export function DataProvider({ children }: DataProviderProps) {
                 setMachinesLoading(false);
             }
 
-            // Fetch JotForm service reports on startup
+            // Fetch All APIs on startup (JotForm, Game Report, Revenue)
             try {
-                console.log("[DataProvider] Fetching JotForm service reports on startup...");
-                const reports = await serviceReportService.getReports("GLOBAL_FETCH");
+                console.log("[DataProvider] Pre-fetching all machine performance APIs...");
+                const [reports, gameData, revData] = await Promise.all([
+                    serviceReportService.getReports("GLOBAL_FETCH"),
+                    gameReportApiService.fetchTodayReport(),
+                    revenueApiService.fetchTodayRevenue()
+                ]);
+
                 setServiceReports(reports);
-                console.log(`[DataProvider] Loaded ${reports.length} service reports from JotForm`);
+                setTodayGameReports(gameData);
+                setTodayRevenue(revData);
+
+                console.log(`[DataProvider] API Sync Complete: ${reports.length} reports, ${gameData.length} game stats, ${revData.length} revenue items`);
             } catch (error) {
-                console.error("[DataProvider] Failed to fetch JotForm reports:", error);
+                console.error("[DataProvider] Failed to fetch startup API data:", error);
             } finally {
                 setServiceReportsLoading(false);
+                setApisLoading(false);
             }
         };
 
@@ -129,19 +150,33 @@ export function DataProvider({ children }: DataProviderProps) {
     }, []);
 
     const getReportsByMachineTag = useCallback((tag: string) => {
+        if (!tag) return [];
         const normalizedTag = tag.trim().toLowerCase();
         return serviceReports.filter(report => {
             const reportTag = String(report.inflowSku || '').trim().toLowerCase();
-            return reportTag === normalizedTag;
+            const reportMachineId = String(report.machineId || '').trim().toLowerCase();
+            return reportTag === normalizedTag || reportMachineId === normalizedTag;
         });
     }, [serviceReports]);
 
-    const refreshServiceReports = useCallback(async () => {
+    const refreshApis = useCallback(async () => {
+        setApisLoading(true);
         try {
-            const reports = await serviceReportService.getReports("GLOBAL_FETCH");
+            const [reports, gameData, revData] = await Promise.all([
+                serviceReportService.getReports("GLOBAL_FETCH"),
+                gameReportApiService.fetchTodayReport(),
+                revenueApiService.fetchTodayRevenue()
+            ]);
             setServiceReports(reports);
+            setTodayGameReports(gameData);
+            setTodayRevenue(revData);
+
+            // Sync with monitoring service
+            monitoringService.setPrefetchedGameData(gameData);
         } catch (error) {
-            console.error("[DataProvider] Failed to refresh service reports:", error);
+            console.error("[DataProvider] Failed to refresh APIs:", error);
+        } finally {
+            setApisLoading(false);
         }
     }, []);
 
@@ -157,7 +192,11 @@ export function DataProvider({ children }: DataProviderProps) {
         serviceReports,
         serviceReportsLoading,
         getReportsByMachineTag,
-        refreshServiceReports,
+        refreshServiceReports: refreshApis,
+        todayGameReports,
+        todayRevenue,
+        apisLoading,
+        refreshApis,
     };
 
     return (

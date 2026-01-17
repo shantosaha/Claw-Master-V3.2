@@ -103,7 +103,7 @@ export function SlotsList({ machine, onUpdate }: SlotsListProps) {
                                     {slot.currentItem ? (
                                         <div className="flex flex-col">
                                             <Link
-                                                href={`/inventory/${slot.currentItem.id}`}
+                                                href={`/inventory/${slot.currentItem.id || (slot.currentItem as any).itemId}`}
                                                 className="font-medium text-blue-600 hover:underline"
                                             >
                                                 {slot.currentItem.name}
@@ -121,7 +121,7 @@ export function SlotsList({ machine, onUpdate }: SlotsListProps) {
                                                 {slot.upcomingQueue.length}
                                             </Badge>
                                             <Link
-                                                href={`/inventory/${slot.upcomingQueue[0].itemId}`}
+                                                href={`/inventory/${slot.upcomingQueue[0].itemId || (slot.upcomingQueue[0] as any).id}`}
                                                 className="text-sm text-blue-600 hover:underline"
                                             >
                                                 {slot.upcomingQueue[0].name}

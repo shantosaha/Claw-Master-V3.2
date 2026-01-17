@@ -266,7 +266,7 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
                             </div>
                             <div>
                                 <Link
-                                    href={`/inventory/${fullCurrentItem.id}`}
+                                    href={`/inventory/${fullCurrentItem.id || (fullCurrentItem as any).itemId}`}
                                     onClick={(e) => e.stopPropagation()}
                                     className="block group/link"
                                 >
@@ -394,7 +394,7 @@ export function StockDetailsPanel({ machine, slotId }: StockDetailsPanelProps) {
 
                                     <div className="flex-1 min-w-[120px]">
                                         <Link
-                                            href={`/inventory/${queueItem.itemId}`}
+                                            href={`/inventory/${queueItem.itemId || (queueItem as any).id}`}
                                             onClick={(e) => e.stopPropagation()}
                                             className="block group/link"
                                         >

@@ -60,6 +60,7 @@ import { NonCraneMachineCard } from "@/components/machines/NonCraneMachineCard";
 import { NonCraneQuickViewDialog } from "@/components/machines/NonCraneQuickViewDialog";
 import { NonCraneReportTable } from "@/components/machines/NonCraneReportTable";
 import { isCraneMachine } from "@/utils/machineTypeUtils";
+import { useData } from "@/context/DataProvider";
 import {
     ResponsiveContainer,
     AreaChart,
@@ -158,65 +159,34 @@ function MachineQuickViewDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
+    const { getReportsByMachineTag, serviceReportsLoading } = useData();
     const [trendRange, setTrendRange] = useState<'7d' | '14d' | '30d' | '6m'>('7d');
     const [realTrendData, setRealTrendData] = useState<any[]>([]);
     const [loadingTrend, setLoadingTrend] = useState(false);
     const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set(['plays', 'customer', 'staff']));
-    const [settingsHistory, setSettingsHistory] = useState<Array<{
-        date: string;
-        c1: number;
-        c2: number;
-        c3: number;
-        c4: number;
-        targetWin: number;
-        staff: string;
-    }>>([]);
-    const [loadingHistory, setLoadingHistory] = useState(false);
+    // Memoized history from global context
+    const settingsHistory = useMemo(() => {
+        if (!machine) return [];
+        const machineTag = String(machine.assetTag || machine.tag || '').trim();
+        const reports = getReportsByMachineTag(machineTag);
 
-    // Fetch real JotForm history when machine changes
-    useEffect(() => {
-        if (!machine || !open) return;
+        return reports
+            .sort((a: ServiceReport, b: ServiceReport) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
+            .slice(0, 3)
+            .map((report: ServiceReport) => ({
+                date: report.timestamp
+                    ? new Date(report.timestamp).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })
+                    : 'Unknown',
+                c1: report.c1 ?? 0,
+                c2: report.c2 ?? 0,
+                c3: report.c3 ?? 0,
+                c4: report.c4 ?? 0,
+                targetWin: report.playPerWin ?? 0,
+                staff: report.staffName || 'Unknown',
+            }));
+    }, [machine?.assetTag, machine?.tag, getReportsByMachineTag]);
 
-        const fetchHistory = async () => {
-            setLoadingHistory(true);
-            try {
-                const { serviceReportService } = await import('@/services/serviceReportService');
-
-                // Fetch reports for this machine (using its tag/assetTag)
-                // getReports("GLOBAL_FETCH") gets all reports, then we filter
-                const allReports = await serviceReportService.getReports("GLOBAL_FETCH");
-
-                const machineTag = String(machine.assetTag || machine.tag || '').trim().toLowerCase();
-                const machineHistory = allReports
-                    .filter((report: ServiceReport) => {
-                        const subTag = String(report.inflowSku || report.machineId || '').trim().toLowerCase();
-                        return subTag === machineTag;
-                    })
-                    .sort((a: ServiceReport, b: ServiceReport) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
-                    .slice(0, 3)
-                    .map((report: ServiceReport) => ({
-                        date: report.timestamp
-                            ? new Date(report.timestamp).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })
-                            : 'Unknown',
-                        c1: report.c1 ?? 0,
-                        c2: report.c2 ?? 0,
-                        c3: report.c3 ?? 0,
-                        c4: report.c4 ?? 0,
-                        targetWin: report.playPerWin ?? 0,
-                        staff: report.staffName || 'Unknown',
-                    }));
-
-                setSettingsHistory(machineHistory);
-            } catch (error) {
-                console.error('Failed to fetch settings history:', error);
-                setSettingsHistory([]);
-            } finally {
-                setLoadingHistory(false);
-            }
-        };
-
-        fetchHistory();
-    }, [machine?.id, open]);
+    const loadingHistory = serviceReportsLoading;
 
     // Fetch real historical data for trend graph
     useEffect(() => {
