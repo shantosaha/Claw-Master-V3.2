@@ -41,7 +41,8 @@ import {
     Users,
     Target,
     ShieldAlert,
-    Loader2
+    Loader2,
+    Trophy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeMachine, ServiceReport } from "@/types";
@@ -171,6 +172,8 @@ function MachineQuickViewDialog({
     const [trendRange, setTrendRange] = useState<'7d' | '14d' | '30d' | '6m'>('7d');
     const [realTrendData, setRealTrendData] = useState<any[]>([]);
     const [loadingTrend, setLoadingTrend] = useState(false);
+    const [storeRankOpen, setStoreRankOpen] = useState(false);
+    const [rankScope, setRankScope] = useState<'store' | 'location' | 'group'>('store');
     const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set(['plays', 'customer', 'staff']));
     // Memoized history from global context
     const settingsHistory = useMemo(() => {
@@ -299,12 +302,19 @@ function MachineQuickViewDialog({
 
     // 1. Store Rank Calculation
     const storeStats = useMemo(() => {
-        if (!machine || !allMachines.length) return { rank: 1, total: 1 };
-        const locationMachines = allMachines.filter(m => m.location === machine.location);
-        const sorted = [...locationMachines].sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
+        if (!machine || !allMachines.length) return { rank: 1, total: 1, list: [] };
+
+        let filtered = [...allMachines];
+        if (rankScope === 'location') {
+            filtered = allMachines.filter(m => m.location === machine.location);
+        } else if (rankScope === 'group') {
+            filtered = allMachines.filter(m => m.group === machine.group);
+        }
+
+        const sorted = filtered.sort((a, b) => (b.revenue || 0) - (a.revenue || 0));
         const rank = sorted.findIndex(m => m.id === machine.id) + 1;
-        return { rank, total: locationMachines.length };
-    }, [machine?.id, machine?.location, allMachines]);
+        return { rank, total: sorted.length, list: sorted };
+    }, [machine?.id, machine?.location, machine?.group, allMachines, rankScope]);
 
     // 2. Momentum Calculation (Growth vs Yesterday)
     const momentum = useMemo(() => {
@@ -353,11 +363,14 @@ function MachineQuickViewDialog({
                 <DialogHeader>
                     <div className="flex items-center gap-3">
                         <div className={cn("h-3 w-3 rounded-full", statusColors[machine.status || 'online'])} />
-                        <DialogTitle className="flex items-center gap-2">
-                            {machine.name}
-                            <Badge variant="outline" className="font-mono text-[10px] bg-muted/50 border-muted-foreground/20">
-                                #{machine.assetTag || machine.tag}
-                            </Badge>
+                        <DialogTitle className="text-xl flex items-center gap-2">
+                            Live Performance Monitor
+                            <div className="flex items-center gap-1.5 ml-2">
+                                <span className="text-sm font-medium text-muted-foreground">{machine.name}</span>
+                                <Badge variant="outline" className="font-mono text-[9px] h-4 px-1.5 bg-muted/50">
+                                    #{machine.assetTag || machine.tag}
+                                </Badge>
+                            </div>
                         </DialogTitle>
                     </div>
                     <DialogDescription>
@@ -503,20 +516,91 @@ function MachineQuickViewDialog({
                                         </div>
                                     </div>
 
-                                    <div className="p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100 dark:border-emerald-900/30">
-                                        <div className="flex items-center gap-2 mb-1">
-                                            <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
-                                                <Target className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                    <Dialog open={storeRankOpen} onOpenChange={setStoreRankOpen}>
+                                        <DialogTrigger asChild>
+                                            <div className="p-3 bg-emerald-50/50 dark:bg-emerald-900/10 rounded-xl border border-emerald-100 dark:border-emerald-900/30 cursor-pointer hover:bg-emerald-100/30 transition-all group">
+                                                <div className="flex items-center justify-between mb-1">
+                                                    <div className="flex items-center gap-2">
+                                                        <div className="p-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg">
+                                                            <Target className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                                                        </div>
+                                                        <span className="text-[10px] font-bold uppercase text-emerald-600/70 dark:text-emerald-400/70">
+                                                            {rankScope === 'store' ? 'Store Rank' : (rankScope === 'location' ? 'Level Rank' : 'Group Rank')}
+                                                        </span>
+                                                    </div>
+                                                    <ChevronRight className="h-3 w-3 text-emerald-400 group-hover:translate-x-0.5 transition-transform" />
+                                                </div>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
+                                                        #{storeStats.rank}
+                                                    </span>
+                                                    <span className="text-[10px] text-emerald-600/50 font-medium">of {storeStats.total} units</span>
+                                                </div>
                                             </div>
-                                            <span className="text-[10px] font-bold uppercase text-emerald-600/70 dark:text-emerald-400/70">Store Rank</span>
-                                        </div>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="text-xl font-bold text-emerald-700 dark:text-emerald-300">
-                                                #{storeStats.rank}
-                                            </span>
-                                            <span className="text-[10px] text-emerald-600/50 font-medium">of {storeStats.total} units</span>
-                                        </div>
-                                    </div>
+                                        </DialogTrigger>
+                                        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                                            <DialogHeader>
+                                                <DialogTitle className="flex items-center gap-2">
+                                                    <Trophy className="h-5 w-5 text-amber-500" />
+                                                    Matchine Leaderboard
+                                                </DialogTitle>
+                                                <DialogDescription>
+                                                    Ranking of machines by revenue. Switching view below.
+                                                </DialogDescription>
+                                            </DialogHeader>
+                                            <div className="flex gap-1 mt-4 p-1 bg-muted rounded-lg">
+                                                {(['store', 'location', 'group'] as const).map((s) => (
+                                                    <Button
+                                                        key={s}
+                                                        variant={rankScope === s ? "default" : "ghost"}
+                                                        size="sm"
+                                                        className="flex-1 h-7 text-[10px] capitalize"
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setRankScope(s);
+                                                        }}
+                                                    >
+                                                        {s}
+                                                    </Button>
+                                                ))}
+                                            </div>
+                                            <div className="mt-4 space-y-2">
+                                                <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-1 border-b">
+                                                    <div className="col-span-1">#</div>
+                                                    <div className="col-span-5">Machine</div>
+                                                    <div className="col-span-2 text-right">Plays</div>
+                                                    <div className="col-span-1 text-right">Win</div>
+                                                    <div className="col-span-3 text-right">Revenue</div>
+                                                </div>
+                                                {storeStats.list.map((m, idx) => (
+                                                    <div
+                                                        key={m.id}
+                                                        className={cn(
+                                                            "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
+                                                            m.id === machine.id ? "bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-500/30 shadow-sm" : "hover:bg-muted/50"
+                                                        )}
+                                                    >
+                                                        <div className="col-span-1 font-mono font-bold text-muted-foreground">
+                                                            {idx + 1}
+                                                        </div>
+                                                        <div className="col-span-5 flex flex-col min-w-0">
+                                                            <span className="font-bold truncate">{m.name}</span>
+                                                            <span className="text-[10px] text-muted-foreground font-mono">#{m.assetTag || m.tag}</span>
+                                                        </div>
+                                                        <div className="col-span-2 text-right font-medium">
+                                                            {m.customerPlays || 0}
+                                                        </div>
+                                                        <div className="col-span-1 text-right text-amber-600 font-bold">
+                                                            {m.payouts || 0}
+                                                        </div>
+                                                        <div className="col-span-3 text-right font-bold text-blue-600 dark:text-blue-400">
+                                                            ${(m.revenue || 0).toFixed(0)}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
                                 </div>
                             </div>
                         </div>
@@ -1887,6 +1971,8 @@ export default function MonitoringPage() {
 
                     <NonCraneQuickViewDialog
                         machine={quickViewNonCraneMachine as any}
+                        allMachines={mergedMachines as any}
+                        dateRange={dateRange}
                         open={!!quickViewNonCraneMachine}
                         onOpenChange={(open) => !open && setQuickViewNonCraneMachine(null)}
                     />

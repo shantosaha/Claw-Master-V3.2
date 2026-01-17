@@ -109,29 +109,37 @@ export function MachineTable({
     };
 
     const sortedMachines = [...machines].sort((a, b) => {
-        const getValue = (item: MachineDisplayItem, field: SortField) => {
+        const getValue = (currentMachine: MachineDisplayItem, field: SortField) => {
             let currentSlot = null;
-            if (item.isSlot && item.slotId) {
-                currentSlot = item.slots.find(s => s.id === item.slotId);
-            } else if (item.slots && item.slots.length > 0) {
-                currentSlot = item.slots[0];
+            if (currentMachine.isSlot && currentMachine.slotId) {
+                currentSlot = currentMachine.slots.find(s => s.id === currentMachine.slotId);
+            } else if (currentMachine.slots && currentMachine.slots.length > 0) {
+                currentSlot = currentMachine.slots[0];
             }
 
             switch (field) {
                 case 'currentItemName':
                     return currentSlot?.currentItem?.name || '';
                 case 'stockLevel':
-                    return currentSlot?.stockLevel || '';
+                    const stockItem = currentSlot?.currentItem;
+                    if (!stockItem) return -1;
+                    const locationsSum = stockItem.locations?.reduce((sum: number, loc: any) => sum + loc.quantity, 0);
+                    return locationsSum !== undefined ? locationsSum : (stockItem.totalQuantity ?? 0);
                 case 'queueLength':
-                    return currentSlot?.upcomingQueue?.length || 0;
+                    // Sort by the name of the first upcoming item since that's what's displayed
+                    return currentSlot?.upcomingQueue?.[0]?.name || '';
                 case 'status':
-                    return item.slotStatus || item.status || '';
+                    return currentMachine.slotStatus || currentMachine.status || '';
                 case 'assetTag':
-                    return item.assetTag || (item as any).tag || '';
+                    return currentMachine.assetTag || (currentMachine as any).tag || '';
                 case 'name':
-                    return item.name || '';
+                    return currentMachine.name || '';
+                case 'location':
+                    return currentMachine.location || '';
+                case 'prizeSize':
+                    return currentMachine.prizeSize || '';
                 default:
-                    return (item as any)[field];
+                    return (currentMachine as any)[field];
             }
         };
 
@@ -140,24 +148,42 @@ export function MachineTable({
 
         // Natural sort helper that handles numbers correctly
         const compareValues = (v1: any, v2: any, field: SortField): number => {
-            // Handle numeric fields first
-            const numericFields: SortField[] = ['playCount', 'revenue', 'queueLength'];
+            // Numeric fields
+            const numericFields: SortField[] = ['playCount', 'revenue', 'stockLevel'];
             if (numericFields.includes(field)) {
                 const n1 = Number(v1) || 0;
                 const n2 = Number(v2) || 0;
                 return n1 - n2;
             }
 
-            // Priority sorting for stockLevel
-            if (field === 'stockLevel') {
+            // Priority sorting for status
+            if (field === 'status') {
                 const priority: Record<string, number> = {
-                    'Full': 0, 'In Stock': 0,
-                    'Good': 1, 'Limited Stock': 2,
-                    'Low': 3, 'Low Stock': 3,
-                    'Empty': 4, 'Out of Stock': 4
+                    'online': 0,
+                    'maintenance': 1,
+                    'error': 2,
+                    'offline': 3
                 };
-                const p1 = priority[String(v1)] ?? 99;
-                const p2 = priority[String(v2)] ?? 99;
+                const s1 = String(v1 || '').toLowerCase();
+                const s2 = String(v2 || '').toLowerCase();
+                const p1 = priority[s1] ?? 99;
+                const p2 = priority[s2] ?? 99;
+                return p1 - p2;
+            }
+
+            // Priority sorting for prizeSize
+            if (field === 'prizeSize') {
+                const priority: Record<string, number> = {
+                    'Extra Small': 0,
+                    'Small': 1,
+                    'Medium': 2,
+                    'Large': 3,
+                    'Extra Large': 4
+                };
+                const s1 = String(v1 || '').trim();
+                const s2 = String(v2 || '').trim();
+                const p1 = priority[s1] ?? 99;
+                const p2 = priority[s2] ?? 99;
                 return p1 - p2;
             }
 
