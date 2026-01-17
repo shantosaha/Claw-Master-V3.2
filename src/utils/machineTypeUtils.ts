@@ -40,22 +40,10 @@ export const GROUP_SUBGROUPS: Record<string, string[]> = {
     "Group 11-Others": ["Other"],
 };
 
-/** Specific crane machine model types */
-export const CRANE_MACHINE_TYPES = [
-    "Trend Catcher",
-    "Trend Box",
-    "SKWEB",
-    "INNIS",
-    "Doll Castle",
-    "Doll House",
-    "Giant Claw",
-    "Crazy Toy Nano",
-    "Crazy Star",
-    "Crazy Toy Miya",
-    "UFO Catcher",
-    "Prize Machine",
-    "Other",
-] as const;
+/** Categories (Machine Type) for each group, currently primarily for Cranes */
+export const GROUP_CATEGORIES: Record<string, string[]> = {
+    "Group 4-Cranes": ["Trend Catcher", "Trend Box", "Doll House", "Giant Claw", "Toy Soldier", "Mini Crane", "Other"],
+};
 
 /**
  * Check if a group string represents a claw machine group

@@ -11,6 +11,8 @@ export interface MachineStatus {
     lastPing: Date;
     telemetry: {
         playCountToday: number;
+        staffPlaysToday: number;
+        payoutsToday: number;
         payoutAccuracy: number; // Calculated from settings vs actual
         errorCode?: string;
     };
@@ -83,6 +85,8 @@ class MonitoringService {
             lastPing: new Date((item.lastUpdate as string) || Date.now()),
             telemetry: {
                 playCountToday: (item.playsToday as number) || 0,
+                staffPlaysToday: (item.staffPlaysToday as number) || 0,
+                payoutsToday: (item.payoutsToday as number) || 0,
                 payoutAccuracy: (item.payoutAccuracy as number) || 0,
                 errorCode: item.errorCode as string | undefined,
             },
@@ -91,13 +95,17 @@ class MonitoringService {
 
     private async transformMachineData(machines: ArcadeMachine[]): Promise<MachineStatus[]> {
         // Fetch today's game report data for real play counts
-        let gameDataByTag = new Map<string, number>();
+        let gameDataByTag = new Map<string, { standard: number; emp: number; payouts: number }>();
         try {
             const gameReportData = await gameReportApiService.fetchTodayReport();
             for (const item of gameReportData) {
                 const tag = String(item.assetTag || item.tag).trim().toLowerCase();
                 if (tag) {
-                    gameDataByTag.set(tag, item.standardPlays || 0);
+                    gameDataByTag.set(tag, {
+                        standard: item.standardPlays || 0,
+                        emp: item.empPlays || 0,
+                        payouts: item.points || 0
+                    });
                 }
             }
         } catch (error) {
@@ -106,7 +114,10 @@ class MonitoringService {
 
         return machines.map(machine => {
             const machineTag = String(machine.assetTag || '').trim().toLowerCase();
-            const playCountToday = gameDataByTag.get(machineTag) || 0;
+            const stats = gameDataByTag.get(machineTag);
+            const playCountToday = stats?.standard || 0;
+            const staffPlaysToday = stats?.emp || 0;
+            const payoutsToday = stats?.payouts || 0;
 
             return {
                 id: machine.id,
@@ -120,6 +131,8 @@ class MonitoringService {
                 type: machine.type || machine.group,   // Include type for backward compat
                 telemetry: {
                     playCountToday,
+                    staffPlaysToday,
+                    payoutsToday,
                     payoutAccuracy: 0, // Will be calculated in report view
                 },
             };

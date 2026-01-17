@@ -46,7 +46,7 @@ import {
 } from "lucide-react";
 import { where, orderBy, limit } from "firebase/firestore";
 import { toast } from "sonner";
-import { MACHINE_GROUPS, GROUP_SUBGROUPS, isCraneGroup, CLAW_MACHINE_GROUP, CRANE_MACHINE_TYPES } from "@/utils/machineTypeUtils";
+import { MACHINE_GROUPS, GROUP_SUBGROUPS, GROUP_CATEGORIES, isCraneGroup, CLAW_MACHINE_GROUP } from "@/utils/machineTypeUtils";
 
 const LOCATIONS = ["Ground", "Basement", "Level-1"];
 
@@ -198,6 +198,7 @@ const machineSchema = z.object({
     notes: z.string().optional(),
     tag: z.string().optional(),
     subGroup: z.string().optional(),
+    category: z.string().optional(),
     assetTagMode: z.enum(["shared", "separate"]).optional(),
     // New pricing fields for all machines
     playPrice: z.coerce.number().min(0).optional(),
@@ -278,6 +279,7 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
             notes: "",
             tag: "",
             subGroup: "",
+            category: "",
             assetTagMode: "shared",
             playPrice: 1.80,
             storeLocation: "",
@@ -550,6 +552,7 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                     notes: machineToEdit.notes || "",
                     tag: machineToEdit.tag || "",
                     subGroup: machineToEdit.subGroup || "",
+                    category: machineToEdit.type || "",
                     assetTagMode: "shared",
                     playPrice: machineToEdit.advancedSettings?.cardCashPlayPrice || 1.80,
                     storeLocation: machineToEdit.storeLocation || "",
@@ -577,6 +580,7 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                     notes: "",
                     tag: "",
                     subGroup: "",
+                    category: "",
                     assetTagMode: "shared",
                     playPrice: 1.80,
                     storeLocation: "",
@@ -611,12 +615,13 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                 location: finalLocation,
                 status: data.status,
                 physicalConfig: isCrane ? (data.physicalConfig || "single") : "single",
-                type: finalGroup, // Keep type for backward compatibility
+                type: isCrane ? (data.category || finalGroup) : finalGroup, // Store category in type field for cranes, fallback to group
                 group: finalGroup, // New: Store in group field
                 prizeSize: isCrane ? data.prizeSize : undefined,
                 notes: data.notes,
                 tag: data.tag,
                 subGroup: data.subGroup,
+                category: data.category,
                 storeLocation: data.storeLocation,
                 imageUrl: capturedImage || undefined,
                 updatedAt: new Date(),
@@ -1250,22 +1255,22 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                                         <Badge variant="secondary" className="text-[10px] ml-auto">Group 4 Only</Badge>
                                     </div>
 
-                                    {/* Machine Type - Specific crane model (Trend Box, Doll House, etc.) */}
+                                    {/* Machine Category (Machine Type eg: Trend Box, Doll House etc.) */}
                                     <FormField
                                         control={form.control}
-                                        name="subGroup"
+                                        name="category"
                                         render={({ field }) => (
                                             <FormItem className="mb-4">
-                                                <FormLabel>Machine Type</FormLabel>
+                                                <FormLabel>Machine Category (Type)</FormLabel>
                                                 <Select onValueChange={field.onChange} value={field.value || ""}>
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Select machine type" />
+                                                            <SelectValue placeholder="Select machine category" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {CRANE_MACHINE_TYPES.map(type => (
-                                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                        {GROUP_CATEGORIES[CLAW_MACHINE_GROUP]?.map(cat => (
+                                                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                                                         ))}
                                                     </SelectContent>
                                                 </Select>

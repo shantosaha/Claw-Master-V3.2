@@ -436,6 +436,7 @@ export interface ArcadeMachine {
     location: string;
     group?: string;
     subGroup?: string;
+    category?: string;
 
     // API Sync Fields
     tag?: string;            // API machine tag ID (string)
