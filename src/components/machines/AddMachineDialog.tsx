@@ -41,18 +41,14 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { ManageStockModal } from "./ManageStockModal";
 import {
     Camera, RefreshCw, Image as ImageIcon, ChevronsUpDown,
-    Package, Upload, X, Check
+    Package, Upload, X, Check, MapPin, DollarSign, Settings2,
+    Tag, Building2, Info, Grip
 } from "lucide-react";
 import { where, orderBy, limit } from "firebase/firestore";
 import { toast } from "sonner";
-import { MACHINE_GROUPS, GROUP_SUBGROUPS, isCraneGroup, CLAW_MACHINE_GROUP } from "@/utils/machineTypeUtils";
+import { MACHINE_GROUPS, GROUP_SUBGROUPS, isCraneGroup, CLAW_MACHINE_GROUP, CRANE_MACHINE_TYPES } from "@/utils/machineTypeUtils";
 
 const LOCATIONS = ["Ground", "Basement", "Level-1"];
-const TYPES = [
-    "Trend Catcher", "Trend Box", "SKWEB", "INNIS",
-    "Doll Castle", "Doll House", "Giant Claw",
-    "Crazy Toy Nano", "Crazy Star", "Crazy Toy Miya"
-];
 
 // Location code mappings for machine ID generation
 const LOCATION_CODES: Record<string, string> = {
@@ -203,6 +199,10 @@ const machineSchema = z.object({
     tag: z.string().optional(),
     subGroup: z.string().optional(),
     assetTagMode: z.enum(["shared", "separate"]).optional(),
+    // New pricing fields for all machines
+    playPrice: z.coerce.number().min(0).optional(),
+    storeLocation: z.string().optional(),
+    // Playfield settings for claw machines
     playfield: z.object({
         c1: z.coerce.number().optional(),
         c2: z.coerce.number().optional(),
@@ -279,6 +279,8 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
             tag: "",
             subGroup: "",
             assetTagMode: "shared",
+            playPrice: 1.80,
+            storeLocation: "",
             playfield: { c1: 0, c2: 0, c3: 0, c4: 0, payoutRate: 0 }
         },
     });
@@ -504,31 +506,36 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
         if (open) {
             if (machineToEdit) {
                 const isCustomLocation = !LOCATIONS.includes(machineToEdit.location);
-                const isCustomType = machineToEdit.type && !TYPES.includes(machineToEdit.type);
+                // Check if group is one of the standard machine groups
+                const isCustomGroup = machineToEdit.group &&
+                    !MACHINE_GROUPS.includes(machineToEdit.group as any) &&
+                    machineToEdit.group !== 'custom';
 
-                // Fetch existing playfield settings
-                const fetchSettings = async () => {
-                    try {
-                        const settingsData = await settingsService.query(
-                            where("machineId", "==", machineToEdit.id),
-                            orderBy("timestamp", "desc"),
-                            limit(1)
-                        );
-                        if (settingsData.length > 0) {
-                            const latest = settingsData[0];
-                            form.setValue("playfield", {
-                                c1: (latest.c1 ?? latest.strengthSetting) || 0,
-                                c2: latest.c2 || 0,
-                                c3: latest.c3 || 0,
-                                c4: latest.c4 || 0,
-                                payoutRate: (latest.payoutRate ?? latest.payoutPercentage) || 0,
-                            });
+                // Fetch existing playfield settings (only for claw machines)
+                if (isCraneGroup(machineToEdit.group)) {
+                    const fetchSettings = async () => {
+                        try {
+                            const settingsData = await settingsService.query(
+                                where("machineId", "==", machineToEdit.id),
+                                orderBy("timestamp", "desc"),
+                                limit(1)
+                            );
+                            if (settingsData.length > 0) {
+                                const latest = settingsData[0];
+                                form.setValue("playfield", {
+                                    c1: (latest.c1 ?? latest.strengthSetting) || 0,
+                                    c2: latest.c2 || 0,
+                                    c3: latest.c3 || 0,
+                                    c4: latest.c4 || 0,
+                                    payoutRate: (latest.payoutRate ?? latest.payoutPercentage) || 0,
+                                });
+                            }
+                        } catch (e) {
+                            console.error("Error fetching settings", e);
                         }
-                    } catch (e) {
-                        console.error("Error fetching settings", e);
-                    }
-                };
-                fetchSettings();
+                    };
+                    fetchSettings();
+                }
 
                 form.reset({
                     name: machineToEdit.name,
@@ -536,14 +543,16 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                     location: isCustomLocation ? "custom" : machineToEdit.location,
                     customLocation: isCustomLocation ? machineToEdit.location : "",
                     status: machineToEdit.status,
-                    physicalConfig: machineToEdit.physicalConfig as any,
-                    group: isCustomType ? "custom" : machineToEdit.type,
-                    customGroup: isCustomType ? machineToEdit.type : "",
+                    physicalConfig: machineToEdit.physicalConfig as any || "single",
+                    group: isCustomGroup ? "custom" : (machineToEdit.group || ""),
+                    customGroup: isCustomGroup ? machineToEdit.group : "",
                     prizeSize: machineToEdit.prizeSize || "",
                     notes: machineToEdit.notes || "",
                     tag: machineToEdit.tag || "",
                     subGroup: machineToEdit.subGroup || "",
                     assetTagMode: "shared",
+                    playPrice: machineToEdit.advancedSettings?.cardCashPlayPrice || 1.80,
+                    storeLocation: machineToEdit.storeLocation || "",
                 });
                 setCapturedImage(machineToEdit.imageUrl || null);
                 setTempMachine(null);
@@ -569,6 +578,8 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                     tag: "",
                     subGroup: "",
                     assetTagMode: "shared",
+                    playPrice: 1.80,
+                    storeLocation: "",
                     playfield: { c1: 0, c2: 0, c3: 0, c4: 0, payoutRate: 0 }
                 });
                 setCapturedImage(null);
@@ -589,8 +600,9 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
         setLoading(true);
         try {
             const finalLocation = data.location === 'custom' ? data.customLocation! : data.location;
-            const finalType = data.group === 'custom' ? data.customGroup! : data.group;
+            const finalGroup = data.group === 'custom' ? data.customGroup! : data.group;
             const finalAssetTag = data.assetTag?.trim() || generateAssetTag();
+            const isCrane = isCraneGroup(finalGroup);
 
             let machineId = machineToEdit?.id;
             const commonData = {
@@ -598,14 +610,21 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                 assetTag: finalAssetTag,
                 location: finalLocation,
                 status: data.status,
-                physicalConfig: data.physicalConfig,
-                type: finalType,
-                prizeSize: data.prizeSize,
+                physicalConfig: isCrane ? (data.physicalConfig || "single") : "single",
+                type: finalGroup, // Keep type for backward compatibility
+                group: finalGroup, // New: Store in group field
+                prizeSize: isCrane ? data.prizeSize : undefined,
                 notes: data.notes,
                 tag: data.tag,
                 subGroup: data.subGroup,
+                storeLocation: data.storeLocation,
                 imageUrl: capturedImage || undefined,
                 updatedAt: new Date(),
+                // Store pricing in advancedSettings
+                advancedSettings: {
+                    ...(machineToEdit?.advancedSettings || {}),
+                    cardCashPlayPrice: data.playPrice || 1.80,
+                },
             };
 
             if (machineToEdit) {
@@ -665,7 +684,7 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                         ];
                         const newMachineId = generateMachineId(
                             finalLocation,
-                            finalType,
+                            finalGroup,
                             suffix,
                             allExistingMachines
                         );
@@ -694,7 +713,8 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                             location: finalLocation,
                             status: data.status,
                             physicalConfig: 'single', // Each is now an independent single machine
-                            type: finalType,
+                            type: finalGroup,
+                            group: finalGroup,
                             prizeSize: slotSizes[i] || data.prizeSize,
                             notes: data.notes ? `${data.notes} (Part of ${data.name} - ${suffix})` : `Part of ${data.name} - ${suffix}`,
                             tag: data.tag ? `${data.tag}-${suffix}` : '',
@@ -706,8 +726,7 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                             updatedAt: new Date(),
                             playCount: 0,
                             revenue: 0,
-                            // Link to parent group for reference
-                            group: data.name, // Store original machine name as group for linking
+                            // Parent machine name can be found in notes field
                         };
 
                         // Use set with structured ID instead of add with auto-generated ID
@@ -756,7 +775,7 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                     // Generate structured machine ID for single slot (no suffix)
                     const newMachineId = generateMachineId(
                         finalLocation,
-                        finalType,
+                        finalGroup,
                         "", // Empty suffix for single/main slot
                         machines
                     );
@@ -886,113 +905,138 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
 
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-                            {/* Photo Section */}
-                            <div className="border rounded-lg p-4 bg-muted/30">
-                                <Label className="text-sm font-semibold mb-3 block">Machine Photo</Label>
-                                <div className="flex items-center gap-4">
-                                    {cameraOpen ? (
-                                        <div className="relative w-full max-w-[300px] aspect-video">
-                                            <video
-                                                ref={videoRef}
-                                                autoPlay
-                                                playsInline
-                                                className="w-full h-full object-cover rounded-md"
-                                            />
-                                            <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
-                                                <Button type="button" size="sm" onClick={capturePhoto}>
-                                                    <Camera className="mr-1 h-3 w-3" /> Capture
-                                                </Button>
-                                                <Button type="button" size="sm" variant="outline" onClick={stopCamera}>
-                                                    Cancel
+                            {/* ==================== SECTION 1: IDENTITY ==================== */}
+                            <div className="border rounded-lg p-4 bg-gradient-to-br from-muted/30 to-muted/10">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <Camera className="h-4 w-4 text-primary" />
+                                    <h3 className="text-sm font-semibold">Machine Identity</h3>
+                                </div>
+
+                                <div className="grid grid-cols-[auto_1fr] gap-4">
+                                    {/* Photo Column */}
+                                    <div className="flex flex-col items-center gap-2">
+                                        {cameraOpen ? (
+                                            <div className="relative w-full max-w-[300px] aspect-video">
+                                                <video
+                                                    ref={videoRef}
+                                                    autoPlay
+                                                    playsInline
+                                                    className="w-full h-full object-cover rounded-md"
+                                                />
+                                                <div className="absolute bottom-2 left-0 right-0 flex justify-center gap-2">
+                                                    <Button type="button" size="sm" onClick={capturePhoto}>
+                                                        <Camera className="mr-1 h-3 w-3" /> Capture
+                                                    </Button>
+                                                    <Button type="button" size="sm" variant="outline" onClick={stopCamera}>
+                                                        Cancel
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : capturedImage ? (
+                                            <div className="relative">
+                                                <img
+                                                    src={capturedImage}
+                                                    alt="Machine"
+                                                    className="w-24 h-24 rounded-lg object-cover border"
+                                                />
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    size="icon"
+                                                    className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
+                                                    onClick={() => setCapturedImage(null)}
+                                                >
+                                                    <X className="h-3 w-3" />
                                                 </Button>
                                             </div>
-                                        </div>
-                                    ) : capturedImage ? (
-                                        <div className="relative">
-                                            <img
-                                                src={capturedImage}
-                                                alt="Machine"
-                                                className="w-24 h-24 rounded-lg object-cover border"
-                                            />
-                                            <Button
-                                                type="button"
-                                                variant="destructive"
-                                                size="icon"
-                                                className="absolute -top-2 -right-2 h-6 w-6 rounded-full"
-                                                onClick={() => setCapturedImage(null)}
-                                            >
-                                                <X className="h-3 w-3" />
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div className="w-24 h-24 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/50">
-                                            <ImageIcon className="h-8 w-8 text-muted-foreground" />
-                                        </div>
-                                    )}
+                                        ) : (
+                                            <div className="w-24 h-24 rounded-lg border-2 border-dashed flex items-center justify-center bg-muted/50">
+                                                <ImageIcon className="h-8 w-8 text-muted-foreground" />
+                                            </div>
+                                        )}
 
-                                    {!cameraOpen && !capturedImage && (
-                                        <div className="flex flex-col gap-2">
-                                            <Button type="button" variant="outline" size="sm" onClick={startCamera}>
-                                                <Camera className="mr-2 h-4 w-4" /> Take Photo
-                                            </Button>
-                                            <Button
-                                                type="button"
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => fileInputRef.current?.click()}
-                                            >
-                                                <Upload className="mr-2 h-4 w-4" /> From Gallery
-                                            </Button>
-                                            <input
-                                                ref={fileInputRef}
-                                                type="file"
-                                                accept="image/*"
-                                                className="hidden"
-                                                onChange={handleFileSelect}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-                                <canvas ref={canvasRef} className="hidden" />
-                            </div>
-
-                            {/* Basic Info */}
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="name"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Machine Name *</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="e.g. Trend Catcher 1" {...field} />
-                                            </FormControl>
-                                            <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="assetTag"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Asset Tag</FormLabel>
-                                            <FormControl>
-                                                <Input
-                                                    placeholder="Auto-generated if empty"
-                                                    {...field}
+                                        {!cameraOpen && !capturedImage && (
+                                            <div className="flex flex-col gap-2">
+                                                <Button type="button" variant="outline" size="sm" onClick={startCamera}>
+                                                    <Camera className="mr-2 h-4 w-4" /> Take Photo
+                                                </Button>
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => fileInputRef.current?.click()}
+                                                >
+                                                    <Upload className="mr-2 h-4 w-4" /> From Gallery
+                                                </Button>
+                                                <input
+                                                    ref={fileInputRef}
+                                                    type="file"
+                                                    accept="image/*"
+                                                    className="hidden"
+                                                    onChange={handleFileSelect}
                                                 />
-                                            </FormControl>
-                                            <p className="text-[10px] text-muted-foreground">
-                                                Leave blank to auto-generate a 4-digit tag
-                                            </p>
-                                        </FormItem>
-                                    )}
-                                />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <canvas ref={canvasRef} className="hidden" />
+
+                                    {/* Identity Info Column */}
+                                    <div className="space-y-3">
+                                        <FormField
+                                            control={form.control}
+                                            name="name"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Machine Name *</FormLabel>
+                                                    <FormControl>
+                                                        <Input placeholder="e.g. Trend Catcher 1" {...field} />
+                                                    </FormControl>
+                                                    <FormMessage />
+                                                </FormItem>
+                                            )}
+                                        />
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <FormField
+                                                control={form.control}
+                                                name="assetTag"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel>Asset Tag</FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="Auto-generate if empty" {...field} />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                            <FormField
+                                                control={form.control}
+                                                name="tag"
+                                                render={({ field }) => (
+                                                    <FormItem>
+                                                        <FormLabel className="flex items-center gap-1">
+                                                            API Tag
+                                                            <span className="text-[10px] text-muted-foreground">(sync)</span>
+                                                        </FormLabel>
+                                                        <FormControl>
+                                                            <Input placeholder="For API sync" {...field} />
+                                                        </FormControl>
+                                                    </FormItem>
+                                                )}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="flex flex-col gap-2">
+                            {/* ==================== SECTION 2: LOCATION & CLASSIFICATION ==================== */}
+                            <div className="border rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <MapPin className="h-4 w-4 text-primary" />
+                                    <h3 className="text-sm font-semibold">Location & Classification</h3>
+                                </div>
+
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {/* Location */}
                                     <FormField
                                         control={form.control}
                                         name="location"
@@ -1082,259 +1126,191 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                                             )}
                                         />
                                     )}
-                                </div>
-                            </div>
 
-                            {/* SubGroup - Cascading based on selected Group */}
-                            {watchedGroup && watchedGroup !== 'custom' && GROUP_SUBGROUPS[watchedGroup] && (
-                                <FormField
-                                    control={form.control}
-                                    name="subGroup"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Sub-Group</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value || ""}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select sub-group (optional)" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    {GROUP_SUBGROUPS[watchedGroup].map(sub => (
-                                                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                                                    ))}
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                    )}
-                                />
-                            )}
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="status"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Status</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select status" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="Online">Online</SelectItem>
-                                                    <SelectItem value="Offline">Offline</SelectItem>
-                                                    <SelectItem value="Maintenance">Maintenance</SelectItem>
-                                                    <SelectItem value="Error">Error</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                    )}
-                                />
-                                {/* Physical Configuration - Only for Claw Machines */}
-                                {isCraneSelected && (
+                                    {/* Store Code */}
                                     <FormField
                                         control={form.control}
-                                        name="physicalConfig"
+                                        name="storeLocation"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Configuration</FormLabel>
-                                                <Select onValueChange={field.onChange} defaultValue={field.value || "single"}>
+                                                <FormLabel className="flex items-center gap-1">
+                                                    <Building2 className="h-3 w-3" />
+                                                    Store Code
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="e.g. KOKO 614" {...field} />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    {/* Status */}
+                                    <FormField
+                                        control={form.control}
+                                        name="status"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Status</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value}>
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Select config" />
+                                                            <SelectValue placeholder="Select status" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        <SelectItem value="single">Single Unit</SelectItem>
-                                                        <SelectItem value="multi_4_slot">4-Player Station (P1-P4)</SelectItem>
-                                                        <SelectItem value="dual_module">Dual Module (Left/Right)</SelectItem>
-                                                        <SelectItem value="multi_dual_stack">Dual Stack (Top/Bottom)</SelectItem>
+                                                        <SelectItem value="Online">🟢 Online</SelectItem>
+                                                        <SelectItem value="Offline">⚫ Offline</SelectItem>
+                                                        <SelectItem value="Maintenance">🟡 Maintenance</SelectItem>
+                                                        <SelectItem value="Error">🔴 Error</SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </FormItem>
                                         )}
                                     />
+                                </div>
+
+                                {/* SubGroup - Cascading based on selected Group */}
+                                {watchedGroup && watchedGroup !== 'custom' && GROUP_SUBGROUPS[watchedGroup] && (
+                                    <div className="mt-4">
+                                        <FormField
+                                            control={form.control}
+                                            name="subGroup"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Sub-Group</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || ""}>
+                                                        <FormControl>
+                                                            <SelectTrigger className="w-full md:w-1/2">
+                                                                <SelectValue placeholder="Select sub-group (optional)" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            {GROUP_SUBGROUPS[watchedGroup].map(sub => (
+                                                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                                            ))}
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+                                    </div>
                                 )}
                             </div>
 
-                            {/* Multi-slot asset tag mode prompt */}
-                            {isMultiSlot && !machineToEdit && (
-                                <div className="border rounded-lg p-4 bg-amber-50/50 border-amber-200">
-                                    <Label className="text-sm font-semibold mb-2 block text-amber-800">
-                                        Multi-Slot Configuration
-                                    </Label>
-                                    <p className="text-xs text-amber-700 mb-3">
-                                        This machine has {slotCount} slots: {slotSuffixes.map((s, i) => (
-                                            <span key={s}>
-                                                <strong>{watchedName || "Machine"} {s}</strong>
-                                                {i < slotSuffixes.length - 1 ? ", " : ""}
-                                            </span>
-                                        ))}
-                                    </p>
+                            {/* ==================== SECTION 3: PRICING ==================== */}
+                            <div className="border rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-4">
+                                    <DollarSign className="h-4 w-4 text-primary" />
+                                    <h3 className="text-sm font-semibold">Pricing & Revenue</h3>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
                                     <FormField
                                         control={form.control}
-                                        name="assetTagMode"
+                                        name="playPrice"
                                         render={({ field }) => (
-                                            <RadioGroup
-                                                value={field.value}
-                                                onValueChange={field.onChange}
-                                                className="flex flex-col gap-2"
-                                            >
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem value="shared" id="tag-shared" />
-                                                    <Label htmlFor="tag-shared" className="cursor-pointer text-sm">
-                                                        <span className="font-medium">Shared Tag</span>
-                                                        <span className="text-muted-foreground ml-1">– All slots share one asset tag</span>
-                                                    </Label>
-                                                </div>
-                                                <div className="flex items-center space-x-2">
-                                                    <RadioGroupItem value="separate" id="tag-separate" />
-                                                    <Label htmlFor="tag-separate" className="cursor-pointer text-sm">
-                                                        <span className="font-medium">Separate Tags</span>
-                                                        <span className="text-muted-foreground ml-1">– Each slot tracked separately</span>
-                                                    </Label>
-                                                </div>
-                                            </RadioGroup>
+                                            <FormItem>
+                                                <FormLabel className="flex items-center gap-1">
+                                                    Play Price ($)
+                                                    <span className="text-[10px] text-muted-foreground">(per play)</span>
+                                                </FormLabel>
+                                                <FormControl>
+                                                    <Input
+                                                        type="number"
+                                                        step="0.10"
+                                                        min="0"
+                                                        placeholder="1.80"
+                                                        {...field}
+                                                    />
+                                                </FormControl>
+                                            </FormItem>
+                                        )}
+                                    />
+                                    <FormField
+                                        control={form.control}
+                                        name="notes"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Notes</FormLabel>
+                                                <FormControl>
+                                                    <Input placeholder="Optional notes..." {...field} />
+                                                </FormControl>
+                                            </FormItem>
                                         )}
                                     />
                                 </div>
-                            )}
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormField
-                                    control={form.control}
-                                    name="prizeSize"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Prize Size</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select size" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="Extra-Small">Extra-Small</SelectItem>
-                                                    <SelectItem value="Small">Small</SelectItem>
-                                                    <SelectItem value="Medium">Medium</SelectItem>
-                                                    <SelectItem value="Large">Large</SelectItem>
-                                                    <SelectItem value="Big">Big</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                    )}
-                                />
-                                <FormField
-                                    control={form.control}
-                                    name="notes"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Notes</FormLabel>
-                                            <FormControl>
-                                                <Input placeholder="Optional notes..." {...field} />
-                                            </FormControl>
-                                        </FormItem>
-                                    )}
-                                />
                             </div>
 
-                            {/* Stock Assignment Section */}
-                            <div className="border rounded-lg p-4 space-y-4">
-                                <div className="flex items-center justify-between">
-                                    <Label className="text-sm font-semibold">Stock Assignment</Label>
-                                    <span className="text-xs text-muted-foreground">
-                                        {slotCount} slot{slotCount > 1 ? "s" : ""}
-                                    </span>
-                                </div>
+                            {/* ==================== SECTION 4: CLAW MACHINE CONFIG (Conditional) ==================== */}
+                            {isCraneSelected && (
+                                <div className="border rounded-lg p-4 bg-blue-50/30 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
+                                    <div className="flex items-center gap-2 mb-4">
+                                        <Grip className="h-4 w-4 text-blue-600" />
+                                        <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">Claw Machine Configuration</h3>
+                                        <Badge variant="secondary" className="text-[10px] ml-auto">Group 4 Only</Badge>
+                                    </div>
 
-                                <div className="grid gap-3">
-                                    {Array.from({ length: slotCount }).map((_, index) => {
-                                        const currentItem = getSlotCurrentItem(index);
-                                        const slotDisplayName = getSlotDisplayName(index);
-                                        const currentSlotSize = slotSizes[index] || watchedPrizeSize || "";
-
-                                        return (
-                                            <div
-                                                key={index}
-                                                className="p-3 border rounded-lg bg-card space-y-3"
-                                            >
-                                                <div className="flex items-center justify-between">
-                                                    <div className="flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
-                                                            {currentItem?.imageUrl ? (
-                                                                <img
-                                                                    src={currentItem.imageUrl}
-                                                                    alt={currentItem.name}
-                                                                    className="w-full h-full object-cover rounded-lg"
-                                                                />
-                                                            ) : (
-                                                                <Package className="h-5 w-5 text-muted-foreground" />
-                                                            )}
-                                                        </div>
-                                                        <div>
-                                                            <p className="font-medium text-sm">{slotDisplayName}</p>
-                                                            {currentItem ? (
-                                                                <p className="text-xs text-green-600">{currentItem.name}</p>
-                                                            ) : (
-                                                                <p className="text-xs text-muted-foreground">No stock assigned</p>
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                    <Button
-                                                        type="button"
-                                                        variant={currentItem ? "secondary" : "outline"}
-                                                        size="sm"
-                                                        onClick={() => openStockModalForSlot(index)}
-                                                    >
-                                                        {currentItem ? "Change" : "Assign Stock"}
-                                                    </Button>
-                                                </div>
-
-                                                {/* Per-slot size selection */}
-                                                <div className="flex items-center gap-2">
-                                                    <Label className="text-xs text-muted-foreground whitespace-nowrap">Size:</Label>
-                                                    <Select
-                                                        value={currentSlotSize}
-                                                        onValueChange={(value) => {
-                                                            // Check if size is changing and stock assignment exists
-                                                            const oldSize = slotSizes[index] || watchedPrizeSize;
-                                                            const hasStockAssigned = !!currentItem;
-
-                                                            // If size changes and stock exists, clear the stock assignment
-                                                            if (hasStockAssigned && oldSize !== value) {
-                                                                // Check if sizes are compatible (Small <-> Extra-Small)
-                                                                const smallSizes = ['Small', 'Extra-Small'];
-                                                                const isCompatible = smallSizes.includes(oldSize || '') && smallSizes.includes(value);
-
-                                                                if (!isCompatible) {
-                                                                    // Clear the stock assignment for this slot
-                                                                    if (tempMachine) {
-                                                                        const updatedSlots = [...tempMachine.slots];
-                                                                        if (updatedSlots[index]) {
-                                                                            updatedSlots[index] = {
-                                                                                ...updatedSlots[index],
-                                                                                currentItem: null,
-                                                                                upcomingQueue: [],
-                                                                            };
-                                                                            setTempMachine({
-                                                                                ...tempMachine,
-                                                                                slots: updatedSlots,
-                                                                            });
-                                                                        }
-                                                                    }
-                                                                    toast.info(`Stock cleared - size changed from ${oldSize} to ${value}`);
-                                                                }
-                                                            }
-
-                                                            setSlotSizes(prev => ({ ...prev, [index]: value }));
-                                                        }}
-                                                    >
-                                                        <SelectTrigger className="h-7 text-xs flex-1">
-                                                            <SelectValue placeholder="Select size" />
+                                    {/* Machine Type - Specific crane model (Trend Box, Doll House, etc.) */}
+                                    <FormField
+                                        control={form.control}
+                                        name="subGroup"
+                                        render={({ field }) => (
+                                            <FormItem className="mb-4">
+                                                <FormLabel>Machine Type</FormLabel>
+                                                <Select onValueChange={field.onChange} value={field.value || ""}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select machine type" />
                                                         </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        {CRANE_MACHINE_TYPES.map(type => (
+                                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                        ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        {/* Physical Configuration */}
+                                        <FormField
+                                            control={form.control}
+                                            name="physicalConfig"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Slot Configuration</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value || "single"}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select config" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
+                                                        <SelectContent>
+                                                            <SelectItem value="single">Single Unit</SelectItem>
+                                                            <SelectItem value="multi_4_slot">4-Player Station (P1-P4)</SelectItem>
+                                                            <SelectItem value="dual_module">Dual Module (Left/Right)</SelectItem>
+                                                            <SelectItem value="multi_dual_stack">Dual Stack (Top/Bottom)</SelectItem>
+                                                        </SelectContent>
+                                                    </Select>
+                                                </FormItem>
+                                            )}
+                                        />
+
+                                        {/* Prize Size */}
+                                        <FormField
+                                            control={form.control}
+                                            name="prizeSize"
+                                            render={({ field }) => (
+                                                <FormItem>
+                                                    <FormLabel>Prize Size</FormLabel>
+                                                    <Select onValueChange={field.onChange} value={field.value}>
+                                                        <FormControl>
+                                                            <SelectTrigger>
+                                                                <SelectValue placeholder="Select size" />
+                                                            </SelectTrigger>
+                                                        </FormControl>
                                                         <SelectContent>
                                                             <SelectItem value="Extra-Small">Extra-Small</SelectItem>
                                                             <SelectItem value="Small">Small</SelectItem>
@@ -1343,127 +1319,283 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                                                             <SelectItem value="Big">Big</SelectItem>
                                                         </SelectContent>
                                                     </Select>
-                                                    {currentSlotSize && ['Small', 'Extra-Small'].includes(currentSlotSize) && (
-                                                        <span className="text-[10px] text-blue-600 whitespace-nowrap">
-                                                            Small ↔ Extra-Small compatible
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Advanced Settings */}
-                            <Collapsible
-                                open={isAdvancedOpen}
-                                onOpenChange={setIsAdvancedOpen}
-                                className="border rounded-lg"
-                            >
-                                <div className="flex items-center justify-between px-4 py-2">
-                                    <h4 className="text-sm font-semibold text-muted-foreground">Advanced Settings</h4>
-                                    <CollapsibleTrigger asChild>
-                                        <Button type="button" variant="ghost" size="sm" className="w-9 p-0">
-                                            <ChevronsUpDown className="h-4 w-4" />
-                                        </Button>
-                                    </CollapsibleTrigger>
-                                </div>
-                                <CollapsibleContent className="px-4 pb-4 space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        <FormField
-                                            control={form.control}
-                                            name="tag"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>API Tag / Primary Key</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Sync Identifier" {...field} />
-                                                    </FormControl>
-                                                </FormItem>
-                                            )}
-                                        />
-                                        <FormField
-                                            control={form.control}
-                                            name="subGroup"
-                                            render={({ field }) => (
-                                                <FormItem>
-                                                    <FormLabel>Sub Group</FormLabel>
-                                                    <FormControl>
-                                                        <Input placeholder="Secondary grouping" {...field} />
-                                                    </FormControl>
                                                 </FormItem>
                                             )}
                                         />
                                     </div>
 
-                                    <div className="border-t pt-4 space-y-3">
-                                        <h5 className="text-sm font-medium">Playfield Settings</h5>
-                                        <div className="grid grid-cols-3 gap-3">
+                                    {/* Multi-slot asset tag mode prompt - Only for Claw Machines */}
+                                    {isCraneSelected && isMultiSlot && !machineToEdit && (
+                                        <div className="border rounded-lg p-4 bg-amber-50/50 border-amber-200">
+                                            <Label className="text-sm font-semibold mb-2 block text-amber-800">
+                                                Multi-Slot Configuration
+                                            </Label>
+                                            <p className="text-xs text-amber-700 mb-3">
+                                                This machine has {slotCount} slots: {slotSuffixes.map((s, i) => (
+                                                    <span key={s}>
+                                                        <strong>{watchedName || "Machine"} {s}</strong>
+                                                        {i < slotSuffixes.length - 1 ? ", " : ""}
+                                                    </span>
+                                                ))}
+                                            </p>
                                             <FormField
                                                 control={form.control}
-                                                name="playfield.c1"
+                                                name="assetTagMode"
                                                 render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs">C1 (Catch)</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" {...field} />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="playfield.c2"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs">C2 (Pickup)</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" {...field} />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="playfield.c3"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs">C3 (Carry)</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" {...field} />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="playfield.c4"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs">C4 (Prize)</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" {...field} />
-                                                        </FormControl>
-                                                    </FormItem>
-                                                )}
-                                            />
-                                            <FormField
-                                                control={form.control}
-                                                name="playfield.payoutRate"
-                                                render={({ field }) => (
-                                                    <FormItem>
-                                                        <FormLabel className="text-xs">Payout Rate</FormLabel>
-                                                        <FormControl>
-                                                            <Input type="number" {...field} />
-                                                        </FormControl>
-                                                    </FormItem>
+                                                    <RadioGroup
+                                                        value={field.value}
+                                                        onValueChange={field.onChange}
+                                                        className="flex flex-col gap-2"
+                                                    >
+                                                        <div className="flex items-center space-x-2">
+                                                            <RadioGroupItem value="shared" id="tag-shared" />
+                                                            <Label htmlFor="tag-shared" className="cursor-pointer text-sm">
+                                                                <span className="font-medium">Shared Tag</span>
+                                                                <span className="text-muted-foreground ml-1">– All slots share one asset tag</span>
+                                                            </Label>
+                                                        </div>
+                                                        <div className="flex items-center space-x-2">
+                                                            <RadioGroupItem value="separate" id="tag-separate" />
+                                                            <Label htmlFor="tag-separate" className="cursor-pointer text-sm">
+                                                                <span className="font-medium">Separate Tags</span>
+                                                                <span className="text-muted-foreground ml-1">– Each slot tracked separately</span>
+                                                            </Label>
+                                                        </div>
+                                                    </RadioGroup>
                                                 )}
                                             />
                                         </div>
-                                    </div>
-                                </CollapsibleContent>
-                            </Collapsible>
+                                    )}
+
+                                    {/* Stock Assignment Section */}
+                                    {isCraneSelected && (
+                                        <div className="border rounded-lg p-4 space-y-4">
+                                            <div className="flex items-center justify-between">
+                                                <Label className="text-sm font-semibold">Stock Assignment</Label>
+                                                <span className="text-xs text-muted-foreground">
+                                                    {slotCount} slot{slotCount > 1 ? "s" : ""}
+                                                </span>
+                                            </div>
+
+                                            <div className="grid gap-3">
+                                                {Array.from({ length: slotCount }).map((_, index) => {
+                                                    const currentItem = getSlotCurrentItem(index);
+                                                    const slotDisplayName = getSlotDisplayName(index);
+                                                    const currentSlotSize = slotSizes[index] || watchedPrizeSize || "";
+
+                                                    return (
+                                                        <div
+                                                            key={index}
+                                                            className="p-3 border rounded-lg bg-card space-y-3"
+                                                        >
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
+                                                                        {currentItem?.imageUrl ? (
+                                                                            <img
+                                                                                src={currentItem.imageUrl}
+                                                                                alt={currentItem.name}
+                                                                                className="w-full h-full object-cover rounded-lg"
+                                                                            />
+                                                                        ) : (
+                                                                            <Package className="h-5 w-5 text-muted-foreground" />
+                                                                        )}
+                                                                    </div>
+                                                                    <div>
+                                                                        <p className="font-medium text-sm">{slotDisplayName}</p>
+                                                                        {currentItem ? (
+                                                                            <p className="text-xs text-green-600">{currentItem.name}</p>
+                                                                        ) : (
+                                                                            <p className="text-xs text-muted-foreground">No stock assigned</p>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                                <Button
+                                                                    type="button"
+                                                                    variant={currentItem ? "secondary" : "outline"}
+                                                                    size="sm"
+                                                                    onClick={() => openStockModalForSlot(index)}
+                                                                >
+                                                                    {currentItem ? "Change" : "Assign Stock"}
+                                                                </Button>
+                                                            </div>
+
+                                                            {/* Per-slot size selection */}
+                                                            <div className="flex items-center gap-2">
+                                                                <Label className="text-xs text-muted-foreground whitespace-nowrap">Size:</Label>
+                                                                <Select
+                                                                    value={currentSlotSize}
+                                                                    onValueChange={(value) => {
+                                                                        // Check if size is changing and stock assignment exists
+                                                                        const oldSize = slotSizes[index] || watchedPrizeSize;
+                                                                        const hasStockAssigned = !!currentItem;
+
+                                                                        // If size changes and stock exists, clear the stock assignment
+                                                                        if (hasStockAssigned && oldSize !== value) {
+                                                                            // Check if sizes are compatible (Small <-> Extra-Small)
+                                                                            const smallSizes = ['Small', 'Extra-Small'];
+                                                                            const isCompatible = smallSizes.includes(oldSize || '') && smallSizes.includes(value);
+
+                                                                            if (!isCompatible) {
+                                                                                // Clear the stock assignment for this slot
+                                                                                if (tempMachine) {
+                                                                                    const updatedSlots = [...tempMachine.slots];
+                                                                                    if (updatedSlots[index]) {
+                                                                                        updatedSlots[index] = {
+                                                                                            ...updatedSlots[index],
+                                                                                            currentItem: null,
+                                                                                            upcomingQueue: [],
+                                                                                        };
+                                                                                        setTempMachine({
+                                                                                            ...tempMachine,
+                                                                                            slots: updatedSlots,
+                                                                                        });
+                                                                                    }
+                                                                                }
+                                                                                toast.info(`Stock cleared - size changed from ${oldSize} to ${value}`);
+                                                                            }
+                                                                        }
+
+                                                                        setSlotSizes(prev => ({ ...prev, [index]: value }));
+                                                                    }}
+                                                                >
+                                                                    <SelectTrigger className="h-7 text-xs flex-1">
+                                                                        <SelectValue placeholder="Select size" />
+                                                                    </SelectTrigger>
+                                                                    <SelectContent>
+                                                                        <SelectItem value="Extra-Small">Extra-Small</SelectItem>
+                                                                        <SelectItem value="Small">Small</SelectItem>
+                                                                        <SelectItem value="Medium">Medium</SelectItem>
+                                                                        <SelectItem value="Large">Large</SelectItem>
+                                                                        <SelectItem value="Big">Big</SelectItem>
+                                                                    </SelectContent>
+                                                                </Select>
+                                                                {currentSlotSize && ['Small', 'Extra-Small'].includes(currentSlotSize) && (
+                                                                    <span className="text-[10px] text-blue-600 whitespace-nowrap">
+                                                                        Small ↔ Extra-Small compatible
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Advanced Settings - Only for Claw Machines (Playfield C1-C4, Payout) */}
+                                    {isCraneSelected && (
+                                        <Collapsible
+                                            open={isAdvancedOpen}
+                                            onOpenChange={setIsAdvancedOpen}
+                                            className="border rounded-lg"
+                                        >
+                                            <div className="flex items-center justify-between px-4 py-2">
+                                                <h4 className="text-sm font-semibold text-muted-foreground">Advanced Settings</h4>
+                                                <CollapsibleTrigger asChild>
+                                                    <Button type="button" variant="ghost" size="sm" className="w-9 p-0">
+                                                        <ChevronsUpDown className="h-4 w-4" />
+                                                    </Button>
+                                                </CollapsibleTrigger>
+                                            </div>
+                                            <CollapsibleContent className="px-4 pb-4 space-y-4">
+                                                <div className="grid grid-cols-2 gap-4">
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="tag"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>API Tag / Primary Key</FormLabel>
+                                                                <FormControl>
+                                                                    <Input placeholder="Sync Identifier" {...field} />
+                                                                </FormControl>
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                    <FormField
+                                                        control={form.control}
+                                                        name="subGroup"
+                                                        render={({ field }) => (
+                                                            <FormItem>
+                                                                <FormLabel>Sub Group</FormLabel>
+                                                                <FormControl>
+                                                                    <Input placeholder="Secondary grouping" {...field} />
+                                                                </FormControl>
+                                                            </FormItem>
+                                                        )}
+                                                    />
+                                                </div>
+
+                                                <div className="border-t pt-4 space-y-3">
+                                                    <h5 className="text-sm font-medium">Playfield Settings</h5>
+                                                    <div className="grid grid-cols-3 gap-3">
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="playfield.c1"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel className="text-xs">C1 (Catch)</FormLabel>
+                                                                    <FormControl>
+                                                                        <Input type="number" {...field} />
+                                                                    </FormControl>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="playfield.c2"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel className="text-xs">C2 (Pickup)</FormLabel>
+                                                                    <FormControl>
+                                                                        <Input type="number" {...field} />
+                                                                    </FormControl>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="playfield.c3"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel className="text-xs">C3 (Carry)</FormLabel>
+                                                                    <FormControl>
+                                                                        <Input type="number" {...field} />
+                                                                    </FormControl>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="playfield.c4"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel className="text-xs">C4 (Prize)</FormLabel>
+                                                                    <FormControl>
+                                                                        <Input type="number" {...field} />
+                                                                    </FormControl>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                        <FormField
+                                                            control={form.control}
+                                                            name="playfield.payoutRate"
+                                                            render={({ field }) => (
+                                                                <FormItem>
+                                                                    <FormLabel className="text-xs">Payout Rate</FormLabel>
+                                                                    <FormControl>
+                                                                        <Input type="number" {...field} />
+                                                                    </FormControl>
+                                                                </FormItem>
+                                                            )}
+                                                        />
+                                                    </div>
+                                                </div>
+                                            </CollapsibleContent>
+                                        </Collapsible>
+                                    )}
+                                </div>
+                            )}
 
                             <DialogFooter>
                                 <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>

@@ -15,6 +15,8 @@ export interface MachineStatus {
         errorCode?: string;
     };
     imageUrl?: string;
+    group?: string;  // Machine group (e.g., "Group 4-Cranes")
+    type?: string;   // Machine type (legacy, same as group)
 }
 
 export interface MonitoringAlert {
@@ -113,7 +115,9 @@ class MonitoringService {
                 location: machine.location,
                 status: this.determineStatusFromMachine(machine),
                 lastPing: new Date(),
-                imageUrl: machine.slots?.[0]?.currentItem?.imageUrl,
+                imageUrl: machine.slots?.[0]?.currentItem?.imageUrl || machine.imageUrl,
+                group: machine.group || machine.type,  // Include group for filtering
+                type: machine.type || machine.group,   // Include type for backward compat
                 telemetry: {
                     playCountToday,
                     payoutAccuracy: 0, // Will be calculated in report view

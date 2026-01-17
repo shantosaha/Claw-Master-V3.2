@@ -39,7 +39,8 @@ import {
     ArrowDown,
     Users,
     Target,
-    ShieldAlert
+    ShieldAlert,
+    Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeMachine } from "@/types";
@@ -53,7 +54,6 @@ import { GlobalServiceHistoryTable } from "@/components/machines/GlobalServiceHi
 import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
 import { MachineComparisonTable } from "@/components/machines/MachineComparisonTable";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import { NonCraneMachineCard } from "@/components/machines/NonCraneMachineCard";
 import { NonCraneQuickViewDialog } from "@/components/machines/NonCraneQuickViewDialog";
@@ -157,21 +157,95 @@ function MachineQuickViewDialog({
     open: boolean;
     onOpenChange: (open: boolean) => void;
 }) {
-    if (!machine) return null;
+    const [trendRange, setTrendRange] = useState<'today' | '7d' | '14d' | '30d'>('7d');
+    const [settingsHistory, setSettingsHistory] = useState<Array<{
+        date: string;
+        c1: number;
+        c2: number;
+        c3: number;
+        c4: number;
+        targetWin: number;
+        staff: string;
+    }>>([]);
+    const [loadingHistory, setLoadingHistory] = useState(false);
 
-    // Generate some trend data based on machine ID
+    // Fetch real JotForm history when machine changes
+    useEffect(() => {
+        if (!machine || !open) return;
+
+        const fetchHistory = async () => {
+            setLoadingHistory(true);
+            try {
+                // Import JotForm service
+                const { jotformApiService } = await import('@/services/jotformApiService');
+
+                // Fetch all submissions
+                const allSubmissions = await jotformApiService.fetchAllSubmissions();
+
+                // Filter by machine asset tag and get last 3
+                const machineTag = String(machine.assetTag || machine.tag || '').trim().toLowerCase();
+                const machineHistory = allSubmissions
+                    .filter(sub => {
+                        const subTag = String(sub.tag || '').trim().toLowerCase();
+                        return subTag === machineTag;
+                    })
+                    .sort((a, b) => new Date(b.settingsDate || 0).getTime() - new Date(a.settingsDate || 0).getTime())
+                    .slice(0, 3)
+                    .map(sub => ({
+                        date: sub.settingsDate
+                            ? new Date(sub.settingsDate).toLocaleDateString('en-US', { month: 'short', day: '2-digit' })
+                            : 'Unknown',
+                        c1: sub.c1 ?? 0,
+                        c2: sub.c2 ?? 0,
+                        c3: sub.c3 ?? 0,
+                        c4: sub.c4 ?? 0,
+                        targetWin: sub.targetedWin ?? 0,
+                        staff: sub.staffName || 'Unknown',
+                    }));
+
+                setSettingsHistory(machineHistory);
+            } catch (error) {
+                console.error('Failed to fetch settings history:', error);
+                setSettingsHistory([]);
+            } finally {
+                setLoadingHistory(false);
+            }
+        };
+
+        fetchHistory();
+    }, [machine?.id, open]);
+
+    // Generate trend data based on selected range
     const trendData = useMemo(() => {
+        if (!machine) return [];
+
         const seed = machine.id.split('').reduce((a, b) => a + b.charCodeAt(0), 0);
         const random = (offset: number) => {
             const x = Math.sin(seed + offset) * 10000;
             return x - Math.floor(x);
         };
 
-        return Array.from({ length: 12 }, (_, i) => ({
-            time: `${i * 2}h`,
-            plays: Math.floor(random(i) * 20) + 5
+        const ranges = {
+            'today': { points: 12, labelFn: (i: number) => `${i * 2}h`, multiplier: 1 },
+            '7d': { points: 7, labelFn: (i: number) => `Day ${i + 1}`, multiplier: 5 },
+            '14d': { points: 14, labelFn: (i: number) => `Day ${i + 1}`, multiplier: 4 },
+            '30d': { points: 15, labelFn: (i: number) => `Day ${i * 2 + 1}`, multiplier: 8 },
+        };
+
+        const config = ranges[trendRange];
+        const baseValue = (machine.customerPlays ?? 0) / (config.points * config.multiplier);
+
+        return Array.from({ length: config.points }, (_, i) => ({
+            time: config.labelFn(i),
+            plays: Math.floor((baseValue + random(i) * 30) * config.multiplier),
+            customer: Math.floor((baseValue + random(i + 100) * 25) * config.multiplier),
+            staff: Math.floor(random(i + 200) * 5 * config.multiplier),
         }));
-    }, [machine.id]);
+    }, [machine?.id, machine?.customerPlays, trendRange]);
+
+    if (!machine) return null;
+
+    const totalPlays = (machine.customerPlays ?? 0) + (machine.staffPlays ?? 0);
 
     const statusColors = {
         online: "bg-green-500",
@@ -216,18 +290,51 @@ function MachineQuickViewDialog({
                             <Card className="p-3 bg-muted/30">
                                 <p className="text-[10px] uppercase text-muted-foreground font-bold">Accuracy</p>
                                 <div className="flex items-end gap-1">
-                                    <p className="text-xl font-bold">{machine.payoutAccuracy}%</p>
+                                    <p className="text-xl font-bold">{machine.payoutAccuracy ?? 0}%</p>
                                     <p className={cn(
                                         "text-[10px] mb-1 font-medium",
                                         machine.payoutAccuracy && machine.payoutAccuracy > 100 ? "text-red-500" : "text-green-500"
                                     )}>
-                                        {machine.payoutStatus}
+                                        {machine.payoutStatus || 'N/A'}
                                     </p>
                                 </div>
                             </Card>
                             <Card className="p-3 bg-muted/30">
-                                <p className="text-[10px] uppercase text-muted-foreground font-bold">Plays Today</p>
-                                <p className="text-xl font-bold">{machine.customerPlays ?? 0}</p>
+                                <div className="flex items-center justify-between">
+                                    <p className="text-[10px] uppercase text-muted-foreground font-bold">Plays Today</p>
+                                    <Dialog>
+                                        <DialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-4 w-4 p-0">
+                                                <Info className="h-3 w-3 text-muted-foreground" />
+                                            </Button>
+                                        </DialogTrigger>
+                                        <DialogContent className="sm:max-w-xs">
+                                            <DialogHeader>
+                                                <DialogTitle className="text-sm">Play Breakdown</DialogTitle>
+                                            </DialogHeader>
+                                            <div className="space-y-2 pt-2">
+                                                <div className="flex justify-between text-sm">
+                                                    <span>Customer Plays:</span>
+                                                    <span className="font-bold text-green-600">{machine.customerPlays ?? 0}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm">
+                                                    <span>Staff Plays:</span>
+                                                    <span className="font-bold text-blue-600">{machine.staffPlays ?? 0}</span>
+                                                </div>
+                                                <div className="flex justify-between text-sm border-t pt-2 font-semibold">
+                                                    <span>Total:</span>
+                                                    <span>{totalPlays}</span>
+                                                </div>
+                                            </div>
+                                        </DialogContent>
+                                    </Dialog>
+                                </div>
+                                <div className="flex items-baseline gap-2">
+                                    <p className="text-xl font-bold">{totalPlays}</p>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        ({machine.customerPlays ?? 0} + <span className="text-blue-500">{machine.staffPlays ?? 0}</span>)
+                                    </p>
+                                </div>
                             </Card>
                         </div>
 
@@ -236,12 +343,16 @@ function MachineQuickViewDialog({
                             <div className="grid grid-cols-2 gap-x-6 gap-y-2 text-sm border-t pt-2">
                                 <div className="space-y-1">
                                     <div className="flex justify-between">
+                                        <span className="text-muted-foreground text-[11px]">Customer Plays:</span>
+                                        <span className="font-mono font-bold text-green-600">{machine.customerPlays ?? 0}</span>
+                                    </div>
+                                    <div className="flex justify-between">
                                         <span className="text-muted-foreground text-[11px]">Staff Plays:</span>
                                         <span className="font-mono font-bold text-blue-500">{machine.staffPlays ?? 0}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground text-[11px]">Payouts:</span>
-                                        <span className="font-mono font-bold text-green-600">{machine.payouts ?? 0}</span>
+                                        <span className="font-mono font-bold text-amber-600">{machine.payouts ?? 0}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground text-[11px]">Plays/Win:</span>
@@ -277,7 +388,22 @@ function MachineQuickViewDialog({
                     {/* Chart & Control */}
                     <div className="space-y-4">
                         <div className="h-[200px] w-full">
-                            <h4 className="text-xs font-bold uppercase text-muted-foreground mb-4">24h Play Trend</h4>
+                            <div className="flex items-center justify-between mb-2">
+                                <h4 className="text-xs font-bold uppercase text-muted-foreground">Play Trend</h4>
+                                <div className="flex gap-1">
+                                    {(['today', '7d', '14d', '30d'] as const).map((range) => (
+                                        <Button
+                                            key={range}
+                                            variant={trendRange === range ? "default" : "outline"}
+                                            size="sm"
+                                            className="h-6 px-2 text-[10px]"
+                                            onClick={() => setTrendRange(range)}
+                                        >
+                                            {range === 'today' ? 'Today' : range.replace('d', ' Days')}
+                                        </Button>
+                                    ))}
+                                </div>
+                            </div>
                             <ResponsiveContainer width="100%" height="100%">
                                 <AreaChart data={trendData}>
                                     <defs>
@@ -286,11 +412,12 @@ function MachineQuickViewDialog({
                                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
-                                    <XAxis dataKey="time" hide />
+                                    <XAxis dataKey="time" tick={{ fontSize: 10 }} />
                                     <YAxis hide />
                                     <RechartsTooltip
                                         labelStyle={{ color: 'black' }}
-                                        contentStyle={{ borderRadius: '8px' }}
+                                        contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                                        formatter={(value: number, name: string) => [value, name === 'plays' ? 'Total Plays' : name]}
                                     />
                                     <Area
                                         type="monotone"
@@ -304,20 +431,35 @@ function MachineQuickViewDialog({
                         </div>
 
                         <div className="space-y-2 pt-4">
-                            <h4 className="text-xs font-bold uppercase text-muted-foreground">Claw Strength History</h4>
+                            <h4 className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
+                                Claw Settings History
+                                <span className="text-[9px] font-normal text-muted-foreground">(From JotForm)</span>
+                            </h4>
                             <div className="space-y-1">
-                                {[
-                                    { date: "Jan 07", c1: 45, c2: 30, c3: 15, c4: 55, staff: "Daniel" },
-                                    { date: "Jan 03", c1: 40, c2: 25, c3: 15, c4: 50, staff: "Shanto" },
-                                ].map((h, i) => (
-                                    <div key={i} className="flex items-center justify-between text-[11px] p-2 bg-muted/30 rounded">
-                                        <span className="font-medium text-muted-foreground">{h.date}</span>
-                                        <div className="flex gap-2">
-                                            <span>{h.c1}-{h.c2}-{h.c3} ({h.c4})</span>
-                                        </div>
-                                        <span className="text-blue-500">{h.staff}</span>
+                                {loadingHistory ? (
+                                    <div className="flex items-center justify-center py-4 text-muted-foreground text-sm">
+                                        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                        Loading history...
                                     </div>
-                                ))}
+                                ) : settingsHistory.length > 0 ? (
+                                    settingsHistory.map((h, i) => (
+                                        <div key={i} className="flex items-center justify-between text-[11px] p-2 bg-muted/30 rounded">
+                                            <span className="font-medium text-muted-foreground w-16">{h.date}</span>
+                                            <div className="flex gap-1 items-center">
+                                                <span className="font-mono">{h.c1}-{h.c2}-{h.c3}</span>
+                                                <span className="text-[9px] text-muted-foreground">C4:</span>
+                                                <span className="font-mono text-blue-600">{h.c4}</span>
+                                                <span className="text-[9px] text-muted-foreground ml-1">TW:</span>
+                                                <span className="font-mono text-amber-600">{h.targetWin}</span>
+                                            </div>
+                                            <span className="text-blue-500 font-medium">{h.staff}</span>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="text-center py-4 text-muted-foreground text-[11px]">
+                                        No settings history found for this machine
+                                    </div>
+                                )}
                             </div>
                         </div>
 
@@ -1174,6 +1316,19 @@ export default function MonitoringPage() {
     const [selectedMachineForAction, setSelectedMachineForAction] = useState<ExtendedMachineStatus | null>(null);
     const [activeStatDetail, setActiveStatDetail] = useState<'revenue' | 'activity' | 'accuracy' | 'uptime' | null>(null);
     const [quickViewMachine, setQuickViewMachine] = useState<ExtendedMachineStatus | null>(null);
+    const [quickViewNonCraneMachine, setQuickViewNonCraneMachine] = useState<ExtendedMachineStatus | null>(null);
+    const [machineTypeTab, setMachineTypeTab] = useState<"cranes" | "other">("cranes");
+
+    // Split machines into crane and non-crane categories
+    const craneMachines = useMemo(() =>
+        sortedMachines.filter(m => isCraneMachine(m as any)),
+        [sortedMachines]
+    );
+
+    const otherMachines = useMemo(() =>
+        sortedMachines.filter(m => !isCraneMachine(m as any)),
+        [sortedMachines]
+    );
 
     if (error) {
         return (
@@ -1395,34 +1550,98 @@ export default function MonitoringPage() {
                             </div>
                         </div>
 
-                        {viewMode === "grid" ? (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                {sortedMachines.map((machine) => (
-                                    <MachineStatusCard
-                                        key={machine.id}
-                                        machine={machine}
-                                        onAction={(action, machine) => {
-                                            setSelectedMachineForAction(machine);
-                                            if (action === 'submit_report') {
-                                                setSelectedTab("submit");
-                                            } else if (action === 'compare') {
-                                                setSelectedTab("comparison");
-                                            } else if (action === 'quick_view') {
-                                                setQuickViewMachine(machine);
-                                            }
-                                        }}
-                                    />
-                                ))}
-                            </div>
-                        ) : (
-                            <MonitoringReportTable data={sortedMachines as any} />
-                        )}
+                        {/* Machine Type Sub-Tabs */}
+                        <Tabs value={machineTypeTab} onValueChange={(v) => setMachineTypeTab(v as "cranes" | "other")} className="space-y-4">
+                            <TabsList className="grid w-full grid-cols-2 max-w-md">
+                                <TabsTrigger value="cranes" className="flex items-center gap-2">
+                                    <Target className="h-4 w-4" />
+                                    Claw Machines
+                                    <Badge variant="secondary" className="text-[10px] ml-1">
+                                        {craneMachines.length}
+                                    </Badge>
+                                </TabsTrigger>
+                                <TabsTrigger value="other" className="flex items-center gap-2">
+                                    <Zap className="h-4 w-4" />
+                                    Other Machines
+                                    <Badge variant="secondary" className="text-[10px] ml-1">
+                                        {otherMachines.length}
+                                    </Badge>
+                                </TabsTrigger>
+                            </TabsList>
+
+                            {/* CRANE MACHINES TAB */}
+                            <TabsContent value="cranes" className="space-y-4 mt-4">
+                                {craneMachines.length > 0 ? (
+                                    viewMode === "grid" ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                                            {craneMachines.map((machine) => (
+                                                <MachineStatusCard
+                                                    key={machine.id}
+                                                    machine={machine}
+                                                    onAction={(action, machine) => {
+                                                        setSelectedMachineForAction(machine);
+                                                        if (action === 'submit_report') {
+                                                            setSelectedTab("submit");
+                                                        } else if (action === 'compare') {
+                                                            setSelectedTab("comparison");
+                                                        } else if (action === 'quick_view') {
+                                                            setQuickViewMachine(machine);
+                                                        }
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <MonitoringReportTable data={craneMachines as any} />
+                                    )
+                                ) : (
+                                    <div className="text-center py-12 text-muted-foreground">
+                                        <Target className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                                        <p>No claw machines found matching your filters</p>
+                                    </div>
+                                )}
+                            </TabsContent>
+
+                            {/* OTHER ARCADE MACHINES TAB */}
+                            <TabsContent value="other" className="space-y-4 mt-4">
+                                {otherMachines.length > 0 ? (
+                                    viewMode === "grid" ? (
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                                            {otherMachines.map((machine) => (
+                                                <NonCraneMachineCard
+                                                    key={machine.id}
+                                                    machine={machine as any}
+                                                    onAction={(action, machine) => {
+                                                        if (action === 'quick_view') {
+                                                            setQuickViewNonCraneMachine(machine as any);
+                                                        }
+                                                    }}
+                                                />
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <NonCraneReportTable data={otherMachines as any} />
+                                    )
+                                ) : (
+                                    <div className="text-center py-12 text-muted-foreground">
+                                        <Zap className="h-12 w-12 mx-auto mb-4 opacity-20" />
+                                        <p>No other arcade machines found matching your filters</p>
+                                    </div>
+                                )}
+                            </TabsContent>
+                        </Tabs>
                     </div>
 
                     <MachineQuickViewDialog
                         machine={quickViewMachine}
                         open={!!quickViewMachine}
                         onOpenChange={(open) => !open && setQuickViewMachine(null)}
+                    />
+
+                    <NonCraneQuickViewDialog
+                        machine={quickViewNonCraneMachine as any}
+                        open={!!quickViewNonCraneMachine}
+                        onOpenChange={(open) => !open && setQuickViewNonCraneMachine(null)}
                     />
                 </TabsContent>
 

@@ -40,6 +40,23 @@ export const GROUP_SUBGROUPS: Record<string, string[]> = {
     "Group 11-Others": ["Other"],
 };
 
+/** Specific crane machine model types */
+export const CRANE_MACHINE_TYPES = [
+    "Trend Catcher",
+    "Trend Box",
+    "SKWEB",
+    "INNIS",
+    "Doll Castle",
+    "Doll House",
+    "Giant Claw",
+    "Crazy Toy Nano",
+    "Crazy Star",
+    "Crazy Toy Miya",
+    "UFO Catcher",
+    "Prize Machine",
+    "Other",
+] as const;
+
 /**
  * Check if a group string represents a claw machine group
  */
@@ -51,12 +68,13 @@ export function isCraneGroup(group: string | undefined | null): boolean {
  * Check if a machine is a claw machine (Group 4-Cranes)
  * Claw machines have inventory features: slots, items, stock levels, JotForm settings
  * 
- * @param machine - The machine to check (can be partial with just group)
+ * @param machine - The machine to check (can be partial with just group or type)
  * @returns true if the machine is a claw machine
  */
-export function isCraneMachine(machine: { group?: string } | null | undefined): boolean {
+export function isCraneMachine(machine: { group?: string; type?: string } | null | undefined): boolean {
     if (!machine) return false;
-    return machine.group === CLAW_MACHINE_GROUP;
+    // Check both group and type for backward compatibility
+    return machine.group === CLAW_MACHINE_GROUP || machine.type === CLAW_MACHINE_GROUP;
 }
 
 /**
