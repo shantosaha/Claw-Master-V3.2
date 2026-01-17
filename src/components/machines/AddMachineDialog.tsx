@@ -45,6 +45,7 @@ import {
 } from "lucide-react";
 import { where, orderBy, limit } from "firebase/firestore";
 import { toast } from "sonner";
+import { MACHINE_GROUPS, GROUP_SUBGROUPS, isCraneGroup, CLAW_MACHINE_GROUP } from "@/utils/machineTypeUtils";
 
 const LOCATIONS = ["Ground", "Basement", "Level-1"];
 const TYPES = [
@@ -194,8 +195,8 @@ const machineSchema = z.object({
     location: z.string().min(1, "Location is required"),
     customLocation: z.string().optional(),
     status: z.enum(["Online", "Offline", "Maintenance", "Error"]),
-    physicalConfig: z.enum(["single", "multi_4_slot", "dual_module", "multi_dual_stack"]),
-    group: z.string().optional(),
+    physicalConfig: z.enum(["single", "multi_4_slot", "dual_module", "multi_dual_stack"]).optional().default("single"),
+    group: z.string().min(1, "Machine group is required"),
     customGroup: z.string().optional(),
     prizeSize: z.string().optional(),
     notes: z.string().optional(),
@@ -223,7 +224,7 @@ const machineSchema = z.object({
         if (!data.customGroup || data.customGroup.length < 2) {
             ctx.addIssue({
                 code: z.ZodIssueCode.custom,
-                message: "Custom type is required",
+                message: "Custom group name is required",
                 path: ["customGroup"]
             });
         }
@@ -288,9 +289,13 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
     const watchedName = form.watch("name");
     const watchedPrizeSize = form.watch("prizeSize");
 
-    const slotCount = getSlotCount(watchedConfig);
-    const slotSuffixes = getSlotSuffixes(watchedConfig);
+    // Check if selected group is a claw machine group (needs inventory features)
+    const isCraneSelected = isCraneGroup(watchedGroup);
+
+    const slotCount = isCraneSelected ? getSlotCount(watchedConfig || "single") : 1;
+    const slotSuffixes = isCraneSelected ? getSlotSuffixes(watchedConfig || "single") : [""];
     const isMultiSlot = slotCount > 1;
+
 
     // Camera Logic
     const startCamera = async () => {
@@ -1032,16 +1037,29 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                                         name="group"
                                         render={({ field }) => (
                                             <FormItem>
-                                                <FormLabel>Type</FormLabel>
-                                                <Select onValueChange={field.onChange} value={field.value}>
+                                                <FormLabel>Machine Group *</FormLabel>
+                                                <Select
+                                                    onValueChange={(value) => {
+                                                        field.onChange(value);
+                                                        // Reset subGroup when group changes
+                                                        form.setValue("subGroup", "");
+                                                        // Reset physicalConfig for non-crane machines
+                                                        if (!isCraneGroup(value)) {
+                                                            form.setValue("physicalConfig", "single");
+                                                        }
+                                                    }}
+                                                    value={field.value}
+                                                >
                                                     <FormControl>
                                                         <SelectTrigger>
-                                                            <SelectValue placeholder="Select type" />
+                                                            <SelectValue placeholder="Select machine group" />
                                                         </SelectTrigger>
                                                     </FormControl>
                                                     <SelectContent>
-                                                        {TYPES.map(type => (
-                                                            <SelectItem key={type} value={type}>{type}</SelectItem>
+                                                        {MACHINE_GROUPS.map(group => (
+                                                            <SelectItem key={group} value={group}>
+                                                                {group.replace("Group ", "").replace("-", " - ")}
+                                                            </SelectItem>
                                                         ))}
                                                         <SelectItem value="custom">Other...</SelectItem>
                                                     </SelectContent>
@@ -1057,7 +1075,7 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                                             render={({ field }) => (
                                                 <FormItem>
                                                     <FormControl>
-                                                        <Input placeholder="Enter custom type" {...field} />
+                                                        <Input placeholder="Enter custom group name" {...field} />
                                                     </FormControl>
                                                     <FormMessage />
                                                 </FormItem>
@@ -1066,6 +1084,31 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                                     )}
                                 </div>
                             </div>
+
+                            {/* SubGroup - Cascading based on selected Group */}
+                            {watchedGroup && watchedGroup !== 'custom' && GROUP_SUBGROUPS[watchedGroup] && (
+                                <FormField
+                                    control={form.control}
+                                    name="subGroup"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                            <FormLabel>Sub-Group</FormLabel>
+                                            <Select onValueChange={field.onChange} value={field.value || ""}>
+                                                <FormControl>
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Select sub-group (optional)" />
+                                                    </SelectTrigger>
+                                                </FormControl>
+                                                <SelectContent>
+                                                    {GROUP_SUBGROUPS[watchedGroup].map(sub => (
+                                                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </FormItem>
+                                    )}
+                                />
+                            )}
 
                             <div className="grid grid-cols-2 gap-4">
                                 <FormField
@@ -1090,28 +1133,31 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                                         </FormItem>
                                     )}
                                 />
-                                <FormField
-                                    control={form.control}
-                                    name="physicalConfig"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                            <FormLabel>Configuration</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                                <FormControl>
-                                                    <SelectTrigger>
-                                                        <SelectValue placeholder="Select config" />
-                                                    </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="single">Single Unit</SelectItem>
-                                                    <SelectItem value="multi_4_slot">4-Player Station (P1-P4)</SelectItem>
-                                                    <SelectItem value="dual_module">Dual Module (Left/Right)</SelectItem>
-                                                    <SelectItem value="multi_dual_stack">Dual Stack (Top/Bottom)</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                        </FormItem>
-                                    )}
-                                />
+                                {/* Physical Configuration - Only for Claw Machines */}
+                                {isCraneSelected && (
+                                    <FormField
+                                        control={form.control}
+                                        name="physicalConfig"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel>Configuration</FormLabel>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value || "single"}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue placeholder="Select config" />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="single">Single Unit</SelectItem>
+                                                        <SelectItem value="multi_4_slot">4-Player Station (P1-P4)</SelectItem>
+                                                        <SelectItem value="dual_module">Dual Module (Left/Right)</SelectItem>
+                                                        <SelectItem value="multi_dual_stack">Dual Stack (Top/Bottom)</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                )}
                             </div>
 
                             {/* Multi-slot asset tag mode prompt */}

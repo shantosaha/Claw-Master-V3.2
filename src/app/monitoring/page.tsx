@@ -53,7 +53,12 @@ import { GlobalServiceHistoryTable } from "@/components/machines/GlobalServiceHi
 import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
 import { MachineComparisonTable } from "@/components/machines/MachineComparisonTable";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { NonCraneMachineCard } from "@/components/machines/NonCraneMachineCard";
+import { NonCraneQuickViewDialog } from "@/components/machines/NonCraneQuickViewDialog";
+import { NonCraneReportTable } from "@/components/machines/NonCraneReportTable";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
 import {
     ResponsiveContainer,
     AreaChart,

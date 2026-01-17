@@ -8,6 +8,45 @@ import { ArcadeMachine } from "@/types";
 /** The group name for claw machines that need inventory management */
 export const CLAW_MACHINE_GROUP = "Group 4-Cranes";
 
+/** All machine groups from Game Report API */
+export const MACHINE_GROUPS = [
+    "Group 1-Video",
+    "Group 2-Redemption",
+    "Group 3-Driving",
+    "Group 4-Cranes",
+    "Group 5-Prize Games",
+    "Group 6-Skill Tester",
+    "Group 7-Music",
+    "Group 8-Attractions",
+    "Group 9-Coin Pushers",
+    "Group 10-Sports",
+    "Group 11-Others",
+] as const;
+
+export type MachineGroup = typeof MACHINE_GROUPS[number];
+
+/** SubGroups mapped to each machine group */
+export const GROUP_SUBGROUPS: Record<string, string[]> = {
+    "Group 1-Video": ["Video", "Fighting", "Shooting"],
+    "Group 2-Redemption": ["Redemption", "Physical Redemption", "Shooting"],
+    "Group 3-Driving": ["Video", "Attractions", "Premium"],
+    "Group 4-Cranes": ["Small", "Medium", "Large", "Pops", "Blindbox"],
+    "Group 5-Prize Games": ["Capsules", "Major Prize", "Prize", "Blindbox", "Pops", "Miner", "Other"],
+    "Group 6-Skill Tester": ["Major Prize", "Pops", "Other"],
+    "Group 7-Music": ["Music", "Premium"],
+    "Group 8-Attractions": ["Attractions", "Photobooth", "Shooting"],
+    "Group 9-Coin Pushers": ["Andamiro", "Elaut", "Golden Railroad", "Other"],
+    "Group 10-Sports": ["Air Hockey", "Hammer/Punch", "Other"],
+    "Group 11-Others": ["Other"],
+};
+
+/**
+ * Check if a group string represents a claw machine group
+ */
+export function isCraneGroup(group: string | undefined | null): boolean {
+    return group === CLAW_MACHINE_GROUP;
+}
+
 /**
  * Check if a machine is a claw machine (Group 4-Cranes)
  * Claw machines have inventory features: slots, items, stock levels, JotForm settings
