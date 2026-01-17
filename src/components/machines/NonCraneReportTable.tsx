@@ -65,8 +65,8 @@ export function NonCraneReportTable({ data }: NonCraneReportTableProps) {
                         bValue = b.staffPlays || 0;
                         break;
                     case 'revenue':
-                        aValue = (a.customerPlays || 0) * 1.8;
-                        bValue = (b.customerPlays || 0) * 1.8;
+                        aValue = a.revenue || 0;
+                        bValue = b.revenue || 0;
                         break;
                     case 'points':
                         aValue = (a as any).points || 0;
@@ -152,7 +152,7 @@ export function NonCraneReportTable({ data }: NonCraneReportTableProps) {
                     </TableHeader>
                     <TableBody>
                         {paginatedData.map((item) => {
-                            const estimatedRevenue = ((item.customerPlays || 0) * 1.8).toFixed(0);
+                            const estimatedRevenue = (item.revenue || 0).toFixed(0);
                             return (
                                 <TableRow key={item.id}>
                                     <TableCell>

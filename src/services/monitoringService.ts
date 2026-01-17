@@ -50,6 +50,7 @@ export interface MonitoringReportItem {
     remarks?: string;
     payoutStatus: 'Very High' | 'High' | 'OK' | 'Low' | 'Very Low';
     payoutAccuracy: number; // Percentage: (Target / Actual) * 100
+    revenue: number; // Machine revenue 
     status: 'online' | 'offline' | 'error' | 'maintenance';
     lastUpdated?: Date;
 }
@@ -357,6 +358,11 @@ class MonitoringService {
                 const staffPlays = gameData?.empPlays ?? 0;
                 const payouts = gameData?.points ?? 0;
 
+                // Decide revenue multiplier based on group
+                const isCrane = machine.group?.toLowerCase().includes('crane') ||
+                    machine.type?.toLowerCase().includes('crane') ||
+                    (machine.group && machine.group.includes('Group 4'));
+                const multiplier = isCrane ? 3.6 : 1.8;
                 // Calculate plays per payout
                 const playsPerPayout = payouts > 0 ? Math.round((customerPlays + staffPlays) / payouts) : 0;
 
@@ -388,6 +394,7 @@ class MonitoringService {
                     imageUrl: machineSettings?.imageUrl || machine.imageUrl,
                     remarks: undefined,
                     payoutStatus,
+                    revenue: gameData?.totalRev ?? (customerPlays * multiplier),
                     lastUpdated: new Date()
                 };
             });

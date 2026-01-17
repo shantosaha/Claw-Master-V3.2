@@ -112,6 +112,9 @@ export function DataProvider({ children }: DataProviderProps) {
                 setTodayGameReports(gameData);
                 setTodayRevenue(revData);
 
+                // Sync with monitoring service
+                monitoringService.setPrefetchedGameData(gameData);
+
                 console.log(`[DataProvider] API Sync Complete: ${reports.length} reports, ${gameData.length} game stats, ${revData.length} revenue items`);
             } catch (error) {
                 console.error("[DataProvider] Failed to fetch startup API data:", error);

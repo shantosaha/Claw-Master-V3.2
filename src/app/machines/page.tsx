@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { machineService, apiService, auditService } from "@/services";
 import { ArcadeMachine, ArcadeMachineSlot, MachineDisplayItem, StockItem, AuditLog } from "@/types";
@@ -29,6 +29,7 @@ import { ConfirmDialog } from "@/components/common/ConfirmDialog";
 import { toast } from "sonner";
 import { usePageState } from "@/hooks/usePageState";
 import { useData } from "@/context/DataProvider";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
 
 // Define the state shape for persistence
 interface MachinesPageState {
@@ -47,7 +48,7 @@ interface MachinesPageState {
 export default function MachinesPage() {
     const router = useRouter();
     // Use global data context which handles subscriptions
-    const { machines, items, machinesLoading, itemsLoading, refreshMachines, refreshItems } = useData();
+    const { machines, items, machinesLoading, itemsLoading, refreshMachines, refreshItems, todayGameReports } = useData();
     const loading = machinesLoading || itemsLoading;
     const [syncing, setSyncing] = useState(false);
 
@@ -73,6 +74,29 @@ export default function MachinesPage() {
 
     // Destructure for easier access
     const { viewMode, searchTerm, statusFilter, typeFilter, locationFilter, prizeSizeFilter, stockLevelFilter, assignmentFilter, categoryFilter, subCategoryFilter } = pageState;
+
+    // Enrich machines with latest revenue data from reports
+    const enrichedMachines = useMemo(() => {
+        return (machines || []).map((machine: ArcadeMachine) => {
+            const gameData = (todayGameReports || []).find(r =>
+                String(r.tag) === String(machine.assetTag) ||
+                String(r.tag) === String(machine.tag) ||
+                String(r.assetTag) === String(machine.assetTag)
+            );
+
+            // Calculate fallback revenue if gameData not found, consistent with monitoring
+            let fallbackRev = machine.revenue || 0;
+            if (!gameData && machine.playCount) {
+                const isCrane = isCraneMachine(machine);
+                fallbackRev = machine.playCount * (isCrane ? 3.6 : 1.8);
+            }
+
+            return {
+                ...machine,
+                revenue: gameData?.totalRev ?? fallbackRev,
+            };
+        });
+    }, [machines, todayGameReports]);
 
     // State update helpers
     const setViewMode = (value: ViewMode) => updateState('viewMode', value);
@@ -419,37 +443,37 @@ export default function MachinesPage() {
 
     // Get unique Machine Types (category) - only for Group 4-Cranes machines
     const uniqueTypes = Array.from(new Set(
-        machines
-            .filter(m => m.group === 'Group 4-Cranes')
-            .map(m => m.category)
-            .filter(cat => cat && cat.trim() !== "")
+        enrichedMachines
+            .filter((m: ArcadeMachine) => m.group === 'Group 4-Cranes')
+            .map((m: ArcadeMachine) => m.category || "")
+            .filter((cat: string) => cat && cat.trim() !== "")
     ));
     // Sort categories: Group 1-11 numerically, then others alphabetically, "Not Assigned" last
-    const uniqueCategories = Array.from(new Set(machines.map(m => m.group).filter(g => g && g.trim() !== ""))).sort((a, b) => {
+    const uniqueCategories = Array.from(new Set(enrichedMachines.map((m: ArcadeMachine) => m.group || "").filter((g: string) => g && g.trim() !== ""))).sort((a, b) => {
         // Extract group numbers for comparison
-        const matchA = a?.match(/Group\s+(\d+)/);
-        const matchB = b?.match(/Group\s+(\d+)/);
+        const matchA = (a as string)?.match(/Group\s+(\d+)/);
+        const matchB = (b as string)?.match(/Group\s+(\d+)/);
         const numA = matchA ? parseInt(matchA[1]) : Infinity;
         const numB = matchB ? parseInt(matchB[1]) : Infinity;
 
         // "Not Assigned" or similar should go last
-        if (a?.toLowerCase().includes('not assigned')) return 1;
-        if (b?.toLowerCase().includes('not assigned')) return -1;
+        if ((a as string)?.toLowerCase().includes('not assigned')) return 1;
+        if ((b as string)?.toLowerCase().includes('not assigned')) return -1;
 
         // Compare by group number
         if (numA !== numB) return numA - numB;
 
         // Fallback to alphabetical
-        return (a || '').localeCompare(b || '');
+        return (a as string || '').localeCompare(b as string || '');
     });
     // Sub-categories are filtered based on selected category
     const uniqueSubCategories = Array.from(new Set(
-        machines
+        enrichedMachines
             .filter(m => categoryFilter === 'all' || m.group === categoryFilter)
             .map(m => m.subGroup)
             .filter(sg => sg && sg.trim() !== "")
     )).sort();
-    const uniqueLocations = Array.from(new Set(machines.map(m => m.location).filter(loc => loc && loc.trim() !== "")));
+    const uniqueLocations = Array.from(new Set(enrichedMachines.map((m: ArcadeMachine) => m.location || "").filter((loc: string) => loc && loc.trim() !== "")));
 
     // Normalize prize sizes to eliminate duplicates (e.g., "Extra Small" vs "Extra-Small" vs "extra small")
     const normalizePrizeSize = (size: string): string => {
@@ -458,7 +482,7 @@ export default function MachinesPage() {
         ).join(' ');
     };
     const uniquePrizeSizes = Array.from(new Set(
-        machines.map(m => m.prizeSize).filter(size => size && size.trim() !== "").map(size => normalizePrizeSize(size as string))
+        enrichedMachines.map((m: ArcadeMachine) => m.prizeSize || "").filter((size: string) => size && size.trim() !== "").map((size: string) => normalizePrizeSize(size))
     ));
 
     // Helper to get machine's stock level from its slots
@@ -482,12 +506,19 @@ export default function MachinesPage() {
         return machine.slots?.some(s => !!s.currentItem) || false;
     };
 
-    const filteredMachines = machines.filter(machine => {
+    const filteredMachines = enrichedMachines.filter((machine: ArcadeMachine) => {
         const matchesSearch =
             machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             machine.assetTag.toLowerCase().includes(searchTerm.toLowerCase());
 
-        const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
+        // Status filter checks machine status OR any slot status
+        const filterStatusLC = statusFilter.toLowerCase();
+        const machineStatusLC = (machine.status || "").toLowerCase();
+        const hasMatchingSlotStatus = (machine.slots || []).some((s: ArcadeMachineSlot) => (s.status || "").toLowerCase() === filterStatusLC);
+
+        const matchesStatus = statusFilter === "all" ||
+            machineStatusLC === filterStatusLC ||
+            hasMatchingSlotStatus;
         const matchesType = typeFilter === "all" || machine.category === typeFilter;
         const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
         const matchesPrizeSize = prizeSizeFilter === "all" || (machine.prizeSize && normalizePrizeSize(machine.prizeSize) === prizeSizeFilter);
@@ -517,7 +548,7 @@ export default function MachinesPage() {
     const flattenedFilteredMachines = flattenMachinesToSlots(filteredMachines);
 
     // Get archived machines for the dialog
-    const archivedMachinesData = machines.filter(m => m.isArchived);
+    const archivedMachinesData = enrichedMachines.filter(m => m.isArchived);
     const flattenedArchivedMachines = flattenMachinesToSlots(archivedMachinesData);
 
     if (loading) return <div className="p-8 text-center flex flex-col items-center justify-center h-64"><RefreshCw className="h-8 w-8 animate-spin mb-4" />Loading machines and inventory...</div>;
@@ -744,15 +775,15 @@ export default function MachinesPage() {
             ) : (
                 <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
                     {/* For card view, we need to inject the items into the machines similar to flattened view logic but preserving machine structure */}
-                    {filteredMachines.map(machine => {
+                    {filteredMachines.map((machine: ArcadeMachine) => {
                         // Enrich machine slots with items for the card view
-                        const enrichedSlots = machine.slots.map(slot => {
+                        const enrichedSlots = machine.slots.map((slot: ArcadeMachineSlot) => {
                             const assignedItem = slot.currentItem;
 
                             // Calculate Stock Level for Card View
                             let derivedStockLevel: ArcadeMachineSlot['stockLevel'] = 'Out of Stock';
                             if (assignedItem) {
-                                const locationsSum = assignedItem.locations?.reduce((sum, loc) => sum + loc.quantity, 0);
+                                const locationsSum = assignedItem.locations?.reduce((sum: number, loc: any) => sum + loc.quantity, 0);
                                 const totalQty = locationsSum !== undefined ? locationsSum : (assignedItem.totalQuantity ?? 0);
                                 derivedStockLevel = calculateStockLevel(totalQty, assignedItem.stockStatus).status as ArcadeMachineSlot['stockLevel'];
                             } else if (slot.stockLevel) {

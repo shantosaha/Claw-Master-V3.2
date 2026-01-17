@@ -83,6 +83,7 @@ function useMonitoring() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+    const { refreshApis } = useData();
 
     useEffect(() => {
         const id = 'monitoring-hook-' + Date.now();
@@ -113,6 +114,9 @@ function useMonitoring() {
     const refresh = useCallback(async () => {
         setIsLoading(true);
         try {
+            // First refresh the global APIs (JotForm, Revenue, etc.)
+            await refreshApis();
+            // Then fetch machine statuses
             const data = await monitoringService.fetchMachineStatuses();
             setMachines(data);
             setLastUpdate(new Date());
@@ -121,7 +125,7 @@ function useMonitoring() {
             setError('Failed to refresh data');
         }
         setIsLoading(false);
-    }, []);
+    }, [refreshApis]);
 
     // Computed values
     const onlineCount = machines.filter(m => m.status === 'online').length;
@@ -434,7 +438,7 @@ function MachineQuickViewDialog({
                                         </div>
                                         <div className="flex items-baseline gap-1">
                                             <span className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                                                ${(todayCustomer * 3.60).toFixed(2)}
+                                                ${(machine.revenue || 0).toFixed(2)}
                                             </span>
                                             <span className="text-[10px] text-blue-600/50 font-medium">today</span>
                                         </div>
@@ -1053,6 +1057,7 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                             {renderSortableHeader("Plays/Payout", "playsPerPayout", "text-right justify-end")}
                             {renderSortableHeader("Target", "payoutSettings", "text-right justify-end")}
                             {renderSortableHeader("Accuracy %", "payoutAccuracy", "text-right justify-end")}
+                            {renderSortableHeader("Revenue", "revenue", "text-right justify-end")}
                             {renderSortableHeader("Settings Date", "settingsDate")}
                             {renderSortableHeader("Staff Name", "staffName")}
                             {renderSortableHeader("C1", "c1", "text-right justify-end")}
@@ -1106,6 +1111,9 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                     ) : (
                                         <span className="text-muted-foreground text-xs">N/A</span>
                                     )}
+                                </TableCell>
+                                <TableCell className="text-right font-bold text-green-600">
+                                    ${(item.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                 </TableCell>
                                 <TableCell className="text-xs text-muted-foreground">
                                     {format(item.settingsDate, 'M/d/yyyy')}<br />
@@ -1230,7 +1238,7 @@ function StatDetailDialog({
     const chartData = useMemo(() => {
         return sortedData.slice(0, 8).map(m => ({
             name: m.name.substring(0, 10),
-            value: type === 'revenue' ? (m.customerPlays || 0) * 3.6 : (m.customerPlays || 0)
+            value: type === 'revenue' ? (m.revenue || 0) : (m.customerPlays || 0)
         }));
     }, [sortedData, type]);
 
@@ -1268,7 +1276,7 @@ function StatDetailDialog({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right py-2">
-                                                {type === 'revenue' && <span className="font-mono text-xs">${((m.customerPlays || 0) * 3.6).toFixed(0)}</span>}
+                                                {type === 'revenue' && <span className="font-mono text-xs">${(m.revenue || 0).toFixed(0)}</span>}
                                                 {type === 'activity' && <span className="font-mono text-xs">{m.customerPlays}</span>}
                                                 {type === 'accuracy' && (
                                                     <Badge variant="outline" className={cn(
@@ -1362,7 +1370,7 @@ export default function MonitoringPage() {
     // Aggregated stats from report data
     const stats = useMemo(() => {
         const totalPlays = reportData.reduce((acc, curr) => acc + (curr.customerPlays || 0), 0);
-        const totalRevenue = reportData.reduce((acc, curr) => acc + ((curr.customerPlays || 0) * 3.6), 0);
+        const totalRevenue = reportData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
         const criticalCount = reportData.filter(r => r.payoutStatus === 'Very High' || r.payoutStatus === 'Very Low').length;
         const avgAccuracy = reportData.length > 0
             ? Math.round(reportData.reduce((acc, curr) => acc + (curr.payoutAccuracy || 0), 0) / reportData.length)
@@ -1508,6 +1516,33 @@ export default function MonitoringPage() {
 
     return (
         <div className="container mx-auto p-4 sm:p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-2xl font-bold tracking-tight">Monitoring Dashboard</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Real-time status and performance telemetry across all locations.
+                    </p>
+                </div>
+                <div className="flex items-center gap-3">
+                    {lastUpdate && (
+                        <div className="hidden md:flex flex-col items-end text-[10px] text-muted-foreground">
+                            <span>Last updated</span>
+                            <span className="font-medium">{lastUpdate.toLocaleTimeString()}</span>
+                        </div>
+                    )}
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => refresh()}
+                        disabled={isLoading}
+                        className="h-9 gap-2"
+                    >
+                        <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
+                        {isLoading ? "Refreshing..." : "Refresh Data"}
+                    </Button>
+                </div>
+            </div>
+
             {/* Top Stats Dashboard */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <Card
