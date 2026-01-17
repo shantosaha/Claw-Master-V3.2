@@ -54,10 +54,6 @@ import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
 import { MachineComparisonTable } from "@/components/machines/MachineComparisonTable";
 import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { isCraneMachine } from "@/utils/machineTypeUtils";
-import { NonCraneMachineCard } from "@/components/machines/NonCraneMachineCard";
-import { NonCraneQuickViewDialog } from "@/components/machines/NonCraneQuickViewDialog";
-import { NonCraneReportTable } from "@/components/machines/NonCraneReportTable";
 import {
     ResponsiveContainer,
     AreaChart,
@@ -1173,19 +1169,6 @@ export default function MonitoringPage() {
     const [selectedMachineForAction, setSelectedMachineForAction] = useState<ExtendedMachineStatus | null>(null);
     const [activeStatDetail, setActiveStatDetail] = useState<'revenue' | 'activity' | 'accuracy' | 'uptime' | null>(null);
     const [quickViewMachine, setQuickViewMachine] = useState<ExtendedMachineStatus | null>(null);
-    const [quickViewNonCrane, setQuickViewNonCrane] = useState<ExtendedMachineStatus | null>(null);
-    const [craneExpanded, setCraneExpanded] = useState(true);
-    const [otherExpanded, setOtherExpanded] = useState(true);
-
-    const craneMachines = useMemo(() =>
-        sortedMachines.filter(m => isCraneMachine(m)),
-        [sortedMachines]
-    );
-
-    const otherMachines = useMemo(() =>
-        sortedMachines.filter(m => !isCraneMachine(m)),
-        [sortedMachines]
-    );
 
     if (error) {
         return (
@@ -1407,118 +1390,34 @@ export default function MonitoringPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-8">
-                            {/* Crane Machines Section */}
-                            <div className="space-y-4">
-                                <div
-                                    className="flex items-center justify-between cursor-pointer group"
-                                    onClick={() => setCraneExpanded(!craneExpanded)}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-1.5 bg-blue-100 dark:bg-blue-900/50 rounded-lg text-blue-600">
-                                            <Zap className="h-5 w-5 fill-current" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-black uppercase tracking-tight">Claw Machines</h3>
-                                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">Group 4-Cranes • {craneMachines.length} Units</p>
-                                        </div>
-                                        <Badge variant="outline" className="ml-2 font-bold">{craneMachines.length}</Badge>
-                                    </div>
-                                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {craneExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                    </Button>
-                                </div>
-
-                                {craneExpanded && (
-                                    viewMode === "grid" ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                            {craneMachines.map((machine) => (
-                                                <MachineStatusCard
-                                                    key={machine.id}
-                                                    machine={machine}
-                                                    onAction={(action, machine) => {
-                                                        setSelectedMachineForAction(machine);
-                                                        if (action === 'submit_report') {
-                                                            setSelectedTab("submit");
-                                                        } else if (action === 'compare') {
-                                                            setSelectedTab("comparison");
-                                                        } else if (action === 'quick_view') {
-                                                            setQuickViewMachine(machine);
-                                                        }
-                                                    }}
-                                                />
-                                            ))}
-                                            {craneMachines.length === 0 && (
-                                                <div className="col-span-full py-12 text-center border-2 border-dashed rounded-xl bg-muted/20">
-                                                    <p className="text-muted-foreground font-medium">No claw machines match the current filters</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <MonitoringReportTable data={craneMachines as any} />
-                                    )
-                                )}
+                        {viewMode === "grid" ? (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                                {sortedMachines.map((machine) => (
+                                    <MachineStatusCard
+                                        key={machine.id}
+                                        machine={machine}
+                                        onAction={(action, machine) => {
+                                            setSelectedMachineForAction(machine);
+                                            if (action === 'submit_report') {
+                                                setSelectedTab("submit");
+                                            } else if (action === 'compare') {
+                                                setSelectedTab("comparison");
+                                            } else if (action === 'quick_view') {
+                                                setQuickViewMachine(machine);
+                                            }
+                                        }}
+                                    />
+                                ))}
                             </div>
-
-                            {/* Non-Crane Machines Section */}
-                            <div className="space-y-4">
-                                <div
-                                    className="flex items-center justify-between cursor-pointer group"
-                                    onClick={() => setOtherExpanded(!otherExpanded)}
-                                >
-                                    <div className="flex items-center gap-2">
-                                        <div className="p-1.5 bg-purple-100 dark:bg-purple-900/50 rounded-lg text-purple-600">
-                                            <LayoutGrid className="h-5 w-5" />
-                                        </div>
-                                        <div>
-                                            <h3 className="text-lg font-black uppercase tracking-tight">Other Arcade Machines</h3>
-                                            <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-widest">General Arcade & Vending • {otherMachines.length} Units</p>
-                                        </div>
-                                        <Badge variant="outline" className="ml-2 font-bold">{otherMachines.length}</Badge>
-                                    </div>
-                                    <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {otherExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                                    </Button>
-                                </div>
-
-                                {otherExpanded && (
-                                    viewMode === "grid" ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                            {otherMachines.map((machine) => (
-                                                <NonCraneMachineCard
-                                                    key={machine.id}
-                                                    machine={machine}
-                                                    onAction={(action, machine) => {
-                                                        if (action === 'quick_view') {
-                                                            setQuickViewNonCrane(machine);
-                                                        }
-                                                    }}
-                                                />
-                                            ))}
-                                            {otherMachines.length === 0 && (
-                                                <div className="col-span-full py-12 text-center border-2 border-dashed rounded-xl bg-muted/20">
-                                                    <p className="text-muted-foreground font-medium">No arcade machines match the current filters</p>
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        <NonCraneReportTable data={otherMachines as any} />
-                                    )
-                                )}
-                            </div>
-                        </div>
+                        ) : (
+                            <MonitoringReportTable data={sortedMachines as any} />
+                        )}
                     </div>
 
                     <MachineQuickViewDialog
                         machine={quickViewMachine}
                         open={!!quickViewMachine}
                         onOpenChange={(open) => !open && setQuickViewMachine(null)}
-                    />
-
-                    <NonCraneQuickViewDialog
-                        machine={quickViewNonCrane}
-                        open={!!quickViewNonCrane}
-                        onOpenChange={(open) => !open && setQuickViewNonCrane(null)}
                     />
                 </TabsContent>
 
