@@ -42,7 +42,26 @@ export const GROUP_SUBGROUPS: Record<string, string[]> = {
 
 /** Categories (Machine Type) for each group, currently primarily for Cranes */
 export const GROUP_CATEGORIES: Record<string, string[]> = {
-    "Group 4-Cranes": ["Trend Catcher", "Trend Box", "Doll House", "Giant Claw", "Toy Soldier", "Mini Crane", "Other"],
+    "Group 4-Cranes": [
+        "Trend Catcher",
+        "Trend Box",
+        "Innis",
+        "Skweb",
+        "Crazy Toy Miya",
+        "Crazy Toy -> Medium",
+        "Crazy Toy Nano",
+        "Crazy Star",
+        "Doll Castle",
+        "The Big Claw",
+        "Hip-Hop Elf",
+        "Clip Story",
+        "E-Claw",
+        "Meow Meow",
+        "Clena",
+        "UFO Catcher",
+        "HexClaw",
+        "Custom",
+    ],
 };
 
 /**

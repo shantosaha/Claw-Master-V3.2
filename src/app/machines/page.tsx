@@ -417,8 +417,13 @@ export default function MachinesPage() {
         return flattened;
     };
 
-    // Get unique values for filters
-    const uniqueTypes = Array.from(new Set(machines.map(m => m.type).filter(type => type && type.trim() !== "")));
+    // Get unique Machine Types (category) - only for Group 4-Cranes machines
+    const uniqueTypes = Array.from(new Set(
+        machines
+            .filter(m => m.group === 'Group 4-Cranes')
+            .map(m => m.category)
+            .filter(cat => cat && cat.trim() !== "")
+    ));
     // Sort categories: Group 1-11 numerically, then others alphabetically, "Not Assigned" last
     const uniqueCategories = Array.from(new Set(machines.map(m => m.group).filter(g => g && g.trim() !== ""))).sort((a, b) => {
         // Extract group numbers for comparison
@@ -483,7 +488,7 @@ export default function MachinesPage() {
             machine.assetTag.toLowerCase().includes(searchTerm.toLowerCase());
 
         const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
-        const matchesType = typeFilter === "all" || machine.type === typeFilter;
+        const matchesType = typeFilter === "all" || machine.category === typeFilter;
         const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
         const matchesPrizeSize = prizeSizeFilter === "all" || (machine.prizeSize && normalizePrizeSize(machine.prizeSize) === prizeSizeFilter);
         const matchesCategory = categoryFilter === "all" || machine.group === categoryFilter;

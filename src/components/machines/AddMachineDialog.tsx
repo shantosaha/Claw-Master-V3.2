@@ -199,6 +199,7 @@ const machineSchema = z.object({
     tag: z.string().optional(),
     subGroup: z.string().optional(),
     category: z.string().optional(),
+    customCategory: z.string().optional(),
     assetTagMode: z.enum(["shared", "separate"]).optional(),
     // New pricing fields for all machines
     playPrice: z.coerce.number().min(0).optional(),
@@ -280,6 +281,7 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
             tag: "",
             subGroup: "",
             category: "",
+            customCategory: "",
             assetTagMode: "shared",
             playPrice: 1.80,
             storeLocation: "",
@@ -292,6 +294,7 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
     const watchedConfig = form.watch("physicalConfig");
     const watchedName = form.watch("name");
     const watchedPrizeSize = form.watch("prizeSize");
+    const watchedCategory = form.watch("category");
 
     // Check if selected group is a claw machine group (needs inventory features)
     const isCraneSelected = isCraneGroup(watchedGroup);
@@ -539,6 +542,10 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                     fetchSettings();
                 }
 
+                // Check if category is custom (not in predefined list)
+                const isCustomCategory = machineToEdit.category &&
+                    !GROUP_CATEGORIES[CLAW_MACHINE_GROUP]?.includes(machineToEdit.category);
+
                 form.reset({
                     name: machineToEdit.name,
                     assetTag: machineToEdit.assetTag,
@@ -552,7 +559,8 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                     notes: machineToEdit.notes || "",
                     tag: machineToEdit.tag || "",
                     subGroup: machineToEdit.subGroup || "",
-                    category: machineToEdit.type || "",
+                    category: isCustomCategory ? "Custom" : (machineToEdit.category || ""),
+                    customCategory: isCustomCategory ? machineToEdit.category : "",
                     assetTagMode: "shared",
                     playPrice: machineToEdit.advancedSettings?.cardCashPlayPrice || 1.80,
                     storeLocation: machineToEdit.storeLocation || "",
@@ -615,13 +623,13 @@ export function AddMachineDialog({ open, onOpenChange, onSuccess, machineToEdit 
                 location: finalLocation,
                 status: data.status,
                 physicalConfig: isCrane ? (data.physicalConfig || "single") : "single",
-                type: isCrane ? (data.category || finalGroup) : finalGroup, // Store category in type field for cranes, fallback to group
-                group: finalGroup, // New: Store in group field
+                type: finalGroup, // Always store group in type for backward compatibility
+                group: finalGroup, // Store in group field
                 prizeSize: isCrane ? data.prizeSize : undefined,
                 notes: data.notes,
                 tag: data.tag,
                 subGroup: data.subGroup,
-                category: data.category,
+                category: isCrane ? data.category : undefined, // Category (machine model) only for cranes
                 storeLocation: data.storeLocation,
                 imageUrl: capturedImage || undefined,
                 updatedAt: new Date(),

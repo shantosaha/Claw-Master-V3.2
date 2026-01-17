@@ -27,7 +27,7 @@ import { MachineComparisonTable } from "@/components/machines/MachineComparisonT
 import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
 import { ServiceHistoryTable } from "@/components/machines/ServiceHistoryTable";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
-import { isCraneMachine } from "@/utils/machineTypeUtils";
+import { isCraneMachine, GROUP_CATEGORIES, CLAW_MACHINE_GROUP } from "@/utils/machineTypeUtils";
 
 // Constants for select field options
 const STATUS_OPTIONS = [
@@ -412,29 +412,42 @@ export default function MachineDetailsPage() {
                                         options={STATUS_OPTIONS}
                                         onSave={(val) => handleFieldUpdate("status", "Status", val, enrichedMachine.status)}
                                     />
-                                    <InlineEditField
-                                        type="text"
-                                        label="Machine Type"
-                                        value={enrichedMachine.type || ""}
-                                        disabled={!isEditMode}
-                                        onSave={(val) => handleFieldUpdate("type", "Machine Type", val, enrichedMachine.type)}
-                                    />
-                                    <InlineEditField
-                                        type="select"
-                                        label="Physical Config"
-                                        value={enrichedMachine.physicalConfig}
-                                        disabled={!isEditMode}
-                                        options={PHYSICAL_CONFIG_OPTIONS}
-                                        onSave={(val) => handleFieldUpdate("physicalConfig", "Physical Config", val, enrichedMachine.physicalConfig)}
-                                    />
-                                    <InlineEditField
-                                        type="select"
-                                        label="Prize Size"
-                                        value={enrichedMachine.prizeSize || ""}
-                                        disabled={!isEditMode}
-                                        options={[{ label: "Not Set", value: "" }, ...PRIZE_SIZE_OPTIONS]}
-                                        onSave={(val) => handleFieldUpdate("prizeSize", "Prize Size", val, enrichedMachine.prizeSize)}
-                                    />
+                                    {/* Machine Type (Category) - Only for Crane Machines */}
+                                    {isCraneMachine(enrichedMachine) && (
+                                        <InlineEditField
+                                            type="select"
+                                            label="Machine Type"
+                                            value={enrichedMachine.category || ""}
+                                            disabled={!isEditMode}
+                                            options={[
+                                                { label: "Not Set", value: "" },
+                                                ...(GROUP_CATEGORIES[CLAW_MACHINE_GROUP]?.map(cat => ({ label: cat, value: cat })) || [])
+                                            ]}
+                                            onSave={(val) => handleFieldUpdate("category", "Machine Type", val, enrichedMachine.category)}
+                                        />
+                                    )}
+                                    {/* Physical Config - Only for Crane Machines */}
+                                    {isCraneMachine(enrichedMachine) && (
+                                        <InlineEditField
+                                            type="select"
+                                            label="Physical Config"
+                                            value={enrichedMachine.physicalConfig}
+                                            disabled={!isEditMode}
+                                            options={PHYSICAL_CONFIG_OPTIONS}
+                                            onSave={(val) => handleFieldUpdate("physicalConfig", "Physical Config", val, enrichedMachine.physicalConfig)}
+                                        />
+                                    )}
+                                    {/* Prize Size - Only for Crane Machines */}
+                                    {isCraneMachine(enrichedMachine) && (
+                                        <InlineEditField
+                                            type="select"
+                                            label="Prize Size"
+                                            value={enrichedMachine.prizeSize || ""}
+                                            disabled={!isEditMode}
+                                            options={[{ label: "Not Set", value: "" }, ...PRIZE_SIZE_OPTIONS]}
+                                            onSave={(val) => handleFieldUpdate("prizeSize", "Prize Size", val, enrichedMachine.prizeSize)}
+                                        />
+                                    )}
                                     <InlineEditField
                                         type="text"
                                         label="Group"
