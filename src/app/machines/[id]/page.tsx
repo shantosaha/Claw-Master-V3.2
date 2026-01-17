@@ -270,7 +270,13 @@ export default function MachineDetailsPage() {
 
     const currentSlot = slotId ? enrichedMachine.slots.find(s => s.id === slotId) : null;
     const displayTitle = currentSlot && currentSlot.name !== "Main" ? `${enrichedMachine.name} - ${currentSlot.name}` : enrichedMachine.name;
-    const displayStatus = currentSlot ? currentSlot.status : enrichedMachine.status;
+
+    // Unified Status Logic: Priority to parent machine if not Online
+    const machineStatusLower = enrichedMachine.status?.toLowerCase() || 'online';
+    const isParentDown = ['maintenance', 'error', 'offline'].includes(machineStatusLower);
+    const displayStatus = isParentDown
+        ? enrichedMachine.status
+        : (currentSlot ? currentSlot.status : enrichedMachine.status);
     const isCrane = isCraneMachine(enrichedMachine);
 
     return (

@@ -739,7 +739,8 @@ function MachineStatusCard({ machine, onAction }: { machine: ExtendedMachineStat
                                         machine.payoutStatus === 'High' && "bg-red-400 hover:bg-red-500 text-white border-red-500",
                                         machine.payoutStatus === 'OK' && "bg-green-500 hover:bg-green-600 text-white border-green-600",
                                         machine.payoutStatus === 'Low' && "bg-yellow-200 hover:bg-yellow-300 text-yellow-800 border-yellow-300",
-                                        machine.payoutStatus === 'Very Low' && "bg-yellow-600 hover:bg-yellow-700 text-white border-yellow-700"
+                                        machine.payoutStatus === 'Very Low' && "bg-orange-600 hover:bg-orange-700 text-white border-orange-700",
+                                        machine.payoutStatus === 'N/A' && "bg-muted hover:bg-muted/80 text-muted-foreground border-muted-foreground/20"
                                     )}>
                                         {machine.payoutStatus}
                                     </Badge>
@@ -972,11 +973,12 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
 
     const sortedData = useMemo(() => {
         const statusOrder = {
-            'Very High': 5,
-            'High': 4,
-            'OK': 3,
-            'Low': 2,
-            'Very Low': 1
+            'Very High': 6,
+            'High': 5,
+            'OK': 4,
+            'Low': 3,
+            'Very Low': 2,
+            'N/A': 1
         };
 
         let sortableItems = [...data];
@@ -1225,7 +1227,7 @@ function StatDetailDialog({
         }
         if (type === 'accuracy') {
             return list.filter(m => m.payoutStatus !== 'OK').sort((a, b) => {
-                const statusOrder = { 'Very High': 4, 'Very Low': 3, 'High': 2, 'Low': 1, 'OK': 0 };
+                const statusOrder = { 'Very High': 5, 'Very Low': 4, 'High': 3, 'Low': 2, 'N/A': 1, 'OK': 0 };
                 return (statusOrder[b.payoutStatus as keyof typeof statusOrder] || 0) - (statusOrder[a.payoutStatus as keyof typeof statusOrder] || 0);
             });
         }
@@ -1281,8 +1283,9 @@ function StatDetailDialog({
                                                 {type === 'accuracy' && (
                                                     <Badge variant="outline" className={cn(
                                                         "text-[10px] h-4",
-                                                        m.payoutStatus === 'Very High' ? "bg-red-500 text-white" :
-                                                            (m.payoutStatus === 'Very Low' ? "bg-yellow-600 text-white" : "bg-muted")
+                                                        m.payoutStatus === 'Very High' ? "bg-red-500 text-white border-none" :
+                                                            (m.payoutStatus === 'Very Low' ? "bg-orange-600 text-white border-none" :
+                                                                (m.payoutStatus === 'N/A' ? "bg-muted text-muted-foreground border-none" : "bg-muted"))
                                                     )}>
                                                         {m.payoutStatus}
                                                     </Badge>
@@ -1694,6 +1697,7 @@ export default function MonitoringPage() {
                                             <SelectItem value="OK">OK</SelectItem>
                                             <SelectItem value="Low">Low</SelectItem>
                                             <SelectItem value="Very Low">Very Low</SelectItem>
+                                            <SelectItem value="N/A">N/A</SelectItem>
                                         </SelectContent>
                                     </Select>
 

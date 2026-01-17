@@ -326,13 +326,18 @@ export default function MachinesPage() {
                 const originalMachine = machine.originalMachine;
                 const updatedSlots = originalMachine.slots.map(slot => {
                     if (slot.id === machine.slotId) {
-                        return { ...slot, status: status as ArcadeMachineSlot['status'] };
+                        return { ...slot, status: status.toLowerCase() as ArcadeMachineSlot['status'] };
                     }
                     return slot;
                 });
 
+                // If setting a slot to Online, also ensure the parent machine is Online
+                // If setting to Maintenance/Error/Offline, we can also update the parent if it's a single-slot machine
+                const shouldUpdateParentStatus = status === 'Online' || originalMachine.slots.length <= 1;
+
                 await machineService.update(originalMachine.id, {
                     slots: updatedSlots,
+                    ...(shouldUpdateParentStatus ? { status: status as ArcadeMachine['status'] } : {})
                 });
             } else {
                 await machineService.update(machine.id, {
@@ -348,6 +353,19 @@ export default function MachinesPage() {
     };
 
     // Flatten machines for list view and merge with stock items
+    // Unified Status Logic: If parent machine is Maintenance/Error/Offline, slots inherit that status
+    const getUnifiedStatus = (machineStatus: string, slotStatus: string): string => {
+        const machineStatusLower = machineStatus?.toLowerCase() || 'online';
+        // If parent machine is not Online, slot inherits parent status
+        if (['maintenance', 'error', 'offline'].includes(machineStatusLower)) {
+            // Normalize to proper casing
+            return machineStatus.charAt(0).toUpperCase() + machineStatus.slice(1).toLowerCase();
+        }
+        // Otherwise use slot's own status, normalized
+        const slotLower = slotStatus?.toLowerCase() || 'online';
+        return slotLower.charAt(0).toUpperCase() + slotLower.slice(1).toLowerCase();
+    };
+
     const flattenMachinesToSlots = (machines: ArcadeMachine[]): MachineDisplayItem[] => {
         const flattened: MachineDisplayItem[] = [];
 
@@ -373,6 +391,9 @@ export default function MachinesPage() {
                     // Use queue directly from slot
                     const upcomingQueue = slot.upcomingQueue || [];
 
+                    // Unified status: inherits from machine if machine is not Online
+                    const unifiedStatus = getUnifiedStatus(machine.status, slot.status);
+
                     // Create a slot object with the currentItem populated
                     const enrichedSlot = {
                         ...slot,
@@ -386,7 +407,7 @@ export default function MachinesPage() {
                         isSlot: true,
                         slotId: slot.id,
                         slotName: slot.name,
-                        slotStatus: slot.status,
+                        slotStatus: unifiedStatus as ArcadeMachineSlot['status'],
                         // Append slot name to machine name for display unless it's "Main"
                         name: (slot.name === 'Main' || slot.name === 'main') ? machine.name : `${machine.name} - ${slot.name}`,
                         originalMachine: machine,
@@ -506,49 +527,51 @@ export default function MachinesPage() {
         return machine.slots?.some(s => !!s.currentItem) || false;
     };
 
-    const filteredMachines = enrichedMachines.filter((machine: ArcadeMachine) => {
+    // Flatten ALL machines first, then apply filters on the flattened items
+    const allFlattenedMachines = flattenMachinesToSlots(enrichedMachines);
+
+    const filteredMachines = allFlattenedMachines.filter((item: MachineDisplayItem) => {
         const matchesSearch =
-            machine.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            machine.assetTag.toLowerCase().includes(searchTerm.toLowerCase());
+            item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            item.assetTag.toLowerCase().includes(searchTerm.toLowerCase());
 
-        // Status filter checks machine status OR any slot status
+        // Status filter uses the unified slotStatus (which already inherits from machine)
+        const displayStatus = item.slotStatus || item.status || 'Online';
+        const displayStatusLC = displayStatus.toLowerCase();
         const filterStatusLC = statusFilter.toLowerCase();
-        const machineStatusLC = (machine.status || "").toLowerCase();
-        const hasMatchingSlotStatus = (machine.slots || []).some((s: ArcadeMachineSlot) => (s.status || "").toLowerCase() === filterStatusLC);
+        const matchesStatus = statusFilter === "all" || displayStatusLC === filterStatusLC;
 
-        const matchesStatus = statusFilter === "all" ||
-            machineStatusLC === filterStatusLC ||
-            hasMatchingSlotStatus;
-        const matchesType = typeFilter === "all" || machine.category === typeFilter;
-        const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
-        const matchesPrizeSize = prizeSizeFilter === "all" || (machine.prizeSize && normalizePrizeSize(machine.prizeSize) === prizeSizeFilter);
-        const matchesCategory = categoryFilter === "all" || machine.group === categoryFilter;
-        const matchesSubCategory = subCategoryFilter === "all" || machine.subGroup === subCategoryFilter;
+        const matchesType = typeFilter === "all" || item.category === typeFilter;
+        const matchesLocation = locationFilter === "all" || item.location === locationFilter;
+        const matchesPrizeSize = prizeSizeFilter === "all" || (item.prizeSize && normalizePrizeSize(item.prizeSize) === prizeSizeFilter);
+        const matchesCategory = categoryFilter === "all" || item.group === categoryFilter;
+        const matchesSubCategory = subCategoryFilter === "all" || item.subGroup === subCategoryFilter;
 
         // Stock level filter
         let matchesStockLevel = true;
         if (stockLevelFilter !== "all") {
-            const machineStockLevel = getMachineStockLevel(machine);
+            const machineStockLevel = getMachineStockLevel(item.originalMachine);
             matchesStockLevel = machineStockLevel === stockLevelFilter;
         }
 
         // Assignment filter
         let matchesAssignment = true;
         if (assignmentFilter === "assigned") {
-            matchesAssignment = machineHasAssignment(machine);
+            matchesAssignment = machineHasAssignment(item.originalMachine);
         } else if (assignmentFilter === "unassigned") {
-            matchesAssignment = !machineHasAssignment(machine);
+            matchesAssignment = !machineHasAssignment(item.originalMachine);
         }
         // Archive filter - main view only shows non-archived
-        const matchesArchive = !machine.isArchived;
+        const matchesArchive = !item.isArchived;
 
         return matchesSearch && matchesStatus && matchesType && matchesLocation && matchesPrizeSize && matchesStockLevel && matchesAssignment && matchesArchive && matchesCategory && matchesSubCategory;
     });
 
-    const flattenedFilteredMachines = flattenMachinesToSlots(filteredMachines);
+    // Use filtered items directly (already flattened)
+    const flattenedFilteredMachines = filteredMachines;
 
     // Get archived machines for the dialog
-    const archivedMachinesData = enrichedMachines.filter(m => m.isArchived);
+    const archivedMachinesData = allFlattenedMachines.filter((m: MachineDisplayItem) => m.isArchived);
     const flattenedArchivedMachines = flattenMachinesToSlots(archivedMachinesData);
 
     if (loading) return <div className="p-8 text-center flex flex-col items-center justify-center h-64"><RefreshCw className="h-8 w-8 animate-spin mb-4" />Loading machines and inventory...</div>;
@@ -774,49 +797,60 @@ export default function MachinesPage() {
                 <MachinePricingTable machines={flattenedFilteredMachines} />
             ) : (
                 <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-6">
-                    {/* For card view, we need to inject the items into the machines similar to flattened view logic but preserving machine structure */}
-                    {filteredMachines.map((machine: ArcadeMachine) => {
-                        // Enrich machine slots with items for the card view
-                        const enrichedSlots = machine.slots.map((slot: ArcadeMachineSlot) => {
-                            const assignedItem = slot.currentItem;
-
-                            // Calculate Stock Level for Card View
-                            let derivedStockLevel: ArcadeMachineSlot['stockLevel'] = 'Out of Stock';
-                            if (assignedItem) {
-                                const locationsSum = assignedItem.locations?.reduce((sum: number, loc: any) => sum + loc.quantity, 0);
-                                const totalQty = locationsSum !== undefined ? locationsSum : (assignedItem.totalQuantity ?? 0);
-                                derivedStockLevel = calculateStockLevel(totalQty, assignedItem.stockStatus).status as ArcadeMachineSlot['stockLevel'];
-                            } else if (slot.stockLevel) {
-                                derivedStockLevel = slot.stockLevel;
+                    {/* For card view, deduplicate parent machines from filtered items */}
+                    {(() => {
+                        // Get unique parent machines from filtered flattened items
+                        const seenMachineIds = new Set<string>();
+                        const uniqueMachines: ArcadeMachine[] = [];
+                        filteredMachines.forEach((item: MachineDisplayItem) => {
+                            if (!seenMachineIds.has(item.originalMachine.id)) {
+                                seenMachineIds.add(item.originalMachine.id);
+                                uniqueMachines.push(item.originalMachine);
                             }
-
-                            const upcomingQueue = slot.upcomingQueue || [];
-
-                            return {
-                                ...slot,
-                                currentItem: assignedItem,
-                                upcomingQueue: upcomingQueue,
-                                stockLevel: derivedStockLevel // Update stock level
-                            };
                         });
-                        const enrichedMachine = { ...machine, slots: enrichedSlots };
+                        return uniqueMachines.map((machine: ArcadeMachine) => {
+                            // Enrich machine slots with items for the card view
+                            const enrichedSlots = machine.slots.map((slot: ArcadeMachineSlot) => {
+                                const assignedItem = slot.currentItem;
 
-                        return (
-                            <MachineCard
-                                key={machine.id}
-                                machine={enrichedMachine}
-                                onManageStock={(m) => router.push(`/machines/${m.id}`)}
-                                onStatusChange={(m, s) => handleStatusChange(m as any, s)}
-                                onEdit={(m) => handleEdit({ ...m, originalMachine: m } as any)}
-                                onDelete={(m) => {
-                                    setMachineToDelete({ ...m, originalMachine: m } as any);
-                                    setIsDeleteDialogOpen(true);
-                                }}
-                                onAssignStock={handleAssignStock}
-                                onStockLevelChange={handleStockLevelChange}
-                            />
-                        );
-                    })}
+                                // Calculate Stock Level for Card View
+                                let derivedStockLevel: ArcadeMachineSlot['stockLevel'] = 'Out of Stock';
+                                if (assignedItem) {
+                                    const locationsSum = assignedItem.locations?.reduce((sum: number, loc: any) => sum + loc.quantity, 0);
+                                    const totalQty = locationsSum !== undefined ? locationsSum : (assignedItem.totalQuantity ?? 0);
+                                    derivedStockLevel = calculateStockLevel(totalQty, assignedItem.stockStatus).status as ArcadeMachineSlot['stockLevel'];
+                                } else if (slot.stockLevel) {
+                                    derivedStockLevel = slot.stockLevel;
+                                }
+
+                                const upcomingQueue = slot.upcomingQueue || [];
+
+                                return {
+                                    ...slot,
+                                    currentItem: assignedItem,
+                                    upcomingQueue: upcomingQueue,
+                                    stockLevel: derivedStockLevel // Update stock level
+                                };
+                            });
+                            const enrichedMachine = { ...machine, slots: enrichedSlots };
+
+                            return (
+                                <MachineCard
+                                    key={machine.id}
+                                    machine={enrichedMachine}
+                                    onManageStock={(m) => router.push(`/machines/${m.id}`)}
+                                    onStatusChange={(m, s) => handleStatusChange(m as any, s)}
+                                    onEdit={(m) => handleEdit({ ...m, originalMachine: m } as any)}
+                                    onDelete={(m) => {
+                                        setMachineToDelete({ ...m, originalMachine: m } as any);
+                                        setIsDeleteDialogOpen(true);
+                                    }}
+                                    onAssignStock={handleAssignStock}
+                                    onStockLevelChange={handleStockLevelChange}
+                                />
+                            );
+                        });
+                    })()}
                 </div>
             )}
 

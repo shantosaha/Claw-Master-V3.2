@@ -55,35 +55,50 @@ export const apiService = {
             // Check if machines exist by Tag - get ALL matching machines (handles duplicates like Trend Top/Bottom)
             const existingMachines = await machineService.query(where("tag", "==", tagString));
 
-            const machineData: Partial<ArcadeMachine> = {
-                location: item.Location,
-                group: item.Group,
-                subGroup: item.SubGroup,
-                tag: tagString,
-                status: (item.machine_status?.toLowerCase() === 'active' ? 'Online' : 'Offline') as ArcadeMachine['status'],
-                playCount: item.StandardPlay || 0,
-                revenue: item.total_revenue || 0,
-                lastSyncedAt: new Date(),
-            };
+            const apiStatus = (item.machine_status?.toLowerCase() === 'active' ? 'Online' : 'Offline') as ArcadeMachine['status'];
 
             if (existingMachines.length > 0) {
                 // Update ALL machines with this tag (handles Trend #1 Top, Trend #1 Bottom, etc.)
                 for (const existingMachine of existingMachines) {
-                    await machineService.update(existingMachine.id, machineData);
+                    const currentStatus = existingMachine.status || 'Online';
+
+                    // Don't overwrite Maintenance or Error status from API sync - these are manual overrides
+                    const isManualStatus = currentStatus === 'Maintenance' || currentStatus === 'Error';
+
+                    const updateData: Partial<ArcadeMachine> = {
+                        location: item.Location,
+                        group: item.Group,
+                        subGroup: item.SubGroup,
+                        tag: tagString,
+                        status: isManualStatus ? existingMachine.status : apiStatus,
+                        playCount: item.StandardPlay || 0,
+                        revenue: item.total_revenue || 0,
+                        lastSyncedAt: new Date(),
+                    };
+
+                    await machineService.update(existingMachine.id, updateData);
                     syncedCount++;
                 }
             } else {
                 // Create new machine only if none exist with this tag
-                await machineService.add({
-                    ...machineData,
+                const newMachineData = {
+                    location: item.Location,
+                    group: item.Group,
+                    subGroup: item.SubGroup,
+                    tag: tagString,
+                    status: apiStatus,
+                    playCount: item.StandardPlay || 0,
+                    revenue: item.total_revenue || 0,
+                    lastSyncedAt: new Date(),
                     name: item.Description || "Unknown Machine",
                     assetTag: `TAG-${tagString}`, // Temporary asset tag
                     physicalConfig: 'single' as const,
-                    status: machineData.status || 'Online',
                     slots: [], // Initialize empty slots
                     createdAt: new Date(),
                     updatedAt: new Date(),
-                } as Omit<ArcadeMachine, 'id'>);
+                };
+
+                await machineService.add(newMachineData as Omit<ArcadeMachine, 'id'>);
                 createdCount++;
             }
         }

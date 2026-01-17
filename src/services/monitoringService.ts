@@ -48,7 +48,7 @@ export interface MonitoringReportItem {
     c4: number;
     imageUrl?: string;
     remarks?: string;
-    payoutStatus: 'Very High' | 'High' | 'OK' | 'Low' | 'Very Low';
+    payoutStatus: 'Very High' | 'High' | 'OK' | 'Low' | 'Very Low' | 'N/A';
     payoutAccuracy: number; // Percentage: (Target / Actual) * 100
     revenue: number; // Machine revenue 
     status: 'online' | 'offline' | 'error' | 'maintenance';
@@ -279,13 +279,25 @@ class MonitoringService {
         return this.alerts;
     }
 
-    private determinePayoutStatus(playsPerPayout: number, target: number): MonitoringReportItem['payoutStatus'] {
+    private determinePayoutStatus(playsPerPayout: number, target: number, totalPlays: number): MonitoringReportItem['payoutStatus'] {
+        if (target <= 0) return 'N/A';
+
+        // Special handling for 0 payouts
+        if (playsPerPayout === 0) {
+            // If we've had less than half the target plays with no win, it's NOT "Very High"
+            // It's just "Not Applicable" (insufficient data)
+            if (totalPlays < target / 2) return 'N/A';
+
+            // If we've had more than half the target plays with no win, it's starting to be "Very Low"
+            return 'Very Low';
+        }
+
         const ratio = playsPerPayout / target;
 
         if (ratio < 0.5) return 'Very High';
         if (ratio < 0.8) return 'High';
         if (ratio <= 1.3) return 'OK';
-        if (ratio <= 1.8) return 'Low';
+        if (ratio <= 1.7) return 'Low';
         return 'Very Low';
     }
 
@@ -372,7 +384,8 @@ class MonitoringService {
                     : 0;
 
                 // Determine status using the logic
-                const payoutStatus = this.determinePayoutStatus(playsPerPayout, payoutSettings);
+                const totalPlays = customerPlays + staffPlays;
+                const payoutStatus = this.determinePayoutStatus(playsPerPayout, payoutSettings, totalPlays);
 
                 return {
                     machineId: machine.id,
