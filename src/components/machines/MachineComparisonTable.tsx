@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { format, eachDayOfInterval } from "date-fns";
 import { DateRange } from "react-day-picker";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -504,8 +504,8 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                                     </TableRow>
                                 ) : (
                                     groupsOrder.filter(group => groupedMetrics[group]).map(group => (
-                                        <>
-                                            <TableRow key={`header-${group}`} className="bg-muted/10 hover:bg-muted/10">
+                                        <Fragment key={group}>
+                                            <TableRow className="bg-muted/10 hover:bg-muted/10">
                                                 <TableCell colSpan={stats.length + 1} className="py-2 pl-4">
                                                     <span className="text-[10px] font-bold uppercase tracking-widest text-primary/60 flex items-center gap-2">
                                                         {group} Metrics
@@ -545,7 +545,7 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                                                     </TableRow>
                                                 );
                                             })}
-                                        </>
+                                        </Fragment>
                                     ))
                                 )}
                             </TableBody>
