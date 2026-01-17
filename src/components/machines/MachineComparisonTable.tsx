@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { ChevronsUpDown, Check, Calendar as CalendarIcon, X, ExternalLink, Image as ImageIcon, ZoomIn } from "lucide-react";
+import { ChevronsUpDown, Check, Calendar as CalendarIcon, X, ExternalLink, Image as ImageIcon, ZoomIn, Users, PlayCircle, DollarSign, Ticket, TrendingUp, Target, Zap, Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeMachine, ServiceReport } from "@/types";
 import { MachineStatus } from "@/services/monitoringService";
@@ -238,28 +238,51 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
     }, [dateRange, selectedMachine, selectionMode, specificDates]);
 
     // Only show C1-C4 and time metrics for crane machines
-    const metrics: { label: string, key: MetricKey, format?: (v: number) => string, craneOnly?: boolean }[] = [
-        { label: "Customer Plays", key: "customerPlays" },
-        { label: "Staff Plays", key: "staffPlays" },
-        { label: "Total Plays", key: "totalPlays" },
-        { label: "Total Revenue", key: "revenue", format: (v: number) => `$${v.toFixed(2)}` },
-        { label: "Cash Revenue", key: "cashRev", format: (v: number) => `$${v.toFixed(2)}` },
-        { label: "Bonus Revenue", key: "bonusRev", format: (v: number) => `$${v.toFixed(2)}` },
-        { label: "Payouts", key: "payouts" },
-        { label: "Plays Per Payout", key: "playsPerPayout" },
-        { label: "Target Plays/Win", key: "payoutSettings", craneOnly: true },
-        { label: "Claw Strength C1", key: "c1", craneOnly: true },
-        { label: "Claw Strength C2", key: "c2", craneOnly: true },
-        { label: "Claw Strength C3", key: "c3", craneOnly: true },
-        { label: "Claw Strength C4", key: "c4", craneOnly: true },
-        { label: "Strong Time", key: "strongTime", craneOnly: true },
-        { label: "Weak Time", key: "weakTime", craneOnly: true },
-    ];
+    const metrics: {
+        label: string,
+        key: MetricKey,
+        format?: (v: number) => string,
+        craneOnly?: boolean,
+        group: 'Activity' | 'Financial' | 'Payouts' | 'Technical' | 'Settings',
+        icon?: any
+    }[] = [
+            // Activity
+            { label: "Customer Plays", key: "customerPlays", group: 'Activity', icon: Users },
+            { label: "Staff Plays", key: "staffPlays", group: 'Activity', icon: Users },
+            { label: "Total Plays", key: "totalPlays", group: 'Activity', icon: PlayCircle },
+
+            // Financial
+            { label: "Total Revenue", key: "revenue", format: (v: number) => `$${v.toFixed(2)}`, group: 'Financial', icon: DollarSign },
+            { label: "Cash Revenue", key: "cashRev", format: (v: number) => `$${v.toFixed(2)}`, group: 'Financial', icon: DollarSign },
+            { label: "Bonus Revenue", key: "bonusRev", format: (v: number) => `$${v.toFixed(2)}`, group: 'Financial', icon: DollarSign },
+
+            // Payouts
+            { label: "Payouts", key: "payouts", group: 'Payouts', icon: Ticket },
+            { label: "Plays Per Payout", key: "playsPerPayout", group: 'Payouts', icon: TrendingUp },
+            { label: "Target Plays/Win", key: "payoutSettings", craneOnly: true, group: 'Payouts', icon: Target },
+
+            // Technical
+            { label: "Claw Strength C1", key: "c1", craneOnly: true, group: 'Technical', icon: Zap },
+            { label: "Claw Strength C2", key: "c2", craneOnly: true, group: 'Technical', icon: Zap },
+            { label: "Claw Strength C3", key: "c3", craneOnly: true, group: 'Technical', icon: Zap },
+            { label: "Claw Strength C4", key: "c4", craneOnly: true, group: 'Technical', icon: Zap },
+            { label: "Strong Time", key: "strongTime", craneOnly: true, group: 'Technical', icon: Activity },
+            { label: "Weak Time", key: "weakTime", craneOnly: true, group: 'Technical', icon: Activity },
+        ];
 
     // Filter metrics based on machine type
     const visibleMetrics = isSelectedCrane
         ? metrics
         : metrics.filter(m => !m.craneOnly);
+
+    // Group metrics
+    const groupedMetrics = visibleMetrics.reduce((acc, metric) => {
+        if (!acc[metric.group]) acc[metric.group] = [];
+        acc[metric.group].push(metric);
+        return acc;
+    }, {} as Record<string, typeof visibleMetrics>);
+
+    const groupsOrder = ['Activity', 'Financial', 'Payouts', 'Technical'];
 
     return (
         <div className="space-y-4">
@@ -378,9 +401,9 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
             ) : (
                 <div className="space-y-4">
                     {/* Selected Machine Header with Images */}
-                    <div className="flex flex-col md:flex-row gap-4 p-4 rounded-lg border bg-card/50 items-center md:items-start">
+                    <div className="flex flex-col md:flex-row gap-4 p-4 rounded-lg border bg-gradient-to-r from-background to-muted/20 items-center md:items-start shadow-sm">
                         {/* Machine Image */}
-                        <div className="h-24 w-24 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative group">
+                        <div className="h-24 w-24 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative group shadow-inner">
                             {machineImage ? (
                                 <img
                                     src={getThumbnailUrl(machineImage, 200)}
@@ -399,7 +422,7 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
 
                         {/* Stock/JotForm Image */}
                         <div
-                            className="h-24 w-24 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative group cursor-pointer"
+                            className="h-24 w-24 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative group cursor-pointer shadow-inner"
                             onClick={() => displayStockImage && setLightboxImage(displayStockImage)}
                         >
                             <OptimizedImage
@@ -428,40 +451,46 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
 
                         <div className="flex-1 space-y-1 text-center md:text-left">
                             <div className="flex items-center justify-center md:justify-start gap-2">
-                                <h3 className="text-lg font-bold">
+                                <h3 className="text-xl font-bold tracking-tight">
                                     <Link
                                         href={`/machines/${selectedMachine.id}`}
-                                        className="hover:underline hover:text-blue-600 flex items-center gap-1.5 transition-colors"
+                                        className="hover:text-blue-600 flex items-center gap-2 transition-colors"
                                     >
                                         {selectedMachine.name}
-                                        <ExternalLink className="h-4 w-4 opacity-50" />
+                                        <ExternalLink className="h-4 w-4 opacity-30 hover:opacity-100 transition-opacity" />
                                     </Link>
                                 </h3>
-                                <Badge variant={selectedMachine.status === 'online' ? 'default' : 'destructive'} className="uppercase text-[10px]">
+                                <Badge variant={selectedMachine.status === 'online' ? 'default' : 'destructive'} className="uppercase text-[10px] font-bold tracking-wider px-2 shadow-sm">
                                     {selectedMachine.status}
                                 </Badge>
                             </div>
-                            <div className="text-sm text-muted-foreground">
-                                <span className="font-mono bg-muted px-1.5 py-0.5 rounded text-xs">{selectedMachine.assetTag || fullMachine?.tag || "N/A"}</span>
-                                <span className="mx-2">•</span>
-                                {selectedMachine.location || fullMachine?.location}
+                            <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-muted-foreground">
+                                <Badge variant="outline" className="font-mono text-[10px] bg-background">
+                                    #{selectedMachine.assetTag || fullMachine?.tag || "N/A"}
+                                </Badge>
+                                <span className="text-muted-foreground/40">•</span>
+                                <span className="font-medium text-foreground/80">{selectedMachine.location || fullMachine?.location}</span>
                             </div>
-                            <div className="text-sm text-muted-foreground/80 mt-2 max-w-lg">
+                            <div className="text-sm mt-3 p-2 bg-muted/30 rounded-md border inline-flex items-center gap-2">
+                                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Current Item</span>
                                 {fullMachine?.slots?.[0]?.currentItem ? (
-                                    <>Current Item: <span className="font-medium text-foreground">{fullMachine.slots[0].currentItem.name}</span></>
-                                ) : "No item assigned"}
+                                    <span className="font-semibold text-foreground">{fullMachine.slots[0].currentItem.name}</span>
+                                ) : <span className="text-muted-foreground italic">No item assigned</span>}
                             </div>
                         </div>
                     </div>
 
-                    <div className="rounded-md border bg-card">
+                    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead className="w-[200px]">Metric</TableHead>
+                                <TableRow className="bg-muted/40 hover:bg-muted/40">
+                                    <TableHead className="w-[200px] font-bold text-xs uppercase tracking-wider text-muted-foreground/70 pl-6 h-12">Metric</TableHead>
                                     {stats.map(stat => (
-                                        <TableHead key={stat.date.toISOString()} className="text-right min-w-[120px]">
-                                            {format(stat.date, "MMM dd, yyyy")}
+                                        <TableHead key={stat.date.toISOString()} className="text-right min-w-[120px] font-bold text-foreground/80 h-10 border-l border-border/50">
+                                            <div className="flex flex-col items-end gap-0.5 py-2">
+                                                <span className="text-xs">{format(stat.date, "MMM dd")}</span>
+                                                <span className="text-[10px] text-muted-foreground font-normal">{format(stat.date, "yyyy")}</span>
+                                            </div>
                                         </TableHead>
                                     ))}
                                 </TableRow>
@@ -469,24 +498,54 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                             <TableBody>
                                 {isLoading ? (
                                     <TableRow>
-                                        <TableCell colSpan={stats.length + 1} className="h-24 text-center">
+                                        <TableCell colSpan={stats.length + 1} className="h-32 text-center text-muted-foreground animate-pulse">
                                             Loading comparisons...
                                         </TableCell>
                                     </TableRow>
                                 ) : (
-                                    visibleMetrics.map((metric) => (
-                                        <TableRow key={metric.label}>
-                                            <TableCell className="font-medium text-muted-foreground">
-                                                {metric.label}
-                                            </TableCell>
-                                            {stats.map(stat => (
-                                                <TableCell key={stat.date.toISOString()} className="text-right">
-                                                    {metric.format
-                                                        ? metric.format(stat[metric.key])
-                                                        : (typeof stat[metric.key] === 'number' && isNaN(stat[metric.key]) ? '-' : stat[metric.key])}
+                                    groupsOrder.filter(group => groupedMetrics[group]).map(group => (
+                                        <>
+                                            <TableRow key={`header-${group}`} className="bg-muted/10 hover:bg-muted/10">
+                                                <TableCell colSpan={stats.length + 1} className="py-2 pl-4">
+                                                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/60 flex items-center gap-2">
+                                                        {group} Metrics
+                                                    </span>
                                                 </TableCell>
-                                            ))}
-                                        </TableRow>
+                                            </TableRow>
+                                            {groupedMetrics[group].map((metric) => {
+                                                const Icon = metric.icon;
+                                                const isMoney = metric.group === 'Financial';
+
+                                                return (
+                                                    <TableRow key={metric.label} className="group hover:bg-muted/5 transition-colors">
+                                                        <TableCell className={cn(
+                                                            "font-medium py-3 pl-6 border-r border-transparent group-hover:border-border/30",
+                                                            isMoney && "text-emerald-700 dark:text-emerald-400"
+                                                        )}>
+                                                            <div className="flex items-center gap-2">
+                                                                {Icon && <Icon className={cn("h-3.5 w-3.5 opacity-50", isMoney && "text-emerald-600")} />}
+                                                                {metric.label}
+                                                            </div>
+                                                        </TableCell>
+                                                        {stats.map(stat => {
+                                                            const val = stat[metric.key];
+                                                            const isZero = val === 0;
+                                                            return (
+                                                                <TableCell key={stat.date.toISOString()} className={cn(
+                                                                    "text-right py-3 border-l border-transparent group-hover:border-border/30",
+                                                                    isMoney && !isZero && "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/10",
+                                                                    isZero && "text-muted-foreground/30"
+                                                                )}>
+                                                                    {metric.format
+                                                                        ? metric.format(val)
+                                                                        : (typeof val === 'number' && isNaN(val) ? '-' : val)}
+                                                                </TableCell>
+                                                            );
+                                                        })}
+                                                    </TableRow>
+                                                );
+                                            })}
+                                        </>
                                     ))
                                 )}
                             </TableBody>
