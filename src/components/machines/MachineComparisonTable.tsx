@@ -7,7 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
-import { ChevronsUpDown, Check, Calendar as CalendarIcon, X, ExternalLink, Image as ImageIcon, ZoomIn, Users, PlayCircle, DollarSign, Ticket, TrendingUp, Target, Zap, Activity } from "lucide-react";
+import { ChevronsUpDown, Check, Calendar as CalendarIcon, X, ExternalLink, Image as ImageIcon, ZoomIn, Users, PlayCircle, DollarSign, Ticket, TrendingUp, Target, Zap, Activity, MoreHorizontal, BarChart3, LineChart as LineChartIcon, PieChart as PieChartIcon, AreaChart as AreaChartIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ArcadeMachine, ServiceReport } from "@/types";
 import { MachineStatus } from "@/services/monitoringService";
@@ -23,6 +23,183 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { serviceReportService } from "@/services/serviceReportService";
 import { gameReportApiService, GameReportItem } from "@/services/gameReportApiService";
 import { isCraneMachine } from "@/utils/machineTypeUtils";
+import { AreaChart, Area, BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, ResponsiveContainer, YAxis, Tooltip } from "recharts";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+
+// Helper for mini charts
+// Helper for mini charts
+function MiniTrendChart({
+    data,
+    dataKey,
+    color,
+    label,
+    type = 'area'
+}: {
+    data: any[],
+    dataKey: string,
+    color: string,
+    label: string,
+    type?: 'area' | 'bar' | 'line' | 'pie'
+}) {
+    const [chartType, setChartType] = useState<'area' | 'bar' | 'line' | 'pie'>(type);
+
+    // reset internal state if prop changes
+    useEffect(() => {
+        setChartType(type);
+    }, [type]);
+
+    if (!data || data.length === 0) return null;
+
+    // Sort oldest to newest for the graph
+    const chartData = [...data].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const total = chartData.reduce((acc, curr) => acc + (Number(curr[dataKey]) || 0), 0);
+    const avg = total / chartData.length;
+
+    // Check if it's a currency field
+    const isCurrency = dataKey.toLowerCase().includes('rev') || dataKey.toLowerCase().includes('cash');
+
+    const renderChart = () => {
+        const commonProps = { data: chartData, margin: { top: 0, right: 0, bottom: 0, left: 0 } };
+        const tooltip = (
+            <Tooltip
+                cursor={{ fill: 'transparent' }}
+                content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                        return (
+                            <div className="bg-popover text-popover-foreground text-[10px] px-2 py-1 rounded shadow-md ring-1 ring-border whitespace-nowrap z-50">
+                                {isCurrency ? '$' : ''}{Number(payload[0].value).toFixed(isCurrency ? 2 : 0)}
+                            </div>
+                        );
+                    }
+                    return null;
+                }}
+            />
+        );
+
+        if (chartType === 'bar') {
+            return (
+                <BarChart {...commonProps}>
+                    {tooltip}
+                    <Bar dataKey={dataKey} fill={color} radius={[2, 2, 0, 0]} isAnimationActive={false} />
+                </BarChart>
+            );
+        } else if (chartType === 'line') {
+            return (
+                <LineChart {...commonProps}>
+                    {tooltip}
+                    <Line
+                        type="monotone"
+                        dataKey={dataKey}
+                        stroke={color}
+                        strokeWidth={2}
+                        dot={false}
+                        isAnimationActive={false}
+                    />
+                </LineChart>
+            );
+        } else if (chartType === 'pie') {
+            const pieData = chartData.map(d => ({
+                name: format(new Date(d.date), 'MMM dd'),
+                value: Number(d[dataKey]) || 0
+            })).filter(d => d.value > 0);
+
+            return (
+                <PieChart>
+                    <Tooltip
+                        content={({ active, payload }) => {
+                            if (active && payload && payload.length) {
+                                return (
+                                    <div className="bg-popover text-popover-foreground text-[10px] px-2 py-1 rounded shadow-md ring-1 ring-border whitespace-nowrap z-50">
+                                        <span className="font-bold">{payload[0].name}:</span> {isCurrency ? '$' : ''}{Number(payload[0].value).toFixed(isCurrency ? 2 : 0)}
+                                    </div>
+                                );
+                            }
+                            return null;
+                        }}
+                    />
+                    <Pie
+                        data={pieData}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={10}
+                        outerRadius={16}
+                        paddingAngle={2}
+                        dataKey="value"
+                        isAnimationActive={false}
+                    >
+                        {pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={color} opacity={0.4 + (index / pieData.length) * 0.6} />
+                        ))}
+                    </Pie>
+                </PieChart>
+            );
+        } else {
+            return (
+                <AreaChart {...commonProps}>
+                    <defs>
+                        <linearGradient id={`gradient-${dataKey}`} x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="5%" stopColor={color} stopOpacity={0.3} />
+                            <stop offset="95%" stopColor={color} stopOpacity={0} />
+                        </linearGradient>
+                    </defs>
+                    {tooltip}
+                    <Area
+                        type="monotone"
+                        dataKey={dataKey}
+                        stroke={color}
+                        strokeWidth={1.5}
+                        fill={`url(#gradient-${dataKey})`}
+                        isAnimationActive={false}
+                    />
+                </AreaChart>
+            );
+        }
+    };
+
+    return (
+        <div className="flex flex-col min-w-[120px] bg-background/50 rounded p-2 border shadow-sm group/chart relative">
+            <div className="flex justify-between items-start mb-1">
+                <span className="text-[10px] uppercase text-muted-foreground font-bold">{label}</span>
+                <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="h-4 w-4 -mt-1 -mr-1 text-muted-foreground opacity-0 group-hover/chart:opacity-100 transition-opacity">
+                            <MoreHorizontal className="h-3 w-3" />
+                        </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-32">
+                        <DropdownMenuItem onClick={() => setChartType('area')}>
+                            <AreaChartIcon className="mr-2 h-3.5 w-3.5" /> Area
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setChartType('bar')}>
+                            <BarChart3 className="mr-2 h-3.5 w-3.5" /> Bar
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setChartType('line')}>
+                            <LineChartIcon className="mr-2 h-3.5 w-3.5" /> Line
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => setChartType('pie')}>
+                            <PieChartIcon className="mr-2 h-3.5 w-3.5" /> Pie
+                        </DropdownMenuItem>
+                    </DropdownMenuContent>
+                </DropdownMenu>
+            </div>
+
+            <div className="h-[32px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    {renderChart()}
+                </ResponsiveContainer>
+            </div>
+            <div className="flex justify-between items-end mt-1">
+                <span className="text-xs font-bold">{isCurrency ? `$${total.toFixed(0)}` : total}</span>
+                <span className="text-[9px] text-muted-foreground">Avg: {isCurrency ? `$${avg.toFixed(0)}` : avg.toFixed(1)}</span>
+            </div>
+        </div>
+    );
+}
 
 interface MachineComparisonTableProps {
     machines: MachineStatus[];
@@ -478,6 +655,17 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                                 ) : <span className="text-muted-foreground italic">No item assigned</span>}
                             </div>
                         </div>
+
+                        {/* Sparkline Charts */}
+                        {stats.length > 0 && (
+                            <div className="flex gap-3 flex-wrap justify-end items-center mt-4 md:mt-0 flex-1 md:flex-none">
+                                <MiniTrendChart data={stats} dataKey="revenue" color="#10b981" label="Revenue" type="area" />
+                                <MiniTrendChart data={stats} dataKey="customerPlays" color="#3b82f6" label="Plays" type="bar" />
+                                <MiniTrendChart data={stats} dataKey="payouts" color="#f59e0b" label="Payouts" type="line" />
+                                <MiniTrendChart data={stats} dataKey="cashRev" color="#059669" label="Cash Rev" type="area" />
+                                <MiniTrendChart data={stats} dataKey="playsPerPayout" color="#8b5cf6" label="Win Rate" type="line" />
+                            </div>
+                        )}
                     </div>
 
                     <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
@@ -552,7 +740,8 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                         </Table>
                     </div>
                 </div>
-            )}
+            )
+            }
             {/* Lightbox for zooming in */}
             <Dialog open={!!lightboxImage} onOpenChange={(open) => !open && setLightboxImage(null)}>
                 <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none shadow-none">
@@ -580,6 +769,6 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                     </div>
                 </DialogContent>
             </Dialog>
-        </div>
+        </div >
     );
 }

@@ -440,56 +440,7 @@ export function NonCraneQuickViewDialog({
                                 </Dialog>
                             </div>
 
-                            {/* --- THE INSIGHTS DASHBOARD --- */}
-                            <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-dashed">
 
-                                {/* 1. Hall of Fame */}
-                                {hallOfFame && (
-                                    <div className="p-2.5 bg-yellow-50/50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-900/30">
-                                        <div className="flex items-center gap-1.5 mb-1.5">
-                                            <Trophy className="h-3 w-3 text-yellow-600" />
-                                            <span className="text-[9px] font-bold uppercase text-yellow-700/70">Hall of Fame</span>
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-[10px] text-muted-foreground">Best Day (Period)</span>
-                                            <div className="flex items-baseline gap-1">
-                                                <span className="font-bold text-sm text-yellow-700 dark:text-yellow-400">${hallOfFame.maxRev.toFixed(0)}</span>
-                                                <span className="text-[9px] text-yellow-600/50">on {hallOfFame.bestDate}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )}
-
-                                {/* 2. Heavy Lifter */}
-                                <div className="p-2.5 bg-slate-50/50 dark:bg-slate-900/10 rounded-lg border border-slate-100 dark:border-slate-800/50">
-                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                        <heavyLifter.icon className={cn("h-3 w-3", heavyLifter.color)} />
-                                        <span className={cn("text-[9px] font-bold uppercase", heavyLifter.color)}>Contribution</span>
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-[10px] text-muted-foreground">{heavyLifter.class}</span>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className={cn("font-bold text-sm", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</span>
-                                            <span className="text-[9px] text-muted-foreground">of Store Rev</span>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* 3. Weekend Forecast */}
-                                <div className="col-span-2 p-2.5 bg-blue-50/30 dark:bg-blue-900/5 rounded-lg border border-blue-50 dark:border-blue-900/20 flex items-center justify-between">
-                                    <div className="flex flex-col">
-                                        <div className="flex items-center gap-1.5 mb-0.5">
-                                            <Calendar className="h-3 w-3 text-blue-500" />
-                                            <span className="text-[9px] font-bold uppercase text-blue-600/70">Weekend Forecast</span>
-                                        </div>
-                                        <span className="text-[10px] font-medium text-muted-foreground">{forecast.label}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2">
-                                        <forecast.Icon className={cn("h-8 w-8", forecast.color)} />
-                                    </div>
-                                </div>
-
-                            </div>
                         </div>
                     </div>
 
@@ -637,12 +588,65 @@ export function NonCraneQuickViewDialog({
                             )}
                         </div>
 
-                        <div className="pt-4 flex justify-end">
-                            <Button variant="outline" onClick={() => onOpenChange(false)}>
-                                Close
-                            </Button>
+
+
+                        {/* --- THE INSIGHTS DASHBOARD (Moved to Right Column) --- */}
+                        <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-dashed">
+
+                            {/* 1. Hall of Fame */}
+                            {hallOfFame && (
+                                <div className="p-2.5 bg-yellow-50/50 dark:bg-yellow-900/10 rounded-lg border border-yellow-100 dark:border-yellow-900/30">
+                                    <div className="flex items-center gap-1.5 mb-1.5">
+                                        <Trophy className="h-3 w-3 text-yellow-600" />
+                                        <span className="text-[9px] font-bold uppercase text-yellow-700/70">Hall of Fame</span>
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-muted-foreground">Best Day (Period)</span>
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="font-bold text-sm text-yellow-700 dark:text-yellow-400">${hallOfFame.maxRev.toFixed(0)}</span>
+                                            <span className="text-[9px] text-yellow-600/50">on {hallOfFame.bestDate}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 2. Heavy Lifter */}
+                            <div className="p-2.5 bg-slate-50/50 dark:bg-slate-900/10 rounded-lg border border-slate-100 dark:border-slate-800/50">
+                                <div className="flex items-center gap-1.5 mb-1.5">
+                                    <heavyLifter.icon className={cn("h-3 w-3", heavyLifter.color)} />
+                                    <span className={cn("text-[9px] font-bold uppercase", heavyLifter.color)}>Contribution</span>
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-muted-foreground">{heavyLifter.class}</span>
+                                    <div className="flex items-baseline gap-1">
+                                        <span className={cn("font-bold text-sm", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</span>
+                                        <span className="text-[9px] text-muted-foreground">of Store Rev</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* 3. Weekend Forecast */}
+                            <div className="col-span-2 p-2.5 bg-blue-50/30 dark:bg-blue-900/5 rounded-lg border border-blue-50 dark:border-blue-900/20 flex items-center justify-between">
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-1.5 mb-0.5">
+                                        <Calendar className="h-3 w-3 text-blue-500" />
+                                        <span className="text-[9px] font-bold uppercase text-blue-600/70">Weekend Forecast</span>
+                                    </div>
+                                    <span className="text-[10px] font-medium text-muted-foreground">{forecast.label}</span>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <forecast.Icon className={cn("h-8 w-8", forecast.color)} />
+                                </div>
+                            </div>
+
                         </div>
                     </div>
+                </div>
+
+                <div className="pt-6 flex justify-end border-t mt-4">
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Close
+                    </Button>
                 </div>
             </DialogContent>
         </Dialog>
