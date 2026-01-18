@@ -405,13 +405,13 @@ function MachineQuickViewDialog({
 
     // 4. The Heavy Lifter (Store Contribution)
     const heavyLifter = useMemo(() => {
-        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors: [] }; // Using Activity as generic icon
+        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', iconName: 'activity' as const, contributors: [] };
 
         // Calculate total store revenue (same location)
         const storeMachines = allMachines.filter(m => m.location === machine.location);
         const storeTotalRev = storeMachines.reduce((sum, m) => sum + (m.revenue || 0), 0);
 
-        if (storeTotalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors: [] };
+        if (storeTotalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', iconName: 'activity' as const, contributors: [] };
 
         const myRev = machine.revenue || 0;
         const percent = (myRev / storeTotalRev) * 100;
@@ -422,16 +422,11 @@ function MachineQuickViewDialog({
             percent: ((m.revenue || 0) / storeTotalRev) * 100
         })).sort((a, b) => b.percent - a.percent);
 
-        // Import icons internally if needed or assume they are available in scope. 
-        // Using generic icons for now if not imported, but earlier file content showed Trophy/Target.
-        // Assuming Activity/Target/Trophy are available.
-        // We need Dumbbell, Crown for this logic usually, but let's reuse what we have or import them.
-        // I will use Activity for now as placeholder for Dumbbell if not imported.
-
-        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', icon: Trophy, contributors };
-        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', icon: Target, contributors };
-        return { percent, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors };
+        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', iconName: 'trophy' as const, contributors };
+        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', iconName: 'target' as const, contributors };
+        return { percent, class: 'Featherweight', color: 'text-muted-foreground', iconName: 'activity' as const, contributors };
     }, [machine, allMachines]);
+
 
     // 5. Weekend Forecast (renamed to Machine Forecast)
     const forecast = useMemo(() => {
@@ -809,8 +804,11 @@ function MachineQuickViewDialog({
                                             <div className="p-3 bg-slate-50/50 dark:bg-slate-900/10 rounded-xl border border-slate-100 dark:border-slate-800/50 cursor-pointer hover:bg-slate-100/30 transition-all group">
                                                 <div className="flex items-center gap-1.5 mb-1.5">
                                                     <div className={cn("p-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50")}>
-                                                        <heavyLifter.icon className={cn("h-3 w-3", heavyLifter.color)} />
+                                                        {heavyLifter.iconName === 'trophy' && <Trophy className={cn("h-3 w-3", heavyLifter.color)} />}
+                                                        {heavyLifter.iconName === 'target' && <Target className={cn("h-3 w-3", heavyLifter.color)} />}
+                                                        {heavyLifter.iconName === 'activity' && <Activity className={cn("h-3 w-3", heavyLifter.color)} />}
                                                     </div>
+
                                                     <span className={cn("text-[9px] font-bold uppercase", heavyLifter.color)}>Contribution</span>
                                                 </div>
                                                 <div className="flex flex-col gap-0.5">
@@ -1362,6 +1360,12 @@ function formatTimeAgo(date: Date): string {
     return `${days}d ago`;
 }
 
+// SortIcon component moved out of table
+function SortIcon({ sortConfig, columnKey }: { sortConfig: { key: keyof MonitoringReportItem; direction: 'asc' | 'desc' } | null; columnKey: keyof MonitoringReportItem }) {
+    if (sortConfig?.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground/50" />;
+    return sortConfig.direction === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
+}
+
 // Sortable Table Component
 function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
     const [page, setPage] = useState(1);
@@ -1419,11 +1423,6 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
         setSortConfig({ key, direction });
     };
 
-    const SortIcon = ({ columnKey }: { columnKey: keyof MonitoringReportItem }) => {
-        if (sortConfig?.key !== columnKey) return <ArrowUpDown className="ml-2 h-4 w-4 text-muted-foreground/50" />;
-        return sortConfig.direction === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
-    };
-
     const renderSortableHeader = (label: string, key: keyof MonitoringReportItem, className?: string) => (
         <TableHead className={className}>
             <Button
@@ -1433,7 +1432,7 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                 onClick={() => requestSort(key)}
             >
                 {label}
-                <SortIcon columnKey={key} />
+                <SortIcon sortConfig={sortConfig} columnKey={key} />
             </Button>
         </TableHead>
     );
@@ -1613,9 +1612,7 @@ function StatDetailDialog({
     machines: ExtendedMachineStatus[];
     onClose: () => void;
 }) {
-    if (!type) return null;
-
-    const titles = {
+    const titles: Record<string, string> = {
         revenue: "Estimated Revenue Drill-down",
         activity: "Activity Leaderboard",
         accuracy: "Payout Accuracy Overview",
@@ -1624,6 +1621,7 @@ function StatDetailDialog({
 
     const sortedData = useMemo(() => {
         const list = [...machines];
+        if (!type) return [];
         if (type === 'revenue' || type === 'activity') {
             return list.sort((a, b) => (b.customerPlays || 0) - (a.customerPlays || 0));
         }
@@ -1640,11 +1638,14 @@ function StatDetailDialog({
     }, [machines, type]);
 
     const chartData = useMemo(() => {
+        if (!type) return [];
         return sortedData.slice(0, 8).map(m => ({
             name: m.name.substring(0, 10),
             value: type === 'revenue' ? (m.revenue || 0) : (m.customerPlays || 0)
         }));
     }, [sortedData, type]);
+
+    if (!type) return null;
 
     return (
         <Dialog open={!!type} onOpenChange={(open) => !open && onClose()}>
@@ -1798,8 +1799,9 @@ export default function MonitoringPage() {
 
     // Merge machines with report data for grid view
     const mergedMachines = useMemo(() => {
+        const reportMap = new Map(reportData.map(r => [r.machineId, r]));
         return machines.map(machine => {
-            const reportItem = reportData.find(r => r.machineId === machine.id);
+            const reportItem = reportMap.get(machine.id);
             return {
                 ...machine,
                 ...reportItem,
@@ -1809,25 +1811,26 @@ export default function MonitoringPage() {
     }, [machines, reportData]);
 
     const filteredMachines = useMemo(() => {
+        const query = searchQuery.toLowerCase().trim();
         return mergedMachines.filter(machine => {
+            const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
+            const matchesPayoutStatus = payoutStatusFilter === "all" || machine.payoutStatus === payoutStatusFilter;
+            const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
+
+            if (!(matchesLocation && matchesPayoutStatus && matchesStatus)) return false;
+            if (!query) return true;
+
             const name = machine.name?.toLowerCase() || "";
             const tag = machine.assetTag?.toLowerCase() || machine.tag?.toLowerCase() || "";
             const staff = machine.staffName?.toLowerCase() || "";
             const remarks = machine.remarks?.toLowerCase() || "";
             const payoutStatus = machine.payoutStatus?.toLowerCase() || "";
-            const query = searchQuery.toLowerCase() || "";
 
-            const matchesSearch = name.includes(query) ||
+            return name.includes(query) ||
                 tag.includes(query) ||
                 staff.includes(query) ||
                 remarks.includes(query) ||
                 payoutStatus.includes(query);
-
-            const matchesLocation = locationFilter === "all" || machine.location === locationFilter;
-            const matchesPayoutStatus = payoutStatusFilter === "all" || machine.payoutStatus === payoutStatusFilter;
-            const matchesStatus = statusFilter === "all" || machine.status === statusFilter;
-
-            return matchesSearch && matchesLocation && matchesPayoutStatus && matchesStatus;
         });
     }, [mergedMachines, searchQuery, locationFilter, payoutStatusFilter, statusFilter]);
 
@@ -1875,9 +1878,15 @@ export default function MonitoringPage() {
     const [selectedTab, setSelectedTab] = useState("monitor");
     const [selectedMachineForAction, setSelectedMachineForAction] = useState<ExtendedMachineStatus | null>(null);
     const [activeStatDetail, setActiveStatDetail] = useState<'revenue' | 'activity' | 'accuracy' | 'uptime' | null>(null);
+    const [visibleMachineCount, setVisibleMachineCount] = useState(25);
     const [quickViewMachine, setQuickViewMachine] = useState<ExtendedMachineStatus | null>(null);
     const [quickViewNonCraneMachine, setQuickViewNonCraneMachine] = useState<ExtendedMachineStatus | null>(null);
     const [machineTypeTab, setMachineTypeTab] = useState<"cranes" | "other">("cranes");
+
+    // Reset pagination when filters change
+    useEffect(() => {
+        setVisibleMachineCount(25);
+    }, [searchQuery, locationFilter, payoutStatusFilter, statusFilter, sortOption]);
 
     // Split machines into crane and non-crane categories
     const craneMachines = useMemo(() =>
@@ -2161,23 +2170,37 @@ export default function MonitoringPage() {
                             <TabsContent value="cranes" className="space-y-4 mt-4">
                                 {craneMachines.length > 0 ? (
                                     viewMode === "grid" ? (
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
-                                            {craneMachines.map((machine) => (
-                                                <MachineStatusCard
-                                                    key={machine.id}
-                                                    machine={machine}
-                                                    onAction={(action, machine) => {
-                                                        setSelectedMachineForAction(machine);
-                                                        if (action === 'submit_report') {
-                                                            setSelectedTab("submit");
-                                                        } else if (action === 'compare') {
-                                                            setSelectedTab("comparison");
-                                                        } else if (action === 'quick_view') {
-                                                            setQuickViewMachine(machine);
-                                                        }
-                                                    }}
-                                                />
-                                            ))}
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4">
+                                                {craneMachines.slice(0, visibleMachineCount).map((machine) => (
+                                                    <MachineStatusCard
+                                                        key={machine.id}
+                                                        machine={machine}
+                                                        onAction={(action, machine) => {
+                                                            setSelectedMachineForAction(machine);
+                                                            if (action === 'submit_report') {
+                                                                setSelectedTab("submit");
+                                                            } else if (action === 'compare') {
+                                                                setSelectedTab("comparison");
+                                                            } else if (action === 'quick_view') {
+                                                                setQuickViewMachine(machine);
+                                                            }
+                                                        }}
+                                                    />
+                                                ))}
+                                            </div>
+                                            {craneMachines.length > visibleMachineCount && (
+                                                <div className="flex justify-center pt-4">
+                                                    <Button
+                                                        variant="outline"
+                                                        size="lg"
+                                                        className="w-full max-w-xs font-bold gap-2"
+                                                        onClick={() => setVisibleMachineCount(prev => prev + 50)}
+                                                    >
+                                                        Show More ({craneMachines.length - visibleMachineCount} remaining)
+                                                    </Button>
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <MonitoringReportTable data={craneMachines as any} />

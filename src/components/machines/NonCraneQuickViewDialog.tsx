@@ -42,8 +42,6 @@ export function NonCraneQuickViewDialog({
     open,
     onOpenChange
 }: NonCraneQuickViewDialogProps) {
-    if (!machine) return null;
-
     const [trendRange, setTrendRange] = useState<'7d' | '14d' | '30d' | '6m'>('7d');
     const [realTrendData, setRealTrendData] = useState<any[]>([]);
     const [loadingTrend, setLoadingTrend] = useState(false);
@@ -214,15 +212,11 @@ export function NonCraneQuickViewDialog({
 
 
 
-    const isToday = !dateRange || (
+    const isToday = useMemo(() => !dateRange || (
         dateRange.from && dateRange.to &&
         format(dateRange.from, 'yyyyMMdd') === format(new Date(), 'yyyyMMdd') &&
         format(dateRange.to, 'yyyyMMdd') === format(new Date(), 'yyyyMMdd')
-    );
-
-    const periodCustomer = machine.customerPlays ?? machine.telemetry?.playCountToday ?? 0;
-    const periodStaff = machine.staffPlays ?? machine.telemetry?.staffPlaysToday ?? 0;
-    const periodTotal = periodCustomer + periodStaff;
+    ), [dateRange]);
 
     // --- NEW INSIGHTS CALCULATIONS ---
 
@@ -246,13 +240,13 @@ export function NonCraneQuickViewDialog({
 
     // 2. The Heavy Lifter (Store Contribution)
     const heavyLifter = useMemo(() => {
-        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell, contributors: [] };
+        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', iconName: 'dumbbell' as const, contributors: [] };
 
         // Calculate total store revenue (same location)
         const storeMachines = allMachines.filter(m => m.location === machine.location);
         const storeTotalRev = storeMachines.reduce((sum, m) => sum + (m.revenue || 0), 0);
 
-        if (storeTotalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell, contributors: [] };
+        if (storeTotalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', iconName: 'dumbbell' as const, contributors: [] };
 
         const myRev = machine.revenue || 0;
         const percent = (myRev / storeTotalRev) * 100;
@@ -263,35 +257,42 @@ export function NonCraneQuickViewDialog({
             percent: ((m.revenue || 0) / storeTotalRev) * 100
         })).sort((a, b) => b.percent - a.percent);
 
-        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', icon: Crown, contributors };
-        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', icon: Dumbbell, contributors };
-        return { percent, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell, contributors };
+        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', iconName: 'crown' as const, contributors };
+        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', iconName: 'dumbbell' as const, contributors };
+        return { percent, class: 'Featherweight', color: 'text-muted-foreground', iconName: 'dumbbell' as const, contributors };
     }, [machine, allMachines]);
+
 
     // 3. Weekend Forecast
     const forecast = useMemo(() => {
         // Simple heuristic: based on recent momentum
-        const baseTraffic = machine.telemetry?.playCountToday ?? 0;
         let prediction = 'Cloudy';
         let label = 'Moderate Traffic';
-        let Icon = Cloud;
+        let iconName: 'sun' | 'cloud' | 'cloudrain' = 'cloud';
         let color = 'text-blue-400';
 
         if (momentum?.isPositive && momentum.percent > 20) {
             prediction = 'Sunny';
             label = 'High Traffic Expected';
-            Icon = Sun;
+            iconName = 'sun';
             color = 'text-amber-500';
         } else if (momentum?.isPositive === false && Math.abs(momentum.percent) > 20) {
             prediction = 'Rainy';
             label = 'Low Turnout Likely';
-            Icon = CloudRain;
+            iconName = 'cloudrain';
             color = 'text-slate-400';
         }
 
-        return { prediction, label, Icon, color };
-    }, [machine, momentum]);
+        return { prediction, label, iconName, color };
+    }, [momentum]);
 
+    // Early return after all hooks
+    if (!machine) return null;
+
+    // Non-hook values computed after null check
+    const periodCustomer = machine.customerPlays ?? machine.telemetry?.playCountToday ?? 0;
+    const periodStaff = machine.staffPlays ?? machine.telemetry?.staffPlaysToday ?? 0;
+    const periodTotal = periodCustomer + periodStaff;
 
     const statusColors = {
         online: "bg-green-500",
@@ -342,10 +343,13 @@ export function NonCraneQuickViewDialog({
 
                         <div className="ml-auto flex items-center gap-2">
                             <Badge variant="outline" className={cn("py-0.5 px-2 bg-background", forecast.color)}>
-                                <forecast.Icon className="w-3 h-3 mr-1.5 inline-block" />
+                                {forecast.iconName === 'sun' && <Sun className="w-3 h-3 mr-1.5 inline-block" />}
+                                {forecast.iconName === 'cloud' && <Cloud className="w-3 h-3 mr-1.5 inline-block" />}
+                                {forecast.iconName === 'cloudrain' && <CloudRain className="w-3 h-3 mr-1.5 inline-block" />}
                                 {forecast.label}
                             </Badge>
                         </div>
+
                     </div>
                     <DialogDescription>
                         {isToday ? 'Real-time staff and performance metrics' : 'Aggregated performance data for the selected period'} for {machine.location}
@@ -722,10 +726,12 @@ export function NonCraneQuickViewDialog({
                                 <div className="p-3 bg-slate-50/50 dark:bg-slate-900/10 rounded-xl border border-slate-100 dark:border-slate-800/50 cursor-pointer hover:bg-slate-100/30 transition-all group">
                                     <div className="flex items-center gap-1.5 mb-1.5">
                                         <div className={cn("p-1 rounded-lg bg-slate-200/50 dark:bg-slate-800/50")}>
-                                            <heavyLifter.icon className={cn("h-3 w-3", heavyLifter.color)} />
+                                            {heavyLifter.iconName === 'crown' && <Crown className={cn("h-3 w-3", heavyLifter.color)} />}
+                                            {heavyLifter.iconName === 'dumbbell' && <Dumbbell className={cn("h-3 w-3", heavyLifter.color)} />}
                                         </div>
                                         <span className={cn("text-[9px] font-bold uppercase", heavyLifter.color)}>Contribution</span>
                                     </div>
+
                                     <div className="flex flex-col gap-0.5">
                                         <span className={cn("font-bold text-xl", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</span>
                                         <span className="text-[9px] text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
