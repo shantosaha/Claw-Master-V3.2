@@ -114,15 +114,15 @@ export async function POST(request: NextRequest) {
             jotformApiToken: body.jotformApiToken || "",
 
             // Game Report
-            gameReportApiUrl: body.gameReportApiUrl || body.jotformApiUrl || DEFAULT_SETTINGS.gameReportApiUrl,
-            gameReportSiteId: body.gameReportSiteId || body.jotformFormId || DEFAULT_SETTINGS.gameReportSiteId,
+            gameReportApiUrl: body.gameReportApiUrl ?? DEFAULT_SETTINGS.gameReportApiUrl,
+            gameReportSiteId: body.gameReportSiteId ?? DEFAULT_SETTINGS.gameReportSiteId,
             gameReportEnabled: body.gameReportEnabled !== undefined ? body.gameReportEnabled : (body.isEnabled !== false),
             gameReportApiKey: body.gameReportApiKey || "",
             gameReportApiToken: body.gameReportApiToken || "",
 
             // Revenue
-            revenueApiUrl: body.revenueApiUrl || body.jotformApiUrl || DEFAULT_SETTINGS.revenueApiUrl,
-            revenueSiteId: body.revenueSiteId || body.jotformFormId || DEFAULT_SETTINGS.revenueSiteId,
+            revenueApiUrl: body.revenueApiUrl ?? DEFAULT_SETTINGS.revenueApiUrl,
+            revenueSiteId: body.revenueSiteId ?? DEFAULT_SETTINGS.revenueSiteId,
             revenueEnabled: body.revenueEnabled !== undefined ? body.revenueEnabled : (body.isEnabled !== false),
             revenueApiKey: body.revenueApiKey || "",
             revenueApiToken: body.revenueApiToken || "",

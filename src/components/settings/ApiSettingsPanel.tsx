@@ -126,10 +126,10 @@ export function ApiSettingsPanel() {
                     jotformEnabled: data.jotformEnabled ?? data.isEnabled ?? true,
                     gameReportEnabled: data.gameReportEnabled ?? data.isEnabled ?? true,
                     revenueEnabled: data.revenueEnabled ?? data.isEnabled ?? true,
-                    gameReportApiUrl: data.gameReportApiUrl || data.jotformApiUrl || "",
-                    gameReportSiteId: data.gameReportSiteId || data.jotformFormId || "614",
-                    revenueApiUrl: data.revenueApiUrl || data.jotformApiUrl || "",
-                    revenueSiteId: data.revenueSiteId || data.jotformFormId || "614",
+                    gameReportApiUrl: data.gameReportApiUrl ?? "",
+                    gameReportSiteId: data.gameReportSiteId ?? "614",
+                    revenueApiUrl: data.revenueApiUrl ?? "",
+                    revenueSiteId: data.revenueSiteId ?? "614",
                 });
             }
         } catch (error) {
