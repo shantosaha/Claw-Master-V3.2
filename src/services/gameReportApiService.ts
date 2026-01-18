@@ -81,7 +81,7 @@ async function fetchGameReport(
             return [];
         }
 
-        const siteId = options.siteId || settings.jotformFormId;
+        const siteId = options.siteId || settings.gameReportSiteId || settings.jotformFormId;
 
         // Build request body
         const body: GameReportRequest = {

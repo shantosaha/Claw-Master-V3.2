@@ -16,10 +16,15 @@ const DEFAULT_SETTINGS = {
 };
 
 interface ApiSettings {
-    jotformApiUrl: string;
-    jotformFormId: string;
-    isEnabled: boolean;
+    jotformApiUrl?: string;
+    jotformFormId?: string;
+    revenueApiUrl?: string;
+    revenueSiteId?: string;
     revenueEnabled?: boolean;
+    revenueApiKey?: string;
+    revenueApiToken?: string;
+    // Legacy/Shared
+    isEnabled: boolean;
     apiKey?: string;
     apiToken?: string;
 }
@@ -32,13 +37,11 @@ function getApiSettings(): ApiSettings {
         if (fs.existsSync(CONFIG_PATH)) {
             const content = fs.readFileSync(CONFIG_PATH, 'utf-8');
             const settings = JSON.parse(content);
-            console.log("[Revenue] Read from config file:", settings.jotformApiUrl);
             return settings;
         }
     } catch (error) {
         console.error("[Revenue] Error reading config file:", error);
     }
-    console.log("[Revenue] Using default settings");
     return DEFAULT_SETTINGS;
 }
 
@@ -51,11 +54,14 @@ function getAuthHeaders(settings: ApiSettings): Record<string, string> {
         'User-Agent': 'ClawMaster/1.0',
     };
 
-    if (settings.apiKey) {
-        headers['X-API-Key'] = settings.apiKey;
+    const apiKey = settings.revenueApiKey || settings.apiKey;
+    const apiToken = settings.revenueApiToken || settings.apiToken;
+
+    if (apiKey) {
+        headers['X-API-Key'] = apiKey;
     }
-    if (settings.apiToken) {
-        headers['Authorization'] = `Bearer ${settings.apiToken}`;
+    if (apiToken) {
+        headers['Authorization'] = `Bearer ${apiToken}`;
     }
 
     return headers;
@@ -73,12 +79,16 @@ export async function GET(
     try {
         const settings = getApiSettings();
 
+        const revenueUrl = settings.revenueApiUrl || settings.jotformApiUrl || DEFAULT_SETTINGS.jotformApiUrl;
+        const revenueSiteId = settings.revenueSiteId || settings.jotformFormId || DEFAULT_SETTINGS.jotformFormId;
+        const isEnabled = settings.revenueEnabled !== undefined ? settings.revenueEnabled : settings.isEnabled;
+
         console.log("[Revenue Proxy] Using:", {
-            url: settings.jotformApiUrl,
-            siteId: settings.jotformFormId,
+            url: revenueUrl,
+            siteId: revenueSiteId,
         });
 
-        if (!settings.isEnabled || settings.revenueEnabled === false) {
+        if (!isEnabled) {
             return NextResponse.json(
                 { error: "Revenue API integration is disabled" },
                 { status: 503 }
@@ -88,9 +98,9 @@ export async function GET(
         // Build the target URL
         const { path: pathSegments } = await params;
         // If path is just the site_id, use it; otherwise use form config
-        const siteId = pathSegments?.[0] || settings.jotformFormId;
+        const siteId = pathSegments?.[0] || revenueSiteId;
         const search = request.nextUrl.search;
-        const targetUrl = `${settings.jotformApiUrl}/revenue/${siteId}${search}`;
+        const targetUrl = `${revenueUrl}/revenue/${siteId}${search}`;
 
         console.log(`[Revenue Proxy] GET from: ${targetUrl}`);
 

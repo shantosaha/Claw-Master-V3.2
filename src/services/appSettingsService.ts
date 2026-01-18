@@ -183,20 +183,27 @@ const API_SETTINGS_DOC_ID = "apiIntegrationSettings";
 export interface ApiIntegrationSettings {
     // JotForm API
     jotformApiUrl: string;
-    jotformFormId: string; // Actually site_id (e.g., "614")
-    isEnabled: boolean;
+    jotformFormId: string;
+    jotformEnabled: boolean;
+    jotformApiKey?: string;
+    jotformApiToken?: string;
 
     // Game Report API
     gameReportEnabled: boolean;
     gameReportApiUrl: string;
     gameReportSiteId: string;
+    gameReportApiKey?: string;
+    gameReportApiToken?: string;
 
     // Revenue API
     revenueEnabled: boolean;
     revenueApiUrl: string;
     revenueSiteId: string;
+    revenueApiKey?: string;
+    revenueApiToken?: string;
 
-    // Authentication (future use)
+    // Legacy/Authentication (future use)
+    isEnabled: boolean; // Global enable
     apiKey?: string;
     apiToken?: string;
 
@@ -214,13 +221,23 @@ export interface ApiIntegrationSettings {
 const DEFAULT_API_SETTINGS: ApiIntegrationSettings = {
     jotformApiUrl: "https://claw.kokoamusement.com.au",
     jotformFormId: "614",
-    isEnabled: true,
+    jotformEnabled: true,
+    jotformApiKey: undefined,
+    jotformApiToken: undefined,
+
     gameReportEnabled: true,
     gameReportApiUrl: "https://claw.kokoamusement.com.au",
     gameReportSiteId: "614",
+    gameReportApiKey: undefined,
+    gameReportApiToken: undefined,
+
     revenueEnabled: true,
     revenueApiUrl: "https://claw.kokoamusement.com.au",
     revenueSiteId: "614",
+    revenueApiKey: undefined,
+    revenueApiToken: undefined,
+
+    isEnabled: true,
     apiKey: undefined,
     apiToken: undefined,
     urlPresets: undefined,

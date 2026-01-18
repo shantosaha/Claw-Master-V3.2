@@ -15,9 +15,15 @@ const DEFAULT_SETTINGS = {
 };
 
 interface ApiSettings {
-    jotformApiUrl: string;
-    jotformFormId: string;
+    jotformApiUrl?: string;
+    jotformFormId?: string;
+    jotformEnabled?: boolean;
+    jotformApiKey?: string;
+    jotformApiToken?: string;
+    // Legacy/Shared
     isEnabled: boolean;
+    apiKey?: string;
+    apiToken?: string;
 }
 
 /**
@@ -28,14 +34,34 @@ function getApiSettings(): ApiSettings {
         if (fs.existsSync(CONFIG_PATH)) {
             const content = fs.readFileSync(CONFIG_PATH, 'utf-8');
             const settings = JSON.parse(content);
-            console.log("[JotForm] Read from config file:", settings.jotformApiUrl);
             return settings;
         }
     } catch (error) {
         console.error("[JotForm] Error reading config file:", error);
     }
-    console.log("[JotForm] Using default settings");
     return DEFAULT_SETTINGS;
+}
+
+/**
+ * Build auth headers
+ */
+function getAuthHeaders(settings: ApiSettings): Record<string, string> {
+    const headers: Record<string, string> = {
+        'Accept': 'application/json',
+        'User-Agent': 'ClawMaster/1.0',
+    };
+
+    const apiKey = settings.jotformApiKey || settings.apiKey;
+    const apiToken = settings.jotformApiToken || settings.apiToken;
+
+    if (apiKey) {
+        headers['X-API-Key'] = apiKey;
+    }
+    if (apiToken) {
+        headers['Authorization'] = `Bearer ${apiToken}`;
+    }
+
+    return headers;
 }
 
 export async function GET(
@@ -46,12 +72,16 @@ export async function GET(
         // Read settings from config file (fresh read)
         const settings = getApiSettings();
 
+        const jotformUrl = settings.jotformApiUrl || DEFAULT_SETTINGS.jotformApiUrl;
+        const jotformFormId = settings.jotformFormId || DEFAULT_SETTINGS.jotformFormId;
+        const isEnabled = settings.jotformEnabled !== undefined ? settings.jotformEnabled : settings.isEnabled;
+
         console.log("[JotForm Proxy] Using:", {
-            url: settings.jotformApiUrl,
-            formId: settings.jotformFormId,
+            url: jotformUrl,
+            formId: jotformFormId,
         });
 
-        if (!settings.isEnabled) {
+        if (!isEnabled) {
             return NextResponse.json(
                 { error: "JotForm API integration is disabled" },
                 { status: 503 }
@@ -62,17 +92,14 @@ export async function GET(
         const { path: pathSegments } = await params;
         const pathString = pathSegments.join('/');
         const search = request.nextUrl.search;
-        const targetUrl = `${settings.jotformApiUrl}/jotform/${pathString}${search}`;
+        const targetUrl = `${jotformUrl}/jotform/${pathString}${search}`;
 
         console.log(`[JotForm Proxy] Fetching from: ${targetUrl}`);
 
         // Fetch from the configured external API
         const response = await fetch(targetUrl, {
             method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'User-Agent': 'ClawMaster/1.0',
-            },
+            headers: getAuthHeaders(settings),
             cache: 'no-store', // Next.js level no-store
         });
 

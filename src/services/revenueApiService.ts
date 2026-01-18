@@ -67,7 +67,7 @@ async function fetchRevenue(
             return [];
         }
 
-        const siteId = options.siteId || settings.jotformFormId;
+        const siteId = options.siteId || settings.revenueSiteId || settings.jotformFormId;
         const startStr = format(options.startDate, "yyyy-MM-dd");
         const endStr = format(options.endDate, "yyyy-MM-dd");
         const aggregateParam = options.aggregate !== false ? 'true' : 'false';

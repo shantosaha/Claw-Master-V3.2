@@ -39,15 +39,27 @@ interface ApiUrlPreset {
 interface ApiSettings {
     jotformApiUrl: string;
     jotformFormId: string;
-    isEnabled: boolean;
-    gameReportEnabled: boolean;
+    jotformEnabled?: boolean;
+    jotformApiKey?: string;
+    jotformApiToken?: string;
+
     gameReportApiUrl: string;
     gameReportSiteId: string;
-    revenueEnabled: boolean;
+    gameReportEnabled: boolean;
+    gameReportApiKey?: string;
+    gameReportApiToken?: string;
+
     revenueApiUrl: string;
     revenueSiteId: string;
+    revenueEnabled: boolean;
+    revenueApiKey?: string;
+    revenueApiToken?: string;
+
+    // Legacy/Global
+    isEnabled: boolean;
     apiKey?: string;
     apiToken?: string;
+
     urlPresets?: ApiUrlPreset[];
     updatedAt?: string;
     updatedBy?: string;
@@ -76,13 +88,23 @@ export function ApiSettingsPanel() {
     const [formData, setFormData] = useState<ApiSettings>({
         jotformApiUrl: "",
         jotformFormId: "",
-        isEnabled: true,
-        gameReportEnabled: true,
+        jotformEnabled: true,
+        jotformApiKey: "",
+        jotformApiToken: "",
+
         gameReportApiUrl: "",
         gameReportSiteId: "614",
-        revenueEnabled: true,
+        gameReportEnabled: true,
+        gameReportApiKey: "",
+        gameReportApiToken: "",
+
         revenueApiUrl: "",
         revenueSiteId: "614",
+        revenueEnabled: true,
+        revenueApiKey: "",
+        revenueApiToken: "",
+
+        isEnabled: true,
         apiKey: "",
         apiToken: "",
         urlPresets: DEFAULT_PRESETS,
@@ -102,6 +124,9 @@ export function ApiSettingsPanel() {
                 setFormData({
                     ...formData,
                     ...data,
+                    jotformEnabled: data.jotformEnabled ?? data.isEnabled ?? true,
+                    gameReportEnabled: data.gameReportEnabled ?? data.isEnabled ?? true,
+                    revenueEnabled: data.revenueEnabled ?? data.isEnabled ?? true,
                     gameReportApiUrl: data.gameReportApiUrl || data.jotformApiUrl || "",
                     gameReportSiteId: data.gameReportSiteId || data.jotformFormId || "614",
                     revenueApiUrl: data.revenueApiUrl || data.jotformApiUrl || "",
@@ -362,8 +387,8 @@ export function ApiSettingsPanel() {
                                 <Label htmlFor="api-enabled" className="text-sm">Enabled</Label>
                                 <Switch
                                     id="api-enabled"
-                                    checked={formData.isEnabled}
-                                    onCheckedChange={(checked) => setFormData({ ...formData, isEnabled: checked })}
+                                    checked={formData.jotformEnabled}
+                                    onCheckedChange={(checked) => setFormData({ ...formData, jotformEnabled: checked })}
                                 />
                             </div>
                         </div>
@@ -463,6 +488,29 @@ export function ApiSettingsPanel() {
                                 <p className="text-xs text-muted-foreground">
                                     The form number (e.g., 614, 615)
                                 </p>
+                            </div>
+                        </div>
+
+                        <div className="grid gap-4 md:grid-cols-2 pt-2 border-t">
+                            <div className="space-y-2">
+                                <Label htmlFor="jotform-api-key">JotForm API Key</Label>
+                                <Input
+                                    id="jotform-api-key"
+                                    type="password"
+                                    placeholder="Enter JotForm specific API key"
+                                    value={formData.jotformApiKey || ""}
+                                    onChange={(e) => setFormData({ ...formData, jotformApiKey: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="jotform-api-token">JotForm API Token</Label>
+                                <Input
+                                    id="jotform-api-token"
+                                    type="password"
+                                    placeholder="Enter bearer token"
+                                    value={formData.jotformApiToken || ""}
+                                    onChange={(e) => setFormData({ ...formData, jotformApiToken: e.target.value })}
+                                />
                             </div>
                         </div>
 
@@ -596,6 +644,29 @@ export function ApiSettingsPanel() {
                             </div>
                         </div>
 
+                        <div className="grid gap-4 md:grid-cols-2 pt-2 border-t border-blue-200/30">
+                            <div className="space-y-2">
+                                <Label htmlFor="game-report-api-key">Game Report API Key</Label>
+                                <Input
+                                    id="game-report-api-key"
+                                    type="password"
+                                    placeholder="Enter Game Report specific API key"
+                                    value={formData.gameReportApiKey || ""}
+                                    onChange={(e) => setFormData({ ...formData, gameReportApiKey: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="game-report-api-token">Game Report API Token</Label>
+                                <Input
+                                    id="game-report-api-token"
+                                    type="password"
+                                    placeholder="Enter bearer token"
+                                    value={formData.gameReportApiToken || ""}
+                                    onChange={(e) => setFormData({ ...formData, gameReportApiToken: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
                         <Alert className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-900">
                             <Info className="h-4 w-4 text-blue-500" />
                             <AlertDescription>
@@ -726,6 +797,29 @@ export function ApiSettingsPanel() {
                             </div>
                         </div>
 
+                        <div className="grid gap-4 md:grid-cols-2 pt-2 border-t border-green-200/30">
+                            <div className="space-y-2">
+                                <Label htmlFor="revenue-api-key">Revenue API Key</Label>
+                                <Input
+                                    id="revenue-api-key"
+                                    type="password"
+                                    placeholder="Enter Revenue specific API key"
+                                    value={formData.revenueApiKey || ""}
+                                    onChange={(e) => setFormData({ ...formData, revenueApiKey: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="revenue-api-token">Revenue API Token</Label>
+                                <Input
+                                    id="revenue-api-token"
+                                    type="password"
+                                    placeholder="Enter bearer token"
+                                    value={formData.revenueApiToken || ""}
+                                    onChange={(e) => setFormData({ ...formData, revenueApiToken: e.target.value })}
+                                />
+                            </div>
+                        </div>
+
                         <Alert className="bg-green-50 dark:bg-green-950/20 border-green-200 dark:border-green-900">
                             <Info className="h-4 w-4 text-green-500" />
                             <AlertDescription>
@@ -776,46 +870,6 @@ export function ApiSettingsPanel() {
                                 )}
                             </Button>
                         </div>
-                    </CardContent>
-                </Card>
-
-                {/* Optional Authentication (Shared) */}
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Shield className="h-5 w-5 text-amber-500" />
-                            Shared Authentication
-                        </CardTitle>
-                        <CardDescription>
-                            Optional authentication credentials shared across all APIs
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="api-key">API Key</Label>
-                                <Input
-                                    id="api-key"
-                                    type="password"
-                                    placeholder="Enter API key (optional)"
-                                    value={formData.apiKey || ""}
-                                    onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-                                />
-                            </div>
-                            <div className="space-y-2">
-                                <Label htmlFor="api-token">API Token</Label>
-                                <Input
-                                    id="api-token"
-                                    type="password"
-                                    placeholder="Enter bearer token (optional)"
-                                    value={formData.apiToken || ""}
-                                    onChange={(e) => setFormData({ ...formData, apiToken: e.target.value })}
-                                />
-                            </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground">
-                            Authentication credentials for future API requirements. Leave blank if not needed.
-                        </p>
                     </CardContent>
                 </Card>
 

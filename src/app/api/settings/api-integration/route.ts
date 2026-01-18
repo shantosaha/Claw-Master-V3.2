@@ -15,7 +15,27 @@ interface ApiUrlPreset {
 interface ApiSettings {
     jotformApiUrl: string;
     jotformFormId: string;
+    jotformEnabled: boolean;
+    jotformApiKey?: string;
+    jotformApiToken?: string;
+
+    gameReportApiUrl: string;
+    gameReportSiteId: string;
+    gameReportEnabled: boolean;
+    gameReportApiKey?: string;
+    gameReportApiToken?: string;
+
+    revenueApiUrl: string;
+    revenueSiteId: string;
+    revenueEnabled: boolean;
+    revenueApiKey?: string;
+    revenueApiToken?: string;
+
+    // Legacy/Global
     isEnabled: boolean;
+    apiKey?: string;
+    apiToken?: string;
+
     urlPresets?: ApiUrlPreset[];
     updatedAt?: string;
     updatedBy?: string;
@@ -25,6 +45,16 @@ interface ApiSettings {
 const DEFAULT_SETTINGS: ApiSettings = {
     jotformApiUrl: "https://claw.kokoamusement.com.au",
     jotformFormId: "614",
+    jotformEnabled: true,
+
+    gameReportApiUrl: "https://claw.kokoamusement.com.au",
+    gameReportSiteId: "614",
+    gameReportEnabled: true,
+
+    revenueApiUrl: "https://claw.kokoamusement.com.au",
+    revenueSiteId: "614",
+    revenueEnabled: true,
+
     isEnabled: true,
     urlPresets: [
         { label: "Production (Remote)", value: "https://claw.kokoamusement.com.au" },
@@ -77,9 +107,32 @@ export async function POST(request: NextRequest) {
         const body = await request.json();
 
         const newSettings: ApiSettings = {
-            jotformApiUrl: body.jotformApiUrl || DEFAULT_SETTINGS.jotformApiUrl,
-            jotformFormId: body.jotformFormId || DEFAULT_SETTINGS.jotformFormId,
+            // JotForm
+            jotformApiUrl: body.jotformApiUrl || body.jotformApiUrl || DEFAULT_SETTINGS.jotformApiUrl,
+            jotformFormId: body.jotformFormId || body.jotformFormId || DEFAULT_SETTINGS.jotformFormId,
+            jotformEnabled: body.jotformEnabled !== undefined ? body.jotformEnabled : (body.isEnabled !== false),
+            jotformApiKey: body.jotformApiKey || "",
+            jotformApiToken: body.jotformApiToken || "",
+
+            // Game Report
+            gameReportApiUrl: body.gameReportApiUrl || body.jotformApiUrl || DEFAULT_SETTINGS.gameReportApiUrl,
+            gameReportSiteId: body.gameReportSiteId || body.jotformFormId || DEFAULT_SETTINGS.gameReportSiteId,
+            gameReportEnabled: body.gameReportEnabled !== undefined ? body.gameReportEnabled : (body.isEnabled !== false),
+            gameReportApiKey: body.gameReportApiKey || "",
+            gameReportApiToken: body.gameReportApiToken || "",
+
+            // Revenue
+            revenueApiUrl: body.revenueApiUrl || body.jotformApiUrl || DEFAULT_SETTINGS.revenueApiUrl,
+            revenueSiteId: body.revenueSiteId || body.jotformFormId || DEFAULT_SETTINGS.revenueSiteId,
+            revenueEnabled: body.revenueEnabled !== undefined ? body.revenueEnabled : (body.isEnabled !== false),
+            revenueApiKey: body.revenueApiKey || "",
+            revenueApiToken: body.revenueApiToken || "",
+
+            // Shared/Legacy
             isEnabled: body.isEnabled !== false,
+            apiKey: body.apiKey || "",
+            apiToken: body.apiToken || "",
+
             urlPresets: body.urlPresets || DEFAULT_SETTINGS.urlPresets,
             updatedAt: new Date().toISOString(),
             updatedBy: body.updatedBy || "api",

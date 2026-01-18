@@ -16,10 +16,15 @@ const DEFAULT_SETTINGS = {
 };
 
 interface ApiSettings {
-    jotformApiUrl: string;
-    jotformFormId: string;
-    isEnabled: boolean;
+    jotformApiUrl?: string;
+    jotformFormId?: string;
+    gameReportApiUrl?: string;
+    gameReportSiteId?: string;
     gameReportEnabled?: boolean;
+    gameReportApiKey?: string;
+    gameReportApiToken?: string;
+    // Legacy/Shared
+    isEnabled: boolean;
     apiKey?: string;
     apiToken?: string;
 }
@@ -32,13 +37,11 @@ function getApiSettings(): ApiSettings {
         if (fs.existsSync(CONFIG_PATH)) {
             const content = fs.readFileSync(CONFIG_PATH, 'utf-8');
             const settings = JSON.parse(content);
-            console.log("[GameReport] Read from config file:", settings.jotformApiUrl);
             return settings;
         }
     } catch (error) {
         console.error("[GameReport] Error reading config file:", error);
     }
-    console.log("[GameReport] Using default settings");
     return DEFAULT_SETTINGS;
 }
 
@@ -52,11 +55,14 @@ function getAuthHeaders(settings: ApiSettings): Record<string, string> {
         'User-Agent': 'ClawMaster/1.0',
     };
 
-    if (settings.apiKey) {
-        headers['X-API-Key'] = settings.apiKey;
+    const apiKey = settings.gameReportApiKey || settings.apiKey;
+    const apiToken = settings.gameReportApiToken || settings.apiToken;
+
+    if (apiKey) {
+        headers['X-API-Key'] = apiKey;
     }
-    if (settings.apiToken) {
-        headers['Authorization'] = `Bearer ${settings.apiToken}`;
+    if (apiToken) {
+        headers['Authorization'] = `Bearer ${apiToken}`;
     }
 
     return headers;
@@ -73,12 +79,16 @@ export async function POST(
     try {
         const settings = getApiSettings();
 
+        const gameReportUrl = settings.gameReportApiUrl || settings.jotformApiUrl || DEFAULT_SETTINGS.jotformApiUrl;
+        const gameReportSiteId = settings.gameReportSiteId || settings.jotformFormId || DEFAULT_SETTINGS.jotformFormId;
+        const isEnabled = settings.gameReportEnabled !== undefined ? settings.gameReportEnabled : settings.isEnabled;
+
         console.log("[GameReport Proxy] POST Using:", {
-            url: settings.jotformApiUrl,
-            siteId: settings.jotformFormId,
+            url: gameReportUrl,
+            siteId: gameReportSiteId,
         });
 
-        if (!settings.isEnabled || settings.gameReportEnabled === false) {
+        if (!isEnabled) {
             return NextResponse.json(
                 { error: "Game Report API integration is disabled" },
                 { status: 503 }
@@ -88,9 +98,9 @@ export async function POST(
         // Build the target URL
         const { path: pathSegments } = await params;
         // If path is just the site_id, use it; otherwise use form config
-        const siteId = pathSegments?.[0] || settings.jotformFormId;
+        const siteId = pathSegments?.[0] || gameReportSiteId;
         const search = request.nextUrl.search;
-        const targetUrl = `${settings.jotformApiUrl}/game_report/${siteId}${search}`;
+        const targetUrl = `${gameReportUrl}/game_report/${siteId}${search}`;
 
         console.log(`[GameReport Proxy] POST to: ${targetUrl}`);
 
@@ -148,12 +158,16 @@ export async function GET(
     try {
         const settings = getApiSettings();
 
+        const gameReportUrl = settings.gameReportApiUrl || settings.jotformApiUrl || DEFAULT_SETTINGS.jotformApiUrl;
+        const gameReportSiteId = settings.gameReportSiteId || settings.jotformFormId || DEFAULT_SETTINGS.jotformFormId;
+        const isEnabled = settings.gameReportEnabled !== undefined ? settings.gameReportEnabled : settings.isEnabled;
+
         console.log("[GameReport Proxy] GET Using:", {
-            url: settings.jotformApiUrl,
-            siteId: settings.jotformFormId,
+            url: gameReportUrl,
+            siteId: gameReportSiteId,
         });
 
-        if (!settings.isEnabled || settings.gameReportEnabled === false) {
+        if (!isEnabled) {
             return NextResponse.json(
                 { error: "Game Report API integration is disabled" },
                 { status: 503 }
@@ -162,9 +176,9 @@ export async function GET(
 
         // Build the target URL
         const { path: pathSegments } = await params;
-        const siteId = pathSegments?.[0] || settings.jotformFormId;
+        const siteId = pathSegments?.[0] || gameReportSiteId;
         const search = request.nextUrl.search;
-        const targetUrl = `${settings.jotformApiUrl}/game_report/${siteId}${search}`;
+        const targetUrl = `${gameReportUrl}/game_report/${siteId}${search}`;
 
         console.log(`[GameReport Proxy] GET from: ${targetUrl}`);
 
