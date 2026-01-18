@@ -7,6 +7,7 @@ import { serviceReportService } from "@/services/serviceReportService";
 import { GameReportItem, gameReportApiService } from "@/services/gameReportApiService";
 import { RevenueItem, revenueApiService } from "@/services/revenueApiService";
 import { monitoringService } from "@/services/monitoringService";
+import { appSettingsService } from "@/services/appSettingsService";
 
 interface DataContextType {
     // Stock Items
@@ -102,23 +103,51 @@ export function DataProvider({ children }: DataProviderProps) {
             // Fetch All APIs on startup (JotForm, Game Report, Revenue)
             try {
                 console.log("[DataProvider] Pre-fetching all machine performance APIs...");
-                const [reports, gameData, revData] = await Promise.all([
-                    serviceReportService.getReports("GLOBAL_FETCH"),
-                    gameReportApiService.fetchTodayReport(),
-                    revenueApiService.fetchTodayRevenue()
-                ]);
 
-                setServiceReports(reports);
-                setTodayGameReports(gameData);
-                setTodayRevenue(revData);
+                // 1. Fetch API settings once to avoid redundant Firestore calls
+                const apiSettings = await appSettingsService.getApiSettings();
+                console.log("[DataProvider] API Settings fetched, starting parallel API calls");
 
-                // Sync with monitoring service
-                monitoringService.setPrefetchedGameData(gameData);
+                // 2. Launch each API fetch independently to allow independent updates
 
-                console.log(`[DataProvider] API Sync Complete: ${reports.length} reports, ${gameData.length} game stats, ${revData.length} revenue items`);
+                // JotForm - Usually slow
+                serviceReportService.getReports("GLOBAL_FETCH", undefined, apiSettings)
+                    .then(reports => {
+                        setServiceReports(reports);
+                        setServiceReportsLoading(false);
+                        console.log(`[DataProvider] JotForm Sync Complete: ${reports.length} reports`);
+                    })
+                    .catch(err => {
+                        console.error("[DataProvider] JotForm fetch failed:", err);
+                        setServiceReportsLoading(false);
+                    });
+
+                // Game Report - Usually fast
+                gameReportApiService.fetchTodayReport(undefined, apiSettings)
+                    .then(gameData => {
+                        setTodayGameReports(gameData);
+                        monitoringService.setPrefetchedGameData(gameData);
+                        console.log(`[DataProvider] Game Report Sync Complete: ${gameData.length} records`);
+                    })
+                    .catch(err => {
+                        console.error("[DataProvider] Game Report fetch failed:", err);
+                    });
+
+                // Revenue - Usually fast
+                revenueApiService.fetchTodayRevenue(undefined, apiSettings)
+                    .then(revData => {
+                        setTodayRevenue(revData);
+                        console.log(`[DataProvider] Revenue Sync Complete: ${revData.length} records`);
+                    })
+                    .catch(err => {
+                        console.error("[DataProvider] Revenue fetch failed:", err);
+                    })
+                    .finally(() => {
+                        setApisLoading(false);
+                    });
+
             } catch (error) {
-                console.error("[DataProvider] Failed to fetch startup API data:", error);
-            } finally {
+                console.error("[DataProvider] Failed to initiate startup API data:", error);
                 setServiceReportsLoading(false);
                 setApisLoading(false);
             }
@@ -164,22 +193,40 @@ export function DataProvider({ children }: DataProviderProps) {
 
     const refreshApis = useCallback(async () => {
         setApisLoading(true);
+        setServiceReportsLoading(true);
         try {
-            const [reports, gameData, revData] = await Promise.all([
-                serviceReportService.getReports("GLOBAL_FETCH"),
-                gameReportApiService.fetchTodayReport(),
-                revenueApiService.fetchTodayRevenue()
-            ]);
-            setServiceReports(reports);
-            setTodayGameReports(gameData);
-            setTodayRevenue(revData);
+            // Fetch API settings once
+            const apiSettings = await appSettingsService.getApiSettings();
 
-            // Sync with monitoring service
-            monitoringService.setPrefetchedGameData(gameData);
+            // Run in parallel but update states as they complete
+            const jotformPromise = serviceReportService.getReports("GLOBAL_FETCH", undefined, apiSettings)
+                .then(reports => {
+                    setServiceReports(reports);
+                    setServiceReportsLoading(false);
+                    return reports;
+                });
+
+            const gameReportPromise = gameReportApiService.fetchTodayReport(undefined, apiSettings)
+                .then(gameData => {
+                    setTodayGameReports(gameData);
+                    monitoringService.setPrefetchedGameData(gameData);
+                    return gameData;
+                });
+
+            const revenuePromise = revenueApiService.fetchTodayRevenue(undefined, apiSettings)
+                .then(revData => {
+                    setTodayRevenue(revData);
+                    return revData;
+                });
+
+            // We still await all for the general apisLoading state if needed, 
+            // but individual states are updated earlier via then()
+            await Promise.allSettled([jotformPromise, gameReportPromise, revenuePromise]);
         } catch (error) {
             console.error("[DataProvider] Failed to refresh APIs:", error);
         } finally {
             setApisLoading(false);
+            setServiceReportsLoading(false);
         }
     }, []);
 

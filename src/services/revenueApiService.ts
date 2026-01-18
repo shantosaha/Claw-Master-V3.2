@@ -57,10 +57,11 @@ async function fetchRevenue(
         startDate: Date;
         endDate: Date;
         aggregate?: boolean;
-    }
+    },
+    apiSettings?: any // Add optional settings parameter
 ): Promise<RevenueItem[]> {
     try {
-        const settings = await appSettingsService.getApiSettings();
+        const settings = apiSettings || await appSettingsService.getApiSettings();
 
         if (!settings.isEnabled || !settings.revenueEnabled) {
             console.log("[RevenueService] API is disabled");
@@ -108,14 +109,15 @@ async function fetchRevenue(
  */
 async function fetchDailyRevenue(
     date: Date,
-    siteId?: string
+    siteId?: string,
+    apiSettings?: any // Add optional settings parameter
 ): Promise<RevenueItem[]> {
     return fetchRevenue({
         siteId,
         startDate: date,
         endDate: date,
         aggregate: false, // Get individual items for a single day
-    });
+    }, apiSettings);
 }
 
 /**
@@ -124,22 +126,23 @@ async function fetchDailyRevenue(
 async function fetchAggregatedRevenue(
     startDate: Date,
     endDate: Date,
-    siteId?: string
+    siteId?: string,
+    apiSettings?: any // Add optional settings parameter
 ): Promise<RevenueItem[]> {
     return fetchRevenue({
         siteId,
         startDate,
         endDate,
         aggregate: true,
-    });
+    }, apiSettings);
 }
 
 /**
  * Fetch today's revenue
  */
-async function fetchTodayRevenue(siteId?: string): Promise<RevenueItem[]> {
+async function fetchTodayRevenue(siteId?: string, apiSettings?: any): Promise<RevenueItem[]> {
     const today = new Date();
-    return fetchDailyRevenue(today, siteId);
+    return fetchDailyRevenue(today, siteId, apiSettings);
 }
 
 /**

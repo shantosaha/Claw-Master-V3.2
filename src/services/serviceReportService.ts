@@ -8,18 +8,22 @@ class ServiceReportService {
     /**
      * Fetches service reports, optionally filtered by date range
      */
-    async getReports(machineId: string, options?: { from?: Date; to?: Date }): Promise<ServiceReport[]> {
-        // Get the configured API endpoint
-        const apiSettings = await appSettingsService.getApiSettings();
+    async getReports(
+        machineId: string,
+        options?: { from?: Date; to?: Date },
+        apiSettings?: any // Add optional settings parameter
+    ): Promise<ServiceReport[]> {
+        // Get the configured API endpoint or use provided settings
+        const settings = apiSettings || await appSettingsService.getApiSettings();
 
-        if (!apiSettings.isEnabled) {
+        if (!settings.isEnabled) {
             console.log("[ServiceReport] JotForm API is disabled, using mock data");
             return this.getMockReports();
         }
 
         // Try to fetch from the local mock API via our Next.js proxy
         try {
-            let endpoint = `/api/jotform/${apiSettings.jotformFormId}`;
+            let endpoint = `/api/jotform/${settings.jotformFormId}`;
 
             // Add date filters if provided (JotForm filter syntax)
             if (options?.from || options?.to) {

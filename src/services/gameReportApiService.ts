@@ -71,10 +71,11 @@ async function fetchGameReport(
         tag?: number;
         groups?: string[];
         aggregate?: boolean;
-    } = {}
+    } = {},
+    apiSettings?: any // Add optional settings parameter
 ): Promise<GameReportItem[]> {
     try {
-        const settings = await appSettingsService.getApiSettings();
+        const settings = apiSettings || await appSettingsService.getApiSettings();
 
         if (!settings.isEnabled || !settings.gameReportEnabled) {
             console.log("[GameReportService] API is disabled");
@@ -163,14 +164,15 @@ async function fetchDailyReport(
     options: {
         siteId?: string;
         groups?: string[];
-    } = {}
+    } = {},
+    apiSettings?: any // Add optional settings parameter
 ): Promise<GameReportItem[]> {
     return fetchGameReport({
         ...options,
         startDate: date,
         endDate: date,
         aggregate: false,
-    });
+    }, apiSettings);
 }
 
 /**
@@ -180,7 +182,8 @@ async function fetchMachineReport(
     tag: number,
     startDate: Date,
     endDate: Date,
-    siteId?: string
+    siteId?: string,
+    apiSettings?: any // Add optional settings parameter
 ): Promise<GameReportItem[]> {
     return fetchGameReport({
         siteId,
@@ -188,15 +191,15 @@ async function fetchMachineReport(
         endDate,
         tag,
         aggregate: true,
-    });
+    }, apiSettings);
 }
 
 /**
  * Fetch today's report
  */
-async function fetchTodayReport(siteId?: string): Promise<GameReportItem[]> {
+async function fetchTodayReport(siteId?: string, apiSettings?: any): Promise<GameReportItem[]> {
     const today = new Date();
-    return fetchDailyReport(today, { siteId });
+    return fetchDailyReport(today, { siteId }, apiSettings);
 }
 
 /**
