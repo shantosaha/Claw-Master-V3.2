@@ -207,21 +207,21 @@ export function ApiSettingsPanel() {
         setSavingRevenue(false);
     };
 
-    const addCurrentAsPreset = () => {
-        if (!formData.jotformApiUrl || !newPresetName) {
+    const addCurrentAsPreset = (urlToSave: string) => {
+        if (!urlToSave || !newPresetName) {
             toast.error("Enter both a preset name and a URL");
             return;
         }
 
         const presets = formData.urlPresets || DEFAULT_PRESETS;
-        if (presets.some(p => p.value === formData.jotformApiUrl)) {
+        if (presets.some(p => p.value === urlToSave)) {
             toast.error("This URL is already in your presets");
             return;
         }
 
         const newPresets = [
             ...presets,
-            { label: newPresetName, value: formData.jotformApiUrl }
+            { label: newPresetName, value: urlToSave }
         ];
 
         handleSaveAll({ urlPresets: newPresets });
@@ -283,8 +283,8 @@ export function ApiSettingsPanel() {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    startDate: today,
-                    endDate: today,
+                    startdate: today,
+                    enddate: today,
                     aggregated: true
                 })
             });
@@ -323,7 +323,7 @@ export function ApiSettingsPanel() {
 
         try {
             const today = new Date().toISOString().split('T')[0];
-            const endpoint = `/api/revenue/${formData.revenueSiteId}?startDate=${today}&endDate=${today}`;
+            const endpoint = `/api/revenue/${formData.revenueSiteId}?startdate=${today}&enddate=${today}`;
             const response = await fetch(endpoint);
 
             if (response.ok) {
@@ -440,7 +440,7 @@ export function ApiSettingsPanel() {
                                         variant="outline"
                                         size="sm"
                                         className="h-8 text-xs whitespace-nowrap"
-                                        onClick={addCurrentAsPreset}
+                                        onClick={() => addCurrentAsPreset(formData.jotformApiUrl)}
                                         disabled={!formData.jotformApiUrl || !newPresetName}
                                     >
                                         Save as Preset
@@ -625,6 +625,49 @@ export function ApiSettingsPanel() {
                                         />
                                     </div>
                                 </div>
+
+                                <div className="flex items-center gap-2 mt-2">
+                                    <Input
+                                        placeholder="Preset Name (e.g. Staging)"
+                                        value={newPresetName}
+                                        onChange={(e) => setNewPresetName(e.target.value)}
+                                        className="h-8 text-xs"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 text-xs whitespace-nowrap"
+                                        onClick={() => addCurrentAsPreset(formData.gameReportApiUrl)}
+                                        disabled={!formData.gameReportApiUrl || !newPresetName}
+                                    >
+                                        Save as Preset
+                                    </Button>
+                                </div>
+
+                                {/* List of Custom Presets */}
+                                {formData.urlPresets && formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).length > 0 && (
+                                    <div className="mt-4 space-y-2 border rounded-md p-2 bg-muted/20">
+                                        <p className="text-[10px] uppercase font-bold text-muted-foreground px-1">Custom Presets</p>
+                                        <div className="space-y-1">
+                                            {formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).map(preset => (
+                                                <div key={preset.value} className="flex items-center justify-between text-xs bg-background p-1.5 rounded border border-border/50">
+                                                    <div className="flex flex-col overflow-hidden">
+                                                        <span className="font-medium truncate">{preset.label}</span>
+                                                        <span className="text-[10px] text-muted-foreground truncate">{preset.value}</span>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                                        onClick={() => removePreset(preset.value)}
+                                                    >
+                                                        <XCircle className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 <p className="text-xs text-muted-foreground">
                                     The base URL for the Game Report API
                                 </p>
@@ -778,6 +821,49 @@ export function ApiSettingsPanel() {
                                         />
                                     </div>
                                 </div>
+
+                                <div className="flex items-center gap-2 mt-2">
+                                    <Input
+                                        placeholder="Preset Name (e.g. Staging)"
+                                        value={newPresetName}
+                                        onChange={(e) => setNewPresetName(e.target.value)}
+                                        className="h-8 text-xs"
+                                    />
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-8 text-xs whitespace-nowrap"
+                                        onClick={() => addCurrentAsPreset(formData.revenueApiUrl)}
+                                        disabled={!formData.revenueApiUrl || !newPresetName}
+                                    >
+                                        Save as Preset
+                                    </Button>
+                                </div>
+
+                                {/* List of Custom Presets */}
+                                {formData.urlPresets && formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).length > 0 && (
+                                    <div className="mt-4 space-y-2 border rounded-md p-2 bg-muted/20">
+                                        <p className="text-[10px] uppercase font-bold text-muted-foreground px-1">Custom Presets</p>
+                                        <div className="space-y-1">
+                                            {formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).map(preset => (
+                                                <div key={preset.value} className="flex items-center justify-between text-xs bg-background p-1.5 rounded border border-border/50">
+                                                    <div className="flex flex-col overflow-hidden">
+                                                        <span className="font-medium truncate">{preset.label}</span>
+                                                        <span className="text-[10px] text-muted-foreground truncate">{preset.value}</span>
+                                                    </div>
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="icon"
+                                                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
+                                                        onClick={() => removePreset(preset.value)}
+                                                    >
+                                                        <XCircle className="h-3 w-3" />
+                                                    </Button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                                 <p className="text-xs text-muted-foreground">
                                     The base URL for the Revenue API
                                 </p>

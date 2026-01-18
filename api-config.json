@@ -9,7 +9,7 @@
   "gameReportEnabled": true,
   "gameReportApiKey": "",
   "gameReportApiToken": "",
-  "revenueApiUrl": "http://localhost:8000",
+  "revenueApiUrl": "https://claw.kokoamusement.com.au",
   "revenueSiteId": "614",
   "revenueEnabled": true,
   "revenueApiKey": "",
@@ -25,8 +25,12 @@
     {
       "label": "Local Server (localhost)",
       "value": "http://localhost:8000"
+    },
+    {
+      "label": "Production",
+      "value": "https://claw.kokoamusement.com.au"
     }
   ],
-  "updatedAt": "2026-01-19T16:32:13.851Z",
+  "updatedAt": "2026-01-18T17:02:04.443Z",
   "updatedBy": "mock-admin"
 }
