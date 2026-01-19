@@ -2,7 +2,7 @@ import { machineService } from "./index";
 import { ArcadeMachine } from "@/types";
 import { where } from "firebase/firestore";
 
-const BASE_URL_PROD = "https://claw.kokoamusement.com.au";
+const BASE_URL_PROD = "";
 const BASE_URL_LOCAL = "http://localhost:3001";
 
 // Use production URL by default or env var

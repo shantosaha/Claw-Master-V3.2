@@ -17,7 +17,7 @@ export interface ApiIntegrationSettings {
 
 // Default settings
 export const DEFAULT_API_SETTINGS: ApiIntegrationSettings = {
-    jotformApiUrl: "https://claw.kokoamusement.com.au",
+    jotformApiUrl: "",
     jotformFormId: "614",
     isEnabled: true,
     lastSyncAt: undefined,

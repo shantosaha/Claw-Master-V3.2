@@ -43,21 +43,20 @@ interface ApiSettings {
 
 // Default settings
 const DEFAULT_SETTINGS: ApiSettings = {
-    jotformApiUrl: "https://claw.kokoamusement.com.au",
+    jotformApiUrl: "",
     jotformFormId: "614",
     jotformEnabled: true,
 
-    gameReportApiUrl: "https://claw.kokoamusement.com.au",
+    gameReportApiUrl: "",
     gameReportSiteId: "614",
     gameReportEnabled: true,
 
-    revenueApiUrl: "https://claw.kokoamusement.com.au",
+    revenueApiUrl: "",
     revenueSiteId: "614",
     revenueEnabled: true,
 
     isEnabled: true,
     urlPresets: [
-        { label: "Production (Remote)", value: "https://claw.kokoamusement.com.au" },
         { label: "Local Server (127.0.0.1)", value: "http://127.0.0.1:8000" },
         { label: "Local Server (localhost)", value: "http://localhost:8000" },
     ]

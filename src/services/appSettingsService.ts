@@ -219,20 +219,20 @@ export interface ApiIntegrationSettings {
 }
 
 const DEFAULT_API_SETTINGS: ApiIntegrationSettings = {
-    jotformApiUrl: "https://claw.kokoamusement.com.au",
+    jotformApiUrl: "",
     jotformFormId: "614",
     jotformEnabled: true,
     jotformApiKey: undefined,
     jotformApiToken: undefined,
 
     gameReportEnabled: true,
-    gameReportApiUrl: "https://claw.kokoamusement.com.au",
+    gameReportApiUrl: "",
     gameReportSiteId: "614",
     gameReportApiKey: undefined,
     gameReportApiToken: undefined,
 
     revenueEnabled: true,
-    revenueApiUrl: "https://claw.kokoamusement.com.au",
+    revenueApiUrl: "",
     revenueSiteId: "614",
     revenueApiKey: undefined,
     revenueApiToken: undefined,

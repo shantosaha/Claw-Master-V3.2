@@ -66,7 +66,6 @@ interface ApiSettings {
 }
 
 const DEFAULT_PRESETS: ApiUrlPreset[] = [
-    { label: "Production (Remote)", value: "https://claw.kokoamusement.com.au" },
     { label: "Local Server (127.0.0.1)", value: "http://127.0.0.1:8000" },
     { label: "Local Server (localhost)", value: "http://localhost:8000" },
 ];
@@ -423,7 +422,7 @@ export function ApiSettingsPanel() {
                                         <Input
                                             id="api-url"
                                             className="pl-9"
-                                            placeholder="https://claw.kokoamusement.com.au"
+                                            placeholder="https://api.example.com"
                                             value={formData.jotformApiUrl}
                                             onChange={(e) => setFormData({ ...formData, jotformApiUrl: e.target.value })}
                                         />
@@ -620,7 +619,7 @@ export function ApiSettingsPanel() {
                                         <Input
                                             id="game-report-url"
                                             className="pl-9"
-                                            placeholder="https://claw.kokoamusement.com.au"
+                                            placeholder="https://api.example.com"
                                             value={formData.gameReportApiUrl}
                                             onChange={(e) => setFormData({ ...formData, gameReportApiUrl: e.target.value })}
                                         />
@@ -773,7 +772,7 @@ export function ApiSettingsPanel() {
                                         <Input
                                             id="revenue-url"
                                             className="pl-9"
-                                            placeholder="https://claw.kokoamusement.com.au"
+                                            placeholder="https://api.example.com"
                                             value={formData.revenueApiUrl}
                                             onChange={(e) => setFormData({ ...formData, revenueApiUrl: e.target.value })}
                                         />
