@@ -21,7 +21,10 @@ import {
     Info,
     Globe,
     BarChart3,
-    DollarSign
+    DollarSign,
+    Settings2,
+    ChevronDown,
+    ChevronUp
 } from "lucide-react";
 import {
     Select,
@@ -30,6 +33,16 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface ApiUrlPreset {
     label: string;
@@ -84,6 +97,9 @@ export function ApiSettingsPanel() {
     const [gameReportTestResult, setGameReportTestResult] = useState<{ success: boolean; message: string } | null>(null);
     const [revenueTestResult, setRevenueTestResult] = useState<{ success: boolean; message: string } | null>(null);
     const [newPresetName, setNewPresetName] = useState("");
+    const [newPresetUrl, setNewPresetUrl] = useState("");
+    const [showPresets, setShowPresets] = useState(false);
+    const [presetToDelete, setPresetToDelete] = useState<string | null>(null);
     const [formData, setFormData] = useState<ApiSettings>({
         jotformApiUrl: "",
         jotformFormId: "",
@@ -207,8 +223,9 @@ export function ApiSettingsPanel() {
         setSavingRevenue(false);
     };
 
-    const addCurrentAsPreset = (urlToSave: string) => {
-        if (!urlToSave || !newPresetName) {
+    const addCurrentAsPreset = (urlToSave: string, nameToSave?: string) => {
+        const name = nameToSave || newPresetName;
+        if (!urlToSave || !name) {
             toast.error("Enter both a preset name and a URL");
             return;
         }
@@ -221,17 +238,26 @@ export function ApiSettingsPanel() {
 
         const newPresets = [
             ...presets,
-            { label: newPresetName, value: urlToSave }
+            { label: name, value: urlToSave }
         ];
 
         handleSaveAll({ urlPresets: newPresets });
         setNewPresetName("");
+        if (!nameToSave) setNewPresetUrl("");
     };
 
     const removePreset = (value: string) => {
+        setPresetToDelete(value);
+    };
+
+    const confirmDeletePreset = () => {
+        if (!presetToDelete) return;
+
         const presets = formData.urlPresets || DEFAULT_PRESETS;
-        const newPresets = presets.filter(p => p.value !== value);
+        const newPresets = presets.filter(p => p.value !== presetToDelete);
         handleSaveAll({ urlPresets: newPresets });
+        setPresetToDelete(null);
+        toast.success("Preset deleted successfully");
     };
 
     const testJotformConnection = async () => {
@@ -369,6 +395,105 @@ export function ApiSettingsPanel() {
             }
         >
             <div className="space-y-6">
+                <div className="flex justify-between items-center">
+                    <div className="space-y-1">
+                        <h2 className="text-2xl font-bold tracking-tight">API Integration</h2>
+                        <p className="text-muted-foreground">
+                            Manage connections to external data services and environment presets.
+                        </p>
+                    </div>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowPresets(!showPresets)}
+                        className={showPresets ? "bg-muted" : ""}
+                    >
+                        <Settings2 className="h-4 w-4 mr-2" />
+                        {showPresets ? "Hide Presets" : "Manage Presets"}
+                        {showPresets ? <ChevronUp className="h-4 w-4 ml-2" /> : <ChevronDown className="h-4 w-4 ml-2" />}
+                    </Button>
+                </div>
+
+                {/* Preset Management */}
+                {showPresets && (
+                    <Card className="border-purple-200/30 bg-purple-50/10 dark:bg-purple-950/5">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Shield className="h-5 w-5 text-purple-500" />
+                                Environment Presets
+                            </CardTitle>
+                            <CardDescription>
+                                Define reusable API base URLs for different environments (Production, Local, Staging)
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid gap-4 md:grid-cols-3">
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-preset-name">Preset Name</Label>
+                                    <Input
+                                        id="new-preset-name"
+                                        placeholder="e.g. Staging"
+                                        value={newPresetName}
+                                        onChange={(e) => setNewPresetName(e.target.value)}
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label htmlFor="new-preset-url">API Base URL</Label>
+                                    <Input
+                                        id="new-preset-url"
+                                        placeholder="https://api.example.com"
+                                        value={newPresetUrl}
+                                        onChange={(e) => setNewPresetUrl(e.target.value)}
+                                    />
+                                </div>
+                                <div className="flex items-end">
+                                    <Button
+                                        className="w-full"
+                                        onClick={() => addCurrentAsPreset(newPresetUrl)}
+                                        disabled={!newPresetName || !newPresetUrl}
+                                    >
+                                        Add New Preset
+                                    </Button>
+                                </div>
+                            </div>
+
+                            {/* List of Custom Presets */}
+                            <div className="mt-4 space-y-2">
+                                <Label>Manage Defined Presets</Label>
+                                <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                    {/* Default/System Presets (Non-deletable) */}
+                                    {DEFAULT_PRESETS.map(preset => (
+                                        <div key={preset.value} className="flex items-center justify-between text-xs bg-muted/30 p-2 rounded border border-border/50">
+                                            <div className="flex flex-col overflow-hidden">
+                                                <span className="font-medium truncate">{preset.label} <span className="text-[10px] text-muted-foreground">(System)</span></span>
+                                                <span className="text-[10px] text-muted-foreground truncate">{preset.value}</span>
+                                            </div>
+                                        </div>
+                                    ))}
+
+                                    {/* User Defined Presets */}
+                                    {(formData.urlPresets || []).filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).map(preset => (
+                                        <div key={preset.value} className="flex items-center justify-between text-xs bg-background p-2 rounded border border-border/50 hover:bg-muted/10 transition-colors">
+                                            <div className="flex flex-col overflow-hidden">
+                                                <span className="font-medium truncate">{preset.label}</span>
+                                                <span className="text-[10px] text-muted-foreground truncate">{preset.value}</span>
+                                            </div>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                                onClick={() => removePreset(preset.value)}
+                                            >
+                                                <XCircle className="h-4 w-4" />
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
+
                 {/* JotForm API Configuration */}
                 <Card>
                     <CardHeader>
@@ -428,52 +553,8 @@ export function ApiSettingsPanel() {
                                         />
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-2 mt-2">
-                                    <Input
-                                        placeholder="Preset Name (e.g. Staging)"
-                                        value={newPresetName}
-                                        onChange={(e) => setNewPresetName(e.target.value)}
-                                        className="h-8 text-xs"
-                                    />
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 text-xs whitespace-nowrap"
-                                        onClick={() => addCurrentAsPreset(formData.jotformApiUrl)}
-                                        disabled={!formData.jotformApiUrl || !newPresetName}
-                                    >
-                                        Save as Preset
-                                    </Button>
-                                </div>
-
-                                {/* List of Custom Presets */}
-                                {formData.urlPresets && formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).length > 0 && (
-                                    <div className="mt-4 space-y-2 border rounded-md p-2 bg-muted/20">
-                                        <p className="text-[10px] uppercase font-bold text-muted-foreground px-1">Custom Presets</p>
-                                        <div className="space-y-1">
-                                            {formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).map(preset => (
-                                                <div key={preset.value} className="flex items-center justify-between text-xs bg-background p-1.5 rounded border border-border/50">
-                                                    <div className="flex flex-col overflow-hidden">
-                                                        <span className="font-medium truncate">{preset.label}</span>
-                                                        <span className="text-[10px] text-muted-foreground truncate">{preset.value}</span>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                                                        onClick={() => removePreset(preset.value)}
-                                                    >
-                                                        <XCircle className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-
-                                <p className="text-xs text-muted-foreground">
-                                    Choose a preset or enter a custom URL and save it for future use.
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Choose a preset or enter a custom URL.
                                 </p>
                             </div>
                             <div className="space-y-2">
@@ -625,51 +706,8 @@ export function ApiSettingsPanel() {
                                         />
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-2 mt-2">
-                                    <Input
-                                        placeholder="Preset Name (e.g. Staging)"
-                                        value={newPresetName}
-                                        onChange={(e) => setNewPresetName(e.target.value)}
-                                        className="h-8 text-xs"
-                                    />
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 text-xs whitespace-nowrap"
-                                        onClick={() => addCurrentAsPreset(formData.gameReportApiUrl)}
-                                        disabled={!formData.gameReportApiUrl || !newPresetName}
-                                    >
-                                        Save as Preset
-                                    </Button>
-                                </div>
-
-                                {/* List of Custom Presets */}
-                                {formData.urlPresets && formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).length > 0 && (
-                                    <div className="mt-4 space-y-2 border rounded-md p-2 bg-muted/20">
-                                        <p className="text-[10px] uppercase font-bold text-muted-foreground px-1">Custom Presets</p>
-                                        <div className="space-y-1">
-                                            {formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).map(preset => (
-                                                <div key={preset.value} className="flex items-center justify-between text-xs bg-background p-1.5 rounded border border-border/50">
-                                                    <div className="flex flex-col overflow-hidden">
-                                                        <span className="font-medium truncate">{preset.label}</span>
-                                                        <span className="text-[10px] text-muted-foreground truncate">{preset.value}</span>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                                                        onClick={() => removePreset(preset.value)}
-                                                    >
-                                                        <XCircle className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                <p className="text-xs text-muted-foreground">
-                                    The base URL for the Game Report API
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    The base URL for the Game Report API.
                                 </p>
                             </div>
                             <div className="space-y-2">
@@ -821,51 +859,8 @@ export function ApiSettingsPanel() {
                                         />
                                     </div>
                                 </div>
-
-                                <div className="flex items-center gap-2 mt-2">
-                                    <Input
-                                        placeholder="Preset Name (e.g. Staging)"
-                                        value={newPresetName}
-                                        onChange={(e) => setNewPresetName(e.target.value)}
-                                        className="h-8 text-xs"
-                                    />
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="h-8 text-xs whitespace-nowrap"
-                                        onClick={() => addCurrentAsPreset(formData.revenueApiUrl)}
-                                        disabled={!formData.revenueApiUrl || !newPresetName}
-                                    >
-                                        Save as Preset
-                                    </Button>
-                                </div>
-
-                                {/* List of Custom Presets */}
-                                {formData.urlPresets && formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).length > 0 && (
-                                    <div className="mt-4 space-y-2 border rounded-md p-2 bg-muted/20">
-                                        <p className="text-[10px] uppercase font-bold text-muted-foreground px-1">Custom Presets</p>
-                                        <div className="space-y-1">
-                                            {formData.urlPresets.filter(p => !DEFAULT_PRESETS.some(dp => dp.value === p.value)).map(preset => (
-                                                <div key={preset.value} className="flex items-center justify-between text-xs bg-background p-1.5 rounded border border-border/50">
-                                                    <div className="flex flex-col overflow-hidden">
-                                                        <span className="font-medium truncate">{preset.label}</span>
-                                                        <span className="text-[10px] text-muted-foreground truncate">{preset.value}</span>
-                                                    </div>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-destructive hover:bg-destructive/10"
-                                                        onClick={() => removePreset(preset.value)}
-                                                    >
-                                                        <XCircle className="h-3 w-3" />
-                                                    </Button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
-                                <p className="text-xs text-muted-foreground">
-                                    The base URL for the Revenue API
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    The base URL for the Revenue API.
                                 </p>
                             </div>
                             <div className="space-y-2">
@@ -958,7 +953,7 @@ export function ApiSettingsPanel() {
                     </CardContent>
                 </Card>
 
-                {/* Save All Button */}
+                {/* Global Save Button */}
                 <div className="flex justify-end pt-4 border-t">
                     <Button
                         size="lg"
@@ -981,11 +976,28 @@ export function ApiSettingsPanel() {
                 </div>
 
                 {formData.updatedAt && (
-                    <p className="text-xs text-muted-foreground text-center">
+                    <p className="text-xs text-muted-foreground text-center mt-4">
                         Last updated: {new Date(formData.updatedAt).toLocaleString()}
                     </p>
                 )}
+
+                <AlertDialog open={!!presetToDelete} onOpenChange={(open) => !open && setPresetToDelete(null)}>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Delete Preset?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Are you sure you want to delete this preset? This action cannot be undone.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={confirmDeletePreset} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                                Delete
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
-        </PermissionGate >
+        </PermissionGate>
     );
 }
