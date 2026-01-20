@@ -38,6 +38,43 @@
                 "reveal": "always",
                 "panel": "shared"
             }
+        },
+        {
+            "label": "Start FastAPI Server",
+            "type": "shell",
+            "command": "./start_fastapi.sh",
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "isBackground": true,
+            "problemMatcher": {
+                "pattern": {
+                    "regexp": "^.*$"
+                },
+                "background": {
+                    "activeOnStart": true,
+                    "beginsPattern": "^INFO:\\s+Will watch for changes",
+                    "endsPattern": "^INFO:\\s+Application startup complete"
+                }
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "dedicated",
+                "showReuseMessage": false
+            },
+            "runOptions": {
+                "runOn": "folderOpen"
+            }
+        },
+        {
+            "label": "Stop FastAPI Server",
+            "type": "shell",
+            "command": "lsof -t -i:8000 | xargs kill -9 || echo 'Server not running'",
+            "problemMatcher": [],
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            }
         }
     ]
 }
