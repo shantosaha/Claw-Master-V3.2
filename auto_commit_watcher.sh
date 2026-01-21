@@ -126,6 +126,7 @@ generate_commit_message() {
 }
 
 check_and_commit() {
+    local force_flag=$1
     local status_output=$(git status --porcelain 2>/dev/null)
     [ -z "$status_output" ] && return 0
 
@@ -137,7 +138,10 @@ check_and_commit() {
     local should_commit=false
     local reason=""
     
-    if [ "$total_changes" -ge "$CHANGE_THRESHOLD" ]; then
+    if [ "$force_flag" = "force" ]; then
+        should_commit=true
+        reason="🚀 Force initial commit"
+    elif [ "$total_changes" -ge "$CHANGE_THRESHOLD" ]; then
         should_commit=true
         reason="📊 $total_changes changes"
     elif [ "$added_count" -gt 0 ]; then
@@ -170,8 +174,26 @@ cleanup() {
 
 trap cleanup SIGINT SIGTERM
 
+# ============================================================
+# Interactive Startup
+# ============================================================
+printf "\033[1;34m»»» Git Auto-Commit Watcher «««\033[0m\n"
+printf "Do you want to start the watcher? (y/n): "
+read -r start_choice
+
+if [[ ! "$start_choice" =~ ^[Yy]$ ]]; then
+    printf "\033[1;31m✘ Watcher not started.\033[0m\n"
+    exit 0
+fi
+
+printf "Perform an immediate initial commit check? (y/n): "
+read -r initial_commit_choice
+
 log "🚀 Watcher Active (Ultralight Logic Mode)"
-check_and_commit
+
+if [[ "$initial_commit_choice" =~ ^[Yy]$ ]]; then
+    check_and_commit "force"
+fi
 
 while true; do
     sleep "$CHECK_INTERVAL"
