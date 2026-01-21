@@ -1,0 +1,502 @@
+{
+    "analysisDate": "2026-01-20T23:43:00+11:00",
+    "summary": {
+        "totalPagesAnalyzed": 5,
+        "totalApiCallsAnalyzed": 12,
+        "localSuccessRate": "100%",
+        "productionSuccessRate": "67%",
+        "criticalIssuesFound": 2
+    },
+    "criticalFindings": [
+        {
+            "id": "CRIT-001",
+            "severity": "HIGH",
+            "api": "GameReport",
+            "issue": "Production API expects 'groups' (plural) but client sends 'group' (singular)",
+            "affectedFiles": [
+                "src/services/gameReportApiService.ts (line 101)",
+                "src/app/api/game_report/[...path]/route.ts"
+            ],
+            "fix": "Change body.group to body.groups in gameReportApiService.ts"
+        },
+        {
+            "id": "CRIT-002",
+            "severity": "HIGH",
+            "api": "GameReport",
+            "issue": "Production API returns empty array when 'groups' not provided, even with valid date range",
+            "affectedFiles": [
+                "src/services/gameReportApiService.ts"
+            ],
+            "fix": "Always include all GAME_REPORT_GROUPS in request body when no specific groups are requested"
+        }
+    ],
+    "pageAnalysis": [
+        {
+            "page": "Dashboard",
+            "route": "/",
+            "apiFunction": "GameReport",
+            "triggerLocation": "DataProvider.initialize -> gameReportApiService.fetchTodayReport",
+            "local": {
+                "method": "POST",
+                "url": "http://localhost:8000/game_report/614?startdate=2026-01-20&enddate=2026-01-20",
+                "queryParams": {
+                    "startdate": "2026-01-20",
+                    "enddate": "2026-01-20"
+                },
+                "requestBody": {
+                    "aggregate": false
+                },
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": [
+                        {
+                            "tag": 182,
+                            "description": "Air Hockey LHS BM",
+                            "assetTag": "182",
+                            "standardPlays": 6,
+                            "totalRev": 17.9
+                        }
+                    ],
+                    "error": null
+                }
+            },
+            "production": {
+                "method": "POST",
+                "url": "https://claw.kokoamusement.com.au/game_report/614?startdate=2026-01-20&enddate=2026-01-20",
+                "queryParams": {
+                    "startdate": "2026-01-20",
+                    "enddate": "2026-01-20"
+                },
+                "requestBody": {
+                    "aggregate": false
+                },
+                "headers": {
+                    "Content-Type": "application/json",
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": {
+                        "status": "success",
+                        "response": []
+                    },
+                    "error": "Empty response - no data returned"
+                }
+            },
+            "differences": {
+                "requestDifferences": [
+                    "Client sends 'group' (singular) but production expects 'groups' (plural)",
+                    "When no groups specified, production returns empty array"
+                ],
+                "responseDifferences": [
+                    "Local returns array of machines with data",
+                    "Production returns empty array"
+                ],
+                "suspectedRootCause": "Production API requires 'groups' array in body to return any data. Current client sends 'group' (singular) which is ignored by production."
+            }
+        },
+        {
+            "page": "Dashboard",
+            "route": "/",
+            "apiFunction": "Revenue",
+            "triggerLocation": "DataProvider.initialize -> revenueApiService.fetchTodayRevenue",
+            "local": {
+                "method": "GET",
+                "url": "http://localhost:8000/revenue/614?startdate=2026-01-20&enddate=2026-01-20&aggregate=false",
+                "queryParams": {
+                    "startdate": "2026-01-20",
+                    "enddate": "2026-01-20",
+                    "aggregate": "false"
+                },
+                "requestBody": {},
+                "headers": {
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": {
+                        "status": "success",
+                        "response": [
+                            {
+                                "type": "pos",
+                                "name": "614-POS-BM-1",
+                                "cashRev": 327.53,
+                                "total": 940.01
+                            }
+                        ]
+                    },
+                    "error": null
+                }
+            },
+            "production": {
+                "method": "GET",
+                "url": "https://claw.kokoamusement.com.au/revenue/614?startdate=2026-01-20&enddate=2026-01-20&aggregate=true",
+                "queryParams": {
+                    "startdate": "2026-01-20",
+                    "enddate": "2026-01-20",
+                    "aggregate": "true"
+                },
+                "requestBody": {},
+                "headers": {
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": {
+                        "status": "success",
+                        "response": [
+                            {
+                                "type": "pos",
+                                "name": "614-POS-BM-1",
+                                "cashRev": 955.9,
+                                "total": 2246.49
+                            }
+                        ]
+                    },
+                    "error": null
+                }
+            },
+            "differences": {
+                "requestDifferences": [],
+                "responseDifferences": [
+                    "Data values differ (expected - different environments)"
+                ],
+                "suspectedRootCause": "NO ISSUE - API works correctly in both environments"
+            }
+        },
+        {
+            "page": "Dashboard",
+            "route": "/",
+            "apiFunction": "Jotform",
+            "triggerLocation": "DataProvider.initialize -> serviceReportService.getReports",
+            "local": {
+                "method": "GET",
+                "url": "http://localhost:8000/jotform/614",
+                "queryParams": {},
+                "requestBody": {},
+                "headers": {
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": [
+                        {
+                            "submissionDate": "2026-01-13 01:21:24",
+                            "tag": 1111,
+                            "firstName": "Tommy",
+                            "lastName": "Wong"
+                        }
+                    ],
+                    "error": null
+                }
+            },
+            "production": {
+                "method": "GET",
+                "url": "https://claw.kokoamusement.com.au/jotform/614",
+                "queryParams": {},
+                "requestBody": {},
+                "headers": {
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": [
+                        {
+                            "submissionDate": "2026-01-18 04:14:34",
+                            "tag": 1003,
+                            "firstName": "Tommy",
+                            "lastName": "Wong"
+                        }
+                    ],
+                    "error": null
+                }
+            },
+            "differences": {
+                "requestDifferences": [],
+                "responseDifferences": [
+                    "Data values differ (expected - different data sources)"
+                ],
+                "suspectedRootCause": "NO ISSUE - API works correctly in both environments"
+            }
+        },
+        {
+            "page": "Monitoring",
+            "route": "/monitoring",
+            "apiFunction": "GameReport",
+            "triggerLocation": "MonitoringPage.fetchReport -> monitoringService.getReport -> gameReportApiService.fetchGameReport",
+            "local": {
+                "method": "POST",
+                "url": "http://localhost:8000/game_report/614",
+                "queryParams": {
+                    "startdate": "2026-01-20",
+                    "enddate": "2026-01-20"
+                },
+                "requestBody": {
+                    "aggregate": true,
+                    "group": [
+                        "Group 4-Cranes"
+                    ]
+                },
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": [
+                        {
+                            "tag": 984,
+                            "description": "Trend #1 BM Top",
+                            "group": "Group 4-Cranes"
+                        }
+                    ],
+                    "error": null
+                }
+            },
+            "production": {
+                "method": "POST",
+                "url": "https://claw.kokoamusement.com.au/game_report/614",
+                "queryParams": {
+                    "startdate": "2026-01-20",
+                    "enddate": "2026-01-20"
+                },
+                "requestBody": {
+                    "aggregate": true,
+                    "group": [
+                        "Group 4-Cranes"
+                    ]
+                },
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": {
+                        "status": "success",
+                        "response": []
+                    },
+                    "error": "Empty response - wrong field name"
+                }
+            },
+            "differences": {
+                "requestDifferences": [
+                    "Client sends 'group' but production expects 'groups'"
+                ],
+                "responseDifferences": [
+                    "Local returns crane machines",
+                    "Production returns empty array"
+                ],
+                "suspectedRootCause": "Field name mismatch: 'group' vs 'groups'"
+            }
+        },
+        {
+            "page": "Machine Details",
+            "route": "/machines/[id]",
+            "apiFunction": "GameReport",
+            "triggerLocation": "MachineQuickViewDialog.fetchTrend -> gameReportApiService.fetchMachineReport",
+            "local": {
+                "method": "POST",
+                "url": "http://localhost:8000/game_report/614",
+                "queryParams": {
+                    "startdate": "2026-01-13",
+                    "enddate": "2026-01-20"
+                },
+                "requestBody": {
+                    "aggregate": true,
+                    "tag": 984
+                },
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": [
+                        {
+                            "tag": 984,
+                            "standardPlays": 150,
+                            "totalRev": 450.5
+                        }
+                    ],
+                    "error": null
+                }
+            },
+            "production": {
+                "method": "POST",
+                "url": "https://claw.kokoamusement.com.au/game_report/614",
+                "queryParams": {
+                    "startdate": "2026-01-13",
+                    "enddate": "2026-01-20"
+                },
+                "requestBody": {
+                    "aggregate": true,
+                    "tag": 984
+                },
+                "headers": {
+                    "Content-Type": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": {
+                        "status": "success",
+                        "response": []
+                    },
+                    "error": "Empty response - no groups specified"
+                }
+            },
+            "differences": {
+                "requestDifferences": [
+                    "No 'groups' array in body"
+                ],
+                "responseDifferences": [
+                    "Local returns machine data",
+                    "Production returns empty array"
+                ],
+                "suspectedRootCause": "Production requires 'groups' array even when filtering by tag"
+            }
+        },
+        {
+            "page": "Machines List",
+            "route": "/machines",
+            "apiFunction": "Jotform",
+            "triggerLocation": "GlobalServiceHistoryTable -> serviceReportService.getReports",
+            "local": {
+                "method": "GET",
+                "url": "http://localhost:8000/jotform/614",
+                "queryParams": {},
+                "requestBody": {},
+                "headers": {
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": [],
+                    "error": null
+                }
+            },
+            "production": {
+                "method": "GET",
+                "url": "https://claw.kokoamusement.com.au/jotform/614",
+                "queryParams": {},
+                "requestBody": {},
+                "headers": {
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": [],
+                    "error": null
+                }
+            },
+            "differences": {
+                "requestDifferences": [],
+                "responseDifferences": [],
+                "suspectedRootCause": "NO ISSUE - API works correctly"
+            }
+        },
+        {
+            "page": "Analytics",
+            "route": "/analytics",
+            "apiFunction": "Revenue",
+            "triggerLocation": "RevenueChart -> revenueApiService.fetchAggregatedRevenue",
+            "local": {
+                "method": "GET",
+                "url": "http://localhost:8000/revenue/614",
+                "queryParams": {
+                    "startdate": "2026-01-13",
+                    "enddate": "2026-01-20",
+                    "aggregate": "true"
+                },
+                "requestBody": {},
+                "headers": {
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": {
+                        "status": "success",
+                        "response": []
+                    },
+                    "error": null
+                }
+            },
+            "production": {
+                "method": "GET",
+                "url": "https://claw.kokoamusement.com.au/revenue/614",
+                "queryParams": {
+                    "startdate": "2026-01-13",
+                    "enddate": "2026-01-20",
+                    "aggregate": "true"
+                },
+                "requestBody": {},
+                "headers": {
+                    "Accept": "application/json"
+                },
+                "response": {
+                    "statusCode": 200,
+                    "bodySample": {
+                        "status": "success",
+                        "response": []
+                    },
+                    "error": null
+                }
+            },
+            "differences": {
+                "requestDifferences": [],
+                "responseDifferences": [],
+                "suspectedRootCause": "NO ISSUE - API works correctly"
+            }
+        }
+    ],
+    "apiEndpointSummary": {
+        "jotform": {
+            "localUrl": "http://localhost:8000/jotform/{siteId}",
+            "productionUrl": "https://claw.kokoamusement.com.au/jotform/{siteId}",
+            "method": "GET",
+            "status": "WORKING",
+            "notes": "Both environments return identical structure"
+        },
+        "gameReport": {
+            "localUrl": "http://localhost:8000/game_report/{siteId}",
+            "productionUrl": "https://claw.kokoamusement.com.au/game_report/{siteId}",
+            "methodLocal": "GET or POST",
+            "methodProduction": "POST ONLY (GET returns 404)",
+            "status": "BROKEN",
+            "notes": "Production requires: 1) POST method, 2) 'groups' (plural) in body, 3) startdate/enddate in query string"
+        },
+        "revenue": {
+            "localUrl": "http://localhost:8000/revenue/{siteId}",
+            "productionUrl": "https://claw.kokoamusement.com.au/revenue/{siteId}",
+            "method": "GET",
+            "status": "WORKING",
+            "notes": "Both environments return identical structure with startdate/enddate query params"
+        }
+    },
+    "recommendedFixes": [
+        {
+            "priority": 1,
+            "file": "src/services/gameReportApiService.ts",
+            "line": 101,
+            "currentCode": "body.group = options.groups;",
+            "fixedCode": "body.groups = options.groups;",
+            "reason": "Production API expects 'groups' (plural), not 'group' (singular)"
+        },
+        {
+            "priority": 2,
+            "file": "src/services/gameReportApiService.ts",
+            "line": "100-102",
+            "currentCode": "if (options.groups && options.groups.length > 0) {\n    body.group = options.groups;\n}",
+            "fixedCode": "// Always include groups array for production compatibility\nbody.groups = (options.groups && options.groups.length > 0) \n    ? options.groups \n    : [...GAME_REPORT_GROUPS];",
+            "reason": "Production returns empty when no 'groups' is specified"
+        },
+        {
+            "priority": 3,
+            "file": "src/app/api/game_report/[...path]/route.ts",
+            "location": "POST handler, before fetch",
+            "suggestion": "Transform body.group to body.groups if present, for backwards compatibility",
+            "reason": "Allows route to work with both local mock and production API"
+        }
+    ]
+}

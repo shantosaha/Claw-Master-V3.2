@@ -52,7 +52,8 @@ export interface GameReportRequest {
     startdate?: string;
     enddate?: string;
     tag?: number;
-    group?: string[];
+    group?: string[];      // Local mock API field
+    groups?: string[];     // Production API field (preferred)
     subGroup?: string[];
     location?: string[];
     fields?: string[];
@@ -61,16 +62,17 @@ export interface GameReportRequest {
 
 /**
  * Fetch game report data with optional filters
- * Uses POST for production API compatibility
+ * PRODUCTION COMPLIANCE:
+ * - Uses POST method
+ * - startdate/enddate in URL (required)
+ * - Body contains ONLY 'groups' array
  */
 async function fetchGameReport(
     options: {
         siteId?: string;
         startDate?: Date;
         endDate?: Date;
-        tag?: number;
         groups?: string[];
-        aggregate?: boolean;
     } = {}
 ): Promise<GameReportItem[]> {
     try {
@@ -83,26 +85,20 @@ async function fetchGameReport(
 
         const siteId = options.siteId || settings.gameReportSiteId || settings.jotformFormId;
 
-        // Build request body
-        const body: GameReportRequest = {
-            aggregate: options.aggregate ?? true, // Default to aggregated
+        // PRODUCTION COMPLIANCE: startdate/enddate required in URL
+        const today = new Date();
+        const startStr = options.startDate ? format(options.startDate, "yyyy-MM-dd") : format(today, "yyyy-MM-dd");
+        const endStr = options.endDate ? format(options.endDate, "yyyy-MM-dd") : format(today, "yyyy-MM-dd");
+
+        // PRODUCTION COMPLIANCE: Body contains ONLY 'groups' array
+        const body = {
+            groups: (options.groups && options.groups.length > 0)
+                ? options.groups
+                : [...GAME_REPORT_GROUPS]
         };
 
-        if (options.startDate) {
-            body.startdate = format(options.startDate, "yyyy-MM-dd");
-        }
-        if (options.endDate) {
-            body.enddate = format(options.endDate, "yyyy-MM-dd");
-        }
-        if (options.tag) {
-            body.tag = options.tag;
-        }
-        if (options.groups && options.groups.length > 0) {
-            body.group = options.groups;
-        }
-
-        // Use our proxy route
-        const endpoint = `/api/game_report/${siteId}`;
+        // Build endpoint with dates in URL
+        const endpoint = `/api/game_report/${siteId}?startdate=${startStr}&enddate=${endStr}`;
 
         console.log(`[GameReportService] Fetching from ${endpoint}`, body);
 
@@ -138,6 +134,7 @@ async function fetchGameReport(
 
 /**
  * Fetch aggregated report for a date range
+ * Note: Production always returns aggregated data
  */
 async function fetchAggregatedReport(
     startDate: Date,
@@ -151,12 +148,12 @@ async function fetchAggregatedReport(
         ...options,
         startDate,
         endDate,
-        aggregate: true,
     });
 }
 
 /**
- * Fetch report for a single day (non-aggregated)
+ * Fetch report for a single day
+ * Note: Production always returns aggregated data
  */
 async function fetchDailyReport(
     date: Date,
@@ -169,12 +166,14 @@ async function fetchDailyReport(
         ...options,
         startDate: date,
         endDate: date,
-        aggregate: false,
     });
 }
 
 /**
  * Fetch report for a specific machine by tag
+ * NOTE: Production API does not support tag filtering.
+ * This function fetches all data for the date range.
+ * Client-side filtering by tag should be done after fetching.
  */
 async function fetchMachineReport(
     tag: number,
@@ -182,13 +181,14 @@ async function fetchMachineReport(
     endDate: Date,
     siteId?: string
 ): Promise<GameReportItem[]> {
-    return fetchGameReport({
+    // Fetch all data, then filter client-side by tag
+    const allData = await fetchGameReport({
         siteId,
         startDate,
         endDate,
-        tag,
-        aggregate: true,
     });
+    // Client-side filter by tag
+    return allData.filter(item => item.tag === tag);
 }
 
 /**

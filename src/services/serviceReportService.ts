@@ -21,19 +21,11 @@ class ServiceReportService {
         try {
             let endpoint = `/api/jotform/${apiSettings.jotformFormId}`;
 
-            // Add date filters if provided (JotForm filter syntax)
-            if (options?.from || options?.to) {
-                const filters: any = {};
-                if (options.from) {
-                    // Format: YYYY-MM-DD HH:MM:SS
-                    const fromStr = options.from.toISOString().split('T')[0] + " 00:00:00";
-                    filters["created_at:gt"] = fromStr;
-                }
-                if (options.to) {
-                    const toStr = options.to.toISOString().split('T')[0] + " 23:59:59";
-                    filters["created_at:lt"] = toStr;
-                }
-                endpoint += `?filter=${encodeURIComponent(JSON.stringify(filters))}`;
+            // PRODUCTION COMPLIANCE: Only 'date' parameter is allowed
+            // Use the 'to' date as the cutoff (returns all data up to that date)
+            if (options?.to) {
+                const dateStr = options.to.toISOString().split('T')[0];
+                endpoint += `?date=${dateStr}`;
             }
 
             console.log(`[ServiceReport] Fetching from: ${endpoint}`);

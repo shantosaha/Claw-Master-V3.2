@@ -88,13 +88,19 @@ export async function GET(
             );
         }
 
-        // Build the full URL with query parameters preserved
+        // Build the full URL - PRODUCTION COMPLIANCE: Only 'date' param allowed
         const { path: pathSegments } = await params;
         const pathString = pathSegments.join('/');
-        const search = request.nextUrl.search;
-        const targetUrl = `${jotformUrl}/jotform/${pathString}${search}`;
+
+        // Production API: Only 'date' parameter is allowed (optional)
+        // If provided, returns data from beginning up to that date
+        // If not provided, returns all data from beginning to latest
+        const dateParam = request.nextUrl.searchParams.get('date');
+        const queryString = dateParam ? `?date=${dateParam}` : '';
+        const targetUrl = `${jotformUrl}/jotform/${pathString}${queryString}`;
 
         console.log(`[JotForm Proxy] Fetching from: ${targetUrl}`);
+        console.log(`[JotForm Proxy] Production compliance: Only 'date' param allowed`);
 
         // Fetch from the configured external API
         const response = await fetch(targetUrl, {

@@ -95,14 +95,27 @@ export async function GET(
             );
         }
 
-        // Build the target URL
+        // Build the target URL - PRODUCTION COMPLIANCE
         const { path: pathSegments } = await params;
         // If path is just the site_id, use it; otherwise use form config
         const siteId = pathSegments?.[0] || revenueSiteId;
-        const search = request.nextUrl.search;
-        const targetUrl = `${revenueUrl}/revenue/${siteId}${search}`;
+
+        // PRODUCTION COMPLIANCE: Only startdate and enddate allowed (both required)
+        const startdate = request.nextUrl.searchParams.get('startdate');
+        const enddate = request.nextUrl.searchParams.get('enddate');
+
+        if (!startdate || !enddate) {
+            return NextResponse.json(
+                { error: "Missing required params: startdate and enddate" },
+                { status: 400 }
+            );
+        }
+
+        // Build compliant URL (no aggregate param - production always returns aggregated)
+        const targetUrl = `${revenueUrl}/revenue/${siteId}?startdate=${startdate}&enddate=${enddate}`;
 
         console.log(`[Revenue Proxy] GET from: ${targetUrl}`);
+        console.log(`[Revenue Proxy] Production compliance: Only startdate/enddate allowed, no aggregate`);
 
         // Fetch from the configured external API
         const response = await fetch(targetUrl, {

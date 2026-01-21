@@ -1,15 +1,15 @@
 {
-  "jotformApiUrl": "http://localhost:8000",
+  "jotformApiUrl": "https://claw.kokoamusement.com.au/",
   "jotformFormId": "614",
   "jotformEnabled": true,
   "jotformApiKey": "",
   "jotformApiToken": "",
-  "gameReportApiUrl": "http://localhost:8000",
+  "gameReportApiUrl": "https://claw.kokoamusement.com.au/",
   "gameReportSiteId": "614",
   "gameReportEnabled": true,
   "gameReportApiKey": "",
   "gameReportApiToken": "",
-  "revenueApiUrl": "http://127.0.0.1:8000",
+  "revenueApiUrl": "https://claw.kokoamusement.com.au/",
   "revenueSiteId": "614",
   "revenueEnabled": true,
   "revenueApiKey": "",
@@ -28,13 +28,9 @@
     },
     {
       "label": "Production",
-      "value": "https://claw.kokoamusement.com.au"
-    },
-    {
-      "label": "dcgdfsf",
-      "value": "sdfsdf"
+      "value": "https://claw.kokoamusement.com.au/"
     }
   ],
-  "updatedAt": "2026-01-19T18:00:47.257Z",
+  "updatedAt": "2026-01-19T14:17:34.404Z",
   "updatedBy": "mock-admin"
 }

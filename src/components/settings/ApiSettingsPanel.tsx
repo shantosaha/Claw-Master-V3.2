@@ -304,14 +304,18 @@ export function ApiSettingsPanel() {
 
         try {
             const today = new Date().toISOString().split('T')[0];
-            const endpoint = `/api/game_report/${formData.gameReportSiteId}`;
+            // PRODUCTION COMPLIANCE: startdate/enddate in URL, only groups in body
+            const endpoint = `/api/game_report/${formData.gameReportSiteId}?startdate=${today}&enddate=${today}`;
             const response = await fetch(endpoint, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    startdate: today,
-                    enddate: today,
-                    aggregated: true
+                    groups: [
+                        "Group 1-Video", "Group 2-Redemption", "Group 3-Driving",
+                        "Group 4-Cranes", "Group 5-Prize Games", "Group 6-Skill Tester",
+                        "Group 7-Music", "Group 8-Attractions", "Group 9-Coin Pushers",
+                        "Group 10-Sports", "Group 11-Others", "Not Assigned"
+                    ]
                 })
             });
 

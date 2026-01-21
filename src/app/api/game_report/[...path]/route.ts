@@ -70,7 +70,9 @@ function getAuthHeaders(settings: ApiSettings): Record<string, string> {
 
 /**
  * POST handler - Primary method for Production API
- * Supports filtering by group, tag, date range, and aggregation
+ * PRODUCTION COMPLIANCE:
+ * - startdate and enddate required in URL
+ * - Body contains ONLY 'groups' array
  */
 export async function POST(
     request: NextRequest,
@@ -95,22 +97,51 @@ export async function POST(
             );
         }
 
-        // Build the target URL
+        // PRODUCTION COMPLIANCE: Validate required URL params
+        const startdate = request.nextUrl.searchParams.get('startdate');
+        const enddate = request.nextUrl.searchParams.get('enddate');
+
+        if (!startdate || !enddate) {
+            return NextResponse.json(
+                { error: "Missing required params: startdate and enddate" },
+                { status: 400 }
+            );
+        }
+
+        // Build the target URL (only startdate and enddate allowed)
         const { path: pathSegments } = await params;
-        // If path is just the site_id, use it; otherwise use form config
         const siteId = pathSegments?.[0] || gameReportSiteId;
-        const search = request.nextUrl.search;
-        const targetUrl = `${gameReportUrl}/game_report/${siteId}${search}`;
+        const targetUrl = `${gameReportUrl}/game_report/${siteId}?startdate=${startdate}&enddate=${enddate}`;
 
         console.log(`[GameReport Proxy] POST to: ${targetUrl}`);
 
         // Get request body
-        let body: Record<string, unknown> = {};
+        let inputBody: Record<string, unknown> = {};
         try {
-            body = await request.json();
+            inputBody = await request.json();
         } catch {
             // Empty body is fine
         }
+
+        // PRODUCTION COMPLIANCE: Body contains ONLY 'groups' array
+        // Extract groups from input, default to all groups if not provided
+        const ALL_GROUPS = [
+            "Group 1-Video", "Group 2-Redemption", "Group 3-Driving",
+            "Group 4-Cranes", "Group 5-Prize Games", "Group 6-Skill Tester",
+            "Group 7-Music", "Group 8-Attractions", "Group 9-Coin Pushers",
+            "Group 10-Sports", "Group 11-Others", "Not Assigned"
+        ];
+
+        const groups = Array.isArray(inputBody.groups) && inputBody.groups.length > 0
+            ? inputBody.groups
+            : (Array.isArray(inputBody.group) && inputBody.group.length > 0
+                ? inputBody.group  // Handle legacy 'group' field
+                : ALL_GROUPS);
+
+        // Construct compliant body (ONLY groups allowed)
+        const body = { groups };
+
+        console.log(`[GameReport Proxy] Production compliant body:`, body);
 
         // Fetch from the configured external API
         const response = await fetch(targetUrl, {
@@ -130,10 +161,32 @@ export async function POST(
 
         const data = await response.json();
 
-        const recordCount = Array.isArray(data) ? data.length : 'unknown';
-        console.log(`[GameReport Proxy] POST Success - ${recordCount} records`);
+        // PRODUCTION API NORMALIZATION:
+        // 1. Production returns cashDebit + cashDebitBonus but NOT totalRev
+        // 2. Production returns aggregated data without 'date' field
+        // 3. Normalize to match expected frontend format
+        const normalizeItem = (item: Record<string, unknown>) => ({
+            ...item,
+            // Compute totalRev if not present
+            totalRev: item.totalRev ?? ((item.cashDebit as number || 0) + (item.cashDebitBonus as number || 0)),
+            // Add date if not present (use startdate from request for aggregated data)
+            date: item.date ?? startdate,
+        });
 
-        return NextResponse.json(data, {
+        let processedData = data;
+        if (data?.response && Array.isArray(data.response)) {
+            processedData = {
+                ...data,
+                response: data.response.map(normalizeItem)
+            };
+        } else if (Array.isArray(data)) {
+            processedData = data.map(normalizeItem);
+        }
+
+        const recordCount = Array.isArray(processedData) ? processedData.length : (processedData?.response?.length || 'unknown');
+        console.log(`[GameReport Proxy] POST Success - ${recordCount} records (normalized: totalRev + date)`);
+
+        return NextResponse.json(processedData, {
             headers: {
                 'Access-Control-Allow-Origin': '*',
                 'Cache-Control': 'no-store, no-cache, must-revalidate',

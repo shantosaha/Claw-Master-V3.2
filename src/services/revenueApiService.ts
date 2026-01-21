@@ -50,13 +50,13 @@ export interface RevenueSummary {
 /**
  * Fetch revenue data for a date range
  * Note: Production API requires both startdate and enddate
+ * Production always returns aggregated data (aggregate param not supported)
  */
 async function fetchRevenue(
     options: {
         siteId?: string;
         startDate: Date;
         endDate: Date;
-        aggregate?: boolean;
     }
 ): Promise<RevenueItem[]> {
     try {
@@ -70,10 +70,9 @@ async function fetchRevenue(
         const siteId = options.siteId || settings.revenueSiteId || settings.jotformFormId;
         const startStr = format(options.startDate, "yyyy-MM-dd");
         const endStr = format(options.endDate, "yyyy-MM-dd");
-        const aggregateParam = options.aggregate !== false ? 'true' : 'false';
 
-        // Use our proxy route
-        const endpoint = `/api/revenue/${siteId}?startdate=${startStr}&enddate=${endStr}&aggregate=${aggregateParam}`;
+        // PRODUCTION COMPLIANCE: Only startdate and enddate allowed (no aggregate)
+        const endpoint = `/api/revenue/${siteId}?startdate=${startStr}&enddate=${endStr}`;
 
         console.log(`[RevenueService] Fetching from ${endpoint}`);
 
@@ -105,6 +104,7 @@ async function fetchRevenue(
 
 /**
  * Fetch revenue for a single day
+ * Note: Production always returns aggregated data
  */
 async function fetchDailyRevenue(
     date: Date,
@@ -114,12 +114,12 @@ async function fetchDailyRevenue(
         siteId,
         startDate: date,
         endDate: date,
-        aggregate: false, // Get individual items for a single day
     });
 }
 
 /**
  * Fetch aggregated revenue for a date range
+ * Note: Production always returns aggregated data
  */
 async function fetchAggregatedRevenue(
     startDate: Date,
@@ -130,7 +130,6 @@ async function fetchAggregatedRevenue(
         siteId,
         startDate,
         endDate,
-        aggregate: true,
     });
 }
 
