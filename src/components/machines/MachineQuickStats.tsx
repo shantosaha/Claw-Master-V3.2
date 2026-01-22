@@ -135,7 +135,7 @@ export function MachineQuickStats({ assetTag, apiTag, groups }: QuickStatsProps)
     ];
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {cards.map((card, i) => (
                 <div key={i} className="relative group">
                     <Card className="overflow-hidden border border-border/40 shadow-sm bg-card hover:border-primary/20 transition-all duration-300">

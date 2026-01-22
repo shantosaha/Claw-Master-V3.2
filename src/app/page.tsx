@@ -127,9 +127,9 @@ export default function Dashboard() {
           const groupMap = new Map<string, { plays: number; revenue: number; wins: number }>();
 
           for (const item of gameReportData) {
-            totalWins += item.merchandise || 0;
-            totalCashRev += item.cashRev || 0;
-            totalBonusRev += item.bonusRev || 0;
+            totalWins += (item.points || item.merchandise || 0);
+            totalCashRev += item.cashDebit || 0;
+            totalBonusRev += item.cashDebitBonus || 0;
             totalEmpPlays += item.empPlays || 0;
 
             // Group breakdown
@@ -137,7 +137,7 @@ export default function Dashboard() {
             groupMap.set(item.group, {
               plays: existing.plays + item.standardPlays + item.empPlays,
               revenue: existing.revenue + item.totalRev,
-              wins: existing.wins + (item.merchandise || 0),
+              wins: existing.wins + (item.points || item.merchandise || 0),
             });
           }
 
@@ -290,8 +290,8 @@ export default function Dashboard() {
       </div>
 
       {/* Second Row: Game Analytics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
-        <Card className="border-l-4 border-l-pink-500">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="border-l-4 border-l-pink-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Total Wins</CardTitle>
             <Gift className="h-4 w-4 text-pink-500" />
@@ -304,7 +304,7 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-cyan-500">
+        <Card className="border-l-4 border-l-cyan-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Win Rate</CardTitle>
             <Target className="h-4 w-4 text-cyan-500" />
@@ -317,23 +317,32 @@ export default function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-indigo-500">
+        <Card className="border-l-4 border-l-indigo-500 shadow-sm relative group">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Game Revenue</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
+              Game Revenue
+              <button
+                onClick={() => setRevenueScopeOpen(true)}
+                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-indigo-100 rounded"
+                title="View Revenue Scope"
+              >
+                <ArrowUpRight className="h-3 w-3 text-indigo-500" />
+              </button>
+            </CardTitle>
             <Gamepad2 className="h-4 w-4 text-indigo-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-indigo-600">
               ${loading ? "-" : stats.gameRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
             </div>
-            <div className="flex gap-2 text-xs text-muted-foreground">
-              <span className="text-green-600">Cash: ${stats.gameCashRev.toFixed(0)}</span>
-              <span className="text-blue-600">Bonus: ${stats.gameBonusRev.toFixed(0)}</span>
+            <div className="flex gap-2 text-xs text-muted-foreground mt-1">
+              <span className="text-green-600 font-medium">Cash: ${stats.gameCashRev.toFixed(0)}</span>
+              <span className="text-blue-600 font-medium">Bonus: ${stats.gameBonusRev.toFixed(0)}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-lime-500">
+        <Card className="border-l-4 border-l-lime-500 shadow-sm">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Active Machines</CardTitle>
             <BarChart3 className="h-4 w-4 text-lime-500" />
@@ -342,27 +351,10 @@ export default function Dashboard() {
             <div className="text-2xl font-bold text-lime-600">
               {loading ? "-" : stats.activeMachines}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Reporting today • {stats.empPlays > 0 && <span className="text-amber-600">Emp: {stats.empPlays}</span>}
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              Reporting today
+              {stats.empPlays > 0 && <span className="text-amber-600 ml-1">• Emp: {stats.empPlays}</span>}
             </p>
-          </CardContent>
-        </Card>
-
-        {/* Revenue Scope Button */}
-        <Card
-          className="border-none shadow-lg bg-gradient-to-br from-emerald-600 to-teal-600 text-white cursor-pointer hover:scale-105 transition-transform"
-          onClick={() => setRevenueScopeOpen(true)}
-        >
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-emerald-50">Revenue Scope</CardTitle>
-            <Receipt className="h-4 w-4 text-emerald-100" />
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-2">
-              <ArrowUpRight className="h-5 w-5" />
-              <span className="font-semibold">View Details</span>
-            </div>
-            <p className="text-xs text-emerald-100 mt-1">Complete revenue analytics</p>
           </CardContent>
         </Card>
       </div>

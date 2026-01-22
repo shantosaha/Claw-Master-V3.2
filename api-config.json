@@ -1,15 +1,15 @@
 {
-  "jotformApiUrl": "http://localhost:8000",
+  "jotformApiUrl": "https://api.kokoamusement.com.au",
   "jotformFormId": "614",
   "jotformEnabled": true,
   "jotformApiKey": "",
   "jotformApiToken": "",
-  "gameReportApiUrl": "http://localhost:8000",
+  "gameReportApiUrl": "https://api.kokoamusement.com.au",
   "gameReportSiteId": "614",
   "gameReportEnabled": true,
   "gameReportApiKey": "",
   "gameReportApiToken": "",
-  "revenueApiUrl": "http://localhost:8000",
+  "revenueApiUrl": "https://api.kokoamusement.com.au",
   "revenueSiteId": "614",
   "revenueEnabled": true,
   "revenueApiKey": "",
@@ -35,6 +35,6 @@
       "value": "https://api.kokoamusement.com.au"
     }
   ],
-  "updatedAt": "2026-01-22T16:45:23.423Z",
+  "updatedAt": "2026-01-22T18:46:09.771Z",
   "updatedBy": "mock-admin"
 }

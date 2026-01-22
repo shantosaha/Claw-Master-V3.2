@@ -29,6 +29,7 @@ import { ServiceHistoryTable } from "@/components/machines/ServiceHistoryTable";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
 import { isCraneMachine, GROUP_CATEGORIES, CLAW_MACHINE_GROUP, MACHINE_GROUPS, GROUP_SUBGROUPS } from "@/utils/machineTypeUtils";
 import { MachineQuickStats } from "@/components/machines/MachineQuickStats";
+import { gameReportApiService, GameReportItem } from "@/services/gameReportApiService";
 
 // Constants for select field options
 const STATUS_OPTIONS = [
@@ -126,6 +127,41 @@ export default function MachineDetailsPage() {
     const [activityLogs, setActivityLogs] = useState<AuditLog[]>([]);
     const [supervisorOverride, setSupervisorOverride] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
+
+    // Performance Data State
+    const [performanceStats, setPerformanceStats] = useState<GameReportItem | null>(null);
+    const [lastStatsSync, setLastStatsSync] = useState<Date | null>(null);
+
+    // Fetch Performance Data
+    useEffect(() => {
+        const fetchStats = async () => {
+            if (!enrichedMachine) return;
+
+            // Only fetch if we have an identifier
+            if (enrichedMachine.tag || enrichedMachine.assetTag) {
+                try {
+                    const apiTag = enrichedMachine.tag || enrichedMachine.assetTag;
+                    const today = new Date();
+                    const reports = await gameReportApiService.fetchGameReport({
+                        startDate: today,
+                        endDate: today,
+                        groups: enrichedMachine.group ? [enrichedMachine.group] : undefined,
+                        tag: apiTag ? parseInt(apiTag) : undefined,
+                        aggregate: true
+                    });
+
+                    if (reports && reports.length > 0) {
+                        setPerformanceStats(reports[0]);
+                        setLastStatsSync(new Date());
+                    }
+                } catch (statsErr) {
+                    console.error("Failed to fetch machine stats:", statsErr);
+                }
+            }
+        };
+
+        fetchStats();
+    }, [enrichedMachine?.id, enrichedMachine?.tag, enrichedMachine?.assetTag]);
 
     // Fetch activity logs when machine is available
     useEffect(() => {
@@ -507,26 +543,40 @@ export default function MachineDetailsPage() {
                             <div className="rounded-lg border p-4">
                                 <h2 className="text-lg font-semibold mb-4">Performance & Stats</h2>
                                 <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                                    <InlineEditField
-                                        type="number"
-                                        label="Play Count"
-                                        value={typeof enrichedMachine.playCount === 'number' && !isNaN(enrichedMachine.playCount) ? enrichedMachine.playCount : 0}
-                                        disabled={!isEditMode}
-                                        onSave={(val) => handleFieldUpdate("playCount", "Play Count", val, enrichedMachine.playCount)}
-                                    />
-                                    <InlineEditField
-                                        type="number"
-                                        label="Revenue"
-                                        value={typeof enrichedMachine.revenue === 'number' && !isNaN(enrichedMachine.revenue) ? enrichedMachine.revenue : 0}
-                                        disabled={!isEditMode}
-                                        onSave={(val) => handleFieldUpdate("revenue", "Revenue", val, enrichedMachine.revenue)}
-                                    />
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-medium text-muted-foreground">Play Count</span>
+                                        <div className="text-2xl font-bold">
+                                            {performanceStats
+                                                ? (performanceStats.standardPlays + performanceStats.empPlays)
+                                                : (typeof enrichedMachine.playCount === 'number' ? enrichedMachine.playCount : "-")}
+                                        </div>
+                                        {performanceStats && (
+                                            <span className="text-[10px] text-muted-foreground">
+                                                Today: {performanceStats.standardPlays} + {performanceStats.empPlays} (Staff)
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    <div className="flex flex-col gap-1">
+                                        <span className="text-xs font-medium text-muted-foreground">Revenue</span>
+                                        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
+                                            {performanceStats
+                                                ? `$${performanceStats.totalRev.toFixed(2)}`
+                                                : (typeof enrichedMachine.revenue === 'number' ? `$${enrichedMachine.revenue}` : "-")}
+                                        </div>
+                                        {performanceStats && (
+                                            <span className="text-[10px] text-muted-foreground">
+                                                Cash: ${performanceStats.cashDebit.toFixed(0)} | Bonus: ${performanceStats.cashDebitBonus.toFixed(0)}
+                                            </span>
+                                        )}
+                                    </div>
+
                                     <div className="flex flex-col gap-1">
                                         <span className="text-xs font-medium text-muted-foreground">Last Synced</span>
                                         <span className="text-sm text-foreground">
-                                            {enrichedMachine.lastSyncedAt
-                                                ? new Date(enrichedMachine.lastSyncedAt).toLocaleString()
-                                                : "Never"}
+                                            {lastStatsSync
+                                                ? lastStatsSync.toLocaleString()
+                                                : (enrichedMachine.lastSyncedAt ? new Date(enrichedMachine.lastSyncedAt).toLocaleString() : "Never")}
                                         </span>
                                     </div>
                                     <div className="flex flex-col gap-1">
@@ -629,8 +679,8 @@ export default function MachineDetailsPage() {
 
                 {/* Settings Tab - Available for all machines */}
                 <TabsContent value="settings" className="mt-6">
-                    <div className="grid gap-6 lg:grid-cols-5">
-                        <div className="lg:col-span-3">
+                    <div className="grid gap-6 lg:grid-cols-2">
+                        <div className="lg:col-span-1">
                             <SettingsPanel
                                 machineId={enrichedMachine.id}
                                 machineName={enrichedMachine.name}

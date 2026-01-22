@@ -464,32 +464,36 @@ export function SettingsPanel({
                     </div>
                 </div>
                 <div className="p-4 bg-card">
-                    <div className={cn(
-                        "grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4",
-                        isCraneMachine ? "xl:grid-cols-7" : "xl:grid-cols-12"
-                    )}>
-                        <div className={cn("space-y-1", !isCraneMachine && "xl:col-span-2")}>
+                    {/* Use Flexbox for mixed fixed/fluid widths */}
+                    <div className="flex flex-wrap gap-4 items-stretch">
+
+                        {/* 1. Play Stats (Flexible but with min-widths) */}
+                        <div className="flex-1 min-w-[140px] max-w-[200px] space-y-1">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <Gamepad2 className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-medium uppercase tracking-wider">Customer Plays</span>
                             </div>
                             <div className="text-2xl font-bold">{performanceData?.standardPlays ?? 0}</div>
                         </div>
-                        <div className={cn("space-y-1", !isCraneMachine && "xl:col-span-2")}>
+
+                        <div className="flex-1 min-w-[140px] max-w-[200px] space-y-1">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <Users className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-medium uppercase tracking-wider">Staff Plays</span>
                             </div>
                             <div className="text-2xl font-bold">{performanceData?.empPlays ?? 0}</div>
                         </div>
-                        <div className={cn("space-y-1", !isCraneMachine && "xl:col-span-2")}>
+
+                        <div className="flex-1 min-w-[140px] max-w-[200px] space-y-1">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <TrendingUp className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-medium uppercase tracking-wider">Total Plays</span>
                             </div>
                             <div className="text-2xl font-bold">{(performanceData?.standardPlays ?? 0) + (performanceData?.empPlays ?? 0)}</div>
                         </div>
-                        <div className={cn("space-y-1", !isCraneMachine && "xl:col-span-3")}>
+
+                        {/* 2. Revenue Card (FIXED WIDTH) */}
+                        <div className="w-[200px] shrink-0 space-y-1">
                             <div className="p-2.5 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30 h-full flex flex-col justify-between">
                                 <div className="flex items-center justify-between gap-1 mb-1 flex-wrap">
                                     <div className="flex items-center gap-1">
@@ -523,17 +527,17 @@ export function SettingsPanel({
                             </div>
                         </div>
 
-                        {/* Crane-specific: Payouts, Win Rate, Accuracy */}
+                        {/* 3. Conditional Content (Crane Stats vs Chart) - Flexible Growth */}
                         {isCraneMachine ? (
-                            <>
-                                <div className="space-y-1">
+                            <div className="contents">
+                                <div className="flex-1 min-w-[140px] max-w-[200px] space-y-1">
                                     <div className="flex items-center gap-1.5 text-muted-foreground">
                                         <Award className="h-3.5 w-3.5" />
                                         <span className="text-[11px] font-medium uppercase tracking-wider">Payouts (Wins)</span>
                                     </div>
                                     <div className="text-2xl font-bold">{performanceData?.points ?? 0}</div>
                                 </div>
-                                <div className="space-y-1">
+                                <div className="flex-1 min-w-[140px] max-w-[200px] space-y-1">
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
@@ -570,7 +574,6 @@ export function SettingsPanel({
                                     const actualPlaysPerWin = totalPayouts > 0 ? totalPlays / totalPayouts : 0;
 
                                     // Calculate accuracy percentage: (Actual / Target) * 100
-                                    // User Logic: 8/10 = 80% (High Payout/Red), 20/10 = 200% (Low Payout/Amber)
                                     let accuracyPct = 0;
                                     let accuracyLabel = 'N/A';
                                     let accuracyColor = 'text-muted-foreground';
@@ -580,7 +583,6 @@ export function SettingsPanel({
                                         accuracyPct = (actualPlaysPerWin / targetPayoutRate) * 100;
                                         accuracyLabel = `${accuracyPct.toFixed(0)}%`;
 
-                                        // Determine color and label based on payout accuracy
                                         if (accuracyPct < 90) {
                                             accuracyColor = 'text-red-600 dark:text-red-400';
                                             statusLabel = 'High Payout';
@@ -598,7 +600,7 @@ export function SettingsPanel({
                                     }
 
                                     return (
-                                        <div className="space-y-1">
+                                        <div className="flex-1 min-w-[140px] max-w-[200px] space-y-1">
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
@@ -612,11 +614,6 @@ export function SettingsPanel({
                                                         <p className="text-xs">
                                                             <strong>Payout Accuracy</strong> = (Actual Plays per Win / Target) × 100%<br />
                                                             <span className="text-muted-foreground mt-1 block italic text-[10px]">
-                                                                • 100% = Exact match to target<br />
-                                                                • Below 100% = Machine paying too much (loose)<br />
-                                                                • Above 100% = Machine paying too little (tight)
-                                                            </span>
-                                                            <span className="text-muted-foreground mt-2 block border-t pt-1">
                                                                 Target: {targetPayoutRate} plays/win<br />
                                                                 Actual: {actualPlaysPerWin.toFixed(1)} plays/win
                                                             </span>
@@ -635,10 +632,10 @@ export function SettingsPanel({
                                         </div>
                                     );
                                 })()}
-                            </>
+                            </div>
                         ) : (
-                            /* Non-crane: Show 7-day chart with type and style selector */
-                            <div className="col-span-1 xs:col-span-2 md:col-span-4 xl:col-span-3 space-y-2">
+                            /* Non-crane: Show 7-day chart */
+                            <div className="flex-[2] min-w-[280px] space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-1.5 text-muted-foreground">
                                         <TrendingUp className="h-3.5 w-3.5" />

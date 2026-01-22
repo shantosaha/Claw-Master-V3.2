@@ -69,7 +69,7 @@ import {
     LineChart,
     Line
 } from "recharts";
-import { format, subDays, subMonths, subYears, parseISO, isSameDay, startOfDay, endOfDay } from "date-fns";
+import { format, subDays, subMonths, subYears, parseISO, isSameDay, startOfDay, endOfDay, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ArcadeMachine, ServiceReport } from "@/types";
 import { monitoringService, MachineStatus, MonitoringAlert, MonitoringReportItem } from "@/services/monitoringService";
@@ -1898,7 +1898,7 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                     <TableBody>
                         {paginatedData.map((item) => (
                             <TableRow
-                                key={item.machineId}
+                                key={item.machineId || (item as any).id}
                                 className={cn(
                                     item.payoutStatus === 'Very High' && "border-2 border-red-600 bg-red-50/10 animate-pulse"
                                 )}
@@ -1949,8 +1949,8 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                     ${(item.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                 </TableCell>
                                 <TableCell className="text-[10px] text-muted-foreground px-1 leading-tight text-center">
-                                    {format(item.settingsDate, 'M/d/yy')}<br />
-                                    {format(item.settingsDate, 'h:mm a')}
+                                    {isValid(item.settingsDate) ? format(item.settingsDate, 'M/d/yy') : '-'}<br />
+                                    {isValid(item.settingsDate) ? format(item.settingsDate, 'h:mm a') : '-'}
                                 </TableCell>
                                 <TableCell className="text-[10px] px-1 text-center">{item.staffName}</TableCell>
                                 <TableCell className="px-1 text-center">
@@ -2286,27 +2286,29 @@ export default function MonitoringPage() {
         const totalRevenue = reportData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
         const cashRevenue = reportData.reduce((acc, curr) => acc + (curr.cashRevenue || 0), 0);
         const bonusRevenue = reportData.reduce((acc, curr) => acc + (curr.bonusRevenue || 0), 0);
-        const totalPayouts = reportData.reduce((acc, curr) => acc + (curr.payouts || 0), 0);
 
-        // Filter claw machines for attention alerts (Group 4 / Crane)
-        const clawMachines = reportData.filter(r => {
+        // Filter claw machines for accurate payout/win aggregation
+        const craneData = reportData.filter(r => {
             const machine = machines.find(m => m.id === r.machineId);
             return machine?.group?.toLowerCase().includes('crane') ||
                 machine?.group?.includes('Group 4') ||
                 machine?.type?.toLowerCase().includes('crane');
         });
 
-        // Count by payout status for claw machines only
-        const veryHighCount = clawMachines.filter(r => r.payoutStatus === 'Very High').length;
-        const highCount = clawMachines.filter(r => r.payoutStatus === 'High').length;
-        const veryLowCount = clawMachines.filter(r => r.payoutStatus === 'Very Low').length;
-        const lowCount = clawMachines.filter(r => r.payoutStatus === 'Low').length;
+        // Total Payouts should ONLY count Crane Machines
+        const totalPayouts = craneData.reduce((acc, curr) => acc + (curr.payouts || 0), 0);
+
+        // Count for attention alerts (Group 4 / Crane)
+        const veryHighCount = craneData.filter(r => r.payoutStatus === 'Very High').length;
+        const highCount = craneData.filter(r => r.payoutStatus === 'High').length;
+        const veryLowCount = craneData.filter(r => r.payoutStatus === 'Very Low').length;
+        const lowCount = craneData.filter(r => r.payoutStatus === 'Low').length;
         const criticalCount = veryHighCount + highCount + veryLowCount + lowCount;
 
         const activeMachines = reportData.filter(r => (r.customerPlays || 0) > 0).length;
         const avgRevenuePerUnit = activeMachines > 0 ? totalRevenue / activeMachines : 0;
-        const avgAccuracy = reportData.length > 0
-            ? Math.round(reportData.reduce((acc, curr) => acc + (curr.payoutAccuracy || 0), 0) / reportData.length)
+        const avgAccuracy = craneData.length > 0
+            ? Math.round(craneData.reduce((acc, curr) => acc + (curr.payoutAccuracy || 0), 0) / craneData.length)
             : 0;
 
         // Yesterday comparison for momentum
@@ -2330,10 +2332,12 @@ export default function MonitoringPage() {
             case 'totalPlays': return '#8b5cf6'; // Purple
             case 'standardPlays': return '#3b82f6'; // Blue
             case 'staffPlays': return '#10b981'; // Green
-            case 'totalRevenue': return '#f59e0b'; // Amber
+            case 'totalRevenue':
+            case 'revenue': return '#f59e0b'; // Amber
             case 'cashRevenue': return '#059669'; // Emerald
             case 'bonusRevenue': return '#7c3aed'; // Violet
-            case 'payouts': return '#f43f5e'; // Rose
+            case 'payouts':
+            case 'payout': return '#f43f5e'; // Rose
             default: return '#a855f7';
         }
     };
@@ -2343,10 +2347,12 @@ export default function MonitoringPage() {
             case 'totalPlays': return 'Total Plays';
             case 'standardPlays': return 'Customer Plays';
             case 'staffPlays': return 'Staff Plays';
-            case 'totalRevenue': return 'Total Revenue';
+            case 'totalRevenue':
+            case 'revenue': return 'Total Revenue';
             case 'cashRevenue': return 'Cash Revenue';
             case 'bonusRevenue': return 'Bonus Revenue';
-            case 'payouts': return 'Total Payouts';
+            case 'payouts':
+            case 'payout': return 'Total Payouts';
             default: return field;
         }
     };
@@ -2409,9 +2415,18 @@ export default function MonitoringPage() {
 
     // Fetch filtered trend chart data with debounce
     useEffect(() => {
-        const currentTags = filteredMachines.map(m => String(m.tag));
-
+        // Debounce to prevent excessive API calls during typing/filtering
         const timer = setTimeout(async () => {
+            // If we have report data but no filtered machines, checking logic matters:
+            // 1. Initial load (reportData empty) -> wait.
+            // 2. Filter result is empty -> pass empty array (returns 0s).
+            // 3. Filter matches all -> pass undefined (returns global stats optimization).
+
+            if (reportData.length === 0) return; // Don't fetch if base data isn't loaded
+
+            const isAllMachines = filteredMachines.length === reportData.length;
+            const currentTags = isAllMachines ? undefined : filteredMachines.map(m => String(m.tag));
+
             setTrendLoading(true);
             try {
                 const data = await monitoringService.fetchDailyTrend(7, currentTags);
@@ -2424,7 +2439,8 @@ export default function MonitoringPage() {
                     staff: d.staffPlays,
                     payout: d.payouts,
                 }));
-                setTrendChartData(chartData);
+                // Check if we got valid data, otherwise fallback to empty to avoid broken charts
+                setTrendChartData(chartData.length > 0 ? chartData : []);
             } catch (err) {
                 console.error('[MonitoringPage] Failed to fetch trend data:', err);
             } finally {
@@ -2433,7 +2449,7 @@ export default function MonitoringPage() {
         }, 500);
 
         return () => clearTimeout(timer);
-    }, [filteredMachines]);
+    }, [filteredMachines, reportData.length]);
 
     const sortedMachines = useMemo(() => {
         const sorted = [...filteredMachines];
@@ -2709,7 +2725,7 @@ export default function MonitoringPage() {
                                                                 {getFieldLabel(entry.dataKey)}:
                                                             </span>
                                                             <span className="font-bold">
-                                                                {(entry.dataKey === 'totalRevenue' || entry.dataKey === 'cashRevenue' || entry.dataKey === 'bonusRevenue') ? '$' : ''}{entry.value?.toLocaleString()}
+                                                                {(entry.dataKey === 'totalRevenue' || entry.dataKey === 'revenue' || entry.dataKey === 'cashRevenue' || entry.dataKey === 'bonusRevenue') ? '$' : ''}{entry.value?.toLocaleString()}
                                                             </span>
                                                         </div>
                                                     ))}
