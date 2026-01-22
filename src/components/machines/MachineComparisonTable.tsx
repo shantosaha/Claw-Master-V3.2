@@ -580,15 +580,70 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                     return;
                 }
 
+                const targetTag = selectedMachine.assetTag || fullMachine?.tag || (selectedMachine as any)?.tag;
+                console.log(`[Comparison] Fetching stats for machine: ${selectedMachine.name}, targetTag: ${targetTag}`);
+
+                // Fetch JotForm reports for this machine to get C1-C4, strongTime, weakTime, payoutSettings
+                let jotformReports: ServiceReport[] = [];
+                if (targetTag) {
+                    try {
+                        const allReports = await serviceReportService.getReports(selectedMachineId || "");
+                        console.log(`[Comparison] Fetched ${allReports.length} total reports from JotForm service`);
+
+                        // Filter to only reports matching this machine's tag
+                        const normalizedTargetTag = String(targetTag).trim().toLowerCase();
+                        jotformReports = allReports.filter(r => {
+                            const rTag = String(r.inflowSku || "").trim().toLowerCase();
+                            const rMachineId = String(r.machineId || "").trim().toLowerCase();
+
+                            // Check exact match on either field
+                            if (rTag === normalizedTargetTag || rMachineId === normalizedTargetTag) return true;
+
+                            // Try numeric match to be more lenient with prefixes or types
+                            const rNum = parseInt(rTag);
+                            const targetNum = parseInt(normalizedTargetTag);
+                            if (!isNaN(rNum) && !isNaN(targetNum) && rNum === targetNum) return true;
+
+                            return false;
+                        });
+
+                        // Sort by timestamp descending (most recent first)
+                        jotformReports.sort((a, b) => {
+                            const timeA = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime();
+                            const timeB = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime();
+                            return timeB - timeA;
+                        });
+
+                        console.log(`[Comparison] Found ${jotformReports.length} matching JotForm reports for tag: ${targetTag}`);
+                    } catch (err) {
+                        console.error("[Comparison] Failed to fetch JotForm reports:", err);
+                    }
+                }
+
+                // Helper function to find the most recent JotForm report on or before a given date
+                const findJotFormSettingsForDate = (date: Date): ServiceReport | undefined => {
+                    const dateEnd = new Date(date);
+                    dateEnd.setHours(23, 59, 59, 999); // End of the day
+
+                    // Find the most recent report that was submitted on or before this date
+                    return jotformReports.find(r => {
+                        const rTime = r.timestamp instanceof Date ? r.timestamp.getTime() : new Date(r.timestamp).getTime();
+                        return rTime <= dateEnd.getTime();
+                    });
+                };
+
+                // Optimization: Get the specific group for this machine to filter API traffic
+                const machineGroups = fullMachine?.group ? [fullMachine.group] :
+                    (fullMachine?.type ? [fullMachine.type] : []);
+
                 for (const date of dates) {
                     // Fetch real data from Game Report API for this specific day
-                    const targetTag = selectedMachine.assetTag || fullMachine?.tag || (selectedMachine as any)?.tag;
-
-                    // Fetch data for this day (same start/end for single day)
+                    // OPTIMIZATION: Filter by machine's group and fetch daily (non-aggregated in prod)
                     const dayData = await gameReportApiService.fetchGameReport({
                         startDate: date,
                         endDate: date,
-                        aggregate: false, // Get raw data
+                        groups: machineGroups,
+                        aggregate: false, // Get raw data breakdown
                     });
 
                     // Find the entry matching this machine's tag
@@ -596,13 +651,28 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                     if (targetTag) {
                         const normalizedTag = String(targetTag).trim().toLowerCase();
                         machineData = dayData.find(item => {
-                            const itemTag = String(item.assetTag || item.tag).trim().toLowerCase();
-                            return itemTag === normalizedTag;
+                            // PRIMARY: Numeric tag match (Production)
+                            const itemTagStr = String(item.tag).trim().toLowerCase();
+                            if (itemTagStr === normalizedTag) return true;
+
+                            // SECONDARY: Asset tag match (Local)
+                            const itemAssetTagStr = String(item.assetTag || "").trim().toLowerCase();
+                            if (itemAssetTagStr === normalizedTag) return true;
+
+                            // TERTIARY: Numeric comparison if they look like numbers
+                            const itemParamNum = parseInt(itemTagStr);
+                            const targetParamNum = parseInt(normalizedTag);
+                            if (!isNaN(itemParamNum) && !isNaN(targetParamNum) && itemParamNum === targetParamNum) return true;
+
+                            return false;
                         });
                     }
 
+                    // Get JotForm settings that were active on this date
+                    const jotformSettings = findJotFormSettingsForDate(date);
+
                     if (machineData) {
-                        // Use real API data
+                        // Use real API data merged with JotForm settings
                         const plays = machineData.standardPlays || 0;
                         const staffPlays = machineData.empPlays || 0;
                         const payouts = machineData.points || 0;
@@ -613,19 +683,20 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                             totalPlays: plays + staffPlays,
                             payouts: payouts,
                             playsPerPayout: payouts > 0 ? Math.round((plays + staffPlays) / payouts) : 0,
-                            payoutSettings: 20, // Default, could come from settings
-                            c1: 0, // C1-C4 come from JotForm settings, not game report
-                            c2: 0,
-                            c3: 0,
-                            c4: 0,
+                            // Use JotForm data if available, otherwise default
+                            payoutSettings: jotformSettings?.playPerWin || 0,
+                            c1: jotformSettings?.c1 || 0,
+                            c2: jotformSettings?.c2 || 0,
+                            c3: jotformSettings?.c3 || 0,
+                            c4: jotformSettings?.c4 || 0,
                             revenue: machineData.totalRev || 0,
                             cashRev: machineData.cashDebit || 0,
                             bonusRev: machineData.cashDebitBonus || 0,
-                            strongTime: 0, // Would come from JotForm settings
-                            weakTime: 0,
+                            strongTime: (jotformSettings as any)?.strongTime || 0,
+                            weakTime: (jotformSettings as any)?.weakTime || 0,
                         });
                     } else {
-                        // No data for this day, show zeros
+                        // No Game Report data for this day, but still show JotForm settings if available
                         newStats.push({
                             date,
                             customerPlays: 0,
@@ -633,16 +704,16 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                             totalPlays: 0,
                             payouts: 0,
                             playsPerPayout: 0,
-                            payoutSettings: 0,
-                            c1: 0,
-                            c2: 0,
-                            c3: 0,
-                            c4: 0,
+                            payoutSettings: jotformSettings?.playPerWin || 0,
+                            c1: jotformSettings?.c1 || 0,
+                            c2: jotformSettings?.c2 || 0,
+                            c3: jotformSettings?.c3 || 0,
+                            c4: jotformSettings?.c4 || 0,
                             revenue: 0,
                             cashRev: 0,
                             bonusRev: 0,
-                            strongTime: 0,
-                            weakTime: 0,
+                            strongTime: (jotformSettings as any)?.strongTime || 0,
+                            weakTime: (jotformSettings as any)?.weakTime || 0,
                         });
                     }
                 }
@@ -654,7 +725,7 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
         };
 
         fetchStats();
-    }, [dateRange, selectedMachine, selectionMode, specificDates]);
+    }, [dateRange, selectedMachine, selectionMode, specificDates, selectedMachineId, fullMachine?.tag]);
 
     // Only show C1-C4 and time metrics for crane machines
     const metrics: {

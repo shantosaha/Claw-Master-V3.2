@@ -97,7 +97,10 @@ export async function GET(
         // If not provided, returns all data from beginning to latest
         const dateParam = request.nextUrl.searchParams.get('date');
         const queryString = dateParam ? `?date=${dateParam}` : '';
-        const targetUrl = `${jotformUrl}/jotform/${pathString}${queryString}`;
+
+        // Ensure no double slashes
+        const baseUrl = jotformUrl.endsWith('/') ? jotformUrl.slice(0, -1) : jotformUrl;
+        const targetUrl = `${baseUrl}/jotform/${pathString}${queryString}`;
 
         console.log(`[JotForm Proxy] Fetching from: ${targetUrl}`);
         console.log(`[JotForm Proxy] Production compliance: Only 'date' param allowed`);

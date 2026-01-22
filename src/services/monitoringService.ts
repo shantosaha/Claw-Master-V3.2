@@ -5,6 +5,7 @@ import { gameReportApiService, GameReportItem } from './gameReportApiService';
 export interface MachineStatus {
     id: string;
     assetTag: string;
+    tag?: string;     // Numeric tag ID (for Production API matching)
     name: string;
     location: string;
     status: 'online' | 'offline' | 'error' | 'maintenance';
@@ -46,12 +47,18 @@ export interface MonitoringReportItem {
     c2: number;
     c3: number;
     c4: number;
+    strongTime?: number;
+    weakTime?: number;
     imageUrl?: string;
     remarks?: string;
     payoutStatus: 'Very High' | 'High' | 'OK' | 'Low' | 'Very Low' | 'N/A';
     payoutAccuracy: number; // Percentage: (Target / Actual) * 100
-    revenue: number; // Machine revenue 
+    revenue: number; // Machine revenue (total)
+    cashRevenue: number; // Cash portion of revenue
+    bonusRevenue: number; // Bonus portion of revenue
     status: 'online' | 'offline' | 'error' | 'maintenance';
+    group?: string;
+    type?: string;
     lastUpdated?: Date;
 }
 
@@ -108,23 +115,52 @@ class MonitoringService {
         let gameDataByTag = new Map<string, { standard: number; emp: number; payouts: number }>();
         try {
             const gameReportData = this.prefetchedGameData || await gameReportApiService.fetchTodayReport();
+            console.log(`[MonitoringService] Game Report items received: ${gameReportData.length}`);
+
+            // Debug: Log first 3 items to see their structure
+            if (gameReportData.length > 0) {
+                console.log('[MonitoringService] Sample Game Report items:',
+                    gameReportData.slice(0, 3).map(item => ({
+                        tag: item.tag,
+                        assetTag: item.assetTag,
+                        description: item.description,
+                        standardPlays: item.standardPlays,
+                        empPlays: item.empPlays
+                    }))
+                );
+            }
+
             for (const item of gameReportData) {
-                const tag = String(item.assetTag || item.tag).trim().toLowerCase();
-                if (tag) {
-                    gameDataByTag.set(tag, {
-                        standard: item.standardPlays || 0,
-                        emp: item.empPlays || 0,
-                        payouts: item.points || 0
-                    });
+                // UNIVERSAL RULE: Always use 'tag' for identification. 
+                // Do not use assetTag for data mapping.
+                const numericTag = item.tag ? String(item.tag).trim() : null;
+
+                const data = {
+                    standard: item.standardPlays || 0,
+                    emp: item.empPlays || 0,
+                    payouts: item.points || 0
+                };
+
+                if (numericTag) {
+                    gameDataByTag.set(numericTag, data);
                 }
             }
+
+            console.log(`[MonitoringService] gameDataByTag map size: ${gameDataByTag.size}`);
         } catch (error) {
             console.warn('Failed to fetch game report data for monitoring:', error);
         }
 
-        return machines.map(machine => {
-            const machineTag = String(machine.assetTag || '').trim().toLowerCase();
-            const stats = gameDataByTag.get(machineTag);
+        return machines.map((machine, index) => {
+            // UNIVERSAL RULE: Always use the machine's 'tag' property for API matching.
+            const machineTag = machine.tag ? String(machine.tag).trim() : null;
+            const stats = machineTag ? gameDataByTag.get(machineTag) : null;
+
+            // Debug matching status
+            if (index < 5) {
+                console.log(`[MonitoringService] Machine: "${machine.name}" | Tag: ${machine.tag} | Match: ${!!(machineTag && gameDataByTag.has(machineTag))}`);
+            }
+
             const playCountToday = stats?.standard || 0;
             const staffPlaysToday = stats?.emp || 0;
             const payoutsToday = stats?.payouts || 0;
@@ -132,6 +168,7 @@ class MonitoringService {
             return {
                 id: machine.id,
                 assetTag: machine.assetTag || '',
+                tag: machine.tag || '',  // Numeric tag for Production API matching
                 name: machine.name,
                 location: machine.location,
                 status: this.determineStatusFromMachine(machine),
@@ -284,12 +321,11 @@ class MonitoringService {
 
         // Special handling for 0 payouts
         if (playsPerPayout === 0) {
-            // If we've had less than half the target plays with no win, it's NOT "Very High"
-            // It's just "Not Applicable" (insufficient data)
-            if (totalPlays < target / 2) return 'N/A';
+            // Only flag as "Very Low" if we've exceeded the target by 150% with no wins
+            if (totalPlays > target * 1.5) return 'Very Low';
 
-            // If we've had more than half the target plays with no win, it's starting to be "Very Low"
-            return 'Very Low';
+            // Otherwise, insufficient data to determine status
+            return 'N/A';
         }
 
         const ratio = playsPerPayout / target;
@@ -310,21 +346,64 @@ class MonitoringService {
             // Import services
             const { settingsService } = await import('@/services');
             const { gameReportApiService } = await import('@/services/gameReportApiService');
+            const { serviceReportService } = await import('@/services/serviceReportService');
+
+            // Fetch service reports for remarks data (from JotForm)
+            let serviceReports: any[] = [];
+            try {
+                serviceReports = await serviceReportService.getReports('');
+            } catch (err) {
+                console.warn('[MonitoringService] Failed to fetch service reports for remarks:', err);
+            }
+
+            // Create a map of machineId/tag -> latest remarks
+            const remarksByTag = new Map<string, string>();
+            for (const report of serviceReports) {
+                const tag = String(report.inflowSku || report.machineId || '').trim();
+                if (tag && report.remarks && !remarksByTag.has(tag)) {
+                    remarksByTag.set(tag, report.remarks);
+                }
+            }
 
             // Fetch real game report data for the date range
             const gameReportData = await gameReportApiService.fetchAggregatedReport(startDate, endDate);
 
-            // Create a map of assetTag -> game report data
-            const gameDataByTag = new Map<string, { standardPlays: number; empPlays: number; points: number; totalRev: number }>();
+            // Create a map of tag -> game report data (support both Production and Local)
+            // IMPORTANT: Aggregate data from multiple days when a date range is selected
+            const gameDataByTag = new Map<string, { standardPlays: number; empPlays: number; points: number; totalRev: number; cashDebit: number; cashDebitBonus: number }>();
             for (const item of gameReportData) {
-                const tag = String(item.assetTag || item.tag).trim().toLowerCase();
-                if (tag) {
-                    gameDataByTag.set(tag, {
-                        standardPlays: item.standardPlays || 0,
-                        empPlays: item.empPlays || 0,
-                        points: item.points || 0,
-                        totalRev: item.totalRev || 0,
-                    });
+                // UNIVERSAL RULE: Always use 'tag' for identification.
+                // Do not use assetTag for data mapping.
+                const numericTag = item.tag ? String(item.tag).trim() : null;
+
+                const newData = {
+                    standardPlays: Number(item.standardPlays || 0),
+                    empPlays: Number(item.empPlays || 0),
+                    points: Number(item.merchandise || item.points || 0),
+                    totalRev: Number(item.totalRev || 0),
+                    cashDebit: Number(item.cashDebit || 0),
+                    cashDebitBonus: Number(item.cashDebitBonus || 0),
+                };
+
+                // Helper function to aggregate data
+                const aggregateToMap = (key: string) => {
+                    const existing = gameDataByTag.get(key);
+                    if (existing) {
+                        gameDataByTag.set(key, {
+                            standardPlays: existing.standardPlays + newData.standardPlays,
+                            empPlays: existing.empPlays + newData.empPlays,
+                            points: existing.points + newData.points,
+                            totalRev: existing.totalRev + newData.totalRev,
+                            cashDebit: existing.cashDebit + newData.cashDebit,
+                            cashDebitBonus: existing.cashDebitBonus + newData.cashDebitBonus,
+                        });
+                    } else {
+                        gameDataByTag.set(key, { ...newData });
+                    }
+                };
+
+                if (numericTag) {
+                    aggregateToMap(numericTag);
                 }
             }
 
@@ -332,7 +411,7 @@ class MonitoringService {
             const allSettings = await settingsService.getAll();
 
             // Create a map of machineId -> latest settings
-            const settingsByMachine = new Map<string, { c1: number; c2: number; c3: number; c4: number; payoutRate: number; imageUrl?: string; staffName?: string; timestamp?: Date }>();
+            const settingsByMachine = new Map<string, { c1: number; c2: number; c3: number; c4: number; strongTime?: number; weakTime?: number; payoutRate: number; imageUrl?: string; staffName?: string; timestamp?: Date; remarks?: string }>();
 
             const sortedSettings = [...allSettings].sort((a, b) =>
                 new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
@@ -345,10 +424,13 @@ class MonitoringService {
                         c2: setting.c2 ?? 0,
                         c3: setting.c3 ?? 0,
                         c4: setting.c4 ?? 0,
-                        payoutRate: setting.payoutRate ?? setting.payoutPercentage ?? 0,
+                        strongTime: (setting as any).strongTime,
+                        weakTime: (setting as any).weakTime,
+                        payoutRate: Number(setting.payoutRate ?? setting.payoutPercentage ?? 0),
                         imageUrl: setting.imageUrl,
                         staffName: setting.setBy,
                         timestamp: new Date(setting.timestamp),
+                        remarks: setting.remarks,
                     });
                 }
             }
@@ -362,9 +444,9 @@ class MonitoringService {
                 const c4 = machineSettings?.c4 ?? 0;
                 const payoutSettings = machineSettings?.payoutRate ?? 0;
 
-                // Get real game data by matching asset tag
-                const machineTag = String(machine.assetTag || '').trim().toLowerCase();
-                const gameData = gameDataByTag.get(machineTag);
+                // UNIVERSAL RULE: Always use 'tag' for mapping API data
+                const machineTag = (machine as any).tag ? String((machine as any).tag).trim() : null;
+                const gameData = machineTag ? gameDataByTag.get(machineTag) : null;
 
                 const customerPlays = gameData?.standardPlays ?? 0;
                 const staffPlays = gameData?.empPlays ?? 0;
@@ -389,7 +471,7 @@ class MonitoringService {
 
                 return {
                     machineId: machine.id,
-                    tag: machine.assetTag || 'N/A',
+                    tag: (machine as any).tag || 'N/A',
                     description: machine.name,
                     status: machine.status,
                     customerPlays,
@@ -404,15 +486,117 @@ class MonitoringService {
                     c2,
                     c3,
                     c4,
+                    strongTime: machineSettings?.strongTime,
+                    weakTime: machineSettings?.weakTime,
                     imageUrl: machineSettings?.imageUrl || machine.imageUrl,
-                    remarks: undefined,
+                    remarks: (machineTag ? remarksByTag.get(machineTag) : undefined) || machineSettings?.remarks,
                     payoutStatus,
                     revenue: gameData?.totalRev ?? (customerPlays * multiplier),
+                    cashRevenue: gameData?.cashDebit ?? 0,
+                    bonusRevenue: gameData?.cashDebitBonus ?? 0,
+                    group: machine.group,
+                    type: machine.type,
                     lastUpdated: new Date()
                 };
             });
         } catch (error) {
             console.error("Failed to fetch monitoring report", error);
+            return [];
+        }
+    }
+
+    /**
+     * Fetch daily trend data for the last N days
+     * Returns aggregated totals per day for charting
+     */
+    async fetchDailyTrend(days: number = 7, tags?: string[]): Promise<{
+        date: string;
+        name: string;
+        totalPlays: number;
+        customerPlays: number;
+        staffPlays: number;
+        revenue: number;
+        cashRevenue: number;
+        bonusRevenue: number;
+        payouts: number;
+    }[]> {
+        try {
+            const { gameReportApiService } = await import('@/services/gameReportApiService');
+            const { subDays, format } = await import('date-fns');
+
+            const endDate = new Date();
+            const results: {
+                date: string;
+                name: string;
+                totalPlays: number;
+                customerPlays: number;
+                staffPlays: number;
+                revenue: number;
+                cashRevenue: number;
+                bonusRevenue: number;
+                payouts: number;
+            }[] = [];
+
+            // Convert tags to a Set for faster lookup
+            const tagSet = tags ? new Set(tags.map(t => String(t).trim())) : null;
+
+            // Fetch each day's data
+            for (let i = days - 1; i >= 0; i--) {
+                const date = subDays(endDate, i);
+                const dateStr = format(date, 'yyyy-MM-dd');
+                const displayName = format(date, 'MMM d');
+
+                try {
+                    let dayData = await gameReportApiService.fetchDailyReport(date);
+
+                    // Filter by tags if provided
+                    if (tagSet) {
+                        dayData = dayData.filter(item => {
+                            const itemTag = item.tag ? String(item.tag).trim() : null;
+                            return itemTag && tagSet.has(itemTag);
+                        });
+                    }
+
+                    // Aggregate machines for this day
+                    const totalPlays = dayData.reduce((sum, item) => sum + (item.standardPlays || 0) + (item.empPlays || 0), 0);
+                    const customerPlays = dayData.reduce((sum, item) => sum + (item.standardPlays || 0), 0);
+                    const staffPlays = dayData.reduce((sum, item) => sum + (item.empPlays || 0), 0);
+                    const revenue = dayData.reduce((sum, item) => sum + (item.totalRev || 0), 0);
+                    const cashRevenue = dayData.reduce((sum, item) => sum + (item.cashDebit || 0), 0);
+                    const bonusRevenue = dayData.reduce((sum, item) => sum + (item.cashDebitBonus || 0), 0);
+                    const payouts = dayData.reduce((sum, item) => sum + (item.points || item.merchandise || 0), 0);
+
+                    results.push({
+                        date: dateStr,
+                        name: displayName,
+                        totalPlays,
+                        customerPlays,
+                        staffPlays,
+                        revenue,
+                        cashRevenue,
+                        bonusRevenue,
+                        payouts,
+                    });
+                } catch (err) {
+                    console.warn(`[MonitoringService] Failed to fetch data for ${dateStr}:`, err);
+                    // Push zero data for failed days
+                    results.push({
+                        date: dateStr,
+                        name: displayName,
+                        totalPlays: 0,
+                        customerPlays: 0,
+                        staffPlays: 0,
+                        revenue: 0,
+                        cashRevenue: 0,
+                        bonusRevenue: 0,
+                        payouts: 0,
+                    });
+                }
+            }
+
+            return results;
+        } catch (error) {
+            console.error('[MonitoringService] Failed to fetch daily trend:', error);
             return [];
         }
     }

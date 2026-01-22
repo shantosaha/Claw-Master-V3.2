@@ -53,9 +53,10 @@ interface SidebarProps {
     open?: boolean;
     collapsed?: boolean;
     onToggle?: () => void;
+    inMobileSheet?: boolean; // When true, sidebar is inside a mobile sheet and should always be visible
 }
 
-export function Sidebar({ open, collapsed, onToggle }: SidebarProps) {
+export function Sidebar({ open, collapsed, onToggle, inMobileSheet }: SidebarProps) {
     const pathname = usePathname();
     const { userProfile, hasPermission } = useAuth();
 
@@ -74,9 +75,10 @@ export function Sidebar({ open, collapsed, onToggle }: SidebarProps) {
 
     return (
         <div className={cn(
-            "hidden border-r bg-muted/40 md:flex flex-col transition-all duration-300 ease-in-out h-full overflow-hidden",
-            collapsed ? "w-16" : "w-64",
-            open && "fixed inset-y-0 left-0 z-50 md:relative md:z-auto flex"
+            "border-r bg-muted/40 flex-col transition-all duration-300 ease-in-out h-full overflow-hidden",
+            // When inside mobile sheet, always show; otherwise use responsive hiding
+            inMobileSheet ? "flex" : "hidden md:flex",
+            collapsed && !inMobileSheet ? "w-16" : "w-64"
         )}>
 
             <div className={cn(

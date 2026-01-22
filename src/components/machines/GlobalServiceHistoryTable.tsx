@@ -417,6 +417,36 @@ export function GlobalServiceHistoryTable() {
                                     </Tooltip>
                                 </TooltipProvider>
                             </TableHead>
+                            <TableHead className="text-right">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center justify-end gap-1 cursor-help">
+                                                Strong Time
+                                                <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="max-w-[200px]">
+                                            <p className="text-xs"><strong>Strong Time</strong> - Duration of strong grip in seconds</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </TableHead>
+                            <TableHead className="text-right">
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <div className="flex items-center justify-end gap-1 cursor-help">
+                                                Weak Time
+                                                <HelpCircle className="h-3 w-3 text-muted-foreground" />
+                                            </div>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="top" className="max-w-[200px]">
+                                            <p className="text-xs"><strong>Weak Time</strong> - Duration of weak grip in seconds</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </TableHead>
                             <TableHead
                                 className="text-right cursor-pointer hover:bg-muted/50 transition-colors"
                                 onClick={() => handleSort('playPerWin')}
@@ -475,6 +505,8 @@ export function GlobalServiceHistoryTable() {
                                     <TableCell className="text-right">{isNaN(report.c2) ? '-' : report.c2}</TableCell>
                                     <TableCell className="text-right">{isNaN(report.c3) ? '-' : report.c3}</TableCell>
                                     <TableCell className="text-right">{isNaN(report.c4) ? '-' : report.c4}</TableCell>
+                                    <TableCell className="text-right">{report.strongTime !== undefined && !isNaN(report.strongTime) ? report.strongTime : '-'}</TableCell>
+                                    <TableCell className="text-right">{report.weakTime !== undefined && !isNaN(report.weakTime) ? report.weakTime : '-'}</TableCell>
                                     <TableCell className="text-right">{isNaN(report.playPerWin) ? '-' : report.playPerWin}</TableCell>
                                     <TableCell className="text-center">
                                         {report.imageUrl ? (

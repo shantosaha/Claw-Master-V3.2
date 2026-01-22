@@ -75,6 +75,8 @@ export function ServiceHistoryTable({ machineId, assetTag }: ServiceHistoryTable
                         <TableHead className="text-right">C2</TableHead>
                         <TableHead className="text-right">C3</TableHead>
                         <TableHead className="text-right">C4</TableHead>
+                        <TableHead className="text-right">Strong Time</TableHead>
+                        <TableHead className="text-right">Weak Time</TableHead>
                         <TableHead className="text-right">Win Rate</TableHead>
                         <TableHead className="text-center">Image</TableHead>
                         <TableHead>Notes</TableHead>
@@ -92,6 +94,8 @@ export function ServiceHistoryTable({ machineId, assetTag }: ServiceHistoryTable
                             <TableCell className="text-right">{isNaN(report.c2) ? '-' : report.c2}</TableCell>
                             <TableCell className="text-right">{isNaN(report.c3) ? '-' : report.c3}</TableCell>
                             <TableCell className="text-right">{isNaN(report.c4) ? '-' : report.c4}</TableCell>
+                            <TableCell className="text-right">{report.strongTime !== undefined && !isNaN(report.strongTime) ? report.strongTime : '-'}</TableCell>
+                            <TableCell className="text-right">{report.weakTime !== undefined && !isNaN(report.weakTime) ? report.weakTime : '-'}</TableCell>
                             <TableCell className="text-right">1/{isNaN(report.playPerWin) ? '-' : report.playPerWin}</TableCell>
                             <TableCell className="text-center">
                                 {report.imageUrl ? (

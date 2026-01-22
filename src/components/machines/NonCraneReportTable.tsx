@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { format } from "date-fns";
 import { MachineStatus, MonitoringReportItem } from "@/services/monitoringService";
 
 type ExtendedMachineStatus = MachineStatus & Partial<MonitoringReportItem> & { group?: string };
@@ -16,7 +17,7 @@ interface NonCraneReportTableProps {
     data: ExtendedMachineStatus[];
 }
 
-type SortKey = 'tag' | 'description' | 'status' | 'location' | 'customerPlays' | 'staffPlays' | 'revenue' | 'points';
+type SortKey = 'tag' | 'description' | 'status' | 'location' | 'customerPlays' | 'staffPlays' | 'revenue' | 'cashRevenue' | 'bonusRevenue' | 'lastUpdated' | 'points';
 
 /**
  * Simplified report table for non-crane machines.
@@ -68,6 +69,18 @@ export function NonCraneReportTable({ data }: NonCraneReportTableProps) {
                         aValue = a.revenue || 0;
                         bValue = b.revenue || 0;
                         break;
+                    case 'cashRevenue':
+                        aValue = a.cashRevenue || 0;
+                        bValue = b.cashRevenue || 0;
+                        break;
+                    case 'bonusRevenue':
+                        aValue = a.bonusRevenue || 0;
+                        bValue = b.bonusRevenue || 0;
+                        break;
+                    case 'lastUpdated':
+                        aValue = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
+                        bValue = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
+                        break;
                     case 'points':
                         aValue = (a as any).points || 0;
                         bValue = (b as any).points || 0;
@@ -105,11 +118,11 @@ export function NonCraneReportTable({ data }: NonCraneReportTableProps) {
     };
 
     const renderSortableHeader = (label: string, key: SortKey, className?: string) => (
-        <TableHead className={className}>
+        <TableHead className={cn("whitespace-nowrap text-center", className)}>
             <Button
                 variant="ghost"
                 size="sm"
-                className="-ml-3 h-8 data-[state=open]:bg-accent"
+                className="h-8 data-[state=open]:bg-accent w-full justify-center px-0 mx-0 font-bold"
                 onClick={() => requestSort(key)}
             >
                 {label}
@@ -139,15 +152,18 @@ export function NonCraneReportTable({ data }: NonCraneReportTableProps) {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/50">
-                            {renderSortableHeader("Status", "status", "w-[100px]")}
-                            {renderSortableHeader("Tag", "tag")}
-                            {renderSortableHeader("Machine Name", "description", "min-w-[200px]")}
-                            {renderSortableHeader("Location", "location")}
-                            {renderSortableHeader("Customer Plays", "customerPlays", "text-right")}
-                            {renderSortableHeader("Staff Plays", "staffPlays", "text-right")}
-                            {renderSortableHeader("Points", "points", "text-right")}
-                            {renderSortableHeader("Est. Revenue", "revenue", "text-right")}
-                            <TableHead>Group</TableHead>
+                            {renderSortableHeader("Status", "status", "w-[80px] px-0.5")}
+                            {renderSortableHeader("Tag", "tag", "w-[50px] px-0.5")}
+                            {renderSortableHeader("Machine", "description", "min-w-[120px] px-0.5")}
+                            {renderSortableHeader("Location", "location", "w-[80px] px-0.5")}
+                            {renderSortableHeader("Plays", "customerPlays", "w-[55px] px-0.5")}
+                            {renderSortableHeader("Staff", "staffPlays", "w-[50px] px-0.5")}
+                            {renderSortableHeader("Points", "points", "w-[55px] px-0.5")}
+                            {renderSortableHeader("Total", "revenue", "w-[60px] px-0.5")}
+                            {renderSortableHeader("Cash", "cashRevenue", "w-[50px] px-0.5")}
+                            {renderSortableHeader("Bonus", "bonusRevenue", "w-[50px] px-0.5")}
+                            {renderSortableHeader("Last Sync", "lastUpdated", "w-[80px] px-0.5")}
+                            <TableHead className="w-[80px] px-0.5 text-center font-bold">Group</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -155,30 +171,40 @@ export function NonCraneReportTable({ data }: NonCraneReportTableProps) {
                             const estimatedRevenue = (item.revenue || 0).toFixed(0);
                             return (
                                 <TableRow key={item.id}>
-                                    <TableCell>
+                                    <TableCell className="px-0.5 text-center">
                                         <Badge
                                             variant="outline"
                                             className={cn(
-                                                "capitalize text-xs",
+                                                "capitalize text-[10px] px-1 py-0",
                                                 statusBadgeVariants[item.status]
                                             )}
                                         >
                                             {item.status}
                                         </Badge>
                                     </TableCell>
-                                    <TableCell className="font-mono text-xs">{item.assetTag || item.tag || '-'}</TableCell>
-                                    <TableCell>
-                                        <Link href={`/machines/${item.id}`} className="hover:underline text-primary font-medium">
+                                    <TableCell className="font-mono text-xs px-0.5 text-center">{item.assetTag || item.tag || '-'}</TableCell>
+                                    <TableCell className="px-0.5 text-center">
+                                        <Link href={`/machines/${item.id}`} className="hover:underline text-primary font-medium text-xs">
                                             {item.name}
                                         </Link>
                                     </TableCell>
-                                    <TableCell className="text-muted-foreground">{item.location}</TableCell>
-                                    <TableCell className="text-right font-medium">{item.customerPlays ?? '-'}</TableCell>
-                                    <TableCell className="text-right text-muted-foreground">{item.staffPlays ?? '-'}</TableCell>
-                                    <TableCell className="text-right font-medium text-purple-600">{(item as any).points ?? '-'}</TableCell>
-                                    <TableCell className="text-right font-medium text-green-600">${estimatedRevenue}</TableCell>
-                                    <TableCell>
-                                        <Badge variant="secondary" className="text-[10px]">
+                                    <TableCell className="text-muted-foreground text-xs px-0.5 text-center">{item.location}</TableCell>
+                                    <TableCell className="text-center font-medium text-xs px-0.5">{item.customerPlays ?? '-'}</TableCell>
+                                    <TableCell className="text-center text-muted-foreground text-xs px-0.5">{item.staffPlays ?? '-'}</TableCell>
+                                    <TableCell className="text-center font-medium text-purple-600 text-xs px-0.5">{(item as any).points ?? '-'}</TableCell>
+                                    <TableCell className="text-center font-medium text-green-600 text-xs px-0.5">${estimatedRevenue}</TableCell>
+                                    <TableCell className="text-center text-xs px-0.5 text-muted-foreground">${(item.cashRevenue || 0).toFixed(0)}</TableCell>
+                                    <TableCell className="text-center text-xs px-0.5 text-orange-600">${(item.bonusRevenue || 0).toFixed(0)}</TableCell>
+                                    <TableCell className="text-center text-[10px] px-0.5 leading-tight text-muted-foreground">
+                                        {item.lastUpdated ? (
+                                            <>
+                                                {format(new Date(item.lastUpdated), 'M/d/yy')}<br />
+                                                {format(new Date(item.lastUpdated), 'h:mm a')}
+                                            </>
+                                        ) : '-'}
+                                    </TableCell>
+                                    <TableCell className="px-0.5 text-center">
+                                        <Badge variant="secondary" className="text-[10px] px-1">
                                             {item.group || 'Unknown'}
                                         </Badge>
                                     </TableCell>

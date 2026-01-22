@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
 import {
     RefreshCw,
     Activity,
@@ -48,39 +49,46 @@ import {
     Cloud,
     CloudRain,
     Crown,
-    Dumbbell
+    Dumbbell,
+    XCircle,
+    HelpCircle,
+    Award,
+    ClipboardCheck
 } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { ArcadeMachine, ServiceReport } from "@/types";
-import { monitoringService, MachineStatus, MonitoringAlert, MonitoringReportItem } from "@/services/monitoringService";
-import { LoadingSkeleton } from "@/components/common/LoadingSkeleton";
-import Link from "next/link";
-import { format, subDays, subMonths, subYears, parseISO, isSameDay } from "date-fns";
-import { DateRange } from "react-day-picker";
-import { DatePickerWithRange } from "@/components/analytics/DateRangePicker";
-import { GlobalServiceHistoryTable } from "@/components/machines/GlobalServiceHistoryTable";
-import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
-import { MachineComparisonTable } from "@/components/machines/MachineComparisonTable";
-import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { NonCraneMachineCard } from "@/components/machines/NonCraneMachineCard";
-import { NonCraneQuickViewDialog } from "@/components/machines/NonCraneQuickViewDialog";
-import { NonCraneReportTable } from "@/components/machines/NonCraneReportTable";
-import { isCraneMachine } from "@/utils/machineTypeUtils";
-import { useData } from "@/context/DataProvider";
 import {
-    ResponsiveContainer,
     AreaChart,
     Area,
     XAxis,
     YAxis,
+    CartesianGrid,
     Tooltip as RechartsTooltip,
+    ResponsiveContainer,
     BarChart,
     Bar,
     Cell,
     LineChart,
     Line
 } from "recharts";
+import { format, subDays, subMonths, subYears, parseISO, isSameDay, startOfDay, endOfDay } from "date-fns";
+import { cn } from "@/lib/utils";
+import { ArcadeMachine, ServiceReport } from "@/types";
+import { monitoringService, MachineStatus, MonitoringAlert, MonitoringReportItem } from "@/services/monitoringService";
+import { gameReportApiService, GameReportItem } from "@/services/gameReportApiService";
+import { LoadingSkeleton } from "@/components/common/LoadingSkeleton";
+import Link from "next/link";
+import { DateRange } from "react-day-picker";
+import { DatePickerWithRange } from "@/components/analytics/DateRangePicker";
+import { GlobalServiceHistoryTable } from "@/components/machines/GlobalServiceHistoryTable";
+import { ServiceReportForm } from "@/components/machines/ServiceReportForm";
+import { MachineComparisonTable } from "@/components/machines/MachineComparisonTable";
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogHeader, DialogDescription } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { NonCraneMachineCard } from "@/components/machines/NonCraneMachineCard";
+import { NonCraneQuickViewDialog } from "@/components/machines/NonCraneQuickViewDialog";
+import { NonCraneReportTable } from "@/components/machines/NonCraneReportTable";
+import { isCraneMachine } from "@/utils/machineTypeUtils";
+import { useData } from "@/context/DataProvider";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
 
 // Custom hook for monitoring data
@@ -177,17 +185,24 @@ function MachineQuickViewDialog({
     const { getReportsByMachineTag, serviceReportsLoading } = useData();
     const [trendRange, setTrendRange] = useState<'7d' | '14d' | '30d' | '6m'>('7d');
     const [realTrendData, setRealTrendData] = useState<any[]>([]);
+    const [trendType, setTrendType] = useState<'plays' | 'revenue'>('plays');
     const [loadingTrend, setLoadingTrend] = useState(false);
     const [storeRankOpen, setStoreRankOpen] = useState(false);
     const [rankScope, setRankScope] = useState<'store' | 'location' | 'group'>('store');
     const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set(['plays', 'customer', 'staff']));
     const [hallOfFameOpen, setHallOfFameOpen] = useState(false);
+    const [hallOfFameEnabled, setHallOfFameEnabled] = useState(false);
+    const [hallOfFameRange, setHallOfFameRange] = useState<'1m' | '3m' | '6m' | '1y' | 'all' | null>(null);
+    const [loadingHallOfFame, setLoadingHallOfFame] = useState(false);
     const [contributionOpen, setContributionOpen] = useState(false);
+    const [contributionScope, setContributionScope] = useState<'store' | 'location' | 'group'>('store');
+    const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
     const [allTimeBestDays, setAllTimeBestDays] = useState<{ date: string; revenue: number }[]>([]);
     // Memoized history from global context
     const settingsHistory = useMemo(() => {
         if (!machine) return [];
-        const machineTag = String(machine.assetTag || machine.tag || '').trim();
+        const machineTag = String(machine.tag || '').trim();
         const reports = getReportsByMachineTag(machineTag);
 
         return reports
@@ -218,30 +233,46 @@ function MachineQuickViewDialog({
                 const { gameReportApiService } = await import('@/services/gameReportApiService');
                 const endDate = new Date();
                 const daysMap = { '7d': 7, '14d': 14, '30d': 30, '6m': 180 };
-                const startDate = trendRange === '6m'
-                    ? subMonths(endDate, 6)
-                    : subDays(endDate, daysMap[trendRange as keyof typeof daysMap] - 1);
+                const daysToFetch = daysMap[trendRange as keyof typeof daysMap];
 
-                const tag = Number(machine.assetTag || machine.tag);
-                if (isNaN(tag)) throw new Error("Invalid tag");
+                // For Production API compliance, we must fetch daily data to avoid aggregation
+                const dates: Date[] = [];
+                for (let i = daysToFetch - 1; i >= 0; i--) {
+                    dates.push(subDays(endDate, i));
+                }
 
-                const reports = await gameReportApiService.fetchGameReport({
-                    tag,
-                    startDate,
-                    endDate,
-                    aggregate: false
-                });
+                // Fetch all days in parallel
+                const dailyReports = await Promise.all(
+                    dates.map(date => gameReportApiService.fetchDailyReport(date, {
+                        groups: machine.group ? [machine.group] : undefined
+                    }))
+                );
 
-                // Map to trend data format
-                const mappedData = reports.map(r => {
-                    const customer = r.standardPlays || 0;
-                    const staff = r.empPlays || 0;
+                // Filter for THIS machine and map to trend format
+                const myTag = machine.tag ? String(machine.tag).trim() : null;
+                const myAssetTag = machine.assetTag ? String(machine.assetTag).trim().toLowerCase() : null;
+
+                const mappedData = dailyReports.map((daysReport, index) => {
+                    const date = dates[index];
+                    const report = daysReport.find(r => {
+                        const rTag = r.tag ? String(r.tag).trim() : null;
+                        return (myTag && rTag === myTag);
+                    });
+
+                    const customer = report?.standardPlays || 0;
+                    const staff = report?.empPlays || 0;
+                    const wins = report?.points || 0;
+
                     return {
-                        time: r.date ? format(new Date(r.date), 'MMM dd') : 'Unknown',
+                        time: format(date, 'MMM dd'),
+                        fullDate: date,
                         plays: customer + staff,
                         customer,
                         staff,
-                        revenue: r.totalRev || 0
+                        wins,
+                        revenue: report?.totalRev || 0,
+                        cashRev: report?.cashDebit || 0,
+                        bonusRev: report?.cashDebitBonus || 0
                     };
                 });
 
@@ -259,42 +290,69 @@ function MachineQuickViewDialog({
 
     // Fetch "All Time" (1 Year) data for Hall of Fame
     useEffect(() => {
-        if (!machine || !open) return;
+        if (!machine || !open || !hallOfFameEnabled || !hallOfFameRange) return;
 
         const fetchAllTime = async () => {
+            setLoadingHallOfFame(true);
             try {
                 const { gameReportApiService } = await import('@/services/gameReportApiService');
                 const endDate = new Date();
-                const startDate = subYears(endDate, 1); // "All Time" approximated to 1 year
-                const tag = Number(machine.assetTag || machine.tag);
 
-                if (isNaN(tag)) return;
+                // Calculate days to fetch based on range
+                const rangeMap = { '1m': 30, '3m': 90, '6m': 180, '1y': 365, 'all': 365 };
+                const daysToFetch = rangeMap[hallOfFameRange] || 365;
 
-                const reports = await gameReportApiService.fetchGameReport({
-                    tag,
-                    startDate,
-                    endDate,
-                    aggregate: false
-                });
+                const dates: Date[] = [];
+                for (let i = 0; i < daysToFetch; i++) {
+                    dates.push(subDays(endDate, i));
+                }
+
+                // Chunked fetching to be polite to the browser (30 days at a time)
+                const chunkSize = 30;
+                let allReports: any[] = [];
+
+                for (let i = 0; i < dates.length; i += chunkSize) {
+                    const chunk = dates.slice(i, i + chunkSize);
+                    const chunkReports = await Promise.all(
+                        chunk.map(date => gameReportApiService.fetchDailyReport(date, {
+                            groups: machine.group ? [machine.group] : undefined
+                        }))
+                    );
+                    allReports = allReports.concat(chunkReports);
+                }
+
+                // Filter for THIS machine across all days
+                const myTag = machine.tag ? String(machine.tag).trim() : null;
+                const myAssetTag = machine.assetTag ? String(machine.assetTag).trim().toLowerCase() : null;
+
+                const dailyBests = allReports.map((daysReport, index) => {
+                    const date = dates[index];
+                    const report = daysReport.find((r: any) => {
+                        const rTag = r.tag ? String(r.tag).trim() : null;
+                        return (myTag && rTag === myTag);
+                    });
+
+                    return {
+                        date: format(date, 'yyyy-MM-dd'),
+                        revenue: report?.totalRev || 0
+                    };
+                }).filter(d => d.revenue > 0);
 
                 // Find top 5 days
-                const sorted = reports
-                    .map(r => ({
-                        date: r.date || '',
-                        revenue: r.totalRev || 0
-                    }))
+                const sorted = dailyBests
                     .sort((a, b) => b.revenue - a.revenue)
-                    .filter(d => d.revenue > 0)
                     .slice(0, 5);
 
                 setAllTimeBestDays(sorted);
             } catch (err) {
                 console.warn("Failed to fetch Hall of Fame data", err);
+            } finally {
+                setLoadingHallOfFame(false);
             }
         };
 
         fetchAllTime();
-    }, [machine?.assetTag, machine?.tag, open]);
+    }, [machine?.assetTag, machine?.tag, machine?.group, open, hallOfFameEnabled, hallOfFameRange]);
 
     // Use simulated data ONLY when API fails
     const simulatedTrendData = useMemo(() => {
@@ -403,35 +461,38 @@ function MachineQuickViewDialog({
         };
     }, [allTimeBestDays]);
 
-    // 4. The Heavy Lifter (Store Contribution)
+    // 4. The Heavy Lifter (Contribution with scope support)
     const heavyLifter = useMemo(() => {
-        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors: [] }; // Using Activity as generic icon
+        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors: [], scopeLabel: 'Store', totalRev: 0, myRev: 0 };
 
-        // Calculate total store revenue (same location)
-        const storeMachines = allMachines.filter(m => m.location === machine.location);
-        const storeTotalRev = storeMachines.reduce((sum, m) => sum + (m.revenue || 0), 0);
+        // Filter machines based on scope
+        let filtered = [...allMachines];
+        let scopeLabel = 'Store';
+        if (contributionScope === 'location') {
+            filtered = allMachines.filter(m => m.location === machine.location);
+            scopeLabel = machine.location || 'Location';
+        } else if (contributionScope === 'group') {
+            filtered = allMachines.filter(m => m.group === machine.group);
+            scopeLabel = machine.group || 'Group';
+        }
 
-        if (storeTotalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors: [] };
-
+        const totalRev = filtered.reduce((sum, m) => sum + (m.revenue || 0), 0);
         const myRev = machine.revenue || 0;
-        const percent = (myRev / storeTotalRev) * 100;
+
+        if (totalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors: [], scopeLabel, totalRev, myRev };
+
+        const percent = (myRev / totalRev) * 100;
 
         // Contributors list for Dialog
-        const contributors = storeMachines.map(m => ({
+        const contributors = filtered.map(m => ({
             ...m,
-            percent: ((m.revenue || 0) / storeTotalRev) * 100
+            percent: ((m.revenue || 0) / totalRev) * 100
         })).sort((a, b) => b.percent - a.percent);
 
-        // Import icons internally if needed or assume they are available in scope. 
-        // Using generic icons for now if not imported, but earlier file content showed Trophy/Target.
-        // Assuming Activity/Target/Trophy are available.
-        // We need Dumbbell, Crown for this logic usually, but let's reuse what we have or import them.
-        // I will use Activity for now as placeholder for Dumbbell if not imported.
-
-        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', icon: Trophy, contributors };
-        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', icon: Target, contributors };
-        return { percent, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors };
-    }, [machine, allMachines]);
+        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', icon: Trophy, contributors, scopeLabel, totalRev, myRev };
+        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', icon: Target, contributors, scopeLabel, totalRev, myRev };
+        return { percent, class: 'Featherweight', color: 'text-muted-foreground', icon: Activity, contributors, scopeLabel, totalRev, myRev };
+    }, [machine, allMachines, contributionScope]);
 
     // 5. Weekend Forecast (renamed to Machine Forecast)
     const forecast = useMemo(() => {
@@ -669,6 +730,20 @@ function MachineQuickViewDialog({
                                                 </div>
                                             )}
                                         </div>
+                                        {/* Revenue Breakdown: Cash + Bonus */}
+                                        <div className="mt-2 pt-2 border-t border-blue-200/30 dark:border-blue-800/30">
+                                            <div className="flex items-center gap-1 text-[10px]">
+                                                <span className="text-blue-600/60 dark:text-blue-400/60">
+                                                    <span className="font-semibold text-blue-700 dark:text-blue-300">${(machine.cashRevenue || 0).toFixed(2)}</span>
+                                                    <span className="text-blue-500/50 mx-1">cash</span>
+                                                </span>
+                                                <span className="text-blue-400/50">+</span>
+                                                <span className="text-blue-600/60 dark:text-blue-400/60">
+                                                    <span className="font-semibold text-blue-700 dark:text-blue-300">${(machine.bonusRevenue || 0).toFixed(2)}</span>
+                                                    <span className="text-blue-500/50 mx-1">bonus</span>
+                                                </span>
+                                            </div>
+                                        </div>
                                     </div>
 
                                     <Dialog open={storeRankOpen} onOpenChange={setStoreRankOpen}>
@@ -693,66 +768,139 @@ function MachineQuickViewDialog({
                                                 </div>
                                             </div>
                                         </DialogTrigger>
-                                        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                                        <DialogContent className="max-w-md">
                                             <DialogHeader>
                                                 <DialogTitle className="flex items-center gap-2">
                                                     <Trophy className="h-5 w-5 text-amber-500" />
-                                                    Matchine Leaderboard
+                                                    Machine Leaderboard
                                                 </DialogTitle>
-                                                <DialogDescription>
-                                                    Ranking of machines by revenue. Switching view below.
+                                                <DialogDescription className="flex items-center gap-2">
+                                                    <span>Ranking by revenue</span>
+                                                    <Badge variant="secondary" className="text-[10px] font-normal">
+                                                        <Calendar className="w-3 h-3 mr-1" />
+                                                        {isToday ? 'Today' : dateRange?.from && dateRange?.to
+                                                            ? `${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd')}`
+                                                            : 'Today'}
+                                                    </Badge>
                                                 </DialogDescription>
                                             </DialogHeader>
-                                            <div className="flex gap-1 mt-4 p-1 bg-muted rounded-lg">
-                                                {(['store', 'location', 'group'] as const).map((s) => (
-                                                    <Button
-                                                        key={s}
-                                                        variant={rankScope === s ? "default" : "ghost"}
-                                                        size="sm"
-                                                        className="flex-1 h-7 text-[10px] capitalize"
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            setRankScope(s);
-                                                        }}
-                                                    >
-                                                        {s}
-                                                    </Button>
-                                                ))}
-                                            </div>
-                                            <div className="mt-4 space-y-2">
-                                                <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-1 border-b">
-                                                    <div className="col-span-1">#</div>
-                                                    <div className="col-span-5">Machine</div>
-                                                    <div className="col-span-2 text-right">Plays</div>
-                                                    <div className="col-span-1 text-right">Win</div>
-                                                    <div className="col-span-3 text-right">Revenue</div>
+                                            <div className="flex items-center justify-between gap-1 mt-4 p-1 bg-muted rounded-lg">
+                                                <div className="flex gap-1 flex-1">
+                                                    {(['store', 'location', 'group'] as const).map((s) => (
+                                                        <Button
+                                                            key={s}
+                                                            variant={rankScope === s ? "default" : "ghost"}
+                                                            size="sm"
+                                                            className="flex-1 h-7 text-[10px] capitalize"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setRankScope(s);
+                                                            }}
+                                                        >
+                                                            {s}
+                                                        </Button>
+                                                    ))}
                                                 </div>
-                                                {storeStats.list.map((m, idx) => (
-                                                    <div
-                                                        key={m.id}
-                                                        className={cn(
-                                                            "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
-                                                            m.id === machine.id ? "bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-500/30 shadow-sm" : "hover:bg-muted/50"
-                                                        )}
+                                                <div className="flex items-center gap-2 px-2 border-l border-muted-foreground/20">
+                                                    <span className="text-[9px] font-bold uppercase text-muted-foreground">Breakdown</span>
+                                                    <Switch
+                                                        checked={showRevenueBreakdown}
+                                                        onCheckedChange={setShowRevenueBreakdown}
+                                                        className="h-3 w-6 scale-75 data-[state=checked]:bg-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            <div className="relative mt-4">
+                                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="Search by name or tag..."
+                                                    className="pl-9 h-9 text-xs"
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
+                                                {searchTerm && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="absolute right-1 top-1 h-7 w-7 p-0"
+                                                        onClick={() => setSearchTerm("")}
                                                     >
-                                                        <div className="col-span-1 font-mono font-bold text-muted-foreground">
-                                                            {idx + 1}
+                                                        <XCircle className="h-3 w-3" />
+                                                        <span className="sr-only">Clear</span>
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            {/* Sticky Table Header */}
+                                            <div className="mt-4">
+                                                <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-2 border-b bg-background sticky top-0 z-10 transition-all">
+                                                    <div className="col-span-1">#</div>
+                                                    <div className={cn(showRevenueBreakdown ? "col-span-4" : "col-span-5")}>Machine</div>
+                                                    <div className={cn("text-right", showRevenueBreakdown ? "col-span-1" : "col-span-2")}>Plays</div>
+                                                    <div className="col-span-1 text-right">Win</div>
+                                                    {showRevenueBreakdown ? (
+                                                        <>
+                                                            <div className="col-span-2 text-right text-blue-500/80">Cash</div>
+                                                            <div className="col-span-3 text-right text-emerald-500/80">Bonus</div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="col-span-3 text-right">Revenue</div>
+                                                    )}
+                                                </div>
+                                                {/* Scrollable Table Body */}
+                                                <div className="max-h-[50vh] overflow-y-auto space-y-1 pt-1">
+                                                    {storeStats.list.filter(m => {
+                                                        if (!searchTerm) return true;
+                                                        const term = searchTerm.toLowerCase();
+                                                        return (
+                                                            m.name?.toLowerCase().includes(term) ||
+                                                            m.tag?.toLowerCase().includes(term) ||
+                                                            m.assetTag?.toLowerCase().includes(term) ||
+                                                            String(m.tag).includes(term) ||
+                                                            String(m.assetTag).includes(term)
+                                                        );
+                                                    }).map((m, idx) => (
+                                                        <div
+                                                            key={m.id}
+                                                            ref={m.id === machine.id ? (el) => {
+                                                                if (el && storeRankOpen) {
+                                                                    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+                                                                }
+                                                            } : undefined}
+                                                            className={cn(
+                                                                "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
+                                                                m.id === machine.id ? "bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-500/30 shadow-sm" : "hover:bg-muted/50"
+                                                            )}
+                                                        >
+                                                            <div className="col-span-1 font-mono font-bold text-muted-foreground">
+                                                                {idx + 1}
+                                                            </div>
+                                                            <div className={cn("flex flex-col min-w-0", showRevenueBreakdown ? "col-span-4" : "col-span-5")}>
+                                                                <span className="font-bold truncate">{m.name}</span>
+                                                                <span className="text-[10px] text-muted-foreground font-mono">#{m.assetTag || m.tag}</span>
+                                                            </div>
+                                                            <div className={cn("text-right font-medium", showRevenueBreakdown ? "col-span-1" : "col-span-2")}>
+                                                                {m.customerPlays || 0}
+                                                            </div>
+                                                            <div className="col-span-1 text-right text-amber-600 font-bold">
+                                                                {m.payouts || 0}
+                                                            </div>
+                                                            {showRevenueBreakdown ? (
+                                                                <>
+                                                                    <div className="col-span-2 text-right font-bold text-blue-600 dark:text-blue-400">
+                                                                        ${(m.cashRevenue || 0).toFixed(0)}
+                                                                    </div>
+                                                                    <div className="col-span-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                                                                        ${(m.bonusRevenue || 0).toFixed(0)}
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <div className="col-span-3 text-right font-bold text-blue-600 dark:text-blue-400">
+                                                                    ${(m.revenue || 0).toFixed(0)}
+                                                                </div>
+                                                            )}
                                                         </div>
-                                                        <div className="col-span-5 flex flex-col min-w-0">
-                                                            <span className="font-bold truncate">{m.name}</span>
-                                                            <span className="text-[10px] text-muted-foreground font-mono">#{m.assetTag || m.tag}</span>
-                                                        </div>
-                                                        <div className="col-span-2 text-right font-medium">
-                                                            {m.customerPlays || 0}
-                                                        </div>
-                                                        <div className="col-span-1 text-right text-amber-600 font-bold">
-                                                            {m.payouts || 0}
-                                                        </div>
-                                                        <div className="col-span-3 text-right font-bold text-blue-600 dark:text-blue-400">
-                                                            ${(m.revenue || 0).toFixed(0)}
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
                                         </DialogContent>
                                     </Dialog>
@@ -761,14 +909,61 @@ function MachineQuickViewDialog({
                                     <Dialog open={hallOfFameOpen} onOpenChange={setHallOfFameOpen}>
                                         <DialogTrigger asChild>
                                             <div className="p-3 bg-yellow-50/50 dark:bg-yellow-900/10 rounded-xl border border-yellow-100 dark:border-yellow-900/30 cursor-pointer hover:bg-yellow-100/30 transition-all group">
-                                                <div className="flex items-center gap-1.5 mb-1.5">
-                                                    <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-                                                        <Trophy className="h-3 w-3 text-yellow-600" />
+                                                <div className="flex items-center justify-between gap-1.5 mb-2">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                                                            <Trophy className="h-3 w-3 text-yellow-600" />
+                                                        </div>
+                                                        <span className="text-[10px] font-bold uppercase text-yellow-700/70">Hall of Fame</span>
                                                     </div>
-                                                    <span className="text-[10px] font-bold uppercase text-yellow-700/70">Hall of Fame</span>
+                                                    <div className="flex items-center gap-2">
+                                                        {hallOfFameEnabled && !loadingHallOfFame && (
+                                                            <span className="text-[8px] font-bold text-yellow-600/40 uppercase tabular-nums">
+                                                                {hallOfFameRange === 'all' ? 'All' : hallOfFameRange}
+                                                            </span>
+                                                        )}
+                                                        <div onClick={(e) => e.stopPropagation()}>
+                                                            <Switch
+                                                                checked={hallOfFameEnabled}
+                                                                onCheckedChange={setHallOfFameEnabled}
+                                                                className="h-3.5 w-7 scale-[0.6] data-[state=checked]:bg-yellow-500"
+                                                            />
+                                                        </div>
+                                                    </div>
                                                 </div>
+
+                                                {/* Inline Range Selector when enabled */}
+                                                {hallOfFameEnabled && (
+                                                    <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+                                                        <div className="flex p-0.5 bg-yellow-100/50 dark:bg-yellow-900/20 rounded-md border border-yellow-200/50">
+                                                            {(['1m', '3m', '6m', '1y', 'all'] as const).map((r) => (
+                                                                <button
+                                                                    key={r}
+                                                                    onClick={() => setHallOfFameRange(r)}
+                                                                    className={cn(
+                                                                        "flex-1 text-[8px] font-bold uppercase py-0.5 rounded-sm transition-all",
+                                                                        hallOfFameRange === r
+                                                                            ? "bg-yellow-500 text-white shadow-sm"
+                                                                            : "text-yellow-700/50 hover:text-yellow-700 hover:bg-yellow-500/10"
+                                                                    )}
+                                                                >
+                                                                    {r}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                )}
                                                 <div className="flex flex-col gap-0.5">
-                                                    {hallOfFame ? (
+                                                    {!hallOfFameEnabled ? (
+                                                        <span className="text-xs text-muted-foreground italic">Disabled</span>
+                                                    ) : !hallOfFameRange ? (
+                                                        <span className="text-[10px] text-yellow-600 font-medium animate-pulse">Select Range Above</span>
+                                                    ) : loadingHallOfFame ? (
+                                                        <div className="flex items-center gap-2">
+                                                            <Loader2 className="h-4 w-4 animate-spin text-yellow-600/50" />
+                                                            <span className="text-[9px] text-yellow-600/50 font-medium">Fetching...</span>
+                                                        </div>
+                                                    ) : hallOfFame ? (
                                                         <>
                                                             <span className="font-bold text-xl text-yellow-700 dark:text-yellow-400">${hallOfFame.maxRev.toFixed(0)}</span>
                                                             <span className="text-[9px] text-yellow-600/50">Top: {hallOfFame.bestDate}</span>
@@ -781,24 +976,59 @@ function MachineQuickViewDialog({
                                         </DialogTrigger>
                                         <DialogContent className="max-w-xs sm:max-w-sm">
                                             <DialogHeader>
-                                                <DialogTitle className="flex items-center gap-2">
-                                                    <Trophy className="h-5 w-5 text-amber-500" />
-                                                    Hall of Fame
+                                                <DialogTitle className="flex items-center justify-between">
+                                                    <div className="flex items-center gap-2">
+                                                        <Trophy className="h-5 w-5 text-amber-500" />
+                                                        Hall of Fame
+                                                    </div>
                                                 </DialogTitle>
                                                 <DialogDescription>
-                                                    Top 5 Highest Revenue Days (All Time).
+                                                    Top 5 Highest Revenue Days.
                                                 </DialogDescription>
                                             </DialogHeader>
-                                            <div className="space-y-2 mt-2">
-                                                {hallOfFame?.topDays.map((day, i) => (
-                                                    <div key={day.time} className={cn("flex items-center justify-between p-2 rounded-lg text-sm", i === 0 ? "bg-amber-100/50 dark:bg-amber-900/20 border border-amber-200" : "hover:bg-muted")}>
-                                                        <div className="flex items-center gap-3">
-                                                            <span className={cn("font-bold font-mono w-4", i === 0 ? "text-amber-600" : "text-muted-foreground")}>{i + 1}</span>
-                                                            <span className="font-medium">{day.time}</span>
-                                                        </div>
-                                                        <span className="font-bold text-amber-700 dark:text-amber-500">${day.revenue.toFixed(0)}</span>
-                                                    </div>
+
+                                            <div className="flex gap-1 p-1 bg-muted rounded-lg mt-2">
+                                                {(['1m', '3m', '6m', '1y', 'all'] as const).map((r) => (
+                                                    <Button
+                                                        key={r}
+                                                        variant={hallOfFameRange === r ? "default" : "ghost"}
+                                                        size="sm"
+                                                        className="flex-1 h-7 text-[10px] uppercase"
+                                                        onClick={() => setHallOfFameRange(r)}
+                                                        disabled={loadingHallOfFame}
+                                                    >
+                                                        {r === 'all' ? 'All' : r}
+                                                    </Button>
                                                 ))}
+                                            </div>
+
+                                            <div className="space-y-2 mt-4 relative min-h-[100px]">
+                                                {loadingHallOfFame ? (
+                                                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 z-10">
+                                                        <Loader2 className="h-6 w-6 animate-spin text-amber-500 mb-2" />
+                                                        <p className="text-xs text-muted-foreground">Fetching records...</p>
+                                                    </div>
+                                                ) : null}
+
+                                                {!hallOfFameEnabled ? (
+                                                    <div className="py-8 text-center bg-muted/30 rounded-lg border border-dashed">
+                                                        <p className="text-xs text-muted-foreground italic">Please enable Hall of Fame to see records</p>
+                                                    </div>
+                                                ) : hallOfFame?.topDays.length === 0 ? (
+                                                    <div className="py-8 text-center">
+                                                        <p className="text-xs text-muted-foreground italic">No revenue days found for this range</p>
+                                                    </div>
+                                                ) : (
+                                                    hallOfFame?.topDays.map((day, i) => (
+                                                        <div key={`${i}-${day.time}`} className={cn("flex items-center justify-between p-2 rounded-lg text-sm", i === 0 ? "bg-amber-100/50 dark:bg-amber-900/20 border border-amber-200" : "hover:bg-muted")}>
+                                                            <div className="flex items-center gap-3">
+                                                                <span className={cn("font-bold font-mono w-4", i === 0 ? "text-amber-600" : "text-muted-foreground")}>{i + 1}</span>
+                                                                <span className="font-medium">{day.time}</span>
+                                                            </div>
+                                                            <span className="font-bold text-amber-700 dark:text-amber-500">${day.revenue.toFixed(0)}</span>
+                                                        </div>
+                                                    ))
+                                                )}
                                             </div>
                                         </DialogContent>
                                     </Dialog>
@@ -821,42 +1051,154 @@ function MachineQuickViewDialog({
                                                 </div>
                                             </div>
                                         </DialogTrigger>
-                                        <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                                        <DialogContent className="max-w-md">
                                             <DialogHeader>
                                                 <DialogTitle className="flex items-center gap-2">
                                                     <Dumbbell className="h-5 w-5 text-slate-500" />
-                                                    Store Contribution
+                                                    Revenue Contribution
                                                 </DialogTitle>
-                                                <DialogDescription>
-                                                    Revenue contribution by machine in {machine.location} ({isToday ? 'Today' : 'Selected Period'}).
+                                                <DialogDescription className="flex items-center gap-2">
+                                                    <span>Contribution by machine</span>
+                                                    <Badge variant="secondary" className="text-[10px] font-normal">
+                                                        <Calendar className="w-3 h-3 mr-1" />
+                                                        {isToday ? 'Today' : dateRange?.from && dateRange?.to
+                                                            ? `${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd')}`
+                                                            : 'Today'}
+                                                    </Badge>
                                                 </DialogDescription>
                                             </DialogHeader>
-                                            <div className="space-y-2 mt-2">
-                                                <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-1 border-b">
+                                            <div className="flex items-center justify-between gap-1 mt-4 p-1 bg-muted rounded-lg">
+                                                <div className="flex gap-1 flex-1">
+                                                    {(['store', 'location', 'group'] as const).map((s) => (
+                                                        <Button
+                                                            key={s}
+                                                            variant={contributionScope === s ? "default" : "ghost"}
+                                                            size="sm"
+                                                            className="flex-1 h-7 text-[10px] capitalize"
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setContributionScope(s);
+                                                            }}
+                                                        >
+                                                            {s}
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                                <div className="flex items-center gap-2 px-2 border-l border-muted-foreground/20">
+                                                    <span className="text-[9px] font-bold uppercase text-muted-foreground">Breakdown</span>
+                                                    <Switch
+                                                        checked={showRevenueBreakdown}
+                                                        onCheckedChange={setShowRevenueBreakdown}
+                                                        className="h-3 w-6 scale-75 data-[state=checked]:bg-blue-500"
+                                                    />
+                                                </div>
+                                            </div>
+                                            {/* Summary Section */}
+                                            <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-slate-200 dark:border-slate-800">
+                                                <div className="grid grid-cols-3 gap-4 text-center">
+                                                    <div>
+                                                        <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">
+                                                            {contributionScope === 'store' ? 'Store' : contributionScope === 'location' ? 'Location' : 'Group'} Total
+                                                        </p>
+                                                        <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${heavyLifter.totalRev.toFixed(0)}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">This Machine</p>
+                                                        <p className="text-lg font-bold text-blue-600 dark:text-blue-400">${heavyLifter.myRev.toFixed(0)}</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">Contribution</p>
+                                                        <p className={cn("text-lg font-bold", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div className="relative mt-4">
+                                                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                                <Input
+                                                    placeholder="Search by name or tag..."
+                                                    className="pl-9 h-9 text-xs"
+                                                    value={searchTerm}
+                                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                                />
+                                                {searchTerm && (
+                                                    <Button
+                                                        variant="ghost"
+                                                        size="sm"
+                                                        className="absolute right-1 top-1 h-7 w-7 p-0"
+                                                        onClick={() => setSearchTerm("")}
+                                                    >
+                                                        <XCircle className="h-3 w-3" />
+                                                        <span className="sr-only">Clear</span>
+                                                    </Button>
+                                                )}
+                                            </div>
+                                            {/* Sticky Table Header */}
+                                            <div className="mt-4">
+                                                <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-2 border-b bg-background sticky top-0 z-10 transition-all">
                                                     <div className="col-span-1">#</div>
-                                                    <div className="col-span-8">Machine</div>
+                                                    <div className={cn(showRevenueBreakdown ? "col-span-4" : "col-span-5")}>Machine</div>
+                                                    {showRevenueBreakdown ? (
+                                                        <>
+                                                            <div className="col-span-2 text-right text-blue-500/80">Cash</div>
+                                                            <div className="col-span-2 text-right text-emerald-500/80">Bonus</div>
+                                                        </>
+                                                    ) : (
+                                                        <div className="col-span-3 text-right">Revenue</div>
+                                                    )}
                                                     <div className="col-span-3 text-right">Share</div>
                                                 </div>
-                                                {heavyLifter.contributors.map((m, idx) => (
-                                                    <div
-                                                        key={m.id}
-                                                        className={cn(
-                                                            "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
-                                                            m.id === machine.id ? "bg-slate-100 dark:bg-slate-800/40 ring-1 ring-slate-400/30" : "hover:bg-muted/50"
-                                                        )}
-                                                    >
-                                                        <div className="col-span-1 font-mono text-muted-foreground">{idx + 1}</div>
-                                                        <div className="col-span-8 flex flex-col min-w-0">
-                                                            <span className="font-bold truncate">{m.name}</span>
-                                                            <span className="text-[10px] text-muted-foreground">#{m.assetTag || m.tag}</span>
+                                                {/* Scrollable Table Body */}
+                                                <div className="max-h-[50vh] overflow-y-auto space-y-1 pt-1">
+                                                    {heavyLifter.contributors.filter(m => {
+                                                        if (!searchTerm) return true;
+                                                        const term = searchTerm.toLowerCase();
+                                                        return (
+                                                            m.name?.toLowerCase().includes(term) ||
+                                                            m.tag?.toLowerCase().includes(term) ||
+                                                            m.assetTag?.toLowerCase().includes(term) ||
+                                                            String(m.tag).includes(term) ||
+                                                            String(m.assetTag).includes(term)
+                                                        );
+                                                    }).map((m, idx) => (
+                                                        <div
+                                                            key={m.id}
+                                                            ref={m.id === machine.id ? (el) => {
+                                                                if (el && contributionOpen) {
+                                                                    setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+                                                                }
+                                                            } : undefined}
+                                                            className={cn(
+                                                                "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
+                                                                m.id === machine.id ? "bg-slate-100 dark:bg-slate-800/40 ring-1 ring-slate-400/30" : "hover:bg-muted/50"
+                                                            )}
+                                                        >
+                                                            <div className="col-span-1 font-mono text-muted-foreground">{idx + 1}</div>
+                                                            <div className={cn("flex flex-col min-w-0", showRevenueBreakdown ? "col-span-4" : "col-span-5")}>
+                                                                <span className="font-bold truncate">{m.name}</span>
+                                                                <span className="text-[10px] text-muted-foreground font-mono">#{m.assetTag || m.tag}</span>
+                                                            </div>
+                                                            {showRevenueBreakdown ? (
+                                                                <>
+                                                                    <div className="col-span-2 text-right font-bold text-blue-600 dark:text-blue-400">
+                                                                        ${(m.cashRevenue || 0).toFixed(0)}
+                                                                    </div>
+                                                                    <div className="col-span-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                                                                        ${(m.bonusRevenue || 0).toFixed(0)}
+                                                                    </div>
+                                                                </>
+                                                            ) : (
+                                                                <div className="col-span-3 text-right font-medium text-blue-600 dark:text-blue-400">
+                                                                    ${(m.revenue || 0).toFixed(0)}
+                                                                </div>
+                                                            )}
+                                                            <div className="col-span-3 text-right">
+                                                                <span className={cn("font-bold", m.id === machine.id ? heavyLifter.color : "text-slate-600 dark:text-slate-400")}>
+                                                                    {m.percent.toFixed(1)}%
+                                                                </span>
+                                                            </div>
                                                         </div>
-                                                        <div className="col-span-3 text-right">
-                                                            <span className={cn("font-bold", m.id === machine.id ? heavyLifter.color : "text-muted-foreground")}>
-                                                                {m.percent.toFixed(1)}%
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
                                         </DialogContent>
                                     </Dialog>
@@ -868,7 +1210,24 @@ function MachineQuickViewDialog({
                     {/* Chart & Control */}
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                            <h4 className="text-xs font-bold uppercase text-muted-foreground">Play Trend</h4>
+                            <div className="flex gap-1 bg-muted/50 p-0.5 rounded-lg border border-muted-foreground/10">
+                                <Button
+                                    variant={trendType === 'plays' ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className={cn("h-6 px-3 text-[10px] font-bold uppercase transition-all", trendType === 'plays' && "bg-background shadow-sm")}
+                                    onClick={() => setTrendType('plays')}
+                                >
+                                    Plays Trend
+                                </Button>
+                                <Button
+                                    variant={trendType === 'revenue' ? "secondary" : "ghost"}
+                                    size="sm"
+                                    className={cn("h-6 px-3 text-[10px] font-bold uppercase transition-all", trendType === 'revenue' && "bg-background shadow-sm")}
+                                    onClick={() => setTrendType('revenue')}
+                                >
+                                    Revenue Trend
+                                </Button>
+                            </div>
                             <div className="flex gap-1">
                                 {(['7d', '14d', '30d', '6m'] as const).map((range) => (
                                     <Button
@@ -887,32 +1246,65 @@ function MachineQuickViewDialog({
                         <div className="flex items-center gap-2 mb-4">
                             <span className="text-[10px] font-bold text-muted-foreground uppercase">Show:</span>
                             <div className="flex gap-1">
-                                {[
-                                    { id: 'plays', label: 'Total', color: 'bg-blue-500' },
-                                    { id: 'customer', label: 'Customer', color: 'bg-amber-500' },
-                                    { id: 'staff', label: 'Staff', color: 'bg-emerald-500' }
-                                ].map(field => (
-                                    <Badge
-                                        key={field.id}
-                                        variant={visibleFields.has(field.id) ? "secondary" : "outline"}
-                                        className={cn(
-                                            "cursor-pointer text-[9px] px-2 py-0 h-5 border-none",
-                                            visibleFields.has(field.id) ? "bg-muted font-bold" : "text-muted-foreground opacity-50"
-                                        )}
-                                        onClick={() => {
-                                            const next = new Set(visibleFields);
-                                            if (next.has(field.id)) {
-                                                if (next.size > 1) next.delete(field.id);
-                                            } else {
-                                                next.add(field.id);
-                                            }
-                                            setVisibleFields(next);
-                                        }}
-                                    >
-                                        <div className={cn("w-1.5 h-1.5 rounded-full mr-1.5", field.color)} />
-                                        {field.label}
-                                    </Badge>
-                                ))}
+                                {trendType === 'plays' ? (
+                                    [
+                                        { id: 'plays', label: 'Total', color: 'bg-blue-500' },
+                                        { id: 'customer', label: 'Customer', color: 'bg-amber-500' },
+                                        { id: 'staff', label: 'Staff', color: 'bg-emerald-500' },
+                                        { id: 'wins', label: 'Wins', color: 'bg-rose-500' }
+                                    ].map(field => (
+                                        <Badge
+                                            key={field.id}
+                                            variant={visibleFields.has(field.id) ? "secondary" : "outline"}
+                                            className={cn(
+                                                "cursor-pointer text-[9px] px-2 py-0 h-5 border-none",
+                                                visibleFields.has(field.id) ? "bg-muted font-bold" : "text-muted-foreground opacity-50"
+                                            )}
+                                            onClick={() => {
+                                                const next = new Set(visibleFields);
+                                                if (next.has(field.id)) {
+                                                    if (next.size > 1) next.delete(field.id);
+                                                } else {
+                                                    next.add(field.id);
+                                                }
+                                                setVisibleFields(next);
+                                            }}
+                                        >
+                                            <div className={cn("w-1.5 h-1.5 rounded-full mr-1.5", field.color)} />
+                                            {field.label}
+                                        </Badge>
+                                    ))
+                                ) : (
+                                    [
+                                        { id: 'revenue', label: 'Total Rev', color: 'bg-blue-600' },
+                                        { id: 'cashRev', label: 'Cash', color: 'bg-emerald-600' },
+                                        { id: 'bonusRev', label: 'Bonus', color: 'bg-purple-600' }
+                                    ].map(field => {
+                                        const isVisible = visibleFields.has(field.id);
+                                        return (
+                                            <Badge
+                                                key={field.id}
+                                                variant={isVisible ? "secondary" : "outline"}
+                                                className={cn(
+                                                    "cursor-pointer text-[9px] px-2 py-0 h-5 border-none",
+                                                    isVisible ? "bg-muted font-bold" : "text-muted-foreground opacity-50"
+                                                )}
+                                                onClick={() => {
+                                                    const next = new Set(visibleFields);
+                                                    if (next.has(field.id)) {
+                                                        if (next.size > 1) next.delete(field.id);
+                                                    } else {
+                                                        next.add(field.id);
+                                                    }
+                                                    setVisibleFields(next);
+                                                }}
+                                            >
+                                                <div className={cn("w-1.5 h-1.5 rounded-full mr-1.5", field.color)} />
+                                                {field.label}
+                                            </Badge>
+                                        );
+                                    })
+                                )}
                             </div>
                         </div>
                         <div className="relative h-[230px] w-full">
@@ -929,55 +1321,73 @@ function MachineQuickViewDialog({
                                             <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                                         </linearGradient>
                                         <linearGradient id="colorCustomer" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                            <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.15} />
                                             <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                                         </linearGradient>
                                         <linearGradient id="colorStaff" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.3} />
+                                            <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
                                             <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorWins" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#2563eb" stopOpacity={0.3} />
+                                            <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#059669" stopOpacity={0.2} />
+                                            <stop offset="95%" stopColor="#059669" stopOpacity={0} />
+                                        </linearGradient>
+                                        <linearGradient id="colorBonus" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.2} />
+                                            <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
                                         </linearGradient>
                                     </defs>
                                     <XAxis dataKey="time" tick={{ fontSize: 10 }} />
                                     <YAxis hide />
                                     <RechartsTooltip
                                         labelStyle={{ color: 'black' }}
-                                        contentStyle={{ borderRadius: '8px', fontSize: '12px' }}
+                                        contentStyle={{ borderRadius: '8px', fontSize: '12px', border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.1)' }}
                                         formatter={(value: number, name: string) => [
-                                            value,
-                                            name === 'plays' ? 'Total' :
+                                            trendType === 'revenue' ? `$${Number(value).toFixed(2)}` : value,
+                                            name === 'plays' ? 'Total Plays' :
                                                 name === 'customer' ? 'Customer' :
-                                                    name === 'staff' ? 'Staff' : name
+                                                    name === 'staff' ? 'Staff' :
+                                                        name === 'wins' ? 'Wins' :
+                                                            name === 'revenue' ? 'Total Rev' :
+                                                                name === 'cashRev' ? 'Cash' :
+                                                                    name === 'bonusRev' ? 'Bonus' : name
                                         ]}
                                     />
-                                    {visibleFields.has('plays') && (
-                                        <Area
-                                            type="monotone"
-                                            dataKey="plays"
-                                            stroke="#3b82f6"
-                                            fillOpacity={1}
-                                            fill="url(#colorPlays)"
-                                            name="plays"
-                                        />
-                                    )}
-                                    {visibleFields.has('customer') && (
-                                        <Area
-                                            type="monotone"
-                                            dataKey="customer"
-                                            stroke="#f59e0b"
-                                            fillOpacity={1}
-                                            fill="url(#colorCustomer)"
-                                            name="customer"
-                                        />
-                                    )}
-                                    {visibleFields.has('staff') && (
-                                        <Area
-                                            type="monotone"
-                                            dataKey="staff"
-                                            stroke="#10b981"
-                                            fillOpacity={1}
-                                            fill="url(#colorStaff)"
-                                            name="staff"
-                                        />
+                                    {trendType === 'plays' ? (
+                                        <>
+                                            {visibleFields.has('plays') && (
+                                                <Area type="monotone" dataKey="plays" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorPlays)" name="plays" />
+                                            )}
+                                            {visibleFields.has('customer') && (
+                                                <Area type="monotone" dataKey="customer" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorCustomer)" name="customer" />
+                                            )}
+                                            {visibleFields.has('staff') && (
+                                                <Area type="monotone" dataKey="staff" stroke="#10b981" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorStaff)" name="staff" />
+                                            )}
+                                            {visibleFields.has('wins') && (
+                                                <Area type="monotone" dataKey="wins" stroke="#f43f5e" strokeWidth={2} fillOpacity={1} fill="url(#colorWins)" name="wins" />
+                                            )}
+                                        </>
+                                    ) : (
+                                        <>
+                                            {visibleFields.has('revenue') && (
+                                                <Area type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} fillOpacity={1} fill="url(#colorRevenue)" name="revenue" />
+                                            )}
+                                            {visibleFields.has('cashRev') && (
+                                                <Area type="monotone" dataKey="cashRev" stroke="#059669" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorCash)" name="cashRev" />
+                                            )}
+                                            {visibleFields.has('bonusRev') && (
+                                                <Area type="monotone" dataKey="bonusRev" stroke="#7c3aed" strokeWidth={2} strokeDasharray="4 4" fillOpacity={1} fill="url(#colorBonus)" name="bonusRev" />
+                                            )}
+                                        </>
                                     )}
                                 </AreaChart>
                             </ResponsiveContainer>
@@ -1424,17 +1834,28 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
         return sortConfig.direction === 'asc' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
     };
 
-    const renderSortableHeader = (label: string, key: keyof MonitoringReportItem, className?: string) => (
-        <TableHead className={className}>
-            <Button
-                variant="ghost"
-                size="sm"
-                className="-ml-3 h-8 data-[state=open]:bg-accent"
-                onClick={() => requestSort(key)}
-            >
-                {label}
-                <SortIcon columnKey={key} />
-            </Button>
+    const renderSortableHeader = (label: string, key: keyof MonitoringReportItem, className?: string, tooltip?: string) => (
+        <TableHead className={cn("whitespace-nowrap", className)}>
+            <TooltipProvider>
+                <Tooltip>
+                    <TooltipTrigger asChild>
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            className={cn("-ml-3 h-8 data-[state=open]:bg-accent w-full px-0 mx-0 font-bold", className?.includes('justify-center') ? 'justify-center ml-0' : '')}
+                            onClick={() => requestSort(key)}
+                        >
+                            {label}
+                            <SortIcon columnKey={key} />
+                        </Button>
+                    </TooltipTrigger>
+                    {tooltip && (
+                        <TooltipContent side="top">
+                            <p className="max-w-[150px] text-center text-xs">{tooltip}</p>
+                        </TooltipContent>
+                    )}
+                </Tooltip>
+            </TooltipProvider>
         </TableHead>
     );
 
@@ -1452,24 +1873,26 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                 <Table>
                     <TableHeader>
                         <TableRow className="bg-muted/50">
-                            {renderSortableHeader("Payout Status", "payoutStatus", "w-[140px]")}
-                            {renderSortableHeader("Tag", "tag")}
-                            {renderSortableHeader("Description", "description", "min-w-[200px]")}
-                            {renderSortableHeader("Customer Plays", "customerPlays", "text-right justify-end")}
-                            {renderSortableHeader("Staff Plays", "staffPlays", "text-right justify-end")}
-                            {renderSortableHeader("Payouts", "payouts", "text-right justify-end")}
-                            {renderSortableHeader("Plays/Payout", "playsPerPayout", "text-right justify-end")}
-                            {renderSortableHeader("Target", "payoutSettings", "text-right justify-end")}
-                            {renderSortableHeader("Accuracy %", "payoutAccuracy", "text-right justify-end")}
-                            {renderSortableHeader("Revenue", "revenue", "text-right justify-end")}
-                            {renderSortableHeader("Settings Date", "settingsDate")}
-                            {renderSortableHeader("Staff Name", "staffName")}
-                            {renderSortableHeader("C1", "c1", "text-right justify-end")}
-                            {renderSortableHeader("C2", "c2", "text-right justify-end")}
-                            {renderSortableHeader("C3", "c3", "text-right justify-end")}
-                            {renderSortableHeader("C4", "c4", "text-right justify-end")}
-                            <TableHead>Image</TableHead>
-                            {renderSortableHeader("Remarks", "remarks")}
+                            {renderSortableHeader("Status", "payoutStatus", "w-[85px] px-0.5 text-center", "Payout Health Status")}
+                            {renderSortableHeader("Tag", "tag", "w-[45px] px-0.5 text-center", "Machine ID / Asset Tag")}
+                            {renderSortableHeader("Description", "description", "min-w-[120px] px-0.5 text-center", "Machine Name & Identity")}
+                            {renderSortableHeader("Plays", "customerPlays", "w-[55px] text-center justify-center px-0.5", "Recorded Customer Plays")}
+                            {renderSortableHeader("Staff", "staffPlays", "w-[45px] text-center justify-center px-0.5", "Staff / Employee Plays")}
+                            {renderSortableHeader("Wins", "payouts", "w-[45px] text-center justify-center px-0.5", "Total Merchandise Wins")}
+                            {renderSortableHeader("P/W", "playsPerPayout", "w-[45px] text-center justify-center px-0.5", "Actual Plays Per Win Ratio")}
+                            {renderSortableHeader("Tgt", "payoutSettings", "w-[40px] text-center justify-center px-0.5", "Target Plays Per Win setting")}
+                            {renderSortableHeader("C1", "c1", "w-[30px] text-center justify-center px-0.5", "Claw Phase 1 Strength")}
+                            {renderSortableHeader("C2", "c2", "w-[30px] text-center justify-center px-0.5", "Claw Phase 2 Strength")}
+                            {renderSortableHeader("C3", "c3", "w-[30px] text-center justify-center px-0.5", "Claw Phase 3 Strength")}
+                            {renderSortableHeader("C4", "c4", "w-[30px] text-center justify-center px-0.5", "Win/Drop Phase Strength")}
+                            {renderSortableHeader("Str", "strongTime", "w-[35px] text-center justify-center px-0.5", "Strong Grip Duration")}
+                            {renderSortableHeader("Wk", "weakTime", "w-[35px] text-center justify-center px-0.5", "Weak Grip Duration")}
+                            {renderSortableHeader("Acc%", "payoutAccuracy", "w-[45px] text-center justify-center px-0.5", "Payout Accuracy (Target vs Actual)")}
+                            {renderSortableHeader("Rev", "revenue", "w-[60px] text-center justify-center px-0.5", "Total Adjusted Revenue")}
+                            {renderSortableHeader("Date", "settingsDate", "w-[75px] px-0.5 text-center", "Settings Modification Date")}
+                            {renderSortableHeader("Staff", "staffName", "w-[80px] px-0.5 text-center", "Last Sync Action Performed By")}
+                            <TableHead className="w-[50px] px-0.5 text-xs text-center font-bold">Img</TableHead>
+                            {renderSortableHeader("Notes", "remarks", "min-w-[100px] px-0.5 text-center", "Sync Remarks and Notes")}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -1480,10 +1903,10 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                     item.payoutStatus === 'Very High' && "border-2 border-red-600 bg-red-50/10 animate-pulse"
                                 )}
                             >
-                                <TableCell>
+                                <TableCell className="px-1 text-center">
                                     <Badge
                                         className={cn(
-                                            "w-full justify-center text-white",
+                                            "w-full justify-center text-[10px] px-1 py-0 h-5 text-white",
                                             item.payoutStatus === 'Very High' && "bg-red-700 hover:bg-red-800 border-red-800",
                                             item.payoutStatus === 'High' && "bg-red-400 hover:bg-red-500 border-red-500",
                                             item.payoutStatus === 'OK' && "bg-green-500 hover:bg-green-600 border-green-600",
@@ -1494,45 +1917,53 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                         {item.payoutStatus}
                                     </Badge>
                                 </TableCell>
-                                <TableCell className="font-mono text-xs">{item.tag}</TableCell>
-                                <TableCell>
-                                    <Link href={`/machines/${item.machineId}`} className="hover:underline text-primary font-medium">
+                                <TableCell className="font-mono text-[10px] px-1 text-center">{item.tag}</TableCell>
+                                <TableCell className="px-1 text-center">
+                                    <Link href={`/machines/${item.machineId}`} className="hover:underline text-primary font-medium text-xs">
                                         {item.description}
                                     </Link>
                                 </TableCell>
-                                <TableCell className="text-right">{item.customerPlays}</TableCell>
-                                <TableCell className="text-right">{item.staffPlays}</TableCell>
-                                <TableCell className="text-right">{item.payouts}</TableCell>
-                                <TableCell className="text-right font-medium">{item.playsPerPayout}</TableCell>
-                                <TableCell className="text-right text-muted-foreground">{item.payoutSettings}</TableCell>
-                                <TableCell className="text-right font-medium">
-                                    {item.payoutAccuracy > 0 ? (
+                                <TableCell className="text-center text-xs px-1">{item.customerPlays}</TableCell>
+                                <TableCell className="text-center text-xs px-1">{item.staffPlays}</TableCell>
+                                <TableCell className="text-center text-xs px-1">{item.payouts}</TableCell>
+                                <TableCell className="text-center font-medium text-xs px-1">{item.playsPerPayout}</TableCell>
+                                <TableCell className="text-center text-muted-foreground text-xs px-1">{item.payoutSettings}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{item.c1}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{item.c2}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{item.c3}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{item.c4}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{item.strongTime !== undefined && !isNaN(item.strongTime) ? item.strongTime : '-'}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{item.weakTime !== undefined && !isNaN(item.weakTime) ? item.weakTime : '-'}</TableCell>
+                                <TableCell className="text-center font-medium text-[10px] px-1">
+                                    {item.payoutSettings > 0 ? (
                                         <span className={cn(
-                                            item.payoutAccuracy > 100 ? "text-red-500" : "text-green-500"
+                                            item.payoutAccuracy > 100 ? "text-red-500" : (item.payoutAccuracy < 50 ? "text-orange-500" : "text-green-500")
                                         )}>
                                             {item.payoutAccuracy}%
                                         </span>
                                     ) : (
-                                        <span className="text-muted-foreground text-xs">N/A</span>
+                                        <span className="text-muted-foreground text-[10px]">N/A</span>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-right font-bold text-green-600">
+                                <TableCell className="text-center font-bold text-green-600 text-xs px-1">
                                     ${(item.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                 </TableCell>
-                                <TableCell className="text-xs text-muted-foreground">
-                                    {format(item.settingsDate, 'M/d/yyyy')}<br />
-                                    {format(item.settingsDate, 'h:mm:ss a')}
+                                <TableCell className="text-[10px] text-muted-foreground px-1 leading-tight text-center">
+                                    {format(item.settingsDate, 'M/d/yy')}<br />
+                                    {format(item.settingsDate, 'h:mm a')}
                                 </TableCell>
-                                <TableCell className="text-xs">{item.staffName}</TableCell>
-                                <TableCell className="text-right text-xs">{item.c1}</TableCell>
-                                <TableCell className="text-right text-xs">{item.c2}</TableCell>
-                                <TableCell className="text-right text-xs">{item.c3}</TableCell>
-                                <TableCell className="text-right text-xs">{item.c4}</TableCell>
-                                <TableCell>
+                                <TableCell className="text-[10px] px-1 text-center">{item.staffName}</TableCell>
+                                <TableCell className="px-1 text-center">
                                     {item.imageUrl ? (
                                         <Dialog>
                                             <DialogTrigger asChild>
-                                                <span className="text-xs text-blue-500 cursor-pointer hover:underline">Show Image</span>
+                                                <div className="flex justify-center">
+                                                    <img
+                                                        src={getThumbnailUrl(item.imageUrl, 100)}
+                                                        alt="Machine"
+                                                        className="h-8 w-8 object-cover rounded border border-muted-foreground/20 cursor-pointer hover:opacity-80 transition-opacity"
+                                                    />
+                                                </div>
                                             </DialogTrigger>
                                             <DialogContent className="max-w-3xl w-full p-0 overflow-hidden bg-transparent border-none shadow-none">
                                                 <VisuallyHidden>
@@ -1550,10 +1981,10 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                             </DialogContent>
                                         </Dialog>
                                     ) : (
-                                        <span className="text-xs text-muted-foreground italic">No image</span>
+                                        <span className="text-[10px] text-muted-foreground italic text-center">No image</span>
                                     )}
                                 </TableCell>
-                                <TableCell className="text-xs text-muted-foreground">{item.remarks}</TableCell>
+                                <TableCell className="text-[10px] text-muted-foreground px-1 truncate max-w-[100px] text-center">{item.remarks}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -1614,35 +2045,52 @@ function StatDetailDialog({
     onClose: () => void;
 }) {
     if (!type) return null;
+    const [attentionTab, setAttentionTab] = useState<'high' | 'low'>('high');
 
     const titles = {
         revenue: "Estimated Revenue Drill-down",
         activity: "Activity Leaderboard",
-        accuracy: "Payout Accuracy Overview",
+        accuracy: "Claw Payout Attention",
         uptime: "Network Health Details"
     };
 
     const sortedData = useMemo(() => {
-        const list = [...machines];
+        let list = [...machines];
+
         if (type === 'revenue' || type === 'activity') {
             return list.sort((a, b) => (b.customerPlays || 0) - (a.customerPlays || 0));
         }
+
         if (type === 'accuracy') {
-            return list.filter(m => m.payoutStatus !== 'OK').sort((a, b) => {
-                const statusOrder = { 'Very High': 5, 'Very Low': 4, 'High': 3, 'Low': 2, 'N/A': 1, 'OK': 0 };
-                return (statusOrder[b.payoutStatus as keyof typeof statusOrder] || 0) - (statusOrder[a.payoutStatus as keyof typeof statusOrder] || 0);
+            // Filter only Claw Machines
+            list = list.filter(m => {
+                const group = m.group?.toLowerCase() || '';
+                const type = m.type?.toLowerCase() || '';
+                return group.includes('crane') || group.includes('group 4') || type.includes('crane') || isCraneMachine(m as any);
             });
+
+            // Filter by selected attention tab
+            if (attentionTab === 'high') {
+                list = list.filter(m => m.payoutStatus === 'Very High' || m.payoutStatus === 'High');
+                return list.sort((a, b) => (b.payoutAccuracy || 0) - (a.payoutAccuracy || 0));
+            } else {
+                list = list.filter(m => m.payoutStatus === 'Very Low' || m.payoutStatus === 'Low');
+                return list.sort((a, b) => (a.payoutAccuracy || 0) - (b.payoutAccuracy || 0));
+            }
         }
+
         if (type === 'uptime') {
             return list.filter(m => m.status !== 'online');
         }
         return list;
-    }, [machines, type]);
+    }, [machines, type, attentionTab]);
 
     const chartData = useMemo(() => {
-        return sortedData.slice(0, 8).map(m => ({
-            name: m.name.substring(0, 10),
-            value: type === 'revenue' ? (m.revenue || 0) : (m.customerPlays || 0)
+        return sortedData.slice(0, 10).map(m => ({
+            name: m.name.substring(0, 12),
+            value: type === 'revenue' ? (m.revenue || 0) :
+                type === 'accuracy' ? (m.payoutAccuracy || 0) :
+                    (m.customerPlays || 0)
         }));
     }, [sortedData, type]);
 
@@ -1652,9 +2100,25 @@ function StatDetailDialog({
                 <DialogHeader>
                     <DialogTitle>{titles[type]}</DialogTitle>
                     <DialogDescription>
-                        Breakdown of the top metrics and status alerts for the current period.
+                        {type === 'accuracy'
+                            ? "Analyzing payout deviations for Claw/Crane machines only."
+                            : "Breakdown of the top metrics and status alerts for the current period."
+                        }
                     </DialogDescription>
                 </DialogHeader>
+
+                {type === 'accuracy' && (
+                    <Tabs value={attentionTab} onValueChange={(v: any) => setAttentionTab(v)} className="mt-4">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="high" className="text-xs">
+                                High Payout Alerts (Very High + High)
+                            </TabsTrigger>
+                            <TabsTrigger value="low" className="text-xs">
+                                Low Payout Alerts (Very Low + Low)
+                            </TabsTrigger>
+                        </TabsList>
+                    </Tabs>
+                )}
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-4">
                     {/* List Section */}
@@ -1666,31 +2130,48 @@ function StatDetailDialog({
                                     <TableRow>
                                         <TableHead className="text-xs">Machine</TableHead>
                                         <TableHead className="text-xs text-right">
-                                            {type === 'revenue' ? 'Revenue' : (type === 'accuracy' ? 'Status' : 'Plays')}
+                                            {type === 'revenue' ? 'Revenue' : (type === 'accuracy' ? 'Accuracy' : 'Plays')}
                                         </TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
-                                    {sortedData.slice(0, 10).map((m) => (
+                                    {sortedData.slice(0, 15).map((m) => (
                                         <TableRow key={m.id}>
                                             <TableCell className="py-2">
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-xs">{m.name}</span>
-                                                    <span className="text-[10px] text-muted-foreground">{m.location}</span>
+                                                <div className="flex items-center gap-2">
+                                                    {(m as any).imageUrl && (
+                                                        <img
+                                                            src={getThumbnailUrl((m as any).imageUrl, 80)}
+                                                            alt="Machine"
+                                                            className="w-6 h-6 rounded object-cover border border-muted-foreground/10"
+                                                        />
+                                                    )}
+                                                    <div className="flex flex-col min-w-0">
+                                                        <span className="font-medium text-[11px] truncate">{m.name}</span>
+                                                        <span className="text-[9px] text-muted-foreground">{m.location}</span>
+                                                    </div>
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right py-2">
                                                 {type === 'revenue' && <span className="font-mono text-xs">${(m.revenue || 0).toFixed(0)}</span>}
                                                 {type === 'activity' && <span className="font-mono text-xs">{m.customerPlays}</span>}
                                                 {type === 'accuracy' && (
-                                                    <Badge variant="outline" className={cn(
-                                                        "text-[10px] h-4",
-                                                        m.payoutStatus === 'Very High' ? "bg-red-500 text-white border-none" :
-                                                            (m.payoutStatus === 'Very Low' ? "bg-orange-600 text-white border-none" :
-                                                                (m.payoutStatus === 'N/A' ? "bg-muted text-muted-foreground border-none" : "bg-muted"))
-                                                    )}>
-                                                        {m.payoutStatus}
-                                                    </Badge>
+                                                    <div className="flex flex-col items-end gap-0.5">
+                                                        <span className={cn(
+                                                            "font-mono text-[11px] font-bold",
+                                                            (m.payoutAccuracy || 0) > 100 ? "text-red-500" : "text-green-600"
+                                                        )}>
+                                                            {m.payoutAccuracy !== undefined && !isNaN(m.payoutAccuracy) ? `${m.payoutAccuracy}%` : 'N/A'}
+                                                        </span>
+                                                        <Badge variant="outline" className={cn(
+                                                            "text-[8px] h-3 px-1 leading-none border-none",
+                                                            m.payoutStatus === 'Very High' ? "bg-red-500 text-white" :
+                                                                (m.payoutStatus === 'Very Low' ? "bg-orange-600 text-white" :
+                                                                    (m.payoutStatus === 'N/A' ? "bg-muted text-muted-foreground" : "bg-muted"))
+                                                        )}>
+                                                            {m.payoutStatus}
+                                                        </Badge>
+                                                    </div>
                                                 )}
                                                 {type === 'uptime' && (
                                                     <Badge variant="destructive" className="text-[10px] h-4 capitalize">
@@ -1709,15 +2190,27 @@ function StatDetailDialog({
                     <div className="space-y-4">
                         <h4 className="text-sm font-bold uppercase text-muted-foreground">Visualization</h4>
                         <div className="h-[250px] w-full bg-muted/10 rounded-lg border p-4">
-                            {(type === 'revenue' || type === 'activity') ? (
+                            {(type === 'revenue' || type === 'activity' || type === 'accuracy') ? (
                                 <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={chartData} layout="vertical">
-                                        <XAxis type="number" hide />
-                                        <YAxis dataKey="name" type="category" width={80} fontSize={10} tickLine={false} axisLine={false} />
-                                        <RechartsTooltip cursor={{ fill: 'transparent' }} />
-                                        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                                    <BarChart data={chartData}>
+                                        <XAxis dataKey="name" hide />
+                                        <YAxis hide />
+                                        <RechartsTooltip
+                                            content={({ active, payload }) => {
+                                                if (active && payload && payload.length) {
+                                                    return (
+                                                        <div className="bg-white border shadow-sm rounded p-1 text-[10px]">
+                                                            <p className="font-bold">{payload[0].payload.name}</p>
+                                                            <p>{type === 'revenue' ? '$' : ''}{payload[0].value?.toLocaleString()}{type === 'accuracy' ? '%' : ''}</p>
+                                                        </div>
+                                                    );
+                                                }
+                                                return null;
+                                            }}
+                                        />
+                                        <Bar dataKey="value" radius={[2, 2, 0, 0]}>
                                             {chartData.map((entry, index) => (
-                                                <Cell key={`cell-${index}`} fill={type === 'revenue' ? '#22c55e' : '#3b82f6'} fillOpacity={0.8 - (index * 0.1)} />
+                                                <Cell key={`cell-${index}`} fill={type === 'revenue' ? '#22c55e' : (type === 'accuracy' ? (entry.value > 100 ? '#ef4444' : '#22c55e') : '#3b82f6')} />
                                             ))}
                                         </Bar>
                                     </BarChart>
@@ -1769,25 +2262,108 @@ export default function MonitoringPage() {
 
     const [sortOption, setSortOption] = useState<string>("default");
 
-    // Report specific state (mock data for now)
+    // Report specific state
     const [reportData, setReportData] = useState<MonitoringReportItem[]>([]);
+    const [yesterdayData, setYesterdayData] = useState<MonitoringReportItem[]>([]);
+
+    // Trends chart state
+    const [selectedTrendsFields, setSelectedTrendsFields] = useState<string[]>(['totalPlays', 'totalRevenue']);
+    const [trendChartData, setTrendChartData] = useState<{
+        name: string;
+        totalPlays: number;
+        revenue: number;
+        cashRevenue: number;
+        bonusRevenue: number;
+        staff: number;
+        payout: number;
+    }[]>([]);
+    const [trendLoading, setTrendLoading] = useState(false);
 
     // Aggregated stats from report data
     const stats = useMemo(() => {
         const totalPlays = reportData.reduce((acc, curr) => acc + (curr.customerPlays || 0), 0);
+        const staffPlays = reportData.reduce((acc, curr) => acc + (curr.staffPlays || 0), 0);
         const totalRevenue = reportData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
-        const criticalCount = reportData.filter(r => r.payoutStatus === 'Very High' || r.payoutStatus === 'Very Low').length;
+        const cashRevenue = reportData.reduce((acc, curr) => acc + (curr.cashRevenue || 0), 0);
+        const bonusRevenue = reportData.reduce((acc, curr) => acc + (curr.bonusRevenue || 0), 0);
+        const totalPayouts = reportData.reduce((acc, curr) => acc + (curr.payouts || 0), 0);
+
+        // Filter claw machines for attention alerts (Group 4 / Crane)
+        const clawMachines = reportData.filter(r => {
+            const machine = machines.find(m => m.id === r.machineId);
+            return machine?.group?.toLowerCase().includes('crane') ||
+                machine?.group?.includes('Group 4') ||
+                machine?.type?.toLowerCase().includes('crane');
+        });
+
+        // Count by payout status for claw machines only
+        const veryHighCount = clawMachines.filter(r => r.payoutStatus === 'Very High').length;
+        const highCount = clawMachines.filter(r => r.payoutStatus === 'High').length;
+        const veryLowCount = clawMachines.filter(r => r.payoutStatus === 'Very Low').length;
+        const lowCount = clawMachines.filter(r => r.payoutStatus === 'Low').length;
+        const criticalCount = veryHighCount + highCount + veryLowCount + lowCount;
+
+        const activeMachines = reportData.filter(r => (r.customerPlays || 0) > 0).length;
+        const avgRevenuePerUnit = activeMachines > 0 ? totalRevenue / activeMachines : 0;
         const avgAccuracy = reportData.length > 0
             ? Math.round(reportData.reduce((acc, curr) => acc + (curr.payoutAccuracy || 0), 0) / reportData.length)
             : 0;
 
-        return { totalPlays, totalRevenue, criticalCount, avgAccuracy };
-    }, [reportData]);
+        // Yesterday comparison for momentum
+        const yesterdayRevenue = yesterdayData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
+        const revenueMomentum = yesterdayRevenue > 0
+            ? Math.round(((totalRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
+            : 0;
+
+        return {
+            totalPlays, staffPlays, totalRevenue, cashRevenue, bonusRevenue, totalPayouts,
+            criticalCount, veryHighCount, highCount, veryLowCount, lowCount,
+            activeMachines, avgRevenuePerUnit, avgAccuracy,
+            yesterdayRevenue, revenueMomentum
+        };
+    }, [reportData, yesterdayData, machines]);
+
+
+
+    const getFieldColor = (field: string) => {
+        switch (field) {
+            case 'totalPlays': return '#8b5cf6'; // Purple
+            case 'standardPlays': return '#3b82f6'; // Blue
+            case 'staffPlays': return '#10b981'; // Green
+            case 'totalRevenue': return '#f59e0b'; // Amber
+            case 'cashRevenue': return '#059669'; // Emerald
+            case 'bonusRevenue': return '#7c3aed'; // Violet
+            case 'payouts': return '#f43f5e'; // Rose
+            default: return '#a855f7';
+        }
+    };
+
+    const getFieldLabel = (field: string) => {
+        switch (field) {
+            case 'totalPlays': return 'Total Plays';
+            case 'standardPlays': return 'Customer Plays';
+            case 'staffPlays': return 'Staff Plays';
+            case 'totalRevenue': return 'Total Revenue';
+            case 'cashRevenue': return 'Cash Revenue';
+            case 'bonusRevenue': return 'Bonus Revenue';
+            case 'payouts': return 'Total Payouts';
+            default: return field;
+        }
+    };
 
     useEffect(() => {
         const fetchReport = async () => {
+            // Fetch current date range data
             const data = await monitoringService.fetchMonitoringReport(dateRange?.from || new Date(), dateRange?.to || new Date());
             setReportData(data);
+
+            // Fetch yesterday's data for momentum comparison
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            const yesterdayStart = new Date(yesterday.setHours(0, 0, 0, 0));
+            const yesterdayEnd = new Date(yesterday.setHours(23, 59, 59, 999));
+            const yData = await monitoringService.fetchMonitoringReport(yesterdayStart, yesterdayEnd);
+            setYesterdayData(yData);
         };
         fetchReport();
     }, [dateRange]);
@@ -1811,7 +2387,7 @@ export default function MonitoringPage() {
     const filteredMachines = useMemo(() => {
         return mergedMachines.filter(machine => {
             const name = machine.name?.toLowerCase() || "";
-            const tag = machine.assetTag?.toLowerCase() || machine.tag?.toLowerCase() || "";
+            const tag = String(machine.tag || "").toLowerCase();
             const staff = machine.staffName?.toLowerCase() || "";
             const remarks = machine.remarks?.toLowerCase() || "";
             const payoutStatus = machine.payoutStatus?.toLowerCase() || "";
@@ -1830,6 +2406,34 @@ export default function MonitoringPage() {
             return matchesSearch && matchesLocation && matchesPayoutStatus && matchesStatus;
         });
     }, [mergedMachines, searchQuery, locationFilter, payoutStatusFilter, statusFilter]);
+
+    // Fetch filtered trend chart data with debounce
+    useEffect(() => {
+        const currentTags = filteredMachines.map(m => String(m.tag));
+
+        const timer = setTimeout(async () => {
+            setTrendLoading(true);
+            try {
+                const data = await monitoringService.fetchDailyTrend(7, currentTags);
+                const chartData = data.map(d => ({
+                    name: d.name,
+                    totalPlays: d.totalPlays,
+                    revenue: d.revenue,
+                    cashRevenue: d.cashRevenue,
+                    bonusRevenue: d.bonusRevenue,
+                    staff: d.staffPlays,
+                    payout: d.payouts,
+                }));
+                setTrendChartData(chartData);
+            } catch (err) {
+                console.error('[MonitoringPage] Failed to fetch trend data:', err);
+            } finally {
+                setTrendLoading(false);
+            }
+        }, 500);
+
+        return () => clearTimeout(timer);
+    }, [filteredMachines]);
 
     const sortedMachines = useMemo(() => {
         const sorted = [...filteredMachines];
@@ -1955,17 +2559,44 @@ export default function MonitoringPage() {
                     onClick={() => setActiveStatDetail('revenue')}
                 >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Estimated Revenue</CardTitle>
+                        <div className="flex items-center gap-1.5">
+                            <CardTitle className="text-sm font-medium">Estimated Revenue</CardTitle>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-[280px]">
+                                        <p className="text-xs"><strong>How it's calculated:</strong> Sum of totalRev from Game Report API. Compared with yesterday's same timeframe.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                         <DollarSign className="h-4 w-4 text-green-500" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">
-                            ${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                        <div className="flex items-baseline gap-2">
+                            <div className="text-2xl font-bold">
+                                ${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                            </div>
+                            {stats.revenueMomentum !== 0 && (
+                                <div className={cn(
+                                    "flex items-center text-xs font-bold",
+                                    stats.revenueMomentum > 0 ? "text-emerald-600" : "text-rose-600"
+                                )}>
+                                    {stats.revenueMomentum > 0 ? <ArrowUp className="h-3 w-3 mr-0.5" /> : <ArrowDown className="h-3 w-3 mr-0.5" />}
+                                    {Math.abs(stats.revenueMomentum)}%
+                                </div>
+                            )}
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            Avg <span className="font-medium">${(stats.totalRevenue / Math.max(1, machines.length)).toFixed(1)}</span> / unit
-                            <span className="text-[10px] ml-2 text-blue-500 font-medium">Click to show details</span>
-                        </p>
+                        <div className="flex flex-col gap-0.5 mt-1">
+                            <p className="text-[10px] text-muted-foreground">
+                                vs ${stats.yesterdayRevenue.toLocaleString()} (yest)
+                            </p>
+                            <p className="text-[10px] text-muted-foreground">
+                                <span className="text-green-600 font-medium">${stats.cashRevenue.toLocaleString()}</span> cash + <span className="text-blue-600 font-medium">${stats.bonusRevenue.toLocaleString()}</span> bonus
+                            </p>
+                        </div>
                     </CardContent>
                 </Card>
 
@@ -1974,7 +2605,19 @@ export default function MonitoringPage() {
                     onClick={() => setActiveStatDetail('activity')}
                 >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Customer Activity</CardTitle>
+                        <div className="flex items-center gap-1.5">
+                            <CardTitle className="text-sm font-medium">Customer Activity</CardTitle>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-[280px]">
+                                        <p className="text-xs"><strong>How it's calculated:</strong> Sum of standardPlays (customer plays) from the Game Report API. Staff plays are excluded.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </div>
                         <PlayCircle className="h-4 w-4 text-blue-500" />
                     </CardHeader>
                     <CardContent>
@@ -1982,42 +2625,196 @@ export default function MonitoringPage() {
                             {stats.totalPlays.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">Plays</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            <span className="font-medium">{Math.round(stats.totalPlays / Math.max(1, machines.length))}</span> sessions / unit
-                            <span className="text-[10px] ml-2 text-blue-500 font-medium">Click to show details</span>
+                            <span className="font-medium">{Math.round(stats.totalPlays / Math.max(1, machines.length))}</span> avg per machine
                         </p>
                     </CardContent>
                 </Card>
 
+                <Card className="shadow-sm border-l-4 border-l-purple-500 overflow-hidden flex flex-col">
+                    <CardHeader className="flex flex-col space-y-2 pb-1 pt-3 px-3">
+                        <div className="flex items-center justify-between w-full">
+                            <span className="text-[10px] font-bold uppercase text-muted-foreground flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                Last 7 Days
+                            </span>
+                            <FileBarChart className="h-3.5 w-3.5 text-purple-500" />
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                            {[
+                                { id: 'totalPlays', label: 'Plays' },
+                                { id: 'totalRevenue', label: 'Rev' },
+                                { id: 'cashRevenue', label: 'Cash' },
+                                { id: 'bonusRevenue', label: 'Bonus' },
+                                { id: 'payouts', label: 'Wins' }
+                            ].map(field => (
+                                <TooltipProvider key={field.id}>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Badge
+                                                variant={selectedTrendsFields.includes(field.id) ? "secondary" : "outline"}
+                                                className={cn(
+                                                    "cursor-pointer text-[9px] px-1.5 py-0 h-4 border-none transition-all",
+                                                    selectedTrendsFields.includes(field.id)
+                                                        ? "bg-purple-100 text-purple-700 font-bold"
+                                                        : "text-muted-foreground opacity-50 hover:opacity-100"
+                                                )}
+                                                onClick={() => {
+                                                    if (selectedTrendsFields.includes(field.id)) {
+                                                        if (selectedTrendsFields.length > 1) {
+                                                            setSelectedTrendsFields(selectedTrendsFields.filter(f => f !== field.id));
+                                                        }
+                                                    } else {
+                                                        setSelectedTrendsFields([...selectedTrendsFields, field.id]);
+                                                    }
+                                                }}
+                                            >
+                                                <div
+                                                    className="w-1.5 h-1.5 rounded-full mr-1"
+                                                    style={{ backgroundColor: getFieldColor(field.id) }}
+                                                />
+                                                {field.label}
+                                            </Badge>
+                                        </TooltipTrigger>
+                                        {field.id === 'payouts' && (
+                                            <TooltipContent className="text-[10px] max-w-[150px]">
+                                                Wins/Payout tracking is highly relevant for Claw/Crane machines (Group 4).
+                                            </TooltipContent>
+                                        )}
+                                    </Tooltip>
+                                </TooltipProvider>
+                            ))}
+                        </div>
+                    </CardHeader>
+                    <CardContent className="p-0 flex-1 min-h-[100px] mt-2 relative">
+                        {trendLoading && (
+                            <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10 rounded">
+                                <Loader2 className="h-5 w-5 animate-spin text-purple-500" />
+                            </div>
+                        )}
+                        <ResponsiveContainer width="100%" height="100%">
+                            <LineChart data={trendChartData} margin={{ top: 5, right: 10, left: 10, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} strokeOpacity={0.1} />
+                                <XAxis dataKey="name" hide />
+                                <YAxis hide domain={['auto', 'auto']} />
+                                <RechartsTooltip
+                                    content={({ active, payload }) => {
+                                        if (active && payload && payload.length) {
+                                            return (
+                                                <div className="bg-white/95 backdrop-blur-sm border shadow-xl rounded-lg p-2 text-[10px] min-w-[100px]">
+                                                    <p className="font-bold border-b pb-1 mb-1">{payload[0].payload.name}</p>
+                                                    {payload.map((entry: any) => (
+                                                        <div key={entry.dataKey} className="flex justify-between items-center gap-4 py-0.5">
+                                                            <span className="flex items-center gap-1">
+                                                                <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: entry.color }} />
+                                                                {getFieldLabel(entry.dataKey)}:
+                                                            </span>
+                                                            <span className="font-bold">
+                                                                {(entry.dataKey === 'totalRevenue' || entry.dataKey === 'cashRevenue' || entry.dataKey === 'bonusRevenue') ? '$' : ''}{entry.value?.toLocaleString()}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            );
+                                        }
+                                        return null;
+                                    }}
+                                />
+                                {selectedTrendsFields.includes('totalPlays') && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="totalPlays"
+                                        name="totalPlays"
+                                        stroke={getFieldColor('totalPlays')}
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={{ r: 4, strokeWidth: 0 }}
+                                    />
+                                )}
+                                {selectedTrendsFields.includes('totalRevenue') && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="revenue"
+                                        name="totalRevenue"
+                                        stroke={getFieldColor('totalRevenue')}
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={{ r: 4, strokeWidth: 0 }}
+                                    />
+                                )}
+                                {selectedTrendsFields.includes('cashRevenue') && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="cashRevenue"
+                                        name="cashRevenue"
+                                        stroke={getFieldColor('cashRevenue')}
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={{ r: 4, strokeWidth: 0 }}
+                                    />
+                                )}
+                                {selectedTrendsFields.includes('bonusRevenue') && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="bonusRevenue"
+                                        name="bonusRevenue"
+                                        stroke={getFieldColor('bonusRevenue')}
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={{ r: 4, strokeWidth: 0 }}
+                                    />
+                                )}
+                                {selectedTrendsFields.includes('payouts') && (
+                                    <Line
+                                        type="monotone"
+                                        dataKey="payout"
+                                        name="payouts"
+                                        stroke={getFieldColor('payouts')}
+                                        strokeWidth={2}
+                                        dot={false}
+                                        activeDot={{ r: 4, strokeWidth: 0 }}
+                                    />
+                                )}
+                            </LineChart>
+                        </ResponsiveContainer>
+                    </CardContent>
+                </Card>
+
                 <Card
-                    className="shadow-sm border-l-4 border-l-yellow-500 cursor-pointer hover:shadow-md transition-all active:scale-95"
+                    className="shadow-sm border-l-4 border-l-orange-500 cursor-pointer hover:shadow-md transition-all active:scale-95"
                     onClick={() => setActiveStatDetail('accuracy')}
                 >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Payout Accuracy</CardTitle>
-                        <Target className="h-4 w-4 text-yellow-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">{stats.avgAccuracy}%</div>
-                        <p className="text-xs text-muted-foreground mt-1 text-orange-600 font-medium">
-                            {stats.criticalCount} machines need attention
-                        </p>
-                    </CardContent>
-                </Card>
-
-                <Card
-                    className="shadow-sm border-l-4 border-l-purple-500 cursor-pointer hover:shadow-md transition-all active:scale-95"
-                    onClick={() => setActiveStatDetail('uptime')}
-                >
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">Network Uptime</CardTitle>
-                        <Wifi className="h-4 w-4 text-purple-500" />
-                    </CardHeader>
-                    <CardContent>
-                        <div className="text-2xl font-bold">
-                            {((onlineCount / Math.max(1, machines.length)) * 100).toFixed(1)}%
+                        <div className="flex items-center gap-1.5">
+                            <CardTitle className="text-sm font-medium">Claw Attention</CardTitle>
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                                    </TooltipTrigger>
+                                    <TooltipContent side="top" className="max-w-[280px]">
+                                        <p className="text-xs"><strong>Alert Scope:</strong> Showing Claw/Crane machines only based on payout status.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
                         </div>
-                        <p className="text-xs text-muted-foreground mt-1">
-                            <span className="font-medium text-green-600">{onlineCount}</span> live, <span className="font-medium text-red-600">{offlineCount}</span> down
+                        <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    </CardHeader>
+                    <CardContent>
+                        <div className="flex items-center justify-between">
+                            <div className="text-2xl font-bold">
+                                {stats.criticalCount}
+                            </div>
+                            <div className="flex flex-col items-end gap-1">
+                                <Badge variant="outline" className="text-[9px] h-4 bg-rose-50 border-rose-200 text-rose-600 px-1">
+                                    {stats.veryHighCount + stats.highCount} High
+                                </Badge>
+                                <Badge variant="outline" className="text-[9px] h-4 bg-orange-50 border-orange-200 text-orange-600 px-1">
+                                    {stats.veryLowCount + stats.lowCount} Low
+                                </Badge>
+                            </div>
+                        </div>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                            Review payout settings
                         </p>
                     </CardContent>
                 </Card>

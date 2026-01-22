@@ -4,8 +4,10 @@ import { useState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
-import { View, TrendingUp, DollarSign, Target, ChevronRight, Trophy, Info, Crown, Sun, CloudRain, Cloud, Dumbbell, Calendar, Medal } from "lucide-react";
+import { View, TrendingUp, DollarSign, Target, ChevronRight, Trophy, Info, Crown, Sun, CloudRain, Cloud, Dumbbell, Calendar, Medal, Loader2, Search, XCircle } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
@@ -42,18 +44,25 @@ export function NonCraneQuickViewDialog({
     open,
     onOpenChange
 }: NonCraneQuickViewDialogProps) {
-    if (!machine) return null;
 
     const [trendRange, setTrendRange] = useState<'7d' | '14d' | '30d' | '6m'>('7d');
     const [realTrendData, setRealTrendData] = useState<any[]>([]);
+    const [trendType, setTrendType] = useState<'plays' | 'revenue'>('plays');
     const [loadingTrend, setLoadingTrend] = useState(false);
     const [storeRankOpen, setStoreRankOpen] = useState(false);
     const [rankScope, setRankScope] = useState<'store' | 'location' | 'group'>('store');
     const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set(['plays', 'customer', 'staff']));
     const [hallOfFameOpen, setHallOfFameOpen] = useState(false);
+    const [hallOfFameEnabled, setHallOfFameEnabled] = useState(false);
+    const [hallOfFameRange, setHallOfFameRange] = useState<'1m' | '3m' | '6m' | '1y' | 'all' | null>(null);
+    const [loadingHallOfFame, setLoadingHallOfFame] = useState(false);
     const [contributionOpen, setContributionOpen] = useState(false);
+    const [contributionScope, setContributionScope] = useState<'store' | 'location' | 'group'>('store');
+    const [showRevenueBreakdown, setShowRevenueBreakdown] = useState(false);
+    const [searchTerm, setSearchTerm] = useState("");
     const [allTimeBestDays, setAllTimeBestDays] = useState<{ date: string; revenue: number }[]>([]);
 
+    // Fetch real historical data for trend graph
     // Fetch real historical data for trend graph
     useEffect(() => {
         if (!machine || !open) return;
@@ -64,30 +73,46 @@ export function NonCraneQuickViewDialog({
                 const { gameReportApiService } = await import('@/services/gameReportApiService');
                 const endDate = new Date();
                 const daysMap = { '7d': 7, '14d': 14, '30d': 30, '6m': 180 };
-                const startDate = trendRange === '6m'
-                    ? subMonths(endDate, 6)
-                    : subDays(endDate, daysMap[trendRange as keyof typeof daysMap] - 1);
+                const daysToFetch = daysMap[trendRange as keyof typeof daysMap];
 
-                const tag = Number(machine.assetTag || machine.tag);
-                if (isNaN(tag)) throw new Error("Invalid tag");
+                // For Production API compliance, we must fetch daily data to avoid aggregation
+                // Limit massive parallel requests for longer ranges if needed, but 7-14 is fine
+                const dates: Date[] = [];
+                for (let i = daysToFetch - 1; i >= 0; i--) {
+                    dates.push(subDays(endDate, i));
+                }
 
-                const reports = await gameReportApiService.fetchGameReport({
-                    tag,
-                    startDate,
-                    endDate,
-                    aggregate: false
-                });
+                // Fetch all days in parallel
+                const dailyReports = await Promise.all(
+                    dates.map(date => gameReportApiService.fetchDailyReport(date, {
+                        groups: machine.group ? [machine.group] : undefined
+                    }))
+                );
 
-                // Map to trend data format
-                const mappedData = reports.map(r => {
-                    const customer = r.standardPlays || 0;
-                    const staff = r.empPlays || 0;
+                // Filter for THIS machine and map to trend format
+                const myTag = machine.tag ? String(machine.tag).trim() : null;
+
+                const mappedData = dailyReports.map((daysReport, index) => {
+                    const date = dates[index];
+                    const report = daysReport.find(r => {
+                        const rTag = r.tag ? String(r.tag).trim() : null;
+                        return (myTag && rTag === myTag);
+                    });
+
+                    const customer = report?.standardPlays || 0;
+                    const staff = report?.empPlays || 0;
+                    const wins = report?.points || 0;
+
                     return {
-                        time: r.date ? format(new Date(r.date), 'MMM dd') : 'Unknown',
+                        time: format(date, 'MMM dd'),
+                        fullDate: date, // For accurate sorting/comparison
                         plays: customer + staff,
                         customer,
                         staff,
-                        revenue: r.totalRev || 0
+                        wins,
+                        revenue: report?.totalRev || 0,
+                        cashRev: report?.cashDebit || 0,
+                        bonusRev: report?.cashDebitBonus || 0
                     };
                 });
 
@@ -103,44 +128,70 @@ export function NonCraneQuickViewDialog({
         fetchTrend();
     }, [machine?.assetTag, machine?.tag, open, trendRange]);
 
-    // Fetch "All Time" (1 Year) data for Hall of Fame
+    // Fetch data for Hall of Fame
     useEffect(() => {
-        if (!machine || !open) return;
+        if (!machine || !open || !hallOfFameEnabled || !hallOfFameRange) return;
 
         const fetchAllTime = async () => {
+            setLoadingHallOfFame(true);
             try {
                 const { gameReportApiService } = await import('@/services/gameReportApiService');
                 const endDate = new Date();
-                const startDate = subYears(endDate, 1); // "All Time" approximated to 1 year
-                const tag = Number(machine.assetTag || machine.tag);
 
-                if (isNaN(tag)) return;
+                // Calculate days to fetch based on range
+                const rangeMap = { '1m': 30, '3m': 90, '6m': 180, '1y': 365, 'all': 365 };
+                const daysToFetch = rangeMap[hallOfFameRange] || 365;
 
-                const reports = await gameReportApiService.fetchGameReport({
-                    tag,
-                    startDate,
-                    endDate,
-                    aggregate: false
-                });
+                const dates: Date[] = [];
+                for (let i = 0; i < daysToFetch; i++) {
+                    dates.push(subDays(endDate, i));
+                }
+
+                // Chunked fetching (30 days at a time)
+                const chunkSize = 30;
+                let allReports: any[] = [];
+
+                for (let i = 0; i < dates.length; i += chunkSize) {
+                    const chunk = dates.slice(i, i + chunkSize);
+                    const chunkReports = await Promise.all(
+                        chunk.map(date => gameReportApiService.fetchDailyReport(date, {
+                            groups: machine.group ? [machine.group] : undefined
+                        }))
+                    );
+                    allReports = allReports.concat(chunkReports);
+                }
+
+                // Filter for THIS machine across all days
+                const myTag = machine.tag ? String(machine.tag).trim() : null;
+
+                const dailyBests = allReports.map((daysReport, index) => {
+                    const date = dates[index];
+                    const report = daysReport.find((r: any) => {
+                        const rTag = r.tag ? String(r.tag).trim() : null;
+                        return (myTag && rTag === myTag);
+                    });
+
+                    return {
+                        date: format(date, 'yyyy-MM-dd'),
+                        revenue: report?.totalRev || 0
+                    };
+                }).filter(d => d.revenue > 0);
 
                 // Find top 5 days
-                const sorted = reports
-                    .map(r => ({
-                        date: r.date || '',
-                        revenue: r.totalRev || 0
-                    }))
+                const sorted = dailyBests
                     .sort((a, b) => b.revenue - a.revenue)
-                    .filter(d => d.revenue > 0)
                     .slice(0, 5);
 
                 setAllTimeBestDays(sorted);
             } catch (err) {
                 console.warn("Failed to fetch Hall of Fame data", err);
+            } finally {
+                setLoadingHallOfFame(false);
             }
         };
 
         fetchAllTime();
-    }, [machine?.assetTag, machine?.tag, open]);
+    }, [machine?.assetTag, machine?.tag, machine?.group, open, hallOfFameEnabled, hallOfFameRange]);
 
     // Use simulated data ONLY when API fails
     const simulatedTrendData = useMemo(() => {
@@ -220,8 +271,8 @@ export function NonCraneQuickViewDialog({
         format(dateRange.to, 'yyyyMMdd') === format(new Date(), 'yyyyMMdd')
     );
 
-    const periodCustomer = machine.customerPlays ?? machine.telemetry?.playCountToday ?? 0;
-    const periodStaff = machine.staffPlays ?? machine.telemetry?.staffPlaysToday ?? 0;
+    const periodCustomer = machine?.customerPlays ?? machine?.telemetry?.playCountToday ?? 0;
+    const periodStaff = machine?.staffPlays ?? machine?.telemetry?.staffPlaysToday ?? 0;
     const periodTotal = periodCustomer + periodStaff;
 
     // --- NEW INSIGHTS CALCULATIONS ---
@@ -244,34 +295,43 @@ export function NonCraneQuickViewDialog({
         };
     }, [allTimeBestDays]);
 
-    // 2. The Heavy Lifter (Store Contribution)
+    // 2. The Heavy Lifter (Contribution with scope support)
     const heavyLifter = useMemo(() => {
-        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell, contributors: [] };
+        if (!machine || !allMachines.length) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell, contributors: [], scopeLabel: 'Store', totalRev: 0, myRev: 0 };
 
-        // Calculate total store revenue (same location)
-        const storeMachines = allMachines.filter(m => m.location === machine.location);
-        const storeTotalRev = storeMachines.reduce((sum, m) => sum + (m.revenue || 0), 0);
+        // Filter machines based on scope
+        let filtered = [...allMachines];
+        let scopeLabel = 'Store';
+        if (contributionScope === 'location') {
+            filtered = allMachines.filter(m => m.location === machine.location);
+            scopeLabel = machine.location || 'Location';
+        } else if (contributionScope === 'group') {
+            filtered = allMachines.filter(m => m.group === machine.group);
+            scopeLabel = machine.group || 'Group';
+        }
 
-        if (storeTotalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell, contributors: [] };
-
+        const totalRev = filtered.reduce((sum, m) => sum + (m.revenue || 0), 0);
         const myRev = machine.revenue || 0;
-        const percent = (myRev / storeTotalRev) * 100;
+
+        if (totalRev === 0) return { percent: 0, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell, contributors: [], scopeLabel, totalRev, myRev };
+
+        const percent = (myRev / totalRev) * 100;
 
         // Contributors list for Dialog
-        const contributors = storeMachines.map(m => ({
+        const contributors = filtered.map(m => ({
             ...m,
-            percent: ((m.revenue || 0) / storeTotalRev) * 100
+            percent: ((m.revenue || 0) / totalRev) * 100
         })).sort((a, b) => b.percent - a.percent);
 
-        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', icon: Crown, contributors };
-        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', icon: Dumbbell, contributors };
-        return { percent, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell, contributors };
-    }, [machine, allMachines]);
+        if (percent >= 10) return { percent, class: 'Boss Level', color: 'text-purple-600', icon: Crown, contributors, scopeLabel, totalRev, myRev };
+        if (percent >= 5) return { percent, class: 'Heavyweight', color: 'text-amber-600', icon: Dumbbell, contributors, scopeLabel, totalRev, myRev };
+        return { percent, class: 'Featherweight', color: 'text-muted-foreground', icon: Dumbbell, contributors, scopeLabel, totalRev, myRev };
+    }, [machine, allMachines, contributionScope]);
 
     // 3. Weekend Forecast
     const forecast = useMemo(() => {
         // Simple heuristic: based on recent momentum
-        const baseTraffic = machine.telemetry?.playCountToday ?? 0;
+        const baseTraffic = machine?.telemetry?.playCountToday ?? 0;
         let prediction = 'Cloudy';
         let label = 'Moderate Traffic';
         let Icon = Cloud;
@@ -292,6 +352,8 @@ export function NonCraneQuickViewDialog({
         return { prediction, label, Icon, color };
     }, [machine, momentum]);
 
+    // Early return AFTER all hooks to comply with Rules of Hooks
+    if (!machine) return null;
 
     const statusColors = {
         online: "bg-green-500",
@@ -311,7 +373,7 @@ export function NonCraneQuickViewDialog({
                             <div className="flex items-center gap-1.5 ml-2">
                                 <span className="text-sm font-medium text-muted-foreground">{machine.name}</span>
                                 <Badge variant="outline" className="font-mono text-[9px] h-4 px-1.5 bg-muted/50">
-                                    #{machine.assetTag || machine.tag}
+                                    #{machine.tag}
                                 </Badge>
                             </div>
                         </DialogTitle>
@@ -418,23 +480,37 @@ export function NonCraneQuickViewDialog({
                         {/* RIGHT: Trend Chart (2/3) */}
                         <div className="md:col-span-2 space-y-4">
                             <div className="flex items-center justify-between">
-                                <h4 className="text-xs font-bold uppercase text-muted-foreground flex items-center gap-2">
-                                    <TrendingUp className="h-4 w-4" />
-                                    PLAY TREND
-                                </h4>
-                                <div className="flex gap-1 bg-muted p-0.5 rounded-lg">
-                                    {['7d', '14d', '30d', '6m'].map((r) => (
+                                <div className="flex gap-1 bg-muted/50 p-0.5 rounded-lg border border-muted-foreground/10">
+                                    <Button
+                                        variant={trendType === 'plays' ? "secondary" : "ghost"}
+                                        size="sm"
+                                        className={cn("h-6 px-3 text-[10px] font-bold uppercase transition-all", trendType === 'plays' && "bg-background shadow-sm")}
+                                        onClick={() => setTrendType('plays')}
+                                    >
+                                        Plays Trend
+                                    </Button>
+                                    <Button
+                                        variant={trendType === 'revenue' ? "secondary" : "ghost"}
+                                        size="sm"
+                                        className={cn("h-6 px-3 text-[10px] font-bold uppercase transition-all", trendType === 'revenue' && "bg-background shadow-sm")}
+                                        onClick={() => setTrendType('revenue')}
+                                    >
+                                        Revenue Trend
+                                    </Button>
+                                </div>
+                                <div className="flex gap-1 bg-muted/30 p-0.5 rounded-lg">
+                                    {(['7d', '14d', '30d', '6m'] as const).map((r) => (
                                         <button
                                             key={r}
-                                            onClick={() => setTrendRange(r as any)}
+                                            onClick={() => setTrendRange(r)}
                                             className={cn(
-                                                "text-[10px] px-2 py-1 rounded-md transition-all font-medium",
+                                                "text-[9px] px-2 py-1 rounded-md transition-all font-bold uppercase",
                                                 trendRange === r
                                                     ? "bg-white dark:bg-black shadow-sm text-foreground"
-                                                    : "text-muted-foreground hover:bg-background/50"
+                                                    : "text-muted-foreground/60 hover:text-muted-foreground"
                                             )}
                                         >
-                                            {r === '6m' ? '6 Months' : `${r.replace('d', ' Days')}`}
+                                            {r === '6m' ? '6M' : r.replace('d', 'D')}
                                         </button>
                                     ))}
                                 </div>
@@ -449,15 +525,39 @@ export function NonCraneQuickViewDialog({
                                         <AreaChart data={chartData} margin={{ top: 10, right: 0, left: -20, bottom: 0 }}>
                                             <defs>
                                                 <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
-                                                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
+                                                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                                                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorCustomer" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.1} />
                                                     <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorStaff" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.1} />
+                                                    <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorWins" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#f43f5e" stopOpacity={0.2} />
+                                                    <stop offset="95%" stopColor="#f43f5e" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.2} />
+                                                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorCash" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#059669" stopOpacity={0.1} />
+                                                    <stop offset="95%" stopColor="#059669" stopOpacity={0} />
+                                                </linearGradient>
+                                                <linearGradient id="colorBonus" x1="0" y1="0" x2="0" y2="1">
+                                                    <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.1} />
+                                                    <stop offset="95%" stopColor="#7c3aed" stopOpacity={0} />
                                                 </linearGradient>
                                             </defs>
                                             <XAxis
                                                 dataKey="time"
                                                 axisLine={false}
                                                 tickLine={false}
-                                                tick={{ fontSize: 10, fill: '#888' }}
+                                                tick={{ fontSize: 9, fill: '#888' }}
                                                 dy={10}
                                                 interval="preserveStartEnd"
                                             />
@@ -471,25 +571,56 @@ export function NonCraneQuickViewDialog({
                                                     if (active && payload && payload.length) {
                                                         const data = payload[0].payload;
                                                         return (
-                                                            <div className="bg-background/95 backdrop-blur border rounded-lg shadow-xl p-3 text-xs">
-                                                                <p className="font-bold mb-2">{label}</p>
-                                                                {visibleFields.has('customer') && (
-                                                                    <div className="flex items-center gap-2 mb-1 text-amber-600">
-                                                                        <span>Customer :</span>
-                                                                        <span className="font-bold">{data.customer}</span>
-                                                                    </div>
-                                                                )}
-                                                                {visibleFields.has('plays') && (
-                                                                    <div className="flex items-center gap-2 mb-1 text-blue-500">
-                                                                        <span>Total :</span>
-                                                                        <span className="font-bold">{data.plays}</span>
-                                                                    </div>
-                                                                )}
-                                                                {visibleFields.has('staff') && (
-                                                                    <div className="flex items-center gap-2 text-emerald-600">
-                                                                        <span>Staff :</span>
-                                                                        <span className="font-bold">{data.staff}</span>
-                                                                    </div>
+                                                            <div className="bg-background/95 backdrop-blur border rounded-lg shadow-xl p-3 text-[10px]">
+                                                                <p className="font-bold mb-2 border-b pb-1">{label}</p>
+                                                                {trendType === 'plays' ? (
+                                                                    <>
+                                                                        {visibleFields.has('plays') && (
+                                                                            <div className="flex items-center justify-between gap-4 mb-1 text-blue-500">
+                                                                                <span>Total Plays:</span>
+                                                                                <span className="font-bold">{data.plays}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {visibleFields.has('customer') && (
+                                                                            <div className="flex items-center justify-between gap-4 mb-1 text-amber-600">
+                                                                                <span>Customer:</span>
+                                                                                <span className="font-bold">{data.customer}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {visibleFields.has('staff') && (
+                                                                            <div className="flex items-center justify-between gap-4 mb-1 text-emerald-600">
+                                                                                <span>Staff:</span>
+                                                                                <span className="font-bold">{data.staff}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {visibleFields.has('wins') && (
+                                                                            <div className="flex items-center justify-between gap-4 text-rose-500">
+                                                                                <span>Wins:</span>
+                                                                                <span className="font-bold">{data.wins}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </>
+                                                                ) : (
+                                                                    <>
+                                                                        {visibleFields.has('revenue') && (
+                                                                            <div className="flex items-center justify-between gap-4 mb-1 text-blue-600">
+                                                                                <span>Total Rev:</span>
+                                                                                <span className="font-bold">${data.revenue.toFixed(2)}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {visibleFields.has('cashRev') && (
+                                                                            <div className="flex items-center justify-between gap-4 mb-1 text-emerald-600">
+                                                                                <span>Cash Rev:</span>
+                                                                                <span className="font-bold">${data.cashRev.toFixed(2)}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {visibleFields.has('bonusRev') && (
+                                                                            <div className="flex items-center justify-between gap-4 text-purple-600">
+                                                                                <span>Bonus Rev:</span>
+                                                                                <span className="font-bold">${data.bonusRev.toFixed(2)}</span>
+                                                                            </div>
+                                                                        )}
+                                                                    </>
                                                                 )}
                                                             </div>
                                                         );
@@ -497,33 +628,33 @@ export function NonCraneQuickViewDialog({
                                                     return null;
                                                 }}
                                             />
-                                            {visibleFields.has('plays') && (
-                                                <Area
-                                                    type="monotone"
-                                                    dataKey="plays"
-                                                    stroke="#3b82f6"
-                                                    strokeWidth={2}
-                                                    fill="url(#colorTotal)"
-                                                />
-                                            )}
-                                            {visibleFields.has('customer') && (
-                                                <Area
-                                                    type="monotone"
-                                                    dataKey="customer"
-                                                    stroke="#f59e0b"
-                                                    strokeWidth={2}
-                                                    strokeDasharray="4 4"
-                                                    fill="none"
-                                                />
-                                            )}
-                                            {visibleFields.has('staff') && (
-                                                <Area
-                                                    type="monotone"
-                                                    dataKey="staff"
-                                                    stroke="#10b981"
-                                                    strokeWidth={2}
-                                                    fill="none"
-                                                />
+                                            {trendType === 'plays' ? (
+                                                <>
+                                                    {visibleFields.has('plays') && (
+                                                        <Area type="monotone" dataKey="plays" stroke="#3b82f6" strokeWidth={2} fill="url(#colorTotal)" name="plays" />
+                                                    )}
+                                                    {visibleFields.has('customer') && (
+                                                        <Area type="monotone" dataKey="customer" stroke="#f59e0b" strokeWidth={2} strokeDasharray="4 4" fill="url(#colorCustomer)" name="customer" />
+                                                    )}
+                                                    {visibleFields.has('staff') && (
+                                                        <Area type="monotone" dataKey="staff" stroke="#10b981" strokeWidth={2} strokeDasharray="4 4" fill="url(#colorStaff)" name="staff" />
+                                                    )}
+                                                    {visibleFields.has('wins') && (
+                                                        <Area type="monotone" dataKey="wins" stroke="#f43f5e" strokeWidth={2} fill="url(#colorWins)" name="wins" />
+                                                    )}
+                                                </>
+                                            ) : (
+                                                <>
+                                                    {visibleFields.has('revenue') && (
+                                                        <Area type="monotone" dataKey="revenue" stroke="#2563eb" strokeWidth={2} fill="url(#colorRevenue)" name="revenue" />
+                                                    )}
+                                                    {visibleFields.has('cashRev') && (
+                                                        <Area type="monotone" dataKey="cashRev" stroke="#059669" strokeWidth={2} strokeDasharray="4 4" fill="url(#colorCash)" name="cashRev" />
+                                                    )}
+                                                    {visibleFields.has('bonusRev') && (
+                                                        <Area type="monotone" dataKey="bonusRev" stroke="#7c3aed" strokeWidth={2} strokeDasharray="4 4" fill="url(#colorBonus)" name="bonusRev" />
+                                                    )}
+                                                </>
                                             )}
                                         </AreaChart>
                                     </ResponsiveContainer>
@@ -531,29 +662,55 @@ export function NonCraneQuickViewDialog({
                             </div>
                             <div className="flex gap-4 justify-end">
                                 <div className="flex items-center gap-2 text-[10px]">
-                                    <span className="font-bold text-muted-foreground">SHOW:</span>
-                                    {[
-                                        { id: 'plays', label: 'Total', color: '#f59e0b' },
-                                        { id: 'customer', label: 'Customer', color: '#f59e0b' },
-                                        { id: 'staff', label: 'Staff', color: '#10b981' }
-                                    ].map(filter => (
-                                        <button
-                                            key={filter.id}
-                                            onClick={() => {
-                                                const next = new Set(visibleFields);
-                                                if (next.has(filter.id)) next.delete(filter.id);
-                                                else next.add(filter.id);
-                                                setVisibleFields(next);
-                                            }}
-                                            className="flex items-center gap-1.5 cursor-pointer hover:opacity-80"
-                                        >
-                                            <div
-                                                className={cn("w-2 h-2 rounded-full transition-all", visibleFields.has(filter.id) ? "" : "opacity-20")}
-                                                style={{ backgroundColor: filter.color }}
-                                            />
-                                            <span className={cn(visibleFields.has(filter.id) ? "font-bold" : "text-muted-foreground")}>{filter.label}</span>
-                                        </button>
-                                    ))}
+                                    <span className="font-bold text-muted-foreground uppercase">Show:</span>
+                                    {trendType === 'plays' ? (
+                                        [
+                                            { id: 'plays', label: 'Total', color: '#3b82f6' },
+                                            { id: 'customer', label: 'Customer', color: '#f59e0b' },
+                                            { id: 'staff', label: 'Staff', color: '#10b981' },
+                                            { id: 'wins', label: 'Wins', color: '#f43f5e' }
+                                        ].map(filter => (
+                                            <button
+                                                key={filter.id}
+                                                onClick={() => {
+                                                    const next = new Set(visibleFields);
+                                                    if (next.has(filter.id)) next.delete(filter.id);
+                                                    else next.add(filter.id);
+                                                    setVisibleFields(next);
+                                                }}
+                                                className="flex items-center gap-1.5 cursor-pointer hover:opacity-80"
+                                            >
+                                                <div
+                                                    className={cn("w-2 h-2 rounded-full transition-all", visibleFields.has(filter.id) ? "" : "opacity-20")}
+                                                    style={{ backgroundColor: filter.color }}
+                                                />
+                                                <span className={cn(visibleFields.has(filter.id) ? "font-bold" : "text-muted-foreground")}>{filter.label}</span>
+                                            </button>
+                                        ))
+                                    ) : (
+                                        [
+                                            { id: 'revenue', label: 'Total Rev', color: '#2563eb' },
+                                            { id: 'cashRev', label: 'Cash', color: '#059669' },
+                                            { id: 'bonusRev', label: 'Bonus', color: '#7c3aed' }
+                                        ].map(filter => (
+                                            <button
+                                                key={filter.id}
+                                                onClick={() => {
+                                                    const next = new Set(visibleFields);
+                                                    if (next.has(filter.id)) next.delete(filter.id);
+                                                    else next.add(filter.id);
+                                                    setVisibleFields(next);
+                                                }}
+                                                className="flex items-center gap-1.5 cursor-pointer hover:opacity-80"
+                                            >
+                                                <div
+                                                    className={cn("w-2 h-2 rounded-full transition-all", visibleFields.has(filter.id) ? "" : "opacity-20")}
+                                                    style={{ backgroundColor: filter.color }}
+                                                />
+                                                <span className={cn(visibleFields.has(filter.id) ? "font-bold" : "text-muted-foreground")}>{filter.label}</span>
+                                            </button>
+                                        ))
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -586,7 +743,22 @@ export function NonCraneQuickViewDialog({
                                     </div>
                                 )}
                             </div>
+                            {/* Revenue Breakdown: Cash + Bonus */}
+                            <div className="mt-2 pt-2 border-t border-blue-200/30 dark:border-blue-800/30">
+                                <div className="flex items-center gap-1 text-[10px]">
+                                    <span className="text-blue-600/60 dark:text-blue-400/60">
+                                        <span className="font-semibold text-blue-700 dark:text-blue-300">${(machine.cashRevenue || 0).toFixed(2)}</span>
+                                        <span className="text-blue-500/50 mx-1">cash</span>
+                                    </span>
+                                    <span className="text-blue-400/50">+</span>
+                                    <span className="text-blue-600/60 dark:text-blue-400/60">
+                                        <span className="font-semibold text-blue-700 dark:text-blue-300">${(machine.bonusRevenue || 0).toFixed(2)}</span>
+                                        <span className="text-blue-500/50 mx-1">bonus</span>
+                                    </span>
+                                </div>
+                            </div>
                         </div>
+
 
                         {/* 2. Store Rank Card */}
                         <Dialog open={storeRankOpen} onOpenChange={setStoreRankOpen}>
@@ -610,62 +782,135 @@ export function NonCraneQuickViewDialog({
                                     </div>
                                 </div>
                             </DialogTrigger>
-                            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                            <DialogContent className="max-w-md">
                                 <DialogHeader>
                                     <DialogTitle className="flex items-center gap-2">
                                         <Trophy className="h-5 w-5 text-amber-500" />
                                         Leaderboard
                                     </DialogTitle>
-                                    <DialogDescription>
-                                        Ranking by revenue.
+                                    <DialogDescription className="flex items-center gap-2">
+                                        <span>Ranking by revenue</span>
+                                        <Badge variant="secondary" className="text-[10px] font-normal">
+                                            <Calendar className="w-3 h-3 mr-1" />
+                                            {isToday ? 'Today' : dateRange?.from && dateRange?.to
+                                                ? `${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd')}`
+                                                : 'Today'}
+                                        </Badge>
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="flex gap-1 mt-4 p-1 bg-muted rounded-lg">
-                                    {(['store', 'location', 'group'] as const).map((s) => (
-                                        <Button
-                                            key={s}
-                                            variant={rankScope === s ? "default" : "ghost"}
-                                            size="sm"
-                                            className="flex-1 h-7 text-[10px] capitalize"
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setRankScope(s);
-                                            }}
-                                        >
-                                            {s}
-                                        </Button>
-                                    ))}
-                                </div>
-                                <div className="mt-4 space-y-2">
-                                    <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-1 border-b">
-                                        <div className="col-span-1">#</div>
-                                        <div className="col-span-6">Machine</div>
-                                        <div className="col-span-2 text-right">Plays</div>
-                                        <div className="col-span-3 text-right">Revenue</div>
+                                <div className="flex items-center justify-between gap-1 mt-4 p-1 bg-muted rounded-lg transition-all">
+                                    <div className="flex gap-1 flex-1">
+                                        {(['store', 'location', 'group'] as const).map((s) => (
+                                            <Button
+                                                key={s}
+                                                variant={rankScope === s ? "default" : "ghost"}
+                                                size="sm"
+                                                className="flex-1 h-7 text-[10px] capitalize"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setRankScope(s);
+                                                }}
+                                            >
+                                                {s}
+                                            </Button>
+                                        ))}
                                     </div>
-                                    {storeStats.list.map((m, idx) => (
-                                        <div
-                                            key={m.id}
-                                            className={cn(
-                                                "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
-                                                m.id === machine.id ? "bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-500/30 shadow-sm" : "hover:bg-muted/50"
-                                            )}
+                                    <div className="flex items-center gap-2 px-2 border-l border-muted-foreground/20">
+                                        <span className="text-[9px] font-bold uppercase text-muted-foreground tabular-nums">Breakdown</span>
+                                        <Switch
+                                            checked={showRevenueBreakdown}
+                                            onCheckedChange={setShowRevenueBreakdown}
+                                            className="h-3 w-6 scale-75 data-[state=checked]:bg-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                                <div className="relative mt-4">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search by name or tag..."
+                                        className="pl-9 h-9 text-xs"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                    {searchTerm && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="absolute right-1 top-1 h-7 w-7 p-0"
+                                            onClick={() => setSearchTerm("")}
                                         >
-                                            <div className="col-span-1 font-mono font-bold text-muted-foreground">
-                                                {idx + 1}
+                                            <XCircle className="h-3 w-3" />
+                                            <span className="sr-only">Clear</span>
+                                        </Button>
+                                    )}
+                                </div>
+                                {/* Sticky Table Header */}
+                                <div className="mt-4">
+                                    <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-2 border-b bg-background sticky top-0 z-10 transition-all">
+                                        <div className="col-span-1">#</div>
+                                        <div className={cn(showRevenueBreakdown ? "col-span-5" : "col-span-6")}>Machine</div>
+                                        <div className={cn("text-right", showRevenueBreakdown ? "col-span-1" : "col-span-2")}>Plays</div>
+                                        {showRevenueBreakdown ? (
+                                            <>
+                                                <div className="col-span-2 text-right text-blue-500/80">Cash</div>
+                                                <div className="col-span-3 text-right text-emerald-500/80">Bonus</div>
+                                            </>
+                                        ) : (
+                                            <div className="col-span-3 text-right">Revenue</div>
+                                        )}
+                                    </div>
+                                    {/* Scrollable Table Body */}
+                                    <div className="max-h-[50vh] overflow-y-auto space-y-1 pt-1">
+                                        {storeStats.list.filter(m => {
+                                            if (!searchTerm) return true;
+                                            const term = searchTerm.toLowerCase();
+                                            return (
+                                                m.name?.toLowerCase().includes(term) ||
+                                                m.tag?.toLowerCase().includes(term) ||
+                                                m.assetTag?.toLowerCase().includes(term) ||
+                                                String(m.tag).includes(term) ||
+                                                String(m.assetTag).includes(term)
+                                            );
+                                        }).map((m, idx) => (
+                                            <div
+                                                key={m.id}
+                                                ref={m.id === machine.id ? (el) => {
+                                                    if (el && storeRankOpen) {
+                                                        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+                                                    }
+                                                } : undefined}
+                                                className={cn(
+                                                    "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
+                                                    m.id === machine.id ? "bg-emerald-50 dark:bg-emerald-900/20 ring-1 ring-emerald-500/30 shadow-sm" : "hover:bg-muted/50"
+                                                )}
+                                            >
+                                                <div className="col-span-1 font-mono font-bold text-muted-foreground">
+                                                    {idx + 1}
+                                                </div>
+                                                <div className={cn("flex flex-col min-w-0", showRevenueBreakdown ? "col-span-5" : "col-span-6")}>
+                                                    <span className="font-bold truncate">{m.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground font-mono">#{m.assetTag || m.tag}</span>
+                                                </div>
+                                                <div className={cn("text-right font-medium", showRevenueBreakdown ? "col-span-1" : "col-span-2")}>
+                                                    {m.customerPlays || 0}
+                                                </div>
+                                                {showRevenueBreakdown ? (
+                                                    <>
+                                                        <div className="col-span-2 text-right font-bold text-blue-600 dark:text-blue-400">
+                                                            ${(m.cashRevenue || 0).toFixed(0)}
+                                                        </div>
+                                                        <div className="col-span-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                                                            ${(m.bonusRevenue || 0).toFixed(0)}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="col-span-3 text-right font-bold text-blue-600 dark:text-blue-400">
+                                                        ${(m.revenue || 0).toFixed(0)}
+                                                    </div>
+                                                )}
                                             </div>
-                                            <div className="col-span-6 flex flex-col min-w-0">
-                                                <span className="font-bold truncate">{m.name}</span>
-                                                <span className="text-[10px] text-muted-foreground font-mono">#{m.assetTag || m.tag}</span>
-                                            </div>
-                                            <div className="col-span-2 text-right font-medium">
-                                                {m.customerPlays || 0}
-                                            </div>
-                                            <div className="col-span-3 text-right font-bold text-blue-600 dark:text-blue-400">
-                                                ${(m.revenue || 0).toFixed(0)}
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             </DialogContent>
                         </Dialog>
@@ -674,14 +919,61 @@ export function NonCraneQuickViewDialog({
                         <Dialog open={hallOfFameOpen} onOpenChange={setHallOfFameOpen}>
                             <DialogTrigger asChild>
                                 <div className="p-3 bg-yellow-50/50 dark:bg-yellow-900/10 rounded-xl border border-yellow-100 dark:border-yellow-900/30 cursor-pointer hover:bg-yellow-100/30 transition-all group">
-                                    <div className="flex items-center gap-1.5 mb-1.5">
-                                        <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
-                                            <Trophy className="h-3 w-3 text-yellow-600" />
+                                    <div className="flex items-center justify-between gap-1.5 mb-2">
+                                        <div className="flex items-center gap-1.5">
+                                            <div className="p-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-lg">
+                                                <Trophy className="h-3 w-3 text-yellow-600" />
+                                            </div>
+                                            <span className="text-[10px] font-bold uppercase text-yellow-700/70">Hall of Fame</span>
                                         </div>
-                                        <span className="text-[10px] font-bold uppercase text-yellow-700/70">Hall of Fame</span>
+                                        <div className="flex items-center gap-2">
+                                            {hallOfFameEnabled && !loadingHallOfFame && (
+                                                <span className="text-[8px] font-bold text-yellow-600/40 uppercase tabular-nums">
+                                                    {hallOfFameRange === 'all' ? 'All' : hallOfFameRange}
+                                                </span>
+                                            )}
+                                            <div onClick={(e) => e.stopPropagation()}>
+                                                <Switch
+                                                    checked={hallOfFameEnabled}
+                                                    onCheckedChange={setHallOfFameEnabled}
+                                                    className="h-3.5 w-7 scale-[0.6] data-[state=checked]:bg-yellow-500"
+                                                />
+                                            </div>
+                                        </div>
                                     </div>
+
+                                    {/* Inline Range Selector when enabled */}
+                                    {hallOfFameEnabled && (
+                                        <div className="mb-2" onClick={(e) => e.stopPropagation()}>
+                                            <div className="flex p-0.5 bg-yellow-100/50 dark:bg-yellow-900/20 rounded-md border border-yellow-200/50">
+                                                {(['1m', '3m', '6m', '1y', 'all'] as const).map((r) => (
+                                                    <button
+                                                        key={r}
+                                                        onClick={() => setHallOfFameRange(r)}
+                                                        className={cn(
+                                                            "flex-1 text-[8px] font-bold uppercase py-0.5 rounded-sm transition-all",
+                                                            hallOfFameRange === r
+                                                                ? "bg-yellow-500 text-white shadow-sm"
+                                                                : "text-yellow-700/50 hover:text-yellow-700 hover:bg-yellow-500/10"
+                                                        )}
+                                                    >
+                                                        {r}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
                                     <div className="flex flex-col gap-0.5">
-                                        {hallOfFame ? (
+                                        {!hallOfFameEnabled ? (
+                                            <span className="text-xs text-muted-foreground italic">Disabled</span>
+                                        ) : !hallOfFameRange ? (
+                                            <span className="text-[10px] text-yellow-600 font-medium animate-pulse">Select Range Above</span>
+                                        ) : loadingHallOfFame ? (
+                                            <div className="flex items-center gap-2">
+                                                <Loader2 className="h-4 w-4 animate-spin text-yellow-600/50" />
+                                                <span className="text-[9px] text-yellow-600/50 font-medium">Fetching...</span>
+                                            </div>
+                                        ) : hallOfFame ? (
                                             <>
                                                 <span className="font-bold text-xl text-yellow-700 dark:text-yellow-400">${hallOfFame.maxRev.toFixed(0)}</span>
                                                 <span className="text-[9px] text-yellow-600/50">Top: {hallOfFame.bestDate}</span>
@@ -694,24 +986,59 @@ export function NonCraneQuickViewDialog({
                             </DialogTrigger>
                             <DialogContent className="max-w-xs sm:max-w-sm">
                                 <DialogHeader>
-                                    <DialogTitle className="flex items-center gap-2">
-                                        <Trophy className="h-5 w-5 text-amber-500" />
-                                        Hall of Fame
+                                    <DialogTitle className="flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <Trophy className="h-5 w-5 text-amber-500" />
+                                            Hall of Fame
+                                        </div>
                                     </DialogTitle>
                                     <DialogDescription>
-                                        Top 5 Highest Revenue Days (All Time).
+                                        Top 5 Highest Revenue Days.
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="space-y-2 mt-2">
-                                    {hallOfFame?.topDays.map((day, i) => (
-                                        <div key={day.time} className={cn("flex items-center justify-between p-2 rounded-lg text-sm", i === 0 ? "bg-amber-100/50 dark:bg-amber-900/20 border border-amber-200" : "hover:bg-muted")}>
-                                            <div className="flex items-center gap-3">
-                                                <span className={cn("font-bold font-mono w-4", i === 0 ? "text-amber-600" : "text-muted-foreground")}>{i + 1}</span>
-                                                <span className="font-medium">{day.time}</span>
-                                            </div>
-                                            <span className="font-bold text-amber-700 dark:text-amber-500">${day.revenue.toFixed(0)}</span>
-                                        </div>
+
+                                <div className="flex gap-1 p-1 bg-muted rounded-lg mt-2">
+                                    {(['1m', '3m', '6m', '1y', 'all'] as const).map((r) => (
+                                        <Button
+                                            key={r}
+                                            variant={hallOfFameRange === r ? "default" : "ghost"}
+                                            size="sm"
+                                            className="flex-1 h-7 text-[10px] uppercase"
+                                            onClick={() => setHallOfFameRange(r)}
+                                            disabled={loadingHallOfFame}
+                                        >
+                                            {r === 'all' ? 'All' : r}
+                                        </Button>
                                     ))}
+                                </div>
+
+                                <div className="space-y-2 mt-4 relative min-h-[100px]">
+                                    {loadingHallOfFame ? (
+                                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/50 z-10">
+                                            <Loader2 className="h-6 w-6 animate-spin text-amber-500 mb-2" />
+                                            <p className="text-xs text-muted-foreground">Fetching records...</p>
+                                        </div>
+                                    ) : null}
+
+                                    {!hallOfFameEnabled ? (
+                                        <div className="py-8 text-center bg-muted/30 rounded-lg border border-dashed">
+                                            <p className="text-xs text-muted-foreground italic">Please enable Hall of Fame to see records</p>
+                                        </div>
+                                    ) : hallOfFame?.topDays.length === 0 ? (
+                                        <div className="py-8 text-center">
+                                            <p className="text-xs text-muted-foreground italic">No revenue days found for this range</p>
+                                        </div>
+                                    ) : (
+                                        hallOfFame?.topDays.map((day, i) => (
+                                            <div key={`${i}-${day.time}`} className={cn("flex items-center justify-between p-2 rounded-lg text-sm", i === 0 ? "bg-amber-100/50 dark:bg-amber-900/20 border border-amber-200" : "hover:bg-muted")}>
+                                                <div className="flex items-center gap-3">
+                                                    <span className={cn("font-bold font-mono w-4", i === 0 ? "text-amber-600" : "text-muted-foreground")}>{i + 1}</span>
+                                                    <span className="font-medium">{day.time}</span>
+                                                </div>
+                                                <span className="font-bold text-amber-700 dark:text-amber-500">${day.revenue.toFixed(0)}</span>
+                                            </div>
+                                        ))
+                                    )}
                                 </div>
                             </DialogContent>
                         </Dialog>
@@ -734,42 +1061,154 @@ export function NonCraneQuickViewDialog({
                                     </div>
                                 </div>
                             </DialogTrigger>
-                            <DialogContent className="max-w-md max-h-[80vh] overflow-y-auto">
+                            <DialogContent className="max-w-md">
                                 <DialogHeader>
                                     <DialogTitle className="flex items-center gap-2">
                                         <Dumbbell className="h-5 w-5 text-slate-500" />
-                                        Store Contribution
+                                        Revenue Contribution
                                     </DialogTitle>
-                                    <DialogDescription>
-                                        Revenue contribution by machine in {machine.location} ({isToday ? 'Today' : 'Selected Period'}).
+                                    <DialogDescription className="flex items-center gap-2">
+                                        <span>Contribution by machine</span>
+                                        <Badge variant="secondary" className="text-[10px] font-normal">
+                                            <Calendar className="w-3 h-3 mr-1" />
+                                            {isToday ? 'Today' : dateRange?.from && dateRange?.to
+                                                ? `${format(dateRange.from, 'MMM dd')} - ${format(dateRange.to, 'MMM dd')}`
+                                                : 'Today'}
+                                        </Badge>
                                     </DialogDescription>
                                 </DialogHeader>
-                                <div className="space-y-2 mt-2">
-                                    <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-1 border-b">
+                                <div className="flex items-center justify-between gap-1 mt-4 p-1 bg-muted rounded-lg transition-all">
+                                    <div className="flex gap-1 flex-1">
+                                        {(['store', 'location', 'group'] as const).map((s) => (
+                                            <Button
+                                                key={s}
+                                                variant={contributionScope === s ? "default" : "ghost"}
+                                                size="sm"
+                                                className="flex-1 h-7 text-[10px] capitalize"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setContributionScope(s);
+                                                }}
+                                            >
+                                                {s}
+                                            </Button>
+                                        ))}
+                                    </div>
+                                    <div className="flex items-center gap-2 px-2 border-l border-muted-foreground/20">
+                                        <span className="text-[9px] font-bold uppercase text-muted-foreground tabular-nums">Breakdown</span>
+                                        <Switch
+                                            checked={showRevenueBreakdown}
+                                            onCheckedChange={setShowRevenueBreakdown}
+                                            className="h-3 w-6 scale-75 data-[state=checked]:bg-blue-500"
+                                        />
+                                    </div>
+                                </div>
+                                {/* Summary Section */}
+                                <div className="mt-4 p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-slate-200 dark:border-slate-800">
+                                    <div className="grid grid-cols-3 gap-4 text-center">
+                                        <div>
+                                            <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">
+                                                {contributionScope === 'store' ? 'Store' : contributionScope === 'location' ? 'Location' : 'Group'} Total
+                                            </p>
+                                            <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${heavyLifter.totalRev.toFixed(0)}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">This Machine</p>
+                                            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">${heavyLifter.myRev.toFixed(0)}</p>
+                                        </div>
+                                        <div>
+                                            <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">Contribution</p>
+                                            <p className={cn("text-lg font-bold", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="relative mt-4">
+                                    <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                                    <Input
+                                        placeholder="Search by name or tag..."
+                                        className="pl-9 h-9 text-xs"
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                    />
+                                    {searchTerm && (
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            className="absolute right-1 top-1 h-7 w-7 p-0"
+                                            onClick={() => setSearchTerm("")}
+                                        >
+                                            <XCircle className="h-3 w-3" />
+                                            <span className="sr-only">Clear</span>
+                                        </Button>
+                                    )}
+                                </div>
+                                {/* Sticky Table Header */}
+                                <div className="mt-4">
+                                    <div className="grid grid-cols-12 px-2 text-[10px] font-bold uppercase text-muted-foreground pb-2 border-b bg-background sticky top-0 z-10 transition-all">
                                         <div className="col-span-1">#</div>
-                                        <div className="col-span-8">Machine</div>
+                                        <div className={cn(showRevenueBreakdown ? "col-span-4" : "col-span-5")}>Machine</div>
+                                        {showRevenueBreakdown ? (
+                                            <>
+                                                <div className="col-span-2 text-right text-blue-500/80">Cash</div>
+                                                <div className="col-span-2 text-right text-emerald-500/80">Bonus</div>
+                                            </>
+                                        ) : (
+                                            <div className="col-span-3 text-right">Revenue</div>
+                                        )}
                                         <div className="col-span-3 text-right">Share</div>
                                     </div>
-                                    {heavyLifter.contributors.map((m, idx) => (
-                                        <div
-                                            key={m.id}
-                                            className={cn(
-                                                "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
-                                                m.id === machine.id ? "bg-slate-100 dark:bg-slate-800/40 ring-1 ring-slate-400/30" : "hover:bg-muted/50"
-                                            )}
-                                        >
-                                            <div className="col-span-1 font-mono text-muted-foreground">{idx + 1}</div>
-                                            <div className="col-span-8 flex flex-col min-w-0">
-                                                <span className="font-bold truncate">{m.name}</span>
-                                                <span className="text-[10px] text-muted-foreground">#{m.assetTag || m.tag}</span>
+                                    {/* Scrollable Table Body */}
+                                    <div className="max-h-[50vh] overflow-y-auto space-y-1 pt-1">
+                                        {heavyLifter.contributors.filter(m => {
+                                            if (!searchTerm) return true;
+                                            const term = searchTerm.toLowerCase();
+                                            return (
+                                                m.name?.toLowerCase().includes(term) ||
+                                                m.tag?.toLowerCase().includes(term) ||
+                                                m.assetTag?.toLowerCase().includes(term) ||
+                                                String(m.tag).includes(term) ||
+                                                String(m.assetTag).includes(term)
+                                            );
+                                        }).map((m, idx) => (
+                                            <div
+                                                key={m.id}
+                                                ref={m.id === machine.id ? (el) => {
+                                                    if (el && contributionOpen) {
+                                                        setTimeout(() => el.scrollIntoView({ behavior: 'smooth', block: 'center' }), 100);
+                                                    }
+                                                } : undefined}
+                                                className={cn(
+                                                    "grid grid-cols-12 items-center p-2 rounded-lg text-xs transition-colors",
+                                                    m.id === machine.id ? "bg-slate-100 dark:bg-slate-800/40 ring-1 ring-slate-400/30" : "hover:bg-muted/50"
+                                                )}
+                                            >
+                                                <div className="col-span-1 font-mono text-muted-foreground">{idx + 1}</div>
+                                                <div className={cn("flex flex-col min-w-0", showRevenueBreakdown ? "col-span-4" : "col-span-5")}>
+                                                    <span className="font-bold truncate">{m.name}</span>
+                                                    <span className="text-[10px] text-muted-foreground font-mono">#{m.assetTag || m.tag}</span>
+                                                </div>
+                                                {showRevenueBreakdown ? (
+                                                    <>
+                                                        <div className="col-span-2 text-right font-bold text-blue-600 dark:text-blue-400">
+                                                            ${(m.cashRevenue || 0).toFixed(0)}
+                                                        </div>
+                                                        <div className="col-span-2 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                                                            ${(m.bonusRevenue || 0).toFixed(0)}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <div className="col-span-3 text-right font-medium text-blue-600 dark:text-blue-400">
+                                                        ${(m.revenue || 0).toFixed(0)}
+                                                    </div>
+                                                )}
+                                                <div className="col-span-3 text-right">
+                                                    <span className={cn("font-bold", m.id === machine.id ? heavyLifter.color : "text-slate-600 dark:text-slate-400")}>
+                                                        {m.percent.toFixed(1)}%
+                                                    </span>
+                                                </div>
                                             </div>
-                                            <div className="col-span-3 text-right">
-                                                <span className={cn("font-bold", m.id === machine.id ? heavyLifter.color : "text-muted-foreground")}>
-                                                    {m.percent.toFixed(1)}%
-                                                </span>
-                                            </div>
-                                        </div>
-                                    ))}
+                                        ))}
+                                    </div>
                                 </div>
                             </DialogContent>
                         </Dialog>

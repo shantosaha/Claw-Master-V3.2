@@ -556,6 +556,7 @@ export interface PlayfieldSetting {
 
     timestamp: Date;
     setBy: string;
+    remarks?: string;
 }
 
 export interface MaintenanceTask {

@@ -1,6 +1,7 @@
 import { ServiceReport } from "@/types";
 import { appSettingsService } from "./appSettingsService";
 import { isCraneMachine } from "@/utils/machineTypeUtils";
+import { format } from "date-fns";
 
 class ServiceReportService {
     // In a real app, this would fetch from a database or the JotForm API (if available via proxy)
@@ -21,12 +22,11 @@ class ServiceReportService {
         try {
             let endpoint = `/api/jotform/${apiSettings.jotformFormId}`;
 
-            // PRODUCTION COMPLIANCE: Only 'date' parameter is allowed
-            // Use the 'to' date as the cutoff (returns all data up to that date)
-            if (options?.to) {
-                const dateStr = options.to.toISOString().split('T')[0];
-                endpoint += `?date=${dateStr}`;
-            }
+            // PRODUCTION COMPLIANCE & UNIVERSAL RULE:
+            // Always include a 'date' parameter. Default to current LOCAL date if not specified.
+            const targetDate = options?.to || new Date();
+            const dateStr = format(targetDate, "yyyy-MM-dd");
+            endpoint += `?date=${dateStr}`;
 
             console.log(`[ServiceReport] Fetching from: ${endpoint}`);
 
@@ -87,8 +87,8 @@ class ServiceReportService {
                             c2: Number(val(['C2', 'c2', 'Top']) || 0),
                             c3: Number(val(['C3', 'c3', 'Move']) || 0),
                             c4: Number(val(['C4', 'c4', 'MaxPower', 'Strength']) || 0),
-                            strongTime: Number(val(['strongTime', 'strong_time', 'StrongTime']) || 0),
-                            weakTime: Number(val(['weakTime', 'weak_time', 'WeakTime']) || 0),
+                            strongTime: Number(val(['timeStrong', 'strongTime', 'strong_time', 'StrongTime']) || 0),
+                            weakTime: Number(val(['timeWeak', 'weakTime', 'weak_time', 'WeakTime']) || 0),
                             playPerWin: Number(val(['payoutSettings', 'playsPerWin', 'plays_per_win', 'Target']) || 0),
                             playPrice: Number(val(['playPrice', 'play_price', 'Price']) || 0),
                             inflowSku: tag,
@@ -352,14 +352,15 @@ class ServiceReportService {
                                 c2: isNaN(report.c2) ? undefined : report.c2,
                                 c3: isNaN(report.c3) ? undefined : report.c3,
                                 c4: isNaN(report.c4) ? undefined : report.c4,
-                                strongTime: (report as any).strongTime,
-                                weakTime: (report as any).weakTime,
+                                strongTime: (report as any).strongTime !== undefined && !isNaN(Number((report as any).strongTime)) ? Number((report as any).strongTime) : undefined,
+                                weakTime: (report as any).weakTime !== undefined && !isNaN(Number((report as any).weakTime)) ? Number((report as any).weakTime) : undefined,
                                 payoutRate: isNaN(report.playPerWin) ? undefined : report.playPerWin,
                                 imageUrl: report.photo1 || report.imageUrl,
                                 stockItemId: activeItem?.id,
                                 stockItemName: activeItem?.name,
                                 timestamp: new Date(),
-                                setBy: report.staffName || "JotForm Sync"
+                                setBy: report.staffName || "JotForm Sync",
+                                remarks: report.remarks
                             };
 
                             await settingsService.add(historyEntry);
@@ -381,8 +382,8 @@ class ServiceReportService {
                                 c2: isNaN(report.c2) ? undefined : report.c2,
                                 c3: isNaN(report.c3) ? undefined : report.c3,
                                 c4: isNaN(report.c4) ? undefined : report.c4,
-                                strongTime: (report as any).strongTime,
-                                weakTime: (report as any).weakTime,
+                                strongTime: (report as any).strongTime !== undefined && !isNaN(Number((report as any).strongTime)) ? Number((report as any).strongTime) : undefined,
+                                weakTime: (report as any).weakTime !== undefined && !isNaN(Number((report as any).weakTime)) ? Number((report as any).weakTime) : undefined,
                                 playPrice: 0, // Preserve or default? (0 means unchanged usually)
                                 playPerWin: isNaN(report.playPerWin) ? undefined : report.playPerWin,
                                 lastUpdatedBy: "JotForm Sync",

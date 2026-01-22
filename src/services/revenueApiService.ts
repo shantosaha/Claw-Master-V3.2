@@ -57,6 +57,7 @@ async function fetchRevenue(
         siteId?: string;
         startDate: Date;
         endDate: Date;
+        aggregate?: boolean;  // Note: Production always returns aggregated regardless
     }
 ): Promise<RevenueItem[]> {
     try {

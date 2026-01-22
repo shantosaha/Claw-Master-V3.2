@@ -1,6 +1,6 @@
 "use client";
 
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Menu, Search, CircleUser } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -52,7 +52,8 @@ export function Header({ }: HeaderProps) {
                         </Button>
                     </SheetTrigger>
                     <SheetContent side="left" className="flex flex-col p-0 w-64">
-                        <Sidebar open={true} collapsed={false} />
+                        <SheetTitle className="sr-only">Mobile Navigation Menu</SheetTitle>
+                        <Sidebar open={true} collapsed={false} inMobileSheet={true} />
                     </SheetContent>
                 </Sheet>
             </div>

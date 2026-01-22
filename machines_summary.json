@@ -1,0 +1,4074 @@
+[
+  {
+    "name": "Air Hockey LHS BM",
+    "tag": "182",
+    "assetTag": "182",
+    "location": "Basement",
+    "group": "Group 10-Sports",
+    "status": "Online"
+  },
+  {
+    "name": "Air Hockey Mai Mai BM",
+    "tag": "453",
+    "assetTag": "453",
+    "location": "Basement",
+    "group": "Group 10-Sports",
+    "status": "Online"
+  },
+  {
+    "name": "All In BM",
+    "tag": "225",
+    "assetTag": "225",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Andamiro Redeemer BM",
+    "tag": "220",
+    "assetTag": "220",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Asphalt 9 P1 BM",
+    "tag": "555",
+    "assetTag": "555",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Asphalt 9 P2 BM",
+    "tag": "551",
+    "assetTag": "551",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Asphalt 9 P3 BM",
+    "tag": "552",
+    "assetTag": "552",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Asphalt 9 P4 BM",
+    "tag": "556",
+    "assetTag": "556",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Asphalt 9 P5 L1",
+    "tag": "1384",
+    "assetTag": "1384",
+    "location": "Level-1",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Asphalt 9 P6 L1",
+    "tag": "1385",
+    "assetTag": "1385",
+    "location": "Level-1",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Asphalt 9 P7 L1",
+    "tag": "1386",
+    "assetTag": "1386",
+    "location": "Level-1",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Asphalt 9 P8 L1",
+    "tag": "1397",
+    "assetTag": "1397",
+    "location": "Level-1",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Avengers Pusher P1 BM",
+    "tag": "221",
+    "assetTag": "221",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Avengers Pusher P2 BM",
+    "tag": "222",
+    "assetTag": "222",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Ball Mania P1 G",
+    "tag": "1347",
+    "assetTag": "1347",
+    "location": "Ground",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Basketball Pro P1 BM",
+    "tag": "245",
+    "assetTag": "245",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Basketball Pro P1 L1",
+    "tag": "496",
+    "assetTag": "496",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Basketball Pro P2 BM",
+    "tag": "246",
+    "assetTag": "246",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Basketball Pro P2 L1",
+    "tag": "497",
+    "assetTag": "497",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Beatmania IIDX L1",
+    "tag": "1083",
+    "assetTag": "1083",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Big Bass Wheel BM",
+    "tag": "248",
+    "assetTag": "248",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Big Buck Hunter HD BM",
+    "tag": "219",
+    "assetTag": "219",
+    "location": "Basement",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Bishi Bashi L1",
+    "tag": "128",
+    "assetTag": "128",
+    "location": "Level-1",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Bonus Match BM",
+    "tag": "1423",
+    "assetTag": "1423",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Bowling Champ P1 BM",
+    "tag": "285",
+    "assetTag": "285",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Bowling Champ P2 BM",
+    "tag": "1515",
+    "assetTag": "1515",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Brick Stacker BM",
+    "tag": "459",
+    "assetTag": "459",
+    "location": "Basement",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Brick Stacker G",
+    "tag": "571",
+    "assetTag": "571",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Burger Mania P1 BM",
+    "tag": "1341",
+    "assetTag": "1341",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Burger Mania P2 BM",
+    "tag": "1611",
+    "assetTag": "1611",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Candy Shop BM",
+    "tag": "98",
+    "assetTag": "98",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Cannon Paradise P1",
+    "tag": "1696",
+    "assetTag": "1696",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Cannon Paradise P2",
+    "tag": "1697",
+    "assetTag": "1697",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Cannon Paradise P3",
+    "tag": "1698",
+    "assetTag": "1698",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Capsule Left BM",
+    "tag": "1060",
+    "assetTag": "1060",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Capsule Right BM",
+    "tag": "1061",
+    "assetTag": "1061",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Check Balance Swiper BM",
+    "tag": "237",
+    "assetTag": "237",
+    "location": "Basement",
+    "group": "Group 11-Others",
+    "status": "Online"
+  },
+  {
+    "name": "Chunithm CENTER L1",
+    "tag": "168",
+    "assetTag": "168",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Chunithm LHS L1",
+    "tag": "925",
+    "assetTag": "925",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Chunithm RHS L1",
+    "tag": "167",
+    "assetTag": "167",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Color Match BM",
+    "tag": "655",
+    "assetTag": "655",
+    "location": "Basement",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Color Match G",
+    "tag": "470",
+    "assetTag": "470",
+    "location": "Ground",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Colorful Air P1 L1",
+    "tag": "1387",
+    "assetTag": "1387",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Colorful Air P2 L1",
+    "tag": "1388",
+    "assetTag": "1388",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Commando Sniper P1 L1",
+    "tag": "959",
+    "assetTag": "959",
+    "location": "Level-1",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Commando Sniper P2 L1",
+    "tag": "960",
+    "assetTag": "960",
+    "location": "Level-1",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Commando Sniper P3 L1",
+    "tag": "961",
+    "assetTag": "961",
+    "location": "Level-1",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Commando Sniper P4 L1",
+    "tag": "962",
+    "assetTag": "962",
+    "location": "Level-1",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Connect 4 Hoops LHS BM",
+    "tag": "485",
+    "assetTag": "485",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Connect 4 Hoops RHS BM",
+    "tag": "486",
+    "assetTag": "486",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Cool Boy P1 BM",
+    "tag": "664",
+    "assetTag": "664",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Cool Boy P2 BM",
+    "tag": "665",
+    "assetTag": "665",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Cool Boy P3 BM",
+    "tag": "666",
+    "assetTag": "666",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Cool Boy P4 BM",
+    "tag": "667",
+    "assetTag": "667",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Cosmo Games P1 L1",
+    "tag": "673",
+    "assetTag": "673",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Cosmo Games P2 L1",
+    "tag": "674",
+    "assetTag": "674",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Capsule Toys BM",
+    "tag": "129",
+    "assetTag": "129",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Crossy Road P2 BM",
+    "tag": "685",
+    "assetTag": "685",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Cyclotron Blue BM",
+    "tag": "405",
+    "assetTag": "405",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Cyclotron Green BM",
+    "tag": "406",
+    "assetTag": "406",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Cyclotron Red BM",
+    "tag": "404",
+    "assetTag": "404",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Dance Rush LHS BM",
+    "tag": "1471",
+    "assetTag": "1471",
+    "location": "Basement",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Dance Rush RHS BM",
+    "tag": "302",
+    "assetTag": "302",
+    "location": "Basement",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "DDR LHS L1",
+    "tag": "1517",
+    "assetTag": "1517",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "DDR RHS L1",
+    "tag": "1516",
+    "assetTag": "1516",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Demolition King LHS BM",
+    "tag": "1470",
+    "assetTag": "1470",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Demolition King RHS BM",
+    "tag": "1468",
+    "assetTag": "1468",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "DIMOC P1 BM",
+    "tag": "320",
+    "assetTag": "320",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "DIMOC P2 BM",
+    "tag": "460",
+    "assetTag": "460",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Dinosaur Era P1 BM",
+    "tag": "274",
+    "assetTag": "274",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Dinosaur Era P2 BM",
+    "tag": "275",
+    "assetTag": "275",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Dinosaur Era P3 BM",
+    "tag": "276",
+    "assetTag": "276",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Dinosaur Era P4 BM",
+    "tag": "277",
+    "assetTag": "277",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Dog Pounder BM",
+    "tag": "315",
+    "assetTag": "315",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Down the Clown LHS BM",
+    "tag": "217",
+    "assetTag": "217",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Down the Clown RHS BM",
+    "tag": "218",
+    "assetTag": "218",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Dragon Punch BM",
+    "tag": "119",
+    "assetTag": "119",
+    "location": "Basement",
+    "group": "Group 10-Sports",
+    "status": "Online"
+  },
+  {
+    "name": "Elastic Planet P1 BM",
+    "tag": "1335",
+    "assetTag": "1335",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Elastic Planet P2 BM",
+    "tag": "1336",
+    "assetTag": "1336",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Elaut Card Kiosk",
+    "tag": "1974",
+    "assetTag": "1974",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Emoji Frenzy P1 BM",
+    "tag": "1424",
+    "assetTag": "1424",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Emoji Frenzy P2 BM",
+    "tag": "1425",
+    "assetTag": "1425",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Emoji Frenzy P3 BM",
+    "tag": "1426",
+    "assetTag": "1426",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Emoji Frenzy P4 BM",
+    "tag": "1427",
+    "assetTag": "1427",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Fantasy Attack P1 BM",
+    "tag": "173",
+    "assetTag": "173",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Fantasy Attack P2 BM",
+    "tag": "174",
+    "assetTag": "174",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Fast Gunman P1 L1",
+    "tag": "321",
+    "assetTag": "321",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Fast Gunman P2 L1",
+    "tag": "582",
+    "assetTag": "582",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Ferris Wheel BM",
+    "tag": "260",
+    "assetTag": "260",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Final Shot BM",
+    "tag": "1389",
+    "assetTag": "1389",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Flappy Bird P1 BM",
+    "tag": "468",
+    "assetTag": "468",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Flappy Bird P2 BM",
+    "tag": "407",
+    "assetTag": "407",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Football Pro BM",
+    "tag": "1496",
+    "assetTag": "1496",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Forerunner Max Pusher G",
+    "tag": "1476",
+    "assetTag": "1476",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Ghost House BM",
+    "tag": "322",
+    "assetTag": "322",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Gitadora L1",
+    "tag": "1474",
+    "assetTag": "1474",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Gold Railroad P1 BM",
+    "tag": "1629",
+    "assetTag": "1629",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Gold Railroad P2 BM",
+    "tag": "1626",
+    "assetTag": "1626",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Gold Railroad P3 BM",
+    "tag": "1628",
+    "assetTag": "1628",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Gold Railroad P4 BM",
+    "tag": "1630",
+    "assetTag": "1630",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Gold Railroad Redeemer #1 BM",
+    "tag": "1631",
+    "assetTag": "1631",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Gold Railroad Redeemer #2 BM",
+    "tag": "1632",
+    "assetTag": "1632",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Halo LHS BM",
+    "tag": "201",
+    "assetTag": "201",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Halo RHS BM",
+    "tag": "202",
+    "assetTag": "202",
+    "location": "Basement",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Happy Miner P1 L1",
+    "tag": "268",
+    "assetTag": "268",
+    "location": "Level-1",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Happy Miner P2 L1",
+    "tag": "269",
+    "assetTag": "269",
+    "location": "Level-1",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Happy Miner P3 L1",
+    "tag": "270",
+    "assetTag": "270",
+    "location": "Level-1",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Happy Miner P4 L1",
+    "tag": "271",
+    "assetTag": "271",
+    "location": "Level-1",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Hitty Mouse 1 L1",
+    "tag": "1101",
+    "assetTag": "1101",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Hitty Mouse 2 L1",
+    "tag": "1102",
+    "assetTag": "1102",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Honey Bee BM",
+    "tag": "280",
+    "assetTag": "280",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Horse Play LHS BM",
+    "tag": "183",
+    "assetTag": "183",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Horse Play RHS BM",
+    "tag": "184",
+    "assetTag": "184",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Hyper Pitch P1 BM",
+    "tag": "579",
+    "assetTag": "579",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Hypernova BM",
+    "tag": "187",
+    "assetTag": "187",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "iCube BM",
+    "tag": "389",
+    "assetTag": "389",
+    "location": "Basement",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "iCube L1",
+    "tag": "121",
+    "assetTag": "121",
+    "location": "Level-1",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Initial D P1 BM",
+    "tag": "592",
+    "assetTag": "592",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Initial D P2 BM",
+    "tag": "593",
+    "assetTag": "593",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Initial D P3 BM",
+    "tag": "594",
+    "assetTag": "594",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Initial D P4 BM",
+    "tag": "595",
+    "assetTag": "595",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Iron Legion P1 BM",
+    "tag": "1551",
+    "assetTag": "1551",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Iron Legion P2 BM",
+    "tag": "1552",
+    "assetTag": "1552",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Iron Legion P3 BM",
+    "tag": "1553",
+    "assetTag": "1553",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Iron Legion P4 BM",
+    "tag": "1554",
+    "assetTag": "1554",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Jetski Madness P1 L1",
+    "tag": "1383",
+    "assetTag": "1383",
+    "location": "Level-1",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Jetski Madness P2 L1",
+    "tag": "1382",
+    "assetTag": "1382",
+    "location": "Level-1",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Jurassic Park BM",
+    "tag": "394",
+    "assetTag": "394",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Karaoke Box",
+    "tag": "1693",
+    "assetTag": "1693",
+    "location": "Basement",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "King Kong Skull Island P1 BM",
+    "tag": "226",
+    "assetTag": "226",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "King Kong Skull Island P2 BM",
+    "tag": "227",
+    "assetTag": "227",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "King of Hammer BM",
+    "tag": "132",
+    "assetTag": "132",
+    "location": "Basement",
+    "group": "Group 10-Sports",
+    "status": "Online"
+  },
+  {
+    "name": "Let's Cola L1",
+    "tag": "1409",
+    "assetTag": "1409",
+    "location": "Level-1",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Lets Disc BM",
+    "tag": "242",
+    "assetTag": "242",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Lucky 666 BM",
+    "tag": "198",
+    "assetTag": "198",
+    "location": "Basement",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Magic Drop L1",
+    "tag": "41",
+    "assetTag": "41",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Magic House G",
+    "tag": "1497",
+    "assetTag": "1497",
+    "location": "Ground",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "maimai DX #1 BM",
+    "tag": "165",
+    "assetTag": "165",
+    "location": "Basement",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "maimai DX #1 G",
+    "tag": "1546",
+    "assetTag": "1546",
+    "location": "Ground",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "maimai DX #2 BM",
+    "tag": "643",
+    "assetTag": "643",
+    "location": "Basement",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "maimai DX #2 G",
+    "tag": "166",
+    "assetTag": "166",
+    "location": "Ground",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "maimai DX #3 BM",
+    "tag": "1396",
+    "assetTag": "1396",
+    "location": "Basement",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Marbles Park P1 BM",
+    "tag": "1069",
+    "assetTag": "1069",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Marbles Park P2 BM",
+    "tag": "1071",
+    "assetTag": "1071",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Marbles Park P3 BM",
+    "tag": "1070",
+    "assetTag": "1070",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Mario Kart #1 G",
+    "tag": "108",
+    "assetTag": "108",
+    "location": "Ground",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Mario Kart #2 G",
+    "tag": "203",
+    "assetTag": "203",
+    "location": "Ground",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Mario Kart #3 G",
+    "tag": "109",
+    "assetTag": "109",
+    "location": "Ground",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Mario Kart #4 G",
+    "tag": "204",
+    "assetTag": "204",
+    "location": "Ground",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Milk Jug Toss LHS BM",
+    "tag": "116",
+    "assetTag": "116",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Milk Jug Toss RHS BM",
+    "tag": "117",
+    "assetTag": "117",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Minecraft P1 L1",
+    "tag": "464",
+    "assetTag": "464",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Minecraft P2 L1",
+    "tag": "467",
+    "assetTag": "467",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Minecraft P3 L1",
+    "tag": "465",
+    "assetTag": "465",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Minecraft P4 L1",
+    "tag": "466",
+    "assetTag": "466",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Mini Pinball P1 G",
+    "tag": "1391",
+    "assetTag": "1391",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Mini Pinball P2 G",
+    "tag": "1392",
+    "assetTag": "1392",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Minions Wheel BM",
+    "tag": "454",
+    "assetTag": "454",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Monopoly Roll and Go BM",
+    "tag": "188",
+    "assetTag": "188",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Monster Catcher L1",
+    "tag": "1401",
+    "assetTag": "1401",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Moto Blitz P1 L1",
+    "tag": "1378",
+    "assetTag": "1378",
+    "location": "Level-1",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Moto Blitz P2 L1",
+    "tag": "1379",
+    "assetTag": "1379",
+    "location": "Level-1",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 BLU #1 BM",
+    "tag": "236",
+    "assetTag": "236",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 BLU #2 BM",
+    "tag": "711",
+    "assetTag": "711",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 BLU #3 BM",
+    "tag": "715",
+    "assetTag": "715",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 BLU #4 BM",
+    "tag": "716",
+    "assetTag": "716",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 GRN #1 BM",
+    "tag": "103",
+    "assetTag": "103",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 GRN #2 BM",
+    "tag": "105",
+    "assetTag": "105",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 GRN #3 BM",
+    "tag": "104",
+    "assetTag": "104",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 GRN #4 BM",
+    "tag": "106",
+    "assetTag": "106",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 RED #1 BM",
+    "tag": "232",
+    "assetTag": "232",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 RED #2 BM",
+    "tag": "234",
+    "assetTag": "234",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 RED #3 BM",
+    "tag": "712",
+    "assetTag": "712",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 RED #4 BM",
+    "tag": "235",
+    "assetTag": "235",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 Terminal #1 BM",
+    "tag": "107",
+    "assetTag": "107",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 Terminal #2 BM",
+    "tag": "233",
+    "assetTag": "233",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "MT6 Terminal #3 BM",
+    "tag": "718",
+    "assetTag": "718",
+    "location": "Basement",
+    "group": "Group 3-Driving",
+    "status": "Online"
+  },
+  {
+    "name": "Naughty Beans L1",
+    "tag": "1511",
+    "assetTag": "1511",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "NBA Hoops Blue BM",
+    "tag": "113",
+    "assetTag": "113",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "NBA Hoops Green BM",
+    "tag": "112",
+    "assetTag": "112",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "NBA Hoops Purple BM",
+    "tag": "115",
+    "assetTag": "115",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "NBA Hoops Red BM",
+    "tag": "114",
+    "assetTag": "114",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Outnumbered L1",
+    "tag": "672",
+    "assetTag": "672",
+    "location": "Level-1",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Over The Edge P1 BM",
+    "tag": "1428",
+    "assetTag": "1428",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Over The Edge P1 G",
+    "tag": "1439",
+    "assetTag": "1439",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Over The Edge P2 BM",
+    "tag": "1429",
+    "assetTag": "1429",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Over The Edge P2 G",
+    "tag": "1440",
+    "assetTag": "1440",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Parallel Universe P1 BM",
+    "tag": "1344",
+    "assetTag": "1344",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Parallel Universe P2 BM",
+    "tag": "1345",
+    "assetTag": "1345",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Photo Booth LHS BM",
+    "tag": "1577",
+    "assetTag": "1577",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Photo Booth RHS BM",
+    "tag": "1578",
+    "assetTag": "1578",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Piano Keys LHS BM",
+    "tag": "180",
+    "assetTag": "180",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Piano Keys RHS BM",
+    "tag": "181",
+    "assetTag": "181",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Pinball Godzilla BM",
+    "tag": "1519",
+    "assetTag": "1519",
+    "location": "Basement",
+    "group": "Group 10-Sports",
+    "status": "Online"
+  },
+  {
+    "name": "Pinball King Kong",
+    "tag": "1735",
+    "assetTag": "1735",
+    "location": "Basement",
+    "group": "Group 10-Sports",
+    "status": "Online"
+  },
+  {
+    "name": "Pinball Stranger Things BM",
+    "tag": "1488",
+    "assetTag": "1488",
+    "location": "Basement",
+    "group": "Group 10-Sports",
+    "status": "Online"
+  },
+  {
+    "name": "Pinball X-Men BM",
+    "tag": "1486",
+    "assetTag": "1486",
+    "location": "Basement",
+    "group": "Group 10-Sports",
+    "status": "Online"
+  },
+  {
+    "name": "Pirate Legend #1 BM",
+    "tag": "224",
+    "assetTag": "224",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Pirate Legend #2 BM",
+    "tag": "134",
+    "assetTag": "134",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Pirate Legend #3 BM",
+    "tag": "133",
+    "assetTag": "133",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Point Blank BM",
+    "tag": "431",
+    "assetTag": "431",
+    "location": "Basement",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Pop And Win G",
+    "tag": "1334",
+    "assetTag": "1334",
+    "location": "Ground",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Pop the Lock L1",
+    "tag": "197",
+    "assetTag": "197",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Power Point BM",
+    "tag": "458",
+    "assetTag": "458",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Prize Safari BM",
+    "tag": "1555",
+    "assetTag": "1555",
+    "location": "Basement",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Pump It Up G",
+    "tag": "1543",
+    "assetTag": "1543",
+    "location": "Ground",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Quik Drop BM",
+    "tag": "249",
+    "assetTag": "249",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Rainbow P1 L1",
+    "tag": "1411",
+    "assetTag": "1411",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Rainbow P2 L1",
+    "tag": "433",
+    "assetTag": "433",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Road Trip BM",
+    "tag": "649",
+    "assetTag": "649",
+    "location": "Basement",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Robot P1 BM",
+    "tag": "272",
+    "assetTag": "272",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Robot P2 BM",
+    "tag": "273",
+    "assetTag": "273",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Roller Ball LHS BM",
+    "tag": "511",
+    "assetTag": "511",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Roller Ball RHS BM",
+    "tag": "512",
+    "assetTag": "512",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Sky Tower 1P BM",
+    "tag": "95",
+    "assetTag": "95",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Sky Tower 2P BM",
+    "tag": "93",
+    "assetTag": "93",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Sky Tower 3P BM",
+    "tag": "94",
+    "assetTag": "94",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Slide Up P1 L1",
+    "tag": "499",
+    "assetTag": "499",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Slide Up P2 L1",
+    "tag": "500",
+    "assetTag": "500",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Smurf Pusher P1",
+    "tag": "1972",
+    "assetTag": "1972",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Smurf Pusher P2",
+    "tag": "1973",
+    "assetTag": "1973",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Solo Cutter Black L1",
+    "tag": "118",
+    "assetTag": "118",
+    "location": "Level-1",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Solo Cutter E BM",
+    "tag": "872",
+    "assetTag": "872",
+    "location": "Basement",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Solo Cutter Pink BM",
+    "tag": "111",
+    "assetTag": "111",
+    "location": "Basement",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Sound Voltex LHS L1",
+    "tag": "1509",
+    "assetTag": "1509",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Sound Voltex RHS L1",
+    "tag": "1510",
+    "assetTag": "1510",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Space Invaders LHS BM",
+    "tag": "185",
+    "assetTag": "185",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Space Invaders RHS BM",
+    "tag": "186",
+    "assetTag": "186",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Spiderman Pusher P1 BM",
+    "tag": "1447",
+    "assetTag": "1447",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Spiderman Pusher P2 BM",
+    "tag": "1448",
+    "assetTag": "1448",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Spongebob Pineapple P1 BM",
+    "tag": "758",
+    "assetTag": "758",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Spongebob Pineapple P2 BM",
+    "tag": "759",
+    "assetTag": "759",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Spongebob Pirates P1 BM",
+    "tag": "178",
+    "assetTag": "178",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Spongebob Pirates P2 BM",
+    "tag": "179",
+    "assetTag": "179",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Street Fighter #1 L1",
+    "tag": "68",
+    "assetTag": "68",
+    "location": "Level-1",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Street Fighter #2 L1",
+    "tag": "155",
+    "assetTag": "155",
+    "location": "Level-1",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Street Fighter #3 L1",
+    "tag": "240",
+    "assetTag": "240",
+    "location": "Level-1",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Street Fighter #4 L1",
+    "tag": "241",
+    "assetTag": "241",
+    "location": "Level-1",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Subway Surfers L1",
+    "tag": "683",
+    "assetTag": "683",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Super Drill P1 L1",
+    "tag": "1376",
+    "assetTag": "1376",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Super Drill P2 L1",
+    "tag": "1375",
+    "assetTag": "1375",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Super Drill P3 L1",
+    "tag": "1374",
+    "assetTag": "1374",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Super Drill P4 L1",
+    "tag": "1377",
+    "assetTag": "1377",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Super MVP #1",
+    "tag": "1666",
+    "assetTag": "1666",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Super MVP #2",
+    "tag": "1667",
+    "assetTag": "1667",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Super MVP #3",
+    "tag": "1668",
+    "assetTag": "1668",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Super MVP #4",
+    "tag": "1669",
+    "assetTag": "1669",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Super Star BM",
+    "tag": "642",
+    "assetTag": "642",
+    "location": "Basement",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "Supreme Marbles P1 G",
+    "tag": "1311",
+    "assetTag": "1311",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Supreme Marbles P2 G",
+    "tag": "1312",
+    "assetTag": "1312",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Sweetland 5 #1 G",
+    "tag": "449",
+    "assetTag": "449",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Sweetland 5 #2 G",
+    "tag": "450",
+    "assetTag": "450",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Sweetland 5 #3 G",
+    "tag": "451",
+    "assetTag": "451",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Sweetland 5 #4 G",
+    "tag": "452",
+    "assetTag": "452",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Sync Pong BM",
+    "tag": "1403",
+    "assetTag": "1403",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Taiko Drum #1 BM",
+    "tag": "1528",
+    "assetTag": "1528",
+    "location": "Basement",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Taiko Drum #2 BM",
+    "tag": "1523",
+    "assetTag": "1523",
+    "location": "Basement",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Taiko Drum #3 BM",
+    "tag": "668",
+    "assetTag": "668",
+    "location": "Basement",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Taiko Drum G",
+    "tag": "440",
+    "assetTag": "440",
+    "location": "Ground",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Taiko Drum L1",
+    "tag": "1525",
+    "assetTag": "1525",
+    "location": "Level-1",
+    "group": "Group 7-Music",
+    "status": "Online"
+  },
+  {
+    "name": "Taj Mahal Mini G",
+    "tag": "1542",
+    "assetTag": "1542",
+    "location": "Ground",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Tako Panic BM",
+    "tag": "314",
+    "assetTag": "314",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Tekken A L1",
+    "tag": "1072",
+    "assetTag": "1072",
+    "location": "Level-1",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Tekken B L1",
+    "tag": "1073",
+    "assetTag": "1073",
+    "location": "Level-1",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "test c",
+    "tag": "1661",
+    "assetTag": "1661",
+    "location": "Basement",
+    "group": "Not Assigned",
+    "status": "Online"
+  },
+  {
+    "name": "test d",
+    "tag": "1659",
+    "assetTag": "1659",
+    "location": "Basement",
+    "group": "Not Assigned",
+    "status": "Online"
+  },
+  {
+    "name": "The Hand L1",
+    "tag": "1414",
+    "assetTag": "1414",
+    "location": "Level-1",
+    "group": "Group 6-Skill Tester",
+    "status": "Online"
+  },
+  {
+    "name": "The King Punch L1",
+    "tag": "1484",
+    "assetTag": "1484",
+    "location": "Level-1",
+    "group": "Group 10-Sports",
+    "status": "Online"
+  },
+  {
+    "name": "Thunderbolt Shot L1",
+    "tag": "1322",
+    "assetTag": "1322",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Ticket Dome Blue G",
+    "tag": "521",
+    "assetTag": "521",
+    "location": "Ground",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Ticket Dome Purple G",
+    "tag": "522",
+    "assetTag": "522",
+    "location": "Ground",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Ticket Dome Red G",
+    "tag": "523",
+    "assetTag": "523",
+    "location": "Ground",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Ticket Dome Yellow G",
+    "tag": "520",
+    "assetTag": "520",
+    "location": "Ground",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Ticket Monster BM",
+    "tag": "1493",
+    "assetTag": "1493",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Ticket Ring BM",
+    "tag": "391",
+    "assetTag": "391",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Ticket Time BM",
+    "tag": "478",
+    "assetTag": "478",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Tight Rope LHS L1",
+    "tag": "355",
+    "assetTag": "355",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Tight Rope RHS L1",
+    "tag": "356",
+    "assetTag": "356",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Time Out G",
+    "tag": "1420",
+    "assetTag": "1420",
+    "location": "Ground",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "TOILET DOOR BM",
+    "tag": "1065",
+    "assetTag": "1065",
+    "location": "Basement",
+    "group": "Group 11-Others",
+    "status": "Online"
+  },
+  {
+    "name": "Tons of Tickets LHS BM",
+    "tag": "463",
+    "assetTag": "463",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Tons of Tickets RHS BM",
+    "tag": "124",
+    "assetTag": "124",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Toothy Kid BM",
+    "tag": "317",
+    "assetTag": "317",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Tornado P1 BM",
+    "tag": "1633",
+    "assetTag": "1633",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Tornado P2 BM",
+    "tag": "1634",
+    "assetTag": "1634",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Tower Crane G",
+    "tag": "1402",
+    "assetTag": "1402",
+    "location": "Ground",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Transformers L1",
+    "tag": "393",
+    "assetTag": "393",
+    "location": "Level-1",
+    "group": "Group 1-Video",
+    "status": "Online"
+  },
+  {
+    "name": "Treasure Cove LHS BM",
+    "tag": "176",
+    "assetTag": "176",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Treasure Cove RHS BM",
+    "tag": "177",
+    "assetTag": "177",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Treasure Quest BM",
+    "tag": "175",
+    "assetTag": "175",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Trypod LHS BM",
+    "tag": "381",
+    "assetTag": "381",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Trypod RHS BM",
+    "tag": "382",
+    "assetTag": "382",
+    "location": "Basement",
+    "group": "Group 5-Prize Games",
+    "status": "Online"
+  },
+  {
+    "name": "Typhoon BM",
+    "tag": "1483",
+    "assetTag": "1483",
+    "location": "Basement",
+    "group": "Group 8-Attractions",
+    "status": "Online"
+  },
+  {
+    "name": "Whachem Funky Gators L1",
+    "tag": "1094",
+    "assetTag": "1094",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Whack a Clown LHS BM",
+    "tag": "126",
+    "assetTag": "126",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Whack a Clown RHS BM",
+    "tag": "127",
+    "assetTag": "127",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Whack N Win BM",
+    "tag": "223",
+    "assetTag": "223",
+    "location": "Basement",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Wicked Tuna LHS L1",
+    "tag": "1416",
+    "assetTag": "1416",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Wicked Tuna RHS L1",
+    "tag": "1417",
+    "assetTag": "1417",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Wild Things Wipe Out P1 L1",
+    "tag": "1699",
+    "assetTag": "1699",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Wild Things Wipe Out P2 L1",
+    "tag": "1700",
+    "assetTag": "1700",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Wild Things Wipe Out P3 L1",
+    "tag": "1701",
+    "assetTag": "1701",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Wild Things Wipe Out P4 L1",
+    "tag": "1702",
+    "assetTag": "1702",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Willy Crash L1",
+    "tag": "164",
+    "assetTag": "164",
+    "location": "Level-1",
+    "group": "Group 2-Redemption",
+    "status": "Online"
+  },
+  {
+    "name": "Willy Wonka Augustus BM",
+    "tag": "291",
+    "assetTag": "291",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Willy Wonka Charlie BM",
+    "tag": "287",
+    "assetTag": "287",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Willy Wonka Mike BM",
+    "tag": "290",
+    "assetTag": "290",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Willy Wonka Veruca BM",
+    "tag": "288",
+    "assetTag": "288",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Willy Wonka Violet BM",
+    "tag": "289",
+    "assetTag": "289",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Willy Wonka Willy BM",
+    "tag": "292",
+    "assetTag": "292",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of OZ P1 BM",
+    "tag": "1975",
+    "assetTag": "1975",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of Oz P1 L2",
+    "tag": "294",
+    "assetTag": "294",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of OZ P2 BM",
+    "tag": "1976",
+    "assetTag": "1976",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of Oz P2 L2",
+    "tag": "295",
+    "assetTag": "295",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of OZ P3 BM",
+    "tag": "1977",
+    "assetTag": "1977",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of Oz P3 L2",
+    "tag": "296",
+    "assetTag": "296",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of OZ P4 BM",
+    "tag": "1978",
+    "assetTag": "1978",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of Oz P4 L2",
+    "tag": "297",
+    "assetTag": "297",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of OZ P5 BM",
+    "tag": "1979",
+    "assetTag": "1979",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of Oz P5 L2",
+    "tag": "298",
+    "assetTag": "298",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of OZ P6 BM",
+    "tag": "1980",
+    "assetTag": "1980",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of Oz P6 L2",
+    "tag": "293",
+    "assetTag": "293",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of OZ Redeemer #1 BM",
+    "tag": "300",
+    "assetTag": "300",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Wizard of OZ Redeemer #2 BM",
+    "tag": "301",
+    "assetTag": "301",
+    "location": "Basement",
+    "group": "Group 9-Coin Pushers",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #1 P1 - Top",
+    "tag": "1431",
+    "assetTag": "1431",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #1 P1 - Bottom",
+    "tag": "1431",
+    "assetTag": "1431",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #1 P2 - Top",
+    "tag": "1432",
+    "assetTag": "1432",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #1 P2 - Bottom",
+    "tag": "1432",
+    "assetTag": "1432",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #2 P1 - Top",
+    "tag": "1433",
+    "assetTag": "1433",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #2 P1 - Bottom",
+    "tag": "1433",
+    "assetTag": "1433",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #2 P2 - Top",
+    "tag": "1434",
+    "assetTag": "1434",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #2 P2 - Bottom",
+    "tag": "1434",
+    "assetTag": "1434",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #3 P1 - Top",
+    "tag": "1435",
+    "assetTag": "1435",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Maintenance"
+  },
+  {
+    "name": "Trend #3 P1 - Bottom",
+    "tag": "1435",
+    "assetTag": "1435",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Maintenance"
+  },
+  {
+    "name": "Trend #3 P2 - Top",
+    "tag": "1436",
+    "assetTag": "1436",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #3 P2 - Bottom",
+    "tag": "1436",
+    "assetTag": "1436",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #4 P1 - Top",
+    "tag": "1437",
+    "assetTag": "1437",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #4 P1 - Bottom",
+    "tag": "1437",
+    "assetTag": "1437",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #4 P2 - Top",
+    "tag": "1438",
+    "assetTag": "1438",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #4 P2 - Bottom",
+    "tag": "1438",
+    "assetTag": "1438",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #5 P1 G",
+    "tag": "1443",
+    "assetTag": "1443",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #5 P1 - Bottom",
+    "tag": "1443",
+    "assetTag": "1443",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #5 P2 G",
+    "tag": "1444",
+    "assetTag": "1444",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #5 P2 - Bottom",
+    "tag": "1444",
+    "assetTag": "1444",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #6 P1 - Top",
+    "tag": "1445",
+    "assetTag": "1445",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #6 P1 - Bottom",
+    "tag": "1445",
+    "assetTag": "1445",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #6 P2 - Top",
+    "tag": "1446",
+    "assetTag": "1446",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #6 P2 - Bottom",
+    "tag": "1446",
+    "assetTag": "1446",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #7 P1 G",
+    "tag": "1451",
+    "assetTag": "1451",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #7 P1 - Bottom",
+    "tag": "1451",
+    "assetTag": "1451",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #7 P2 G",
+    "tag": "1452",
+    "assetTag": "1452",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #7 P2 - Bottom",
+    "tag": "1452",
+    "assetTag": "1452",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #8 P1 G",
+    "tag": "1482",
+    "assetTag": "1482",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #8 P1 - Bottom",
+    "tag": "1482",
+    "assetTag": "1482",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #8 P2 G",
+    "tag": "1481",
+    "assetTag": "1481",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend #8 P2 - Bottom",
+    "tag": "1481",
+    "assetTag": "1481",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Clip Story Black P1 BM",
+    "tag": "244",
+    "assetTag": "244",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Clip Story Black P2 BM",
+    "tag": "614",
+    "assetTag": "614",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Clip Story White Single BM",
+    "tag": "696",
+    "assetTag": "696",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Color Star P1 G",
+    "tag": "484",
+    "assetTag": "484",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Color Star P2 G",
+    "tag": "1530",
+    "assetTag": "1530",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Color Star P3 G",
+    "tag": "690",
+    "assetTag": "690",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Color Star P4 G",
+    "tag": "691",
+    "assetTag": "691",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Stars 3 P1 BM",
+    "tag": "210",
+    "assetTag": "210",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Stars 3 P2 BM",
+    "tag": "1531",
+    "assetTag": "1531",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Stars 3 P3 BM",
+    "tag": "211",
+    "assetTag": "211",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Stars 3 P4 BM",
+    "tag": "212",
+    "assetTag": "212",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Stars 3 P5 BM",
+    "tag": "213",
+    "assetTag": "213",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Stars 3 P6 BM",
+    "tag": "214",
+    "assetTag": "214",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy 2 BM",
+    "tag": "1271",
+    "assetTag": "1271",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Double LHS BM",
+    "tag": "149",
+    "assetTag": "149",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Double RHS BM",
+    "tag": "150",
+    "assetTag": "150",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy L1",
+    "tag": "1545",
+    "assetTag": "1545",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1000 BM",
+    "tag": "1000",
+    "assetTag": "1000",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1001 BM",
+    "tag": "1001",
+    "assetTag": "1001",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1002 BM",
+    "tag": "1002",
+    "assetTag": "1002",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1003 BM",
+    "tag": "1003",
+    "assetTag": "1003",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1004 BM",
+    "tag": "1004",
+    "assetTag": "1004",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1005 BM",
+    "tag": "1005",
+    "assetTag": "1005",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1006 BM",
+    "tag": "1006",
+    "assetTag": "1006",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1007 BM",
+    "tag": "1007",
+    "assetTag": "1007",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1008 BM",
+    "tag": "1008",
+    "assetTag": "1008",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1009 BM",
+    "tag": "1009",
+    "assetTag": "1009",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1010 BM",
+    "tag": "1010",
+    "assetTag": "1010",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1011 BM",
+    "tag": "1011",
+    "assetTag": "1011",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1012 BM",
+    "tag": "1012",
+    "assetTag": "1012",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1013 BM",
+    "tag": "1013",
+    "assetTag": "1013",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1014 BM",
+    "tag": "1014",
+    "assetTag": "1014",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1015 BM",
+    "tag": "1015",
+    "assetTag": "1015",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1016 BM",
+    "tag": "1016",
+    "assetTag": "1016",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1017 BM",
+    "tag": "1017",
+    "assetTag": "1017",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1018 BM",
+    "tag": "1018",
+    "assetTag": "1018",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1019 BM",
+    "tag": "1019",
+    "assetTag": "1019",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1020 BM",
+    "tag": "1020",
+    "assetTag": "1020",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1021 BM",
+    "tag": "1021",
+    "assetTag": "1021",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1022 BM",
+    "tag": "1022",
+    "assetTag": "1022",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1023 BM",
+    "tag": "1023",
+    "assetTag": "1023",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1024 BM",
+    "tag": "1024",
+    "assetTag": "1024",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1025 BM",
+    "tag": "1025",
+    "assetTag": "1025",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1026 BM",
+    "tag": "1026",
+    "assetTag": "1026",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1027 BM",
+    "tag": "1027",
+    "assetTag": "1027",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1028 BM",
+    "tag": "1028",
+    "assetTag": "1028",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1029 BM",
+    "tag": "1029",
+    "assetTag": "1029",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1030 BM",
+    "tag": "1030",
+    "assetTag": "1030",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1031 BM",
+    "tag": "1031",
+    "assetTag": "1031",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1032 BM",
+    "tag": "1032",
+    "assetTag": "1032",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1033 BM",
+    "tag": "1033",
+    "assetTag": "1033",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1034 BM",
+    "tag": "1034",
+    "assetTag": "1034",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1035 BM",
+    "tag": "1035",
+    "assetTag": "1035",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1036 BM",
+    "tag": "1036",
+    "assetTag": "1036",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1037 BM",
+    "tag": "1037",
+    "assetTag": "1037",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1038 BM",
+    "tag": "1038",
+    "assetTag": "1038",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1039 BM",
+    "tag": "1039",
+    "assetTag": "1039",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1040 BM",
+    "tag": "1040",
+    "assetTag": "1040",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1041 BM",
+    "tag": "1041",
+    "assetTag": "1041",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1042 BM",
+    "tag": "1042",
+    "assetTag": "1042",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1043 BM",
+    "tag": "1043",
+    "assetTag": "1043",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1044 BM",
+    "tag": "1044",
+    "assetTag": "1044",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1045 BM",
+    "tag": "1045",
+    "assetTag": "1045",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1046 BM",
+    "tag": "1046",
+    "assetTag": "1046",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1047 BM",
+    "tag": "1047",
+    "assetTag": "1047",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1048 BM",
+    "tag": "1048",
+    "assetTag": "1048",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1049 BM",
+    "tag": "1049",
+    "assetTag": "1049",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1050 BM",
+    "tag": "1050",
+    "assetTag": "1050",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1051 BM",
+    "tag": "1051",
+    "assetTag": "1051",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1052 BM",
+    "tag": "1052",
+    "assetTag": "1052",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1053 BM",
+    "tag": "1053",
+    "assetTag": "1053",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1054 BM",
+    "tag": "1054",
+    "assetTag": "1054",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 1058 BM",
+    "tag": "1058",
+    "assetTag": "1058",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 979 BM",
+    "tag": "979",
+    "assetTag": "979",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 980 BM",
+    "tag": "980",
+    "assetTag": "980",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 981 BM",
+    "tag": "981",
+    "assetTag": "981",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 982 BM",
+    "tag": "982",
+    "assetTag": "982",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 983 BM",
+    "tag": "983",
+    "assetTag": "983",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 984 BM",
+    "tag": "984",
+    "assetTag": "984",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 985 BM",
+    "tag": "985",
+    "assetTag": "985",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 986 BM",
+    "tag": "986",
+    "assetTag": "986",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 987 BM",
+    "tag": "987",
+    "assetTag": "987",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 988 BM",
+    "tag": "988",
+    "assetTag": "988",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 989 BM",
+    "tag": "989",
+    "assetTag": "989",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 990 BM",
+    "tag": "990",
+    "assetTag": "990",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 991 BM",
+    "tag": "991",
+    "assetTag": "991",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 992 BM",
+    "tag": "992",
+    "assetTag": "992",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 993 BM",
+    "tag": "993",
+    "assetTag": "993",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 994 BM",
+    "tag": "994",
+    "assetTag": "994",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 995 BM",
+    "tag": "995",
+    "assetTag": "995",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 996 BM",
+    "tag": "996",
+    "assetTag": "996",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 997 BM",
+    "tag": "997",
+    "assetTag": "997",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 998 BM",
+    "tag": "998",
+    "assetTag": "998",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crazy Toy Miya 999 BM",
+    "tag": "999",
+    "assetTag": "999",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "CrazyToy Nano #1 BM",
+    "tag": "146",
+    "assetTag": "146",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "CrazyToy Nano #2 BM",
+    "tag": "147",
+    "assetTag": "147",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crystal House #1 BM",
+    "tag": "143",
+    "assetTag": "143",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crystal House #2 BM",
+    "tag": "144",
+    "assetTag": "144",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Crystal House #3 BM",
+    "tag": "145",
+    "assetTag": "145",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Doll Castle # 1 BM",
+    "tag": "1110",
+    "assetTag": "1110",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Doll Castle 6 BM",
+    "tag": "1635",
+    "assetTag": "1635",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Doll Castle LHS BM",
+    "tag": "1111",
+    "assetTag": "1111",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Doll House #2 BM",
+    "tag": "547",
+    "assetTag": "547",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Doll House #3 BM",
+    "tag": "208",
+    "assetTag": "208",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Doll House RHS BM",
+    "tag": "209",
+    "assetTag": "209",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Eclaw LHS BM",
+    "tag": "545",
+    "assetTag": "545",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Eclaw LHS G",
+    "tag": "492",
+    "assetTag": "492",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Eclaw RHS BM",
+    "tag": "546",
+    "assetTag": "546",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Eclaw RHS G",
+    "tag": "544",
+    "assetTag": "544",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Future Fields L1",
+    "tag": "1430",
+    "assetTag": "1430",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Handsome Man BM",
+    "tag": "377",
+    "assetTag": "377",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Handsome Man L1",
+    "tag": "378",
+    "assetTag": "378",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hexclaw P1 G",
+    "tag": "1535",
+    "assetTag": "1535",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hexclaw P2 G",
+    "tag": "1534",
+    "assetTag": "1534",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hexclaw P3 G",
+    "tag": "1533",
+    "assetTag": "1533",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hexclaw P4 G",
+    "tag": "1536",
+    "assetTag": "1536",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hexclaw P5 G",
+    "tag": "1537",
+    "assetTag": "1537",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hexclaw P6 G",
+    "tag": "1540",
+    "assetTag": "1540",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hip Pop Elf (Blue) #1 BM",
+    "tag": "142",
+    "assetTag": "142",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hip Pop Elf (Blue) #2 BM",
+    "tag": "136",
+    "assetTag": "136",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hip Pop Elf (Pink) #1 BM",
+    "tag": "139",
+    "assetTag": "139",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hip Pop Elf (Pink) #2 BM",
+    "tag": "137",
+    "assetTag": "137",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hip Pop Elf (Yellow) #1 BM",
+    "tag": "138",
+    "assetTag": "138",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hip Pop Elf (Yellow) #2 BM",
+    "tag": "140",
+    "assetTag": "140",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Hip Pop Elf (Yellow) #3 BM",
+    "tag": "141",
+    "assetTag": "141",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Innis 4 P1 L1",
+    "tag": "1502",
+    "assetTag": "1502",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Innis 4 P2 L1",
+    "tag": "1503",
+    "assetTag": "1503",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Innis 4 P3 L1",
+    "tag": "1504",
+    "assetTag": "1504",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Innis 4 P4 L1",
+    "tag": "1506",
+    "assetTag": "1506",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Ins Balloon #1 L1",
+    "tag": "1441",
+    "assetTag": "1441",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Ins Balloon #2 L1",
+    "tag": "1442",
+    "assetTag": "1442",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Meow Meow House #1 BM",
+    "tag": "159",
+    "assetTag": "159",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Meow Meow House #2 BM",
+    "tag": "160",
+    "assetTag": "160",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Meow Meow House #3 BM",
+    "tag": "96",
+    "assetTag": "96",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Meow Meow House #4 BM",
+    "tag": "231",
+    "assetTag": "231",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Party Plus P1 BM",
+    "tag": "1349",
+    "assetTag": "1349",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Party Plus P2 BM",
+    "tag": "1350",
+    "assetTag": "1350",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Party Plus P3 BM",
+    "tag": "1351",
+    "assetTag": "1351",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Party Plus P4 BM",
+    "tag": "1352",
+    "assetTag": "1352",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "SKEWB P1 L1",
+    "tag": "686",
+    "assetTag": "686",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "SKEWB P2 L1",
+    "tag": "687",
+    "assetTag": "687",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "SKEWB P3 L1",
+    "tag": "688",
+    "assetTag": "688",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "SKEWB P4 L1",
+    "tag": "689",
+    "assetTag": "689",
+    "location": "Level-1",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "The Big One Claw BM",
+    "tag": "1532",
+    "assetTag": "1532",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "The Clena P1 G",
+    "tag": "1449",
+    "assetTag": "1449",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "The Clena P2 G",
+    "tag": "1450",
+    "assetTag": "1450",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "UFO Catcher P1 G",
+    "tag": "1406",
+    "assetTag": "1406",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "UFO Catcher P2 G",
+    "tag": "1408",
+    "assetTag": "1408",
+    "location": "Ground",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Virgo BM",
+    "tag": "1125",
+    "assetTag": "1125",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend Box P1 G",
+    "tag": "1498",
+    "assetTag": "1498",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend Box P2 G",
+    "tag": "1499",
+    "assetTag": "1499",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend Box P3 G",
+    "tag": "1500",
+    "assetTag": "1500",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  },
+  {
+    "name": "Trend Box P4 G",
+    "tag": "1501",
+    "assetTag": "1501",
+    "location": "Basement",
+    "group": "Group 4-Cranes",
+    "status": "Online"
+  }
+]

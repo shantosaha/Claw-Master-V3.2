@@ -108,10 +108,19 @@ export async function POST(
             );
         }
 
-        // Build the target URL (only startdate and enddate allowed)
+        // Build the target URL (startdate, enddate, and aggregate allowed)
         const { path: pathSegments } = await params;
         const siteId = pathSegments?.[0] || gameReportSiteId;
-        const targetUrl = `${gameReportUrl}/game_report/${siteId}?startdate=${startdate}&enddate=${enddate}`;
+
+        // Ensure no double slashes
+        const baseUrl = gameReportUrl.endsWith('/') ? gameReportUrl.slice(0, -1) : gameReportUrl;
+        const searchParams = new URLSearchParams();
+        if (startdate) searchParams.set('startdate', startdate);
+        if (enddate) searchParams.set('enddate', enddate);
+        const aggregate = request.nextUrl.searchParams.get('aggregate');
+        if (aggregate) searchParams.set('aggregate', aggregate);
+
+        const targetUrl = `${baseUrl}/game_report/${siteId}?${searchParams.toString()}`;
 
         console.log(`[GameReport Proxy] POST to: ${targetUrl}`);
 
@@ -173,18 +182,20 @@ export async function POST(
             date: item.date ?? startdate,
         });
 
-        let processedData = data;
+        let processedData: Record<string, unknown>[];
         if (data?.response && Array.isArray(data.response)) {
-            processedData = {
-                ...data,
-                response: data.response.map(normalizeItem)
-            };
+            // Production: unwrap and normalize - always return raw array
+            processedData = data.response.map(normalizeItem);
         } else if (Array.isArray(data)) {
+            // Local: just normalize
             processedData = data.map(normalizeItem);
+        } else {
+            // Unexpected format - return empty array
+            console.warn('[GameReport Proxy] Unexpected response format:', typeof data);
+            processedData = [];
         }
 
-        const recordCount = Array.isArray(processedData) ? processedData.length : (processedData?.response?.length || 'unknown');
-        console.log(`[GameReport Proxy] POST Success - ${recordCount} records (normalized: totalRev + date)`);
+        console.log(`[GameReport Proxy] POST Success - ${processedData.length} records (normalized: totalRev + date, unwrapped)`);
 
         return NextResponse.json(processedData, {
             headers: {
@@ -231,7 +242,10 @@ export async function GET(
         const { path: pathSegments } = await params;
         const siteId = pathSegments?.[0] || gameReportSiteId;
         const search = request.nextUrl.search;
-        const targetUrl = `${gameReportUrl}/game_report/${siteId}${search}`;
+
+        // Ensure no double slashes
+        const baseUrl = gameReportUrl.endsWith('/') ? gameReportUrl.slice(0, -1) : gameReportUrl;
+        const targetUrl = `${baseUrl}/game_report/${siteId}${search}`;
 
         console.log(`[GameReport Proxy] GET from: ${targetUrl}`);
 

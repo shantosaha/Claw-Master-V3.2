@@ -77,6 +77,11 @@ export function SettingsPanel({
     // New advanced settings state
     const [advancedSettings, setAdvancedSettings] = useState<AdvancedMachineSettings>({});
     const [performanceData, setPerformanceData] = useState<GameReportItem | null>(null);
+    const [momentum, setMomentum] = useState<{
+        percent: number;
+        isPositive: boolean;
+        yesterdayRevenue: number;
+    } | null>(null);
     const [revenueHistory, setRevenueHistory] = useState<{ date: string; revenue: number; plays: number }[]>([]);
     const [chartType, setChartType] = useState<'revenue' | 'plays'>('revenue');
     const [chartStyle, setChartStyle] = useState<'bar' | 'line'>('bar');
@@ -91,68 +96,130 @@ export function SettingsPanel({
     // Initial load
     useEffect(() => {
         loadSettings();
-    }, [machineId, assetTag, activeStockItem?.id]);
+    }, [machineId, assetTag, activeStockItem?.id, isCraneMachine]);
 
     const loadSettings = async () => {
         setLoading(true);
         try {
-            // 1. Load Machine Performance Data (Today)
-            if (assetTag) {
-                const today = new Date();
-                const reports = await gameReportApiService.fetchGameReport({
-                    startDate: today,
-                    endDate: today,
-                    tag: parseInt(assetTag), // User confirmed web assetTag = api tag
-                    aggregate: true
-                });
-
-                if (reports && reports.length > 0) {
-                    setPerformanceData(reports[0]);
-                    setLastSyncedAt(new Date());
-                } else {
-                    setPerformanceData(null);
-                }
-
-                // For non-crane machines, also fetch last 7 days revenue
-                if (!isCraneMachine) {
-                    const today = new Date();
-                    const weekAgo = new Date();
-                    weekAgo.setDate(weekAgo.getDate() - 6);
-
-                    const weekReports = await gameReportApiService.fetchGameReport({
-                        startDate: weekAgo,
-                        endDate: today,
-                        tag: parseInt(assetTag),
-                        aggregate: false // Get daily data
-                    });
-
-                    if (weekReports && weekReports.length > 0) {
-                        // Group by date and sum revenue + plays
-                        const dataByDate = new Map<string, { revenue: number; plays: number }>();
-                        weekReports.forEach(r => {
-                            const dateKey = r.date || 'today';
-                            const existing = dataByDate.get(dateKey) || { revenue: 0, plays: 0 };
-                            dataByDate.set(dateKey, {
-                                revenue: existing.revenue + r.totalRev,
-                                plays: existing.plays + r.standardPlays + r.empPlays
-                            });
-                        });
-
-                        // Convert to array sorted by date
-                        const historyData = Array.from(dataByDate.entries())
-                            .map(([date, data]) => ({ date, revenue: data.revenue, plays: data.plays }))
-                            .sort((a, b) => a.date.localeCompare(b.date));
-
-                        setRevenueHistory(historyData);
-                    }
-                }
-            }
-
-            // 2. Load Machine Advanced Settings
+            // 1. Load Machine First to get Group optimization
             const machine = await machineService.getById(machineId);
+            const apiTag = machine?.tag || assetTag;
+
             if (machine) {
                 setAdvancedSettings(machine.advancedSettings || {});
             }
+
+            const machineGroup = machine?.group || machine?.type;
+            const groups = machineGroup ? [machineGroup] : undefined;
+
+            // 2. Load Machine Performance Data (Today & Yesterday for Momentum)
+            if (apiTag) {
+                const today = new Date();
+                const yesterday = new Date();
+                yesterday.setDate(yesterday.getDate() - 1);
+
+                const [todayReports, yesterdayReports] = await Promise.all([
+                    gameReportApiService.fetchGameReport({
+                        startDate: today,
+                        endDate: today,
+                        groups,
+                        tag: apiTag ? parseInt(apiTag) : undefined,
+                        aggregate: true
+                    }),
+                    gameReportApiService.fetchGameReport({
+                        startDate: yesterday,
+                        endDate: yesterday,
+                        groups,
+                        tag: apiTag ? parseInt(apiTag) : undefined,
+                        aggregate: true
+                    })
+                ]);
+
+                if (todayReports && todayReports.length > 0) {
+                    const todayData = todayReports[0];
+                    setPerformanceData(todayData);
+                    setLastSyncedAt(new Date());
+
+                    // Calculate Momentum
+                    if (yesterdayReports && yesterdayReports.length > 0) {
+                        const yesterdayData = yesterdayReports[0];
+                        const yesterdayRev = yesterdayData.totalRev || 0;
+                        const todayRev = todayData.totalRev || 0;
+
+                        if (yesterdayRev > 0) {
+                            const growth = ((todayRev - yesterdayRev) / yesterdayRev) * 100;
+                            setMomentum({
+                                percent: Math.abs(Math.round(growth)),
+                                isPositive: growth >= 0,
+                                yesterdayRevenue: yesterdayRev
+                            });
+                        } else if (todayRev > 0) {
+                            setMomentum({
+                                percent: 100,
+                                isPositive: true,
+                                yesterdayRevenue: 0
+                            });
+                        }
+                    }
+                } else {
+                    setPerformanceData(null);
+                    setMomentum(null);
+                }
+
+                // For non-crane machines, fetch last 7 days revenue (one call per day)
+                // Production API always returns aggregated data, so we must call individually
+                if (!isCraneMachine) {
+                    const historyData: { date: string; revenue: number; plays: number }[] = [];
+                    const todayDate = new Date();
+
+                    // Create array of promises for parallel fetching
+                    const dailyPromises = [];
+                    for (let i = 6; i >= 0; i--) {
+                        const d = new Date(todayDate);
+                        d.setDate(d.getDate() - i);
+                        dailyPromises.push(
+                            gameReportApiService.fetchGameReport({
+                                startDate: d,
+                                endDate: d,
+                                groups,
+                                tag: apiTag ? parseInt(apiTag) : undefined,
+                                aggregate: true
+                            }).then(reports => ({
+                                date: d.toISOString().split('T')[0],
+                                reports
+                            }))
+                        );
+                    }
+
+                    // Wait for all daily fetches
+                    const dailyResults = await Promise.all(dailyPromises);
+
+                    // Process results
+                    for (const { date, reports } of dailyResults) {
+                        let dayRevenue = 0;
+                        let dayPlays = 0;
+
+                        if (reports && reports.length > 0) {
+                            for (const r of reports) {
+                                dayRevenue += r.totalRev || 0;
+                                dayPlays += (r.standardPlays || 0) + (r.empPlays || 0);
+                            }
+                        }
+
+                        historyData.push({
+                            date,
+                            revenue: dayRevenue,
+                            plays: dayPlays
+                        });
+                    }
+
+                    // Sort by date to ensure correct order
+                    historyData.sort((a, b) => a.date.localeCompare(b.date));
+                    setRevenueHistory(historyData);
+                }
+            }
+
+            // 3. Machine Advanced Settings already loaded at step 1
 
             // 3. Load playfield settings history directly from JotForm as requested
             try {
@@ -398,37 +465,61 @@ export function SettingsPanel({
                 </div>
                 <div className="p-4 bg-card">
                     <div className={cn(
-                        "grid grid-cols-2 md:grid-cols-4 gap-4",
-                        isCraneMachine ? "xl:grid-cols-7" : "lg:grid-cols-6"
+                        "grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-4",
+                        isCraneMachine ? "xl:grid-cols-7" : "xl:grid-cols-12"
                     )}>
-                        <div className="space-y-1">
+                        <div className={cn("space-y-1", !isCraneMachine && "xl:col-span-2")}>
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <Gamepad2 className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-medium uppercase tracking-wider">Customer Plays</span>
                             </div>
                             <div className="text-2xl font-bold">{performanceData?.standardPlays ?? 0}</div>
                         </div>
-                        <div className="space-y-1">
+                        <div className={cn("space-y-1", !isCraneMachine && "xl:col-span-2")}>
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <Users className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-medium uppercase tracking-wider">Staff Plays</span>
                             </div>
                             <div className="text-2xl font-bold">{performanceData?.empPlays ?? 0}</div>
                         </div>
-                        <div className="space-y-1">
+                        <div className={cn("space-y-1", !isCraneMachine && "xl:col-span-2")}>
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                                 <TrendingUp className="h-3.5 w-3.5" />
                                 <span className="text-[11px] font-medium uppercase tracking-wider">Total Plays</span>
                             </div>
                             <div className="text-2xl font-bold">{(performanceData?.standardPlays ?? 0) + (performanceData?.empPlays ?? 0)}</div>
                         </div>
-                        <div className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-muted-foreground">
-                                <DollarSign className="h-3.5 w-3.5" />
-                                <span className="text-[11px] font-medium uppercase tracking-wider">Revenue</span>
-                            </div>
-                            <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
-                                ${performanceData?.totalRev?.toFixed(2) ?? '0.00'}
+                        <div className={cn("space-y-1", !isCraneMachine && "xl:col-span-3")}>
+                            <div className="p-2.5 bg-blue-50/50 dark:bg-blue-900/10 rounded-xl border border-blue-100 dark:border-blue-900/30 h-full flex flex-col justify-between">
+                                <div className="flex items-center justify-between gap-1 mb-1 flex-wrap">
+                                    <div className="flex items-center gap-1">
+                                        <div className="p-0.5 bg-blue-100 dark:bg-blue-900/30 rounded">
+                                            <DollarSign className="h-3 w-3 text-blue-600 dark:text-blue-400" />
+                                        </div>
+                                        <span className="text-[10px] font-bold uppercase text-blue-600/70 dark:text-blue-400/70">Revenue</span>
+                                    </div>
+                                    {momentum && (
+                                        <span className={cn(
+                                            "text-[9px] font-bold whitespace-nowrap",
+                                            momentum.isPositive ? "text-green-600" : "text-red-500"
+                                        )}>
+                                            {momentum.isPositive ? '↑' : '↓'}{momentum.percent}%
+                                        </span>
+                                    )}
+                                </div>
+                                <div className="text-xl font-bold text-blue-700 dark:text-blue-300 leading-tight">
+                                    ${performanceData?.totalRev?.toFixed(2) ?? '0.00'}
+                                </div>
+                                {/* Revenue Breakdown: Cash + Bonus */}
+                                <div className="mt-1 pt-1 border-t border-blue-200/30 dark:border-blue-800/30">
+                                    <div className="flex items-center gap-1 text-[9px] whitespace-nowrap overflow-hidden">
+                                        <span className="text-blue-700 dark:text-blue-300 font-bold">${(performanceData?.cashDebit || 0).toFixed(0)}</span>
+                                        <span className="text-blue-500/50">c</span>
+                                        <span className="text-blue-400/50">+</span>
+                                        <span className="text-blue-700 dark:text-blue-300 font-bold">${(performanceData?.cashDebitBonus || 0).toFixed(0)}</span>
+                                        <span className="text-blue-500/50">b</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
@@ -547,7 +638,7 @@ export function SettingsPanel({
                             </>
                         ) : (
                             /* Non-crane: Show 7-day chart with type and style selector */
-                            <div className="col-span-2 md:col-span-3 space-y-2">
+                            <div className="col-span-1 xs:col-span-2 md:col-span-4 xl:col-span-3 space-y-2">
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-1.5 text-muted-foreground">
                                         <TrendingUp className="h-3.5 w-3.5" />

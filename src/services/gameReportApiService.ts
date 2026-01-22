@@ -22,6 +22,9 @@ export interface GameReportItem {
     standardPlays: number;
     empPlays: number;
     totalRev: number;
+    merchandise?: number; // Wins
+    cashRev?: number;     // Breakdown: Cash
+    bonusRev?: number;    // Breakdown: Bonus
     date?: string; // Present in non-aggregated responses
 }
 
@@ -73,6 +76,8 @@ async function fetchGameReport(
         startDate?: Date;
         endDate?: Date;
         groups?: string[];
+        tag?: number;          // Filter by specific machine tag
+        aggregate?: boolean;   // If true, return aggregated data; if false, daily data
     } = {}
 ): Promise<GameReportItem[]> {
     try {
@@ -98,7 +103,11 @@ async function fetchGameReport(
         };
 
         // Build endpoint with dates in URL
-        const endpoint = `/api/game_report/${siteId}?startdate=${startStr}&enddate=${endStr}`;
+        let endpoint = `/api/game_report/${siteId}?startdate=${startStr}&enddate=${endStr}`;
+        if (options.aggregate !== undefined) {
+            endpoint += `&aggregate=${options.aggregate}`;
+        }
+
 
         console.log(`[GameReportService] Fetching from ${endpoint}`, body);
 
@@ -119,13 +128,22 @@ async function fetchGameReport(
         const data = await response.json();
 
         // Handle both array and {response: [...]} formats
+        let results: GameReportItem[] = [];
         if (Array.isArray(data)) {
-            return data;
+            results = data;
         } else if (data.response && Array.isArray(data.response)) {
-            return data.response;
+            results = data.response;
         }
 
-        return [];
+        // Client-side filtering by tag if provided
+        // PRODUCTION COMPLIANCE: Upstream doesn't support tag filtering in body, so we must filter here.
+        if (options.tag !== undefined && results.length > 0) {
+            const requestedTag = String(options.tag);
+            results = results.filter(item => String(item.tag) === requestedTag);
+            console.log(`[GameReportService] Client-side filtered by tag ${requestedTag}: ${results.length} items remain`);
+        }
+
+        return results;
     } catch (error) {
         console.error("[GameReportService] Fetch error:", error);
         return [];
@@ -142,6 +160,7 @@ async function fetchAggregatedReport(
     options: {
         siteId?: string;
         groups?: string[];
+        aggregate?: boolean;
     } = {}
 ): Promise<GameReportItem[]> {
     return fetchGameReport({
@@ -166,29 +185,35 @@ async function fetchDailyReport(
         ...options,
         startDate: date,
         endDate: date,
+        aggregate: false // Daily reports should not be aggregated if we want per-machine data
     });
 }
 
 /**
  * Fetch report for a specific machine by tag
  * NOTE: Production API does not support tag filtering.
- * This function fetches all data for the date range.
- * Client-side filtering by tag should be done after fetching.
+ * This function fetches data for the provided date range.
+ * If group is provided, it limits the upstream fetch to that group.
+ * Client-side filtering by tag is performed after fetching.
  */
 async function fetchMachineReport(
     tag: number,
     startDate: Date,
     endDate: Date,
-    siteId?: string
+    options: {
+        siteId?: string;
+        group?: string;
+    } = {}
 ): Promise<GameReportItem[]> {
-    // Fetch all data, then filter client-side by tag
+    // Fetch data, limiting by group if available to minimize traffic
     const allData = await fetchGameReport({
-        siteId,
+        siteId: options.siteId,
         startDate,
         endDate,
+        groups: options.group ? [options.group] : undefined
     });
     // Client-side filter by tag
-    return allData.filter(item => item.tag === tag);
+    return allData.filter(item => String(item.tag) === String(tag));
 }
 
 /**
