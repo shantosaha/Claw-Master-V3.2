@@ -64,6 +64,14 @@ export default function Dashboard() {
   const [listGroupFilter, setListGroupFilter] = useState<string>('all');
   const [listSubGroupFilter, setListSubGroupFilter] = useState<string>('all');
 
+  // Helper to format currency without rounding up
+  const formatNoRound = (num: number) => {
+    return (Math.floor(num * 100) / 100).toLocaleString(undefined, {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
   // Calculate stats from context data and APIs
   useEffect(() => {
     const calculateStats = async () => {
@@ -117,37 +125,58 @@ export default function Dashboard() {
         // Process Game Report data
         if (gameReportData.length > 0) {
           baseStats.dailyPlays = gameReportApiService.calculateTotalPlays(gameReportData);
-          baseStats.gameRevenue = gameReportApiService.calculateTotalRevenue(gameReportData);
 
           // Calculate additional game report stats
           let totalWins = 0;
+          let clawPlays = 0; // Only count claw machine plays for win rate
           let totalCashRev = 0;
           let totalBonusRev = 0;
+          let totalGameRev = 0;
           let totalEmpPlays = 0;
           const groupMap = new Map<string, { plays: number; revenue: number; wins: number }>();
 
           for (const item of gameReportData) {
-            totalWins += (item.points || item.merchandise || 0);
-            totalCashRev += item.cashDebit || 0;
-            totalBonusRev += item.cashDebitBonus || 0;
-            totalEmpPlays += item.empPlays || 0;
+            // Support multiple field names for wins
+            const machineWins = Number(item.merchandise || 0) + Number(item.points || 0);
+            const machinePlays = Number(item.standardPlays || 0) + Number(item.empPlays || 0);
+
+            // Standardizing revenue with fallbacks (consistent with Monitoring Page)
+            // Wrap in Number() to prevent string concatenation if API returns strings
+            const cash = Number(item.cashDebit || item.cashRev || 0);
+            const bonus = Number(item.cashDebitBonus || item.bonusRev || 0);
+            const totalRev = Number(item.totalRev) || (cash + bonus);
+
+            // Only count wins/plays for Group 4-Cranes (claw machines)
+            if (item.group?.toLowerCase().includes('crane') || item.group?.startsWith('Group 4')) {
+              totalWins += machineWins;
+              clawPlays += machinePlays;
+            }
+
+            // Standardizing revenue with fallbacks
+            totalCashRev += cash;
+            totalBonusRev += bonus;
+            totalGameRev += totalRev;
+            totalEmpPlays += (item.empPlays || 0);
 
             // Group breakdown
             const existing = groupMap.get(item.group) || { plays: 0, revenue: 0, wins: 0 };
             groupMap.set(item.group, {
-              plays: existing.plays + item.standardPlays + item.empPlays,
-              revenue: existing.revenue + item.totalRev,
-              wins: existing.wins + (item.points || item.merchandise || 0),
+              plays: existing.plays + machinePlays,
+              revenue: existing.revenue + totalRev,
+              wins: existing.wins + machineWins,
             });
           }
 
           baseStats.totalWins = totalWins;
+          baseStats.gameRevenue = totalGameRev;
           baseStats.gameCashRev = totalCashRev;
           baseStats.gameBonusRev = totalBonusRev;
           baseStats.empPlays = totalEmpPlays;
-          baseStats.activeMachines = gameReportData.length;
-          baseStats.winRate = baseStats.dailyPlays > 0
-            ? (totalWins / baseStats.dailyPlays) * 100
+          // Active machines should be those with at least one standard play
+          baseStats.activeMachines = gameReportData.filter(r => (Number(r.standardPlays) || 0) > 0).length;
+          // Win rate calculated only from claw machine plays
+          baseStats.winRate = clawPlays > 0
+            ? (totalWins / clawPlays) * 100
             : 0;
 
           // Set group breakdown
@@ -290,21 +319,21 @@ export default function Dashboard() {
       </div>
 
       {/* Second Row: Game Analytics Cards */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="border-l-4 border-l-pink-500 shadow-sm">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+        <Card className="border-l-4 border-l-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Total Wins</CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Claw Wins</CardTitle>
             <Gift className="h-4 w-4 text-pink-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-pink-600">
               {loading ? "-" : stats.totalWins.toLocaleString()}
             </div>
-            <p className="text-xs text-muted-foreground">Prizes dispensed today</p>
+            <p className="text-xs text-muted-foreground">Prizes dispensed • <span className="text-pink-500 font-medium">Cranes only</span></p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-cyan-500 shadow-sm">
+        <Card className="border-l-4 border-l-cyan-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Win Rate</CardTitle>
             <Target className="h-4 w-4 text-cyan-500" />
@@ -313,36 +342,27 @@ export default function Dashboard() {
             <div className="text-2xl font-bold text-cyan-600">
               {loading ? "-" : `${stats.winRate.toFixed(1)}%`}
             </div>
-            <p className="text-xs text-muted-foreground">Wins per play</p>
+            <p className="text-xs text-muted-foreground">Wins per play • <span className="text-cyan-500 font-medium">Cranes only</span></p>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-indigo-500 shadow-sm relative group">
+        <Card className="border-l-4 border-l-indigo-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              Game Revenue
-              <button
-                onClick={() => setRevenueScopeOpen(true)}
-                className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-indigo-100 rounded"
-                title="View Revenue Scope"
-              >
-                <ArrowUpRight className="h-3 w-3 text-indigo-500" />
-              </button>
-            </CardTitle>
+            <CardTitle className="text-sm font-medium text-muted-foreground">Game Revenue</CardTitle>
             <Gamepad2 className="h-4 w-4 text-indigo-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-indigo-600">
-              ${loading ? "-" : stats.gameRevenue.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+              ${loading ? "-" : formatNoRound(stats.gameRevenue)}
             </div>
-            <div className="flex gap-2 text-xs text-muted-foreground mt-1">
-              <span className="text-green-600 font-medium">Cash: ${stats.gameCashRev.toFixed(0)}</span>
-              <span className="text-blue-600 font-medium">Bonus: ${stats.gameBonusRev.toFixed(0)}</span>
+            <div className="flex gap-2 text-xs text-muted-foreground">
+              <span className="text-green-600">Cash: ${formatNoRound(stats.gameCashRev)}</span>
+              <span className="text-blue-600">Bonus: ${formatNoRound(stats.gameBonusRev)}</span>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="border-l-4 border-l-lime-500 shadow-sm">
+        <Card className="border-l-4 border-l-lime-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">Active Machines</CardTitle>
             <BarChart3 className="h-4 w-4 text-lime-500" />
@@ -351,10 +371,27 @@ export default function Dashboard() {
             <div className="text-2xl font-bold text-lime-600">
               {loading ? "-" : stats.activeMachines}
             </div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
-              Reporting today
-              {stats.empPlays > 0 && <span className="text-amber-600 ml-1">• Emp: {stats.empPlays}</span>}
+            <p className="text-xs text-muted-foreground">
+              Reporting today • {stats.empPlays > 0 && <span className="text-amber-600">Emp: {stats.empPlays}</span>}
             </p>
+          </CardContent>
+        </Card>
+
+        {/* Revenue Scope Button */}
+        <Card
+          className="border-none shadow-lg bg-gradient-to-br from-emerald-600 to-teal-600 text-white cursor-pointer hover:scale-105 transition-transform"
+          onClick={() => setRevenueScopeOpen(true)}
+        >
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-emerald-50">Revenue Scope</CardTitle>
+            <Receipt className="h-4 w-4 text-emerald-100" />
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2">
+              <ArrowUpRight className="h-5 w-5" />
+              <span className="font-semibold">View Details</span>
+            </div>
+            <p className="text-xs text-emerald-100 mt-1">Complete revenue analytics</p>
           </CardContent>
         </Card>
       </div>

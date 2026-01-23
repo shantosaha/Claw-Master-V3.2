@@ -435,44 +435,28 @@ class MonitoringService {
                 }
             }
 
-            // Create a Set of all unique tags from both sources
-            const allTags = new Set<string>();
-            machines.forEach(m => {
-                if (m.tag) allTags.add(String(m.tag).trim());
-            });
-            for (const key of gameDataByTag.keys()) {
-                allTags.add(key);
-            }
-
-            const results: MonitoringReportItem[] = [];
-
-            // Iterate over all unique tags to build the comprehensive report
-            for (const tag of allTags) {
-                // Find matching machine definition (if any)
-                const machine = machines.find(m => String(m.tag).trim() === tag);
-
+            return machines.map(machine => {
                 // Get real settings if available
-                const machineSettings = machine ? settingsByMachine.get(machine.id) : null;
+                const machineSettings = settingsByMachine.get(machine.id);
                 const c1 = machineSettings?.c1 ?? 0;
                 const c2 = machineSettings?.c2 ?? 0;
                 const c3 = machineSettings?.c3 ?? 0;
                 const c4 = machineSettings?.c4 ?? 0;
                 const payoutSettings = machineSettings?.payoutRate ?? 0;
 
-                // Get game data
-                const gameData = gameDataByTag.get(tag);
+                // UNIVERSAL RULE: Always use 'tag' for mapping API data
+                const machineTag = (machine as any).tag ? String((machine as any).tag).trim() : null;
+                const gameData = machineTag ? gameDataByTag.get(machineTag) : null;
 
                 const customerPlays = gameData?.standardPlays ?? 0;
                 const staffPlays = gameData?.empPlays ?? 0;
                 const payouts = gameData?.points ?? 0;
 
                 // Decide revenue multiplier based on group
-                // If machine is unknown, try to guess from reports if possible, otherwise default
-                const isCrane = machine?.group?.toLowerCase().includes('crane') ||
-                    machine?.type?.toLowerCase().includes('crane') ||
-                    (machine?.group && machine.group.includes('Group 4'));
+                const isCrane = machine.group?.toLowerCase().includes('crane') ||
+                    machine.type?.toLowerCase().includes('crane') ||
+                    (machine.group && machine.group.includes('Group 4'));
                 const multiplier = isCrane ? 3.6 : 1.8;
-
                 // Calculate plays per payout
                 const playsPerPayout = payouts > 0 ? Math.round((customerPlays + staffPlays) / payouts) : 0;
 
@@ -488,13 +472,13 @@ class MonitoringService {
                 // Revenue breakdown from API data
                 const cashRevenue = gameData?.cashDebit ?? 0;
                 const bonusRevenue = gameData?.cashDebitBonus ?? 0;
-                const totalRevenue = gameData?.totalRev ?? (cashRevenue + bonusRevenue);
+                const totalRevenue = (gameData?.totalRev || (cashRevenue + bonusRevenue));
 
-                results.push({
-                    machineId: machine?.id || `unknown-${tag}`,
-                    tag: tag,
-                    description: machine?.name || `Unknown Machine (${tag})`,
-                    status: machine?.status || 'offline',
+                return {
+                    machineId: machine.id,
+                    tag: (machine as any).tag || 'N/A',
+                    description: machine.name,
+                    status: machine.status,
                     customerPlays,
                     staffPlays,
                     payouts,
@@ -509,19 +493,17 @@ class MonitoringService {
                     c4,
                     strongTime: machineSettings?.strongTime,
                     weakTime: machineSettings?.weakTime,
-                    imageUrl: machineSettings?.imageUrl || machine?.imageUrl,
-                    remarks: (tag ? remarksByTag.get(tag) : undefined) || machineSettings?.remarks,
+                    imageUrl: machineSettings?.imageUrl || machine.imageUrl,
+                    remarks: (machineTag ? remarksByTag.get(machineTag) : undefined) || machineSettings?.remarks,
                     payoutStatus,
                     revenue: totalRevenue,
                     cashRevenue,
                     bonusRevenue,
-                    group: machine?.group || 'Unknown',
-                    type: machine?.type || 'Unknown',
+                    group: machine.group,
+                    type: machine.type,
                     lastUpdated: new Date()
-                });
-            }
-
-            return results;
+                };
+            });
         } catch (error) {
             console.error("Failed to fetch monitoring report", error);
             return [];
@@ -581,12 +563,17 @@ class MonitoringService {
                     }
 
                     // Aggregate machines for this day
-                    const totalPlays = dayData.reduce((sum, item) => sum + (item.standardPlays || 0) + (item.empPlays || 0), 0);
-                    const customerPlays = dayData.reduce((sum, item) => sum + (item.standardPlays || 0), 0);
-                    const staffPlays = dayData.reduce((sum, item) => sum + (item.empPlays || 0), 0);
-                    const revenue = dayData.reduce((sum, item) => sum + (item.totalRev || 0), 0);
-                    const cashRevenue = dayData.reduce((sum, item) => sum + (item.cashDebit || 0), 0);
-                    const bonusRevenue = dayData.reduce((sum, item) => sum + (item.cashDebitBonus || 0), 0);
+                    const totalPlays = dayData.reduce((sum, item) => sum + (Number(item.standardPlays) || 0) + (Number(item.empPlays) || 0), 0);
+                    const customerPlays = dayData.reduce((sum, item) => sum + (Number(item.standardPlays) || 0), 0);
+                    const staffPlays = dayData.reduce((sum, item) => sum + (Number(item.empPlays) || 0), 0);
+
+                    const cashRevenue = dayData.reduce((sum, item) => sum + (Number(item.cashDebit || item.cashRev) || 0), 0);
+                    const bonusRevenue = dayData.reduce((sum, item) => sum + (Number(item.cashDebitBonus || item.bonusRev) || 0), 0);
+                    const revenue = dayData.reduce((sum, item) => {
+                        const machineCash = Number(item.cashDebit || item.cashRev || 0);
+                        const machineBonus = Number(item.cashDebitBonus || item.bonusRev || 0);
+                        return sum + (Number(item.totalRev) || (machineCash + machineBonus));
+                    }, 0);
 
                     // UNIVERSAL RULE: Wins/Payouts only count for Crane/Claw machines
                     const payouts = dayData.reduce((sum, item) => {

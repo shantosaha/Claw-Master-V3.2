@@ -176,8 +176,8 @@ export async function POST(
         // 3. Normalize to match expected frontend format
         const normalizeItem = (item: Record<string, unknown>) => ({
             ...item,
-            // Compute totalRev if not present
-            totalRev: item.totalRev ?? ((item.cashDebit as number || 0) + (item.cashDebitBonus as number || 0)),
+            // Compute totalRev if not present or zero (using component sum as fallback)
+            totalRev: (item.totalRev as number) || ((item.cashDebit as number || 0) + (item.cashDebitBonus as number || 0)),
             // Add date if not present (use startdate from request for aggregated data)
             date: item.date ?? startdate,
         });

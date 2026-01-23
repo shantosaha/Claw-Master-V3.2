@@ -69,7 +69,7 @@ import {
     LineChart,
     Line
 } from "recharts";
-import { format, subDays, subMonths, subYears, parseISO, isSameDay, startOfDay, endOfDay, isValid } from "date-fns";
+import { format, subDays, subMonths, subYears, parseISO, isSameDay, startOfDay, endOfDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { ArcadeMachine, ServiceReport } from "@/types";
 import { monitoringService, MachineStatus, MonitoringAlert, MonitoringReportItem } from "@/services/monitoringService";
@@ -1898,7 +1898,7 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                     <TableBody>
                         {paginatedData.map((item) => (
                             <TableRow
-                                key={item.machineId || (item as any).id}
+                                key={item.machineId}
                                 className={cn(
                                     item.payoutStatus === 'Very High' && "border-2 border-red-600 bg-red-50/10 animate-pulse"
                                 )}
@@ -1949,8 +1949,8 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                     ${(item.revenue || 0).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
                                 </TableCell>
                                 <TableCell className="text-[10px] text-muted-foreground px-1 leading-tight text-center">
-                                    {isValid(item.settingsDate) ? format(item.settingsDate, 'M/d/yy') : '-'}<br />
-                                    {isValid(item.settingsDate) ? format(item.settingsDate, 'h:mm a') : '-'}
+                                    {format(item.settingsDate, 'M/d/yy')}<br />
+                                    {format(item.settingsDate, 'h:mm a')}
                                 </TableCell>
                                 <TableCell className="text-[10px] px-1 text-center">{item.staffName}</TableCell>
                                 <TableCell className="px-1 text-center">
@@ -2250,6 +2250,16 @@ export default function MonitoringPage() {
         refresh,
     } = useMonitoring();
 
+    const { todayGameReports } = useData();
+
+    // Helper to format currency without rounding up
+    const formatNoRound = (num: number) => {
+        return (Math.floor(num * 100) / 100).toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        });
+    };
+
     const [searchQuery, setSearchQuery] = useState("");
     const [statusFilter, setStatusFilter] = useState<string>("all");
     const [locationFilter, setLocationFilter] = useState<string>("all");
@@ -2279,36 +2289,65 @@ export default function MonitoringPage() {
     }[]>([]);
     const [trendLoading, setTrendLoading] = useState(false);
 
-    // Aggregated stats from report data
+    // Aggregated stats from todayGameReports (same as Dashboard) 
     const stats = useMemo(() => {
-        const totalPlays = reportData.reduce((acc, curr) => acc + (curr.customerPlays || 0), 0);
-        const staffPlays = reportData.reduce((acc, curr) => acc + (curr.staffPlays || 0), 0);
-        const totalRevenue = reportData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
-        const cashRevenue = reportData.reduce((acc, curr) => acc + (curr.cashRevenue || 0), 0);
-        const bonusRevenue = reportData.reduce((acc, curr) => acc + (curr.bonusRevenue || 0), 0);
+        // Use raw Game Report data for accurate totals (matches Dashboard)
+        let totalPlaysSum = 0;
+        let staffPlaysSum = 0;
+        let totalRevenueSum = 0;
+        let cashRevenueSum = 0;
+        let bonusRevenueSum = 0;
+
+        for (const item of todayGameReports) {
+            // Standardizing play counts
+            const sPlays = Number(item.standardPlays) || 0;
+            const ePlays = Number(item.empPlays) || 0;
+            totalPlaysSum += sPlays + ePlays;
+            staffPlaysSum += ePlays;
+
+            // Standardizing revenue with fallbacks (Matches Dashboard logic)
+            const cash = Number(item.cashDebit || item.cashRev || 0);
+            const bonus = Number(item.cashDebitBonus || item.bonusRev || 0);
+
+            cashRevenueSum += cash;
+            bonusRevenueSum += bonus;
+
+            // Per-machine totalRev can be zero in API even if components exist
+            totalRevenueSum += (Number(item.totalRev) || (cash + bonus));
+        }
+
+        const totalPlays = totalPlaysSum;
+        const staffPlays = staffPlaysSum;
+        const totalRevenue = totalRevenueSum;
+        const cashRevenue = cashRevenueSum;
+        const bonusRevenue = bonusRevenueSum;
 
         // Filter claw machines for accurate payout/win aggregation
-        const craneData = reportData.filter(r => {
+        const craneData = todayGameReports.filter(r =>
+            r.group?.toLowerCase().includes('crane') ||
+            r.group?.includes('Group 4')
+        );
+
+        // Total Payouts should ONLY count Crane Machines
+        const totalPayouts = craneData.reduce((acc, curr) => acc + (Number(curr.points || curr.merchandise) || 0), 0);
+
+        // Count for attention alerts (Group 4 / Crane) - use reportData for status
+        const craneReportData = reportData.filter(r => {
             const machine = machines.find(m => m.id === r.machineId);
             return machine?.group?.toLowerCase().includes('crane') ||
                 machine?.group?.includes('Group 4') ||
                 machine?.type?.toLowerCase().includes('crane');
         });
-
-        // Total Payouts should ONLY count Crane Machines
-        const totalPayouts = craneData.reduce((acc, curr) => acc + (curr.payouts || 0), 0);
-
-        // Count for attention alerts (Group 4 / Crane)
-        const veryHighCount = craneData.filter(r => r.payoutStatus === 'Very High').length;
-        const highCount = craneData.filter(r => r.payoutStatus === 'High').length;
-        const veryLowCount = craneData.filter(r => r.payoutStatus === 'Very Low').length;
-        const lowCount = craneData.filter(r => r.payoutStatus === 'Low').length;
+        const veryHighCount = craneReportData.filter(r => r.payoutStatus === 'Very High').length;
+        const highCount = craneReportData.filter(r => r.payoutStatus === 'High').length;
+        const veryLowCount = craneReportData.filter(r => r.payoutStatus === 'Very Low').length;
+        const lowCount = craneReportData.filter(r => r.payoutStatus === 'Low').length;
         const criticalCount = veryHighCount + highCount + veryLowCount + lowCount;
 
-        const activeMachines = reportData.filter(r => (r.customerPlays || 0) > 0).length;
+        const activeMachines = todayGameReports.filter(r => (Number(r.standardPlays) || 0) > 0).length;
         const avgRevenuePerUnit = activeMachines > 0 ? totalRevenue / activeMachines : 0;
-        const avgAccuracy = craneData.length > 0
-            ? Math.round(craneData.reduce((acc, curr) => acc + (curr.payoutAccuracy || 0), 0) / craneData.length)
+        const avgAccuracy = craneReportData.length > 0
+            ? Math.round(craneReportData.reduce((acc, curr) => acc + (Number(curr.payoutAccuracy) || 0), 0) / craneReportData.length)
             : 0;
 
         // Yesterday comparison for momentum
@@ -2323,7 +2362,7 @@ export default function MonitoringPage() {
             activeMachines, avgRevenuePerUnit, avgAccuracy,
             yesterdayRevenue, revenueMomentum
         };
-    }, [reportData, yesterdayData, machines]);
+    }, [todayGameReports, reportData, yesterdayData, machines]);
 
 
 
@@ -2593,7 +2632,7 @@ export default function MonitoringPage() {
                     <CardContent>
                         <div className="flex items-baseline gap-2">
                             <div className="text-2xl font-bold">
-                                ${stats.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                                ${formatNoRound(stats.totalRevenue)}
                             </div>
                             {stats.revenueMomentum !== 0 && (
                                 <div className={cn(
@@ -2610,7 +2649,7 @@ export default function MonitoringPage() {
                                 vs ${stats.yesterdayRevenue.toLocaleString()} (yest)
                             </p>
                             <p className="text-[10px] text-muted-foreground">
-                                <span className="text-green-600 font-medium">${stats.cashRevenue.toLocaleString()}</span> cash + <span className="text-blue-600 font-medium">${stats.bonusRevenue.toLocaleString()}</span> bonus
+                                <span className="text-green-600 font-medium">${formatNoRound(stats.cashRevenue)}</span> cash + <span className="text-blue-600 font-medium">${formatNoRound(stats.bonusRevenue)}</span> bonus
                             </p>
                         </div>
                     </CardContent>
@@ -2629,7 +2668,7 @@ export default function MonitoringPage() {
                                         <HelpCircle className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
                                     </TooltipTrigger>
                                     <TooltipContent side="top" className="max-w-[280px]">
-                                        <p className="text-xs"><strong>How it's calculated:</strong> Sum of standardPlays (customer plays) from the Game Report API. Staff plays are excluded.</p>
+                                        <p className="text-xs"><strong>How it's calculated:</strong> Sum of standardPlays (customer) and empPlays (staff) from the Game Report API. This represents total registered machine activity.</p>
                                     </TooltipContent>
                                 </Tooltip>
                             </TooltipProvider>
@@ -2641,7 +2680,7 @@ export default function MonitoringPage() {
                             {stats.totalPlays.toLocaleString()} <span className="text-sm font-normal text-muted-foreground">Plays</span>
                         </div>
                         <p className="text-xs text-muted-foreground mt-1">
-                            <span className="font-medium">{Math.round(stats.totalPlays / Math.max(1, machines.length))}</span> avg per machine
+                            <span className="font-medium">{(stats.totalPlays / Math.max(1, machines.length)).toFixed(1)}</span> avg per machine
                         </p>
                     </CardContent>
                 </Card>
