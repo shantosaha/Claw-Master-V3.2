@@ -1,8 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
+import { subDays, format, startOfDay, endOfDay } from "date-fns";
+import { DateRange } from "react-day-picker";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -28,7 +30,7 @@ import {
     FileText,
     ChevronDown
 } from "lucide-react";
-import { analyticsService, AnalyticsOverview } from "@/services/analyticsService";
+import { analyticsService, AnalyticsOverview, RevenueSource, AnalyticsFilter } from "@/services/analyticsService";
 import {
     Bar,
     BarChart,
@@ -62,9 +64,49 @@ import { ReorderRecommendations } from "@/components/analytics/ReorderRecommenda
 import { FinancialAnalyticsTab } from "@/components/analytics/FinancialAnalyticsTab";
 import { AdvancedReportsTab } from "@/components/analytics/AdvancedReportsTab";
 import { AdvancedFilters, FilterState, defaultFilterState } from "@/components/analytics/AdvancedFilters";
+import { DatePickerWithRange } from "@/components/analytics/DateRangePicker";
+import { Calendar, Filter } from "lucide-react";
 
 // Color palette for charts
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899", "#6366f1", "#84cc16"];
+
+// Helper component for chart-level filters
+const ChartFilter = ({
+    onLocationChange,
+    onTypeChange,
+    locations,
+    types,
+    locationValue,
+    typeValue
+}: {
+    onLocationChange: (val: string) => void;
+    onTypeChange: (val: string) => void;
+    locations: string[];
+    types: string[];
+    locationValue?: string;
+    typeValue?: string;
+}) => {
+    return (
+        <div className="flex items-center gap-1 sm:gap-2">
+            <Select value={locationValue} onValueChange={onLocationChange}>
+                <SelectTrigger className="h-6 w-[110px] text-[10px] bg-background">
+                    <SelectValue placeholder="Location" />
+                </SelectTrigger>
+                <SelectContent>
+                    {locations.map(l => <SelectItem key={l} value={l} className="text-xs">{l}</SelectItem>)}
+                </SelectContent>
+            </Select>
+            <Select value={typeValue} onValueChange={onTypeChange}>
+                <SelectTrigger className="h-6 w-[110px] text-[10px] bg-background">
+                    <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                    {types.map(t => <SelectItem key={t} value={t} className="text-xs">{t}</SelectItem>)}
+                </SelectContent>
+            </Select>
+        </div>
+    )
+}
 
 // Allowed roles for analytics access
 const ALLOWED_ROLES: ("admin" | "manager" | "tech" | "crew")[] = ["admin", "manager"];
@@ -91,6 +133,20 @@ export default function AnalyticsPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [brandStock, setBrandStock] = useState<any[]>([]);
     const [timePeriod, setTimePeriod] = useState("30");
+    const [revenueSource, setRevenueSource] = useState<RevenueSource>("sales");
+    const [dateRange, setDateRange] = useState<DateRange | undefined>({
+        from: subDays(new Date(), 29),
+        to: new Date(),
+    });
+
+    // Individual card revenue sources
+    const [cardRevenueSources, setCardRevenueSources] = useState({
+        total: "sales" as RevenueSource,
+        trend: "sales" as RevenueSource,
+        location: "sales" as RevenueSource,
+        financial: "sales" as RevenueSource
+    });
+
     const [selectedTab, setSelectedTab] = useState("overview");
 
     // Advanced filter states for each tab
@@ -105,43 +161,44 @@ export default function AnalyticsPage() {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [comparisonData, setComparisonData] = useState<any[]>([]);
 
+    // Section-specific filters & data
+    const [trendFilter, setTrendFilter] = useState<AnalyticsFilter>({});
+    const [locationFilter, setLocationFilter] = useState<AnalyticsFilter>({});
+    const [typeFilter, setTypeFilter] = useState<AnalyticsFilter>({});
+    const [playsWinsFilter, setPlaysWinsFilter] = useState<AnalyticsFilter>({});
+    const [playsWinsData, setPlaysWinsData] = useState<any[]>([]);
+
+    // Derived Date Range for Effects
+    const customRange = useMemo(() => dateRange?.from && dateRange?.to ? { startDate: startOfDay(dateRange.from), endDate: endOfDay(dateRange.to) } : undefined, [dateRange]);
+
     useEffect(() => {
         if (!authLoading && !hasRole(ALLOWED_ROLES)) {
             router.push("/");
         } else if (!authLoading) {
             loadAllData();
         }
-    }, [authLoading, hasRole, router, timePeriod]);
+    }, [authLoading, hasRole, router, timePeriod, revenueSource, dateRange]);
 
     const loadAllData = async () => {
         setLoading(true);
         try {
             const [
                 overviewData,
-                revenue,
                 machines,
                 stock,
-                locRevenue,
-                tRevenue,
                 catStock,
                 brStock
             ] = await Promise.all([
-                analyticsService.getOverview(parseInt(timePeriod)),
-                analyticsService.getRevenueTimeSeries(parseInt(timePeriod)),
-                analyticsService.getMachinePerformance(),
-                analyticsService.getStockPerformance(),
-                analyticsService.getRevenueByLocation(),
-                analyticsService.getRevenueByMachineType(),
-                analyticsService.getStockByCategory(),
-                analyticsService.getStockByBrand(),
+                analyticsService.getOverview(parseInt(timePeriod), revenueSource, customRange, {}),
+                analyticsService.getMachinePerformance(parseInt(timePeriod), 'game', customRange),
+                analyticsService.getStockPerformance(parseInt(timePeriod), customRange),
+                analyticsService.getStockByCategory(parseInt(timePeriod)),
+                analyticsService.getStockByBrand(parseInt(timePeriod)),
             ]);
 
             setOverview(overviewData);
-            setRevenueData(revenue);
             setMachinePerformance(machines);
             setStockPerformance(stock);
-            setLocationRevenue(locRevenue);
-            setTypeRevenue(tRevenue);
             setCategoryStock(catStock);
             setBrandStock(brStock);
         } catch (error) {
@@ -151,11 +208,83 @@ export default function AnalyticsPage() {
         }
     };
 
+    // --- Individual Section Effects ---
+
+    // 1. Revenue Trend Data
+    useEffect(() => {
+        if (!authLoading && hasRole(ALLOWED_ROLES)) {
+            analyticsService.getRevenueTimeSeries(parseInt(timePeriod), cardRevenueSources.trend, customRange, trendFilter)
+                .then(setRevenueData)
+                .catch(err => console.error("Error fetching trend data:", err));
+        }
+    }, [timePeriod, cardRevenueSources.trend, customRange, trendFilter, authLoading, hasRole]);
+
+    // 2. Revenue by Location Data
+    useEffect(() => {
+        if (!authLoading && hasRole(ALLOWED_ROLES)) {
+            analyticsService.getRevenueByLocation(parseInt(timePeriod), cardRevenueSources.location, customRange, locationFilter)
+                .then(setLocationRevenue)
+                .catch(err => console.error("Error fetching location revenue:", err));
+        }
+    }, [timePeriod, cardRevenueSources.location, customRange, locationFilter, authLoading, hasRole]);
+
+    // 3. Revenue by Machine Type Data
+    useEffect(() => {
+        if (!authLoading && hasRole(ALLOWED_ROLES)) {
+            // Type revenue usually based on Game revenue. If you want source selection, add it to state.
+            analyticsService.getRevenueByMachineType(parseInt(timePeriod), 'game', customRange, typeFilter)
+                .then(setTypeRevenue)
+                .catch(err => console.error("Error fetching type revenue:", err));
+        }
+    }, [timePeriod, customRange, typeFilter, authLoading, hasRole]);
+
+    // 4. Plays vs Wins Data
+    useEffect(() => {
+        if (!authLoading && hasRole(ALLOWED_ROLES)) {
+            // Plays/Wins uses TimeSeriesData structure. defaulting to 'game' source or 'trend' source? 
+            // Plays/wins are game specific usually. logic uses getRevenueTimeSeries.
+            const source = 'game';
+            analyticsService.getRevenueTimeSeries(parseInt(timePeriod), source, customRange, playsWinsFilter)
+                .then(setPlaysWinsData)
+                .catch(err => console.error("Error fetching plays/wins data:", err));
+        }
+    }, [timePeriod, customRange, playsWinsFilter, authLoading, hasRole]);
+
+
     const loadComparisonData = async () => {
         if (comparisonMachine1 && comparisonMachine2) {
-            const data = await analyticsService.compareMachines(comparisonMachine1, comparisonMachine2);
+            const data = await analyticsService.compareMachines(comparisonMachine1, comparisonMachine2, parseInt(timePeriod));
             setComparisonData(data);
         }
+    };
+
+    const handleDownload = () => {
+        if (!revenueData || revenueData.length === 0) return;
+
+        const headers = ["Date", "Total Revenue", "Sales Revenue", "Machine Revenue", "Plays", "Wins"];
+        const csvRows = [headers.join(",")];
+
+        revenueData.forEach((row: any) => {
+            csvRows.push([
+                format(new Date(row.date), "yyyy-MM-dd"),
+                (row.revenue || 0).toFixed(2),
+                (row.salesRevenue || 0).toFixed(2),
+                (row.machineRevenue || 0).toFixed(2),
+                row.plays || 0,
+                row.wins || 0
+            ].join(","));
+        });
+
+        const csvString = csvRows.join("\n");
+        const blob = new Blob([csvString], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `analytics_export_${format(new Date(), "yyyy-MM-dd")}.csv`);
+        link.style.visibility = "hidden";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     };
 
     useEffect(() => {
@@ -167,7 +296,7 @@ export default function AnalyticsPage() {
             loadAllData();
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [timePeriod]);
+    }, [timePeriod, revenueSource, dateRange]);
 
     // Filter and Sort Logic
     const getFilteredMachines = () => {
@@ -251,6 +380,12 @@ export default function AnalyticsPage() {
     const filteredMachines = getFilteredMachines();
     const filteredStock = getFilteredStock();
 
+    // Derived Filter Options moved here to ensure they are available for valid rendering
+    const uniqueLocations = ["All Locations", ...Array.from(new Set(machinePerformance.map((m: any) => m.location).filter(Boolean)))].sort();
+    const uniqueTypes = ["All Types", ...Array.from(new Set(machinePerformance.map((m: any) => m.type).filter(Boolean)))].sort();
+    const uniqueCategories = ["All Categories", ...Array.from(new Set(stockPerformance.map((s: any) => s.category).filter(Boolean)))].sort();
+    const uniqueBrands = ["All Brands", ...Array.from(new Set(stockPerformance.map((s: any) => s.brand).filter(Boolean)))].sort();
+
     // Access denied screen
     if (!authLoading && !hasRole(ALLOWED_ROLES)) {
         return (
@@ -270,7 +405,8 @@ export default function AnalyticsPage() {
         );
     }
 
-    if (authLoading || loading) {
+    // Only show full page loader on initial load
+    if (authLoading || (loading && !overview)) {
         return (
             <div className="flex items-center justify-center min-h-[60vh]">
                 <div className="flex flex-col items-center space-y-4">
@@ -293,23 +429,40 @@ export default function AnalyticsPage() {
                         Comprehensive insights into operations, revenue, and performance
                     </p>
                 </div>
-                <div className="flex items-center gap-3">
-                    <Select value={timePeriod} onValueChange={setTimePeriod}>
-                        <SelectTrigger className="w-[140px]">
-                            <SelectValue placeholder="Time Period" />
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-2 bg-muted/30 p-1 rounded-lg border border-muted/50">
+                        <Calendar className="h-4 w-4 text-muted-foreground ml-2" />
+                        <DatePickerWithRange
+                            date={dateRange}
+                            onDateChange={setDateRange}
+                            className="border-none shadow-none focus-visible:ring-0"
+                        />
+                    </div>
+                    <Select value={revenueSource} onValueChange={(v) => {
+                        const source = v as RevenueSource;
+                        setRevenueSource(source);
+                        // Sync specific cards if they are on default
+                        setCardRevenueSources(prev => ({
+                            ...prev,
+                            total: source,
+                            trend: source,
+                            location: source,
+                            financial: source
+                        }));
+                    }}>
+                        <SelectTrigger className="w-[160px]">
+                            <SelectValue placeholder="Global Source" />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="7">Last 7 Days</SelectItem>
-                            <SelectItem value="14">Last 14 Days</SelectItem>
-                            <SelectItem value="30">Last 30 Days</SelectItem>
-                            <SelectItem value="60">Last 60 Days</SelectItem>
-                            <SelectItem value="90">Last 90 Days</SelectItem>
+                            <SelectItem value="sales">Sales Revenue</SelectItem>
+                            <SelectItem value="game">Game Revenue</SelectItem>
+                            <SelectItem value="both">Combined</SelectItem>
                         </SelectContent>
                     </Select>
-                    <Button variant="outline" size="icon" onClick={loadAllData}>
-                        <RefreshCw className="h-4 w-4" />
+                    <Button variant="outline" size="icon" onClick={loadAllData} disabled={loading}>
+                        <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
                     </Button>
-                    <Button variant="outline" size="icon">
+                    <Button variant="outline" size="icon" onClick={handleDownload} disabled={!revenueData || revenueData.length === 0}>
                         <Download className="h-4 w-4" />
                     </Button>
                 </div>
@@ -321,11 +474,32 @@ export default function AnalyticsPage() {
                     <Card className="border-none shadow-lg bg-gradient-to-br from-purple-600 to-indigo-500 text-white overflow-hidden relative">
                         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                            <CardTitle className="text-sm font-medium text-purple-100">Total Revenue</CardTitle>
+                            <div className="flex flex-col">
+                                <CardTitle className="text-sm font-medium text-purple-100 flex items-center gap-2">
+                                    Total Revenue
+                                    <Select value={cardRevenueSources.total} onValueChange={(v) => setCardRevenueSources(p => ({ ...p, total: v as RevenueSource }))}>
+                                        <SelectTrigger className="h-6 w-24 bg-white/10 border-none text-[10px] text-white py-0">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="sales">Sales</SelectItem>
+                                            <SelectItem value="game">Game</SelectItem>
+                                            <SelectItem value="both">Both</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </CardTitle>
+                                <p className="text-[10px] text-purple-200 mt-1 opacity-80">
+                                    {dateRange?.from && dateRange?.to ? `${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd")}` : `Last ${timePeriod} days`}
+                                </p>
+                            </div>
                             <DollarSign className="h-4 w-4 text-purple-200" />
                         </CardHeader>
                         <CardContent className="relative">
-                            <div className="text-2xl font-bold">${overview.totalRevenue.toLocaleString()}</div>
+                            <div className="text-2xl font-bold">
+                                ${cardRevenueSources.total === 'sales' ? overview.salesRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) :
+                                    cardRevenueSources.total === 'game' ? overview.machineRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) :
+                                        overview.totalRevenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </div>
                             <div className="flex items-center mt-1">
                                 {overview.revenueChange >= 0 ? (
                                     <TrendingUp className="h-4 w-4 text-green-300 mr-1" />
@@ -342,7 +516,12 @@ export default function AnalyticsPage() {
                     <Card className="border-none shadow-lg bg-gradient-to-br from-cyan-500 to-blue-500 text-white overflow-hidden relative">
                         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                            <CardTitle className="text-sm font-medium text-cyan-100">Total Plays</CardTitle>
+                            <div className="flex flex-col">
+                                <CardTitle className="text-sm font-medium text-cyan-100">Total Plays</CardTitle>
+                                <p className="text-[10px] text-cyan-200 mt-1 opacity-80">
+                                    {dateRange?.from && dateRange?.to ? `${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd")}` : `Last ${timePeriod} days`}
+                                </p>
+                            </div>
                             <PlayCircle className="h-4 w-4 text-cyan-200" />
                         </CardHeader>
                         <CardContent className="relative">
@@ -363,7 +542,12 @@ export default function AnalyticsPage() {
                     <Card className="border-none shadow-lg bg-gradient-to-br from-emerald-500 to-green-500 text-white overflow-hidden relative">
                         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                            <CardTitle className="text-sm font-medium text-emerald-100">Win Rate</CardTitle>
+                            <div className="flex flex-col">
+                                <CardTitle className="text-sm font-medium text-emerald-100">Win Rate</CardTitle>
+                                <p className="text-[10px] text-emerald-200 mt-1 opacity-80">
+                                    {dateRange?.from && dateRange?.to ? `${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd")}` : `Last ${timePeriod} days`}
+                                </p>
+                            </div>
                             <Trophy className="h-4 w-4 text-emerald-200" />
                         </CardHeader>
                         <CardContent className="relative">
@@ -377,11 +561,14 @@ export default function AnalyticsPage() {
                     <Card className="border-none shadow-lg bg-gradient-to-br from-amber-500 to-orange-500 text-white overflow-hidden relative">
                         <div className="absolute inset-0 bg-[url('/grid.svg')] opacity-10"></div>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-                            <CardTitle className="text-sm font-medium text-amber-100">Stock Value</CardTitle>
+                            <div className="flex flex-col">
+                                <CardTitle className="text-sm font-medium text-amber-100">Stock Value</CardTitle>
+                                <p className="text-[10px] text-amber-200 mt-1 opacity-80">As of today</p>
+                            </div>
                             <Package className="h-4 w-4 text-amber-200" />
                         </CardHeader>
                         <CardContent className="relative">
-                            <div className="text-2xl font-bold">${overview.totalStockValue.toLocaleString()}</div>
+                            <div className="text-2xl font-bold">${overview.totalStockValue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
                             <p className="text-xs text-amber-100 mt-1">
                                 {overview.lowStockItems} items low stock
                             </p>
@@ -420,7 +607,7 @@ export default function AnalyticsPage() {
                             <div className="flex items-center justify-between">
                                 <div>
                                     <p className="text-sm text-muted-foreground">Avg Revenue/Play</p>
-                                    <p className="text-2xl font-bold">${overview.avgRevenuePerPlay}</p>
+                                    <p className="text-2xl font-bold">${overview.avgRevenuePerPlay.toFixed(2)}</p>
                                 </div>
                                 <Target className="h-8 w-8 text-blue-500 opacity-50" />
                             </div>
@@ -460,48 +647,86 @@ export default function AnalyticsPage() {
                 {/* Overview Tab */}
                 <TabsContent value="overview" className="space-y-4">
                     {/* Filters for Overview Tab */}
-                    <AdvancedFilters
-                        filters={overviewFilters}
-                        onFilterChange={(f) => {
-                            setOverviewFilters(f);
-                            setTimePeriod(f.timePeriod);
-                        }}
-                        showSortOptions={true}
-                        showRevenueFilter={true}
-                    />
+
 
                     <div className="grid gap-4 lg:grid-cols-7">
                         {/* Revenue Trend */}
                         <Card className="lg:col-span-4">
-                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                            <CardHeader className="flex flex-col space-y-2 pb-2 sm:flex-row sm:items-center sm:justify-between sm:space-y-0">
                                 <div className="space-y-1">
-                                    <CardTitle>Revenue Trend</CardTitle>
-                                    <CardDescription>Daily revenue over selected period</CardDescription>
+                                    <div className="flex items-center gap-2">
+                                        <CardTitle>Revenue Trend</CardTitle>
+                                        <Select value={cardRevenueSources.trend} onValueChange={(v) => setCardRevenueSources(p => ({ ...p, trend: v as RevenueSource }))}>
+                                            <SelectTrigger className="h-6 w-24 bg-muted border-none text-[10px] py-0">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="sales">Sales</SelectItem>
+                                                <SelectItem value="game">Game</SelectItem>
+                                                <SelectItem value="both">Both</SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <CardDescription>
+                                        Daily revenue ({dateRange?.from && dateRange?.to ? `${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd")}` : `Last ${timePeriod} days`})
+                                    </CardDescription>
                                 </div>
-                                <ChartTypeSelector
-                                    value={overviewChartType}
-                                    onChange={setOverviewChartType}
-                                    options={["area", "line", "bar"]}
-                                    size="sm"
-                                />
+                                <div className="flex items-center gap-2">
+                                    <ChartFilter
+                                        locations={uniqueLocations}
+                                        types={uniqueTypes}
+                                        locationValue={trendFilter.location}
+                                        typeValue={trendFilter.machineType}
+                                        onLocationChange={(v) => setTrendFilter(p => ({ ...p, location: v }))}
+                                        onTypeChange={(v) => setTrendFilter(p => ({ ...p, machineType: v }))}
+                                    />
+                                    <ChartTypeSelector
+                                        value={overviewChartType}
+                                        onChange={setOverviewChartType}
+                                        options={["area", "line", "bar"]}
+                                        size="sm"
+                                    />
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
                                     {overviewChartType === "bar" ? (
                                         <BarChart data={revenueData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                                            <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} formatter={(value: number) => [`$${value}`, 'Revenue']} />
-                                            <Bar dataKey="revenue" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                                            <XAxis
+                                                dataKey="date"
+                                                stroke="#888888"
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tickFormatter={(value) => format(new Date(value), "EEE dd")}
+                                            />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v.toFixed(2)}`} />
+                                            <Tooltip
+                                                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                                                formatter={(value: number) => [`$${value.toFixed(2)}`, cardRevenueSources.trend === 'sales' ? 'Sales Rev' : cardRevenueSources.trend === 'game' ? 'Game Rev' : 'Total Revenue']}
+                                                labelFormatter={(label) => `Date: ${format(new Date(label), "EEE MMM dd, yyyy")}`}
+                                            />
+                                            <Bar dataKey={cardRevenueSources.trend === 'sales' ? 'salesRevenue' : cardRevenueSources.trend === 'game' ? 'machineRevenue' : 'revenue'} fill="#8b5cf6" radius={[4, 4, 0, 0]} />
                                         </BarChart>
                                     ) : overviewChartType === "line" ? (
                                         <LineChart data={revenueData}>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                                            <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} formatter={(value: number) => [`$${value}`, 'Revenue']} />
-                                            <Line type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} dot={{ fill: "#8b5cf6" }} />
+                                            <XAxis
+                                                dataKey="date"
+                                                stroke="#888888"
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tickFormatter={(value) => format(new Date(value), "EEE dd")}
+                                            />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v.toFixed(2)}`} />
+                                            <Tooltip
+                                                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                                                formatter={(value: number) => [`$${value.toFixed(2)}`, cardRevenueSources.trend === 'sales' ? 'Sales Rev' : cardRevenueSources.trend === 'game' ? 'Game Rev' : 'Total Revenue']}
+                                                labelFormatter={(label) => `Date: ${format(new Date(label), "EEE MMM dd, yyyy")}`}
+                                            />
+                                            <Line type="monotone" dataKey={cardRevenueSources.trend === 'sales' ? 'salesRevenue' : cardRevenueSources.trend === 'game' ? 'machineRevenue' : 'revenue'} stroke="#8b5cf6" strokeWidth={2} dot={{ fill: "#8b5cf6" }} />
                                         </LineChart>
                                     ) : (
                                         <AreaChart data={revenueData}>
@@ -512,10 +737,21 @@ export default function AnalyticsPage() {
                                                 </linearGradient>
                                             </defs>
                                             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e5e7eb" />
-                                            <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v}`} />
-                                            <Tooltip contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }} formatter={(value: number) => [`$${value}`, 'Revenue']} />
-                                            <Area type="monotone" dataKey="revenue" stroke="#8b5cf6" strokeWidth={2} fill="url(#colorRevenue)" />
+                                            <XAxis
+                                                dataKey="date"
+                                                stroke="#888888"
+                                                fontSize={12}
+                                                tickLine={false}
+                                                axisLine={false}
+                                                tickFormatter={(value) => format(new Date(value), "EEE dd")}
+                                            />
+                                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(v) => `$${v.toFixed(2)}`} />
+                                            <Tooltip
+                                                contentStyle={{ borderRadius: '8px', border: '1px solid #e5e7eb' }}
+                                                formatter={(value: number) => [`$${value.toFixed(2)}`, cardRevenueSources.trend === 'sales' ? 'Sales Rev' : cardRevenueSources.trend === 'game' ? 'Game Rev' : 'Total Revenue']}
+                                                labelFormatter={(label) => `Date: ${format(new Date(label), "EEE MMM dd, yyyy")}`}
+                                            />
+                                            <Area type="monotone" dataKey={cardRevenueSources.trend === 'sales' ? 'salesRevenue' : cardRevenueSources.trend === 'game' ? 'machineRevenue' : 'revenue'} stroke="#8b5cf6" strokeWidth={2} fill="url(#colorRevenue)" />
                                         </AreaChart>
                                     )}
                                 </ResponsiveContainer>
@@ -525,8 +761,36 @@ export default function AnalyticsPage() {
                         {/* Revenue by Location */}
                         <Card className="lg:col-span-3">
                             <CardHeader>
-                                <CardTitle>Revenue by Location</CardTitle>
-                                <CardDescription>Performance across floor levels</CardDescription>
+                                <div className="flex items-center justify-between">
+                                    <div className="space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            <CardTitle>Revenue by Location</CardTitle>
+                                            <Select value={cardRevenueSources.location} onValueChange={(v) => {
+                                                const source = v as RevenueSource;
+                                                setCardRevenueSources(p => ({ ...p, location: source }));
+                                            }}>
+                                                <SelectTrigger className="h-6 w-24 bg-muted border-none text-[10px] py-0">
+                                                    <SelectValue />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="sales">Sales</SelectItem>
+                                                    <SelectItem value="game">Game</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <CardDescription>
+                                            Performance by zone ({dateRange?.from && dateRange?.to ? `${format(dateRange.from, "MMM dd")} - ${format(dateRange.to, "MMM dd")}` : `Last ${timePeriod} days`})
+                                        </CardDescription>
+                                    </div>
+                                    <ChartFilter
+                                        locations={uniqueLocations}
+                                        types={uniqueTypes}
+                                        locationValue={locationFilter.location}
+                                        typeValue={locationFilter.machineType}
+                                        onLocationChange={(v) => setLocationFilter(p => ({ ...p, location: v }))}
+                                        onTypeChange={(v) => setLocationFilter(p => ({ ...p, machineType: v }))}
+                                    />
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
@@ -546,7 +810,9 @@ export default function AnalyticsPage() {
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                                             ))}
                                         </Pie>
-                                        <Tooltip formatter={(value: number) => [`$${value}`, 'Revenue']} />
+                                        <Tooltip
+                                            formatter={(value: number) => [`$${value.toFixed(2)}`, cardRevenueSources.location === 'sales' ? 'Sales Revenue' : 'Game Revenue']}
+                                        />
                                     </PieChart>
                                 </ResponsiveContainer>
                             </CardContent>
@@ -556,18 +822,31 @@ export default function AnalyticsPage() {
                     {/* Plays and Wins */}
                     <div className="grid gap-4 lg:grid-cols-2">
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Plays vs Wins</CardTitle>
-                                <CardDescription>Daily activity comparison</CardDescription>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <div>
+                                    <CardTitle>Plays vs Wins</CardTitle>
+                                    <CardDescription>Daily activity comparison</CardDescription>
+                                </div>
+                                <ChartFilter
+                                    locations={uniqueLocations}
+                                    types={uniqueTypes}
+                                    locationValue={playsWinsFilter.location}
+                                    typeValue={playsWinsFilter.machineType}
+                                    onLocationChange={(v) => setPlaysWinsFilter(p => ({ ...p, location: v }))}
+                                    onTypeChange={(v) => setPlaysWinsFilter(p => ({ ...p, machineType: v }))}
+                                />
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
-                                    <ComposedChart data={revenueData}>
+                                    <ComposedChart data={playsWinsData}>
                                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                         <XAxis dataKey="date" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                         <YAxis yAxisId="left" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
                                         <YAxis yAxisId="right" orientation="right" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                                        <Tooltip contentStyle={{ borderRadius: '8px' }} />
+                                        <Tooltip
+                                            contentStyle={{ borderRadius: '8px' }}
+                                            labelFormatter={(label) => `Date: ${label}`}
+                                        />
                                         <Legend />
                                         <Bar yAxisId="left" dataKey="plays" fill="#06b6d4" radius={[4, 4, 0, 0]} name="Plays" />
                                         <Line yAxisId="right" type="monotone" dataKey="wins" stroke="#10b981" strokeWidth={2} name="Wins" />
@@ -577,17 +856,29 @@ export default function AnalyticsPage() {
                         </Card>
 
                         <Card>
-                            <CardHeader>
-                                <CardTitle>Revenue by Machine Type</CardTitle>
-                                <CardDescription>Compare performance across machine categories</CardDescription>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <div>
+                                    <CardTitle>Revenue by Machine Type</CardTitle>
+                                    <CardDescription>Compare performance across machine categories</CardDescription>
+                                </div>
+                                <ChartFilter
+                                    locations={uniqueLocations}
+                                    types={uniqueTypes}
+                                    locationValue={typeFilter.location}
+                                    typeValue={typeFilter.machineType}
+                                    onLocationChange={(v) => setTypeFilter(p => ({ ...p, location: v }))}
+                                    onTypeChange={(v) => setTypeFilter(p => ({ ...p, machineType: v }))}
+                                />
                             </CardHeader>
                             <CardContent>
                                 <ResponsiveContainer width="100%" height={300}>
                                     <BarChart data={typeRevenue} layout="vertical">
                                         <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                                        <XAxis type="number" stroke="#888888" fontSize={12} tickFormatter={(v) => `$${v}`} />
+                                        <XAxis type="number" stroke="#888888" fontSize={12} tickFormatter={(v) => `$${v.toFixed(2)}`} />
                                         <YAxis type="category" dataKey="type" stroke="#888888" fontSize={12} width={120} />
-                                        <Tooltip formatter={(value: number) => [`$${value}`, 'Revenue']} />
+                                        <Tooltip
+                                            formatter={(value: number) => [`$${value.toFixed(2)}`, 'Revenue']}
+                                        />
                                         <Bar dataKey="revenue" fill="#8b5cf6" radius={[0, 4, 4, 0]}>
                                             {typeRevenue.map((entry, index) => (
                                                 <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -609,6 +900,8 @@ export default function AnalyticsPage() {
                         showSortOptions={true}
                         showPerformanceFilter={true}
                         showRevenueFilter={true}
+                        locations={uniqueLocations}
+                        machineTypes={uniqueTypes}
                     />
                     {/* Top/Bottom Performers */}
                     <div className="grid gap-4 lg:grid-cols-2">
@@ -937,7 +1230,7 @@ export default function AnalyticsPage() {
                             </Button>
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-4">
-                            <ReorderRecommendations maxItems={8} />
+                            <ReorderRecommendations maxItems={8} days={parseInt(timePeriod)} />
                         </CollapsibleContent>
                     </Collapsible>
                 </TabsContent>
@@ -1088,10 +1381,10 @@ export default function AnalyticsPage() {
                         </CollapsibleTrigger>
                         <CollapsibleContent className="mt-4 space-y-4">
                             <div className="grid gap-4 lg:grid-cols-2">
-                                <LocationCompareChart />
+                                <LocationCompareChart days={parseInt(timePeriod)} />
                                 <PeriodComparisonCard days={parseInt(timePeriod)} />
                             </div>
-                            <MultiMachineCompare />
+                            <MultiMachineCompare days={parseInt(timePeriod)} />
                         </CollapsibleContent>
                     </Collapsible>
                 </TabsContent>
@@ -1108,12 +1401,12 @@ export default function AnalyticsPage() {
                         showRevenueFilter={true}
                         variant="compact"
                     />
-                    <FinancialAnalyticsTab timePeriod={parseInt(timePeriod)} />
+                    <FinancialAnalyticsTab timePeriod={parseInt(timePeriod)} revenueSource={revenueSource} />
                 </TabsContent>
 
                 {/* Reports Tab - NEW */}
                 <TabsContent value="reports" className="space-y-4">
-                    <AdvancedReportsTab />
+                    <AdvancedReportsTab days={parseInt(timePeriod)} revenueSource={revenueSource} />
                 </TabsContent>
             </Tabs>
         </div>

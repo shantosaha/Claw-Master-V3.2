@@ -23,12 +23,13 @@ import { analyticsService, MachinePerformance } from "@/services/analyticsServic
 import { Activity, BarChart3 } from "lucide-react";
 
 interface MultiMachineCompareProps {
+    days?: number;
     className?: string;
 }
 
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b"];
 
-export function MultiMachineCompare({ className }: MultiMachineCompareProps) {
+export function MultiMachineCompare({ days = 30, className }: MultiMachineCompareProps) {
     const [machines, setMachines] = useState<MachinePerformance[]>([]);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [selectedMachines, setSelectedMachines] = useState<MachinePerformance[]>([]);
@@ -36,7 +37,7 @@ export function MultiMachineCompare({ className }: MultiMachineCompareProps) {
 
     useEffect(() => {
         loadMachines();
-    }, []);
+    }, [days]);
 
     useEffect(() => {
         if (selectedIds.length > 0) {
@@ -44,12 +45,12 @@ export function MultiMachineCompare({ className }: MultiMachineCompareProps) {
         } else {
             setSelectedMachines([]);
         }
-    }, [selectedIds]);
+    }, [selectedIds, days]);
 
     const loadMachines = async () => {
         setLoading(true);
         try {
-            const data = await analyticsService.getMachinePerformance();
+            const data = await analyticsService.getMachinePerformance(days);
             setMachines(data);
             // Auto-select first 2 machines
             if (data.length >= 2) {
@@ -64,7 +65,7 @@ export function MultiMachineCompare({ className }: MultiMachineCompareProps) {
 
     const loadComparison = async () => {
         try {
-            const result = await analyticsService.compareMultipleMachines(selectedIds);
+            const result = await analyticsService.compareMultipleMachines(selectedIds, days);
             setSelectedMachines(result.machines);
         } catch (error) {
             console.error("Failed to load comparison:", error);

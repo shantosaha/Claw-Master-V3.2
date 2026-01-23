@@ -380,7 +380,18 @@ export default function MachineDetailsPage() {
                     )}
                 </TabsList>
 
-                <TabsContent value="overview" className="mt-6">
+                <TabsContent value="overview" className="mt-6 space-y-6">
+                    {/* Dynamic Quick Insights for Overview */}
+                    <div className="rounded-xl border bg-card p-6 shadow-sm">
+                        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70 mb-4">Quick Insights (7d)</h3>
+                        <MachineQuickStats
+                            machineId={enrichedMachine.id}
+                            assetTag={enrichedMachine.assetTag}
+                            apiTag={enrichedMachine.tag}
+                            groups={enrichedMachine.group ? [enrichedMachine.group] : undefined}
+                        />
+                    </div>
+
                     <div className="grid gap-6 lg:grid-cols-3">
                         {/* Left Column - Machine Details (Editable) */}
                         <div className="lg:col-span-2 space-y-6">
@@ -677,42 +688,43 @@ export default function MachineDetailsPage() {
                     </div>
                 </TabsContent>
 
-                {/* Settings Tab - Available for all machines */}
-                <TabsContent value="settings" className="mt-6">
-                    <div className="grid gap-6 lg:grid-cols-2">
-                        <div className="lg:col-span-1">
-                            <SettingsPanel
-                                machineId={enrichedMachine.id}
-                                machineName={enrichedMachine.name}
-                                assetTag={enrichedMachine.assetTag}
-                                activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
-                                supervisorOverride={supervisorOverride}
-                                isCraneMachine={isCrane}
-                            />
-                        </div>
-                        <div className="space-y-6">
-                            <div className="rounded-lg border p-4">
-                                <h2 className="text-lg font-semibold mb-2">Configuration Guide</h2>
-                                <p className="text-sm text-muted-foreground mb-4">
-                                    {isCrane
-                                        ? "Adjust claw strength stages (C1-C4) and payout rates to optimize machine performance. Settings are automatically synced to the active stock item."
-                                        : "Configure advanced machine settings including pricing and identification."
-                                    }
-                                </p>
+                <TabsContent value="settings" className="mt-6 space-y-6">
+                    {/* Integrated Configuration Guide & Quick Insights */}
+                    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                        <div className="p-6">
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                                <div>
+                                    <h2 className="text-xl font-bold">Configuration Guide</h2>
+                                    <p className="text-sm text-muted-foreground">
+                                        {isCrane
+                                            ? "Adjust claw strength stages (C1-C4) and payout rates to optimize machine performance. Settings are automatically synced to the active stock item."
+                                            : "Configure advanced machine settings including pricing and identification."
+                                        }
+                                    </p>
+                                </div>
+                            </div>
 
-                                {!isCrane && (
-                                    <div className="pt-4 border-t space-y-4">
-                                        <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Quick Insights (7d)</h3>
-                                        <MachineQuickStats
-                                            machineId={enrichedMachine.id}
-                                            assetTag={enrichedMachine.assetTag}
-                                            apiTag={enrichedMachine.tag}
-                                            groups={enrichedMachine.group ? [enrichedMachine.group] : undefined}
-                                        />
-                                    </div>
-                                )}
+                            <div className="pt-6 border-t space-y-4">
+                                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground/70">Quick Insights (7d)</h3>
+                                <MachineQuickStats
+                                    machineId={enrichedMachine.id}
+                                    assetTag={enrichedMachine.assetTag}
+                                    apiTag={enrichedMachine.tag}
+                                    groups={enrichedMachine.group ? [enrichedMachine.group] : undefined}
+                                />
                             </div>
                         </div>
+                    </div>
+
+                    <div className="grid gap-6">
+                        <SettingsPanel
+                            machineId={enrichedMachine.id}
+                            machineName={enrichedMachine.name}
+                            assetTag={enrichedMachine.assetTag}
+                            activeStockItem={assignedStock.find(i => i.assignedStatus === 'Assigned') || assignedStock[0] || null}
+                            supervisorOverride={supervisorOverride}
+                            isCraneMachine={isCrane}
+                        />
                     </div>
                 </TabsContent>
 

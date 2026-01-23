@@ -202,7 +202,7 @@ function MiniTrendChart({
     };
 
     return (
-        <div className="flex flex-col min-w-[140px] bg-background/50 rounded p-2 border shadow-sm group/chart relative transition-all hover:bg-background hover:scale-[1.02] hover:shadow-md z-0 hover:z-10">
+        <div className="flex flex-col min-w-[120px] bg-background/50 rounded p-2 border shadow-sm group/chart relative transition-all hover:bg-background hover:scale-[1.02] hover:shadow-md z-0 hover:z-10">
             <div className="flex justify-between items-start mb-1 h-5">
                 <span className="text-[10px] uppercase text-muted-foreground font-bold truncate pr-4">{label}</span>
                 <div className="flex opacity-0 group-hover/chart:opacity-100 transition-opacity -mt-1 -mr-1">
@@ -458,6 +458,113 @@ interface DailyStats {
 
 type MetricKey = Exclude<keyof DailyStats, 'date'>;
 
+// Extracted Table Component
+
+
+// Extracted Table Component
+function ComparisonDataTable({
+    stats,
+    isLoading,
+    groupedMetrics,
+    groupsOrder,
+    compact = false
+}: {
+    stats: DailyStats[],
+    isLoading: boolean,
+    groupedMetrics: any,
+    groupsOrder: string[],
+    compact?: boolean
+}) {
+    return (
+        <Table containerClassName={cn(compact ? "max-h-[600px]" : "h-full", "overflow-y-auto")}>
+            <TableHeader>
+                <TableRow className="bg-muted/40 hover:bg-muted/40 sticky top-0 z-30 shadow-sm backdrop-blur-sm">
+                    <TableHead className={cn(
+                        "font-bold uppercase tracking-wider text-muted-foreground/70 sticky left-0 z-40 bg-muted/95 backdrop-blur-sm shadow-[1px_0_0_0_rgba(0,0,0,0.1)]",
+                        compact ? "w-[120px] md:w-[200px] text-[10px] pl-4 md:pl-6 h-8" : "w-[150px] md:w-[250px] text-xs pl-6 h-12"
+                    )}>
+                        Metric
+                    </TableHead>
+                    {stats.map(stat => (
+                        <TableHead key={stat.date.toISOString()} className={cn(
+                            "text-right font-bold text-foreground/80 border-l border-border/50",
+                            compact ? "min-w-[100px] h-8" : "min-w-[140px] h-12"
+                        )}>
+                            <div className={cn("flex flex-col items-end justify-center h-full leading-none", compact ? "" : "gap-0.5")}>
+                                <span className={cn(compact ? "text-[10px] mb-0.5" : "text-xs")}>{format(stat.date, "MMM dd")}</span>
+                                <span className={cn("text-muted-foreground font-normal", compact ? "text-[9px]" : "text-[10px]")}>{format(stat.date, "yyyy")}</span>
+                            </div>
+                        </TableHead>
+                    ))}
+                </TableRow>
+            </TableHeader>
+            <TableBody>
+                {isLoading ? (
+                    <TableRow>
+                        <TableCell colSpan={stats.length + 1} className="h-32 text-center text-muted-foreground animate-pulse">
+                            Loading comparisons...
+                        </TableCell>
+                    </TableRow>
+                ) : (
+                    groupsOrder.filter(group => groupedMetrics[group]).map(group => (
+                        <Fragment key={group}>
+                            <TableRow className={compact ? "bg-muted/20 hover:bg-muted/20" : "bg-muted/10 hover:bg-muted/10"}>
+                                <TableCell className={cn(
+                                    "sticky left-0 z-20 bg-muted/95 backdrop-blur-sm border-b border-border/10 border-r border-border/10",
+                                    compact ? "py-1 pl-4" : "py-2 pl-4"
+                                )}>
+                                    <span className={cn(
+                                        "font-bold uppercase tracking-widest text-primary/70 flex items-center gap-2",
+                                        compact ? "text-[9px]" : "text-[10px]"
+                                    )}>
+                                        {group} Metrics
+                                    </span>
+                                </TableCell>
+                                <TableCell colSpan={stats.length} className="bg-muted/95 backdrop-blur-sm border-b border-border/10" />
+                            </TableRow>
+                            {groupedMetrics[group].map((metric: any) => {
+                                const Icon = metric.icon;
+                                const isMoney = metric.group === 'Financial';
+
+                                return (
+                                    <TableRow key={metric.label} className="group hover:bg-muted/5 transition-colors">
+                                        <TableCell className={cn(
+                                            "font-medium border-r border-transparent group-hover:border-border/30 sticky left-0 z-20 bg-background group-hover:bg-muted shadow-[1px_0_0_0_rgba(0,0,0,0.05)]",
+                                            compact ? "py-1.5 pl-6 text-xs" : "py-3 pl-6 text-sm",
+                                            isMoney && "text-emerald-700 dark:text-emerald-400"
+                                        )}>
+                                            <div className="flex items-center gap-2">
+                                                {Icon && <Icon className={cn("opacity-50", compact ? "h-3 w-3" : "h-3.5 w-3.5", isMoney && "text-emerald-600")} />}
+                                                {metric.label}
+                                            </div>
+                                        </TableCell>
+                                        {stats.map(stat => {
+                                            const val = stat[metric.key as MetricKey];
+                                            const isZero = val === 0;
+                                            return (
+                                                <TableCell key={stat.date.toISOString()} className={cn(
+                                                    "text-right border-l border-transparent group-hover:border-border/30",
+                                                    compact ? "py-1.5 text-xs" : "py-3 text-sm",
+                                                    isMoney && !isZero && "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/10",
+                                                    isZero && "text-muted-foreground/30"
+                                                )}>
+                                                    {metric.format
+                                                        ? metric.format(val)
+                                                        : (typeof val === 'number' && isNaN(val) ? '-' : val)}
+                                                </TableCell>
+                                            );
+                                        })}
+                                    </TableRow>
+                                );
+                            })}
+                        </Fragment>
+                    ))
+                )}
+            </TableBody>
+        </Table>
+    );
+}
+
 export function MachineComparisonTable({ machines, initialMachineId }: MachineComparisonTableProps) {
     const [selectedMachineId, setSelectedMachineId] = useState<string | undefined>(initialMachineId);
     const [openMachineSearch, setOpenMachineSearch] = useState(false);
@@ -465,6 +572,7 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
     const [dashboardMetric, setDashboardMetric] = useState<string | undefined>(undefined);
     const [dashboardKeys, setDashboardKeys] = useState<string[] | undefined>(undefined);
     const [dashboardType, setDashboardType] = useState<string | undefined>(undefined);
+    const [isExpandedViewOpen, setIsExpandedViewOpen] = useState(false);
     const { machines: allMachines } = useData();
 
     const handleOpenDashboard = (metric?: string, keys?: string[], type?: string) => {
@@ -775,56 +883,67 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
     const groupsOrder = ['Activity', 'Financial', 'Payouts', 'Technical'];
 
     return (
-        <div className="space-y-4">
-            <div className="flex flex-col sm:flex-row gap-4 justify-between bg-muted/30 p-4 rounded-lg border">
+        <div className="space-y-4 max-w-full overflow-hidden">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 bg-muted/30 p-4 rounded-lg border">
                 <div className="flex-1">
                     <label className="text-sm font-medium text-muted-foreground mb-1 block">Select Machine</label>
-                    <Popover open={openMachineSearch} onOpenChange={setOpenMachineSearch}>
-                        <PopoverTrigger asChild>
-                            <Button
-                                variant="outline"
-                                role="combobox"
-                                aria-expanded={openMachineSearch}
-                                className="w-full sm:w-[300px] justify-between font-normal h-9 bg-background"
-                            >
-                                {selectedMachine
-                                    ? `${selectedMachine.name} (${selectedMachine.assetTag || (selectedMachine as any).tag || "N/A"})`
-                                    : "Search machine..."}
-                                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                            </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-[300px] p-0" align="start">
-                            <Command>
-                                <CommandInput placeholder="Search machine name or tag..." />
-                                <CommandList>
-                                    <CommandEmpty>No machine found.</CommandEmpty>
-                                    <CommandGroup>
-                                        {machines.map((m) => (
-                                            <CommandItem
-                                                key={m.id}
-                                                value={`${m.name} ${m.assetTag || (m as any).tag || ""}`}
-                                                onSelect={() => {
-                                                    setSelectedMachineId(m.id);
-                                                    setOpenMachineSearch(false);
-                                                }}
-                                            >
-                                                <Check
-                                                    className={cn(
-                                                        "mr-2 h-4 w-4",
-                                                        selectedMachineId === m.id ? "opacity-100" : "opacity-0"
-                                                    )}
-                                                />
-                                                <div className="flex flex-col">
-                                                    <span className="font-medium text-sm">{m.name}</span>
-                                                    <span className="text-[10px] text-muted-foreground">Tag: {m.assetTag || (m as any).tag || "N/A"}</span>
-                                                </div>
-                                            </CommandItem>
-                                        ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
+                    <div className="flex gap-2 w-full">
+                        <Popover open={openMachineSearch} onOpenChange={setOpenMachineSearch}>
+                            <PopoverTrigger asChild>
+                                <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openMachineSearch}
+                                    className="flex-1 justify-between font-normal h-9 bg-background text-xs sm:text-sm overflow-hidden"
+                                >
+                                    {selectedMachine
+                                        ? `${selectedMachine.name} (${selectedMachine.assetTag || (selectedMachine as any).tag || "N/A"})`
+                                        : "Search machine..."}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[300px] p-0" align="start">
+                                <Command>
+                                    <CommandInput placeholder="Search machine name or tag..." />
+                                    <CommandList>
+                                        <CommandEmpty>No machine found.</CommandEmpty>
+                                        <CommandGroup>
+                                            {machines.map((m) => (
+                                                <CommandItem
+                                                    key={m.id}
+                                                    value={`${m.name} ${m.assetTag || (m as any).tag || ""}`}
+                                                    onSelect={() => {
+                                                        setSelectedMachineId(m.id);
+                                                        setOpenMachineSearch(false);
+                                                    }}
+                                                >
+                                                    <Check
+                                                        className={cn(
+                                                            "mr-2 h-4 w-4",
+                                                            selectedMachineId === m.id ? "opacity-100" : "opacity-0"
+                                                        )}
+                                                    />
+                                                    <div className="flex flex-col">
+                                                        <span className="font-medium text-sm">{m.name}</span>
+                                                        <span className="text-[10px] text-muted-foreground">Tag: {m.assetTag || (m as any).tag || "N/A"}</span>
+                                                    </div>
+                                                </CommandItem>
+                                            ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-9 w-9 shrink-0"
+                            onClick={() => setIsExpandedViewOpen(true)}
+                            title="Open Full View"
+                        >
+                            <Maximize2 className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                    </div>
                 </div>
                 <div className="flex-1">
                     <label className="text-sm font-medium text-muted-foreground mb-1 block">Date Selection</label>
@@ -833,13 +952,13 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                         onValueChange={(val) => setSelectionMode(val as 'range' | 'specific')}
                         className="w-full"
                     >
-                        <div className="flex flex-col sm:flex-row gap-2">
-                            <TabsList className="grid grid-cols-2 w-full sm:w-[200px] h-9">
+                        <div className="flex flex-col md:flex-row gap-2">
+                            <TabsList className="grid grid-cols-2 w-full md:w-[160px] h-9 shrink-0">
                                 <TabsTrigger value="range" className="text-xs">Range</TabsTrigger>
                                 <TabsTrigger value="specific" className="text-xs">Specific</TabsTrigger>
                             </TabsList>
 
-                            <div className="flex-1">
+                            <div className="flex-1 min-w-0">
                                 <TabsContent value="range" className="mt-0">
                                     <DatePickerWithRange
                                         date={dateRange}
@@ -890,88 +1009,91 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                 </div>
             ) : (
                 <div className="space-y-4">
-                    {/* Selected Machine Header with Images */}
-                    <div className="flex flex-col md:flex-row gap-4 p-4 rounded-lg border bg-gradient-to-r from-background to-muted/20 items-center md:items-start shadow-sm">
-                        {/* Machine Image */}
-                        <div className="h-24 w-24 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative group shadow-inner">
-                            {machineImage ? (
-                                <img
-                                    src={getThumbnailUrl(machineImage, 200)}
-                                    alt="Machine"
-                                    className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                                />
-                            ) : (
-                                <div className="h-full w-full flex items-center justify-center text-muted-foreground bg-muted/50">
-                                    <ImageIcon className="h-8 w-8 opacity-20" />
+                    <div className="flex flex-col xl:flex-row gap-6 p-4 rounded-lg border bg-gradient-to-r from-background to-muted/20 items-stretch xl:items-start shadow-sm overflow-hidden">
+                        <div className="flex flex-col md:flex-row gap-4 flex-1">
+                            <div className="flex gap-4 items-start">
+                                {/* Machine Image */}
+                                <div className="h-24 w-24 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative group shadow-inner">
+                                    {machineImage ? (
+                                        <img
+                                            src={getThumbnailUrl(machineImage, 200)}
+                                            alt="Machine"
+                                            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                        />
+                                    ) : (
+                                        <div className="h-full w-full flex items-center justify-center text-muted-foreground bg-muted/50">
+                                            <ImageIcon className="h-8 w-8 opacity-20" />
+                                        </div>
+                                    )}
+                                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-medium">
+                                        Machine
+                                    </div>
                                 </div>
-                            )}
-                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[10px] font-medium">
-                                Machine
-                            </div>
-                        </div>
 
-                        {/* Stock/JotForm Image */}
-                        <div
-                            className="h-24 w-24 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative group cursor-pointer shadow-inner"
-                            onClick={() => displayStockImage && setLightboxImage(displayStockImage)}
-                        >
-                            <OptimizedImage
-                                src={displayStockImage}
-                                alt="Stock/Report"
-                                width={100}
-                                aspectRatio="1/1"
-                                className="h-full w-full"
-                                imageClassName="object-cover transition-transform duration-500 group-hover:scale-110"
-                            />
-                            {displayStockImage && (
-                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
-                                    <ZoomIn className="h-5 w-5 mb-1" />
-                                    <span className="text-[8px] font-medium uppercase tracking-wider">View</span>
+                                {/* Stock/JotForm Image */}
+                                <div
+                                    className="h-24 w-24 rounded-md border bg-muted flex-shrink-0 overflow-hidden relative group cursor-pointer shadow-inner"
+                                    onClick={() => displayStockImage && setLightboxImage(displayStockImage)}
+                                >
+                                    <OptimizedImage
+                                        src={displayStockImage}
+                                        alt="Stock/Report"
+                                        width={100}
+                                        aspectRatio="1/1"
+                                        className="h-full w-full"
+                                        imageClassName="object-cover transition-transform duration-500 group-hover:scale-110"
+                                    />
+                                    {displayStockImage && (
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                                            <ZoomIn className="h-5 w-5 mb-1" />
+                                            <span className="text-[8px] font-medium uppercase tracking-wider">View</span>
+                                        </div>
+                                    )}
+                                    {!displayStockImage && (
+                                        <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/50">
+                                            <ImageIcon className="h-8 w-8 opacity-20" />
+                                        </div>
+                                    )}
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center text-white text-[9px] font-medium truncate px-1">
+                                        {recentReportImage ? "Latest Report" : "Current Item"}
+                                    </div>
                                 </div>
-                            )}
-                            {!displayStockImage && (
-                                <div className="absolute inset-0 flex items-center justify-center text-muted-foreground bg-muted/50">
-                                    <ImageIcon className="h-8 w-8 opacity-20" />
-                                </div>
-                            )}
-                            <div className="absolute bottom-0 left-0 right-0 bg-black/60 py-0.5 text-center text-white text-[9px] font-medium truncate px-1">
-                                {recentReportImage ? "Latest Report" : "Current Item"}
                             </div>
-                        </div>
 
-                        <div className="flex-1 space-y-1 text-center md:text-left">
-                            <div className="flex items-center justify-center md:justify-start gap-2">
-                                <h3 className="text-xl font-bold tracking-tight">
-                                    <Link
-                                        href={`/machines/${selectedMachine.id}`}
-                                        className="hover:text-blue-600 flex items-center gap-2 transition-colors"
-                                    >
-                                        {selectedMachine.name}
-                                        <ExternalLink className="h-4 w-4 opacity-30 hover:opacity-100 transition-opacity" />
-                                    </Link>
-                                </h3>
-                                <Badge variant={selectedMachine.status === 'online' ? 'default' : 'destructive'} className="uppercase text-[10px] font-bold tracking-wider px-2 shadow-sm">
-                                    {selectedMachine.status}
-                                </Badge>
-                            </div>
-                            <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-muted-foreground">
-                                <Badge variant="outline" className="font-mono text-[10px] bg-background">
-                                    #{selectedMachine.assetTag || fullMachine?.tag || "N/A"}
-                                </Badge>
-                                <span className="text-muted-foreground/40">•</span>
-                                <span className="font-medium text-foreground/80">{selectedMachine.location || fullMachine?.location}</span>
-                            </div>
-                            <div className="text-sm mt-3 p-2 bg-muted/30 rounded-md border inline-flex items-center gap-2">
-                                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Current Item</span>
-                                {fullMachine?.slots?.[0]?.currentItem ? (
-                                    <span className="font-semibold text-foreground">{fullMachine.slots[0].currentItem.name}</span>
-                                ) : <span className="text-muted-foreground italic">No item assigned</span>}
+                            <div className="flex-1 space-y-1 text-center md:text-left min-w-0">
+                                <div className="flex flex-wrap items-center justify-center md:justify-start gap-2">
+                                    <h3 className="text-xl font-bold tracking-tight">
+                                        <Link
+                                            href={`/machines/${selectedMachine.id}`}
+                                            className="hover:text-blue-600 flex items-center gap-2 transition-colors"
+                                        >
+                                            {selectedMachine.name}
+                                            <ExternalLink className="h-4 w-4 opacity-30 hover:opacity-100 transition-opacity" />
+                                        </Link>
+                                    </h3>
+                                    <Badge variant={selectedMachine.status === 'online' ? 'default' : 'destructive'} className="uppercase text-[10px] font-bold tracking-wider px-2 shadow-sm">
+                                        {selectedMachine.status}
+                                    </Badge>
+                                </div>
+                                <div className="flex items-center justify-center md:justify-start gap-2 text-sm text-muted-foreground">
+                                    <Badge variant="outline" className="font-mono text-[10px] bg-background">
+                                        #{selectedMachine.assetTag || fullMachine?.tag || "N/A"}
+                                    </Badge>
+                                    <span className="text-muted-foreground/40">•</span>
+                                    <span className="font-medium text-foreground/80">{selectedMachine.location || fullMachine?.location}</span>
+                                </div>
+                                <div className="text-sm mt-3 p-2 bg-muted/30 rounded-md border inline-flex items-center gap-2">
+                                    <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Current Item</span>
+                                    {fullMachine?.slots?.[0]?.currentItem ? (
+                                        <span className="font-semibold text-foreground">{fullMachine.slots[0].currentItem.name}</span>
+                                    ) : <span className="text-muted-foreground italic">No item assigned</span>}
+                                </div>
                             </div>
                         </div>
 
                         {/* Sparkline Charts */}
                         {stats.length > 0 && (
-                            <div className="flex gap-3 flex-wrap justify-end items-center mt-4 md:mt-0 flex-1 md:flex-none">
+                            <div className="flex gap-2 sm:gap-3 flex-wrap justify-center xl:justify-end items-center mt-4 xl:mt-0 w-full xl:w-auto overflow-hidden">
                                 <Button variant="outline" size="sm" className="h-8 text-xs md:hidden lg:flex" onClick={() => handleOpenDashboard()}>
                                     <Activity className="h-3 w-3 mr-2" /> Detail View
                                 </Button>
@@ -1011,80 +1133,64 @@ export function MachineComparisonTable({ machines, initialMachineId }: MachineCo
                         />
                     </div>
 
-                    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
-                        <Table>
-                            <TableHeader>
-                                <TableRow className="bg-muted/40 hover:bg-muted/40">
-                                    <TableHead className="w-[200px] font-bold text-xs uppercase tracking-wider text-muted-foreground/70 pl-6 h-12">Metric</TableHead>
-                                    {stats.map(stat => (
-                                        <TableHead key={stat.date.toISOString()} className="text-right min-w-[120px] font-bold text-foreground/80 h-10 border-l border-border/50">
-                                            <div className="flex flex-col items-end gap-0.5 py-2">
-                                                <span className="text-xs">{format(stat.date, "MMM dd")}</span>
-                                                <span className="text-[10px] text-muted-foreground font-normal">{format(stat.date, "yyyy")}</span>
-                                            </div>
-                                        </TableHead>
-                                    ))}
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {isLoading ? (
-                                    <TableRow>
-                                        <TableCell colSpan={stats.length + 1} className="h-32 text-center text-muted-foreground animate-pulse">
-                                            Loading comparisons...
-                                        </TableCell>
-                                    </TableRow>
-                                ) : (
-                                    groupsOrder.filter(group => groupedMetrics[group]).map(group => (
-                                        <Fragment key={group}>
-                                            <TableRow className="bg-muted/10 hover:bg-muted/10">
-                                                <TableCell colSpan={stats.length + 1} className="py-2 pl-4">
-                                                    <span className="text-[10px] font-bold uppercase tracking-widest text-primary/60 flex items-center gap-2">
-                                                        {group} Metrics
-                                                    </span>
-                                                </TableCell>
-                                            </TableRow>
-                                            {groupedMetrics[group].map((metric) => {
-                                                const Icon = metric.icon;
-                                                const isMoney = metric.group === 'Financial';
+                    <div className="flex justify-end items-center mb-2 px-1 gap-2">
+                        <span className="text-xs text-muted-foreground mr-auto">
+                            Comparing <span className="font-bold text-foreground">{stats.length}</span> days
+                        </span>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 gap-1.5 text-xs bg-background/50 hover:bg-background shadow-sm transition-all"
+                            onClick={() => setIsExpandedViewOpen(true)}
+                        >
+                            <Maximize2 className="h-3.5 w-3.5" />
+                            Expand Table
+                        </Button>
+                    </div>
 
-                                                return (
-                                                    <TableRow key={metric.label} className="group hover:bg-muted/5 transition-colors">
-                                                        <TableCell className={cn(
-                                                            "font-medium py-3 pl-6 border-r border-transparent group-hover:border-border/30",
-                                                            isMoney && "text-emerald-700 dark:text-emerald-400"
-                                                        )}>
-                                                            <div className="flex items-center gap-2">
-                                                                {Icon && <Icon className={cn("h-3.5 w-3.5 opacity-50", isMoney && "text-emerald-600")} />}
-                                                                {metric.label}
-                                                            </div>
-                                                        </TableCell>
-                                                        {stats.map(stat => {
-                                                            const val = stat[metric.key];
-                                                            const isZero = val === 0;
-                                                            return (
-                                                                <TableCell key={stat.date.toISOString()} className={cn(
-                                                                    "text-right py-3 border-l border-transparent group-hover:border-border/30",
-                                                                    isMoney && !isZero && "font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50/10",
-                                                                    isZero && "text-muted-foreground/30"
-                                                                )}>
-                                                                    {metric.format
-                                                                        ? metric.format(val)
-                                                                        : (typeof val === 'number' && isNaN(val) ? '-' : val)}
-                                                                </TableCell>
-                                                            );
-                                                        })}
-                                                    </TableRow>
-                                                );
-                                            })}
-                                        </Fragment>
-                                    ))
-                                )}
-                            </TableBody>
-                        </Table>
+                    <div className="rounded-xl border bg-card shadow-sm overflow-hidden">
+                        <ComparisonDataTable
+                            stats={stats}
+                            isLoading={isLoading}
+                            groupedMetrics={groupedMetrics}
+                            groupsOrder={groupsOrder}
+                            compact={isSelectedCrane}
+                        />
                     </div>
                 </div>
             )
             }
+
+            {/* Expanded Table Dialog */}
+            <Dialog open={isExpandedViewOpen} onOpenChange={setIsExpandedViewOpen}>
+                <DialogContent className="max-w-[98vw] sm:max-w-[98vw] w-[98vw] h-[95vh] flex flex-col p-4">
+                    <DialogTitle className="flex justify-between items-center mr-8">
+                        <div className="flex flex-col gap-1">
+                            <span className="text-xl font-bold flex items-center gap-2">
+                                <Activity className="h-5 w-5 text-primary" />
+                                {selectedMachine?.name} Data Analysis
+                            </span>
+                            <span className="text-sm font-normal text-muted-foreground">
+                                Detailed comparison view with full metrics
+                            </span>
+                        </div>
+                    </DialogTitle>
+                    <div className="flex-1 overflow-hidden mt-4 border rounded-lg bg-card shadow-sm">
+                        <ComparisonDataTable
+                            stats={stats}
+                            isLoading={isLoading}
+                            groupedMetrics={groupedMetrics}
+                            groupsOrder={groupsOrder}
+                            compact={false}
+                        />
+                    </div>
+                    <div className="flex justify-end pt-4">
+                        <Button onClick={() => setIsExpandedViewOpen(false)}>
+                            Close Expanded View
+                        </Button>
+                    </div>
+                </DialogContent>
+            </Dialog>
             {/* Lightbox for zooming in */}
             <Dialog open={!!lightboxImage} onOpenChange={(open) => !open && setLightboxImage(null)}>
                 <DialogContent className="max-w-4xl p-0 overflow-hidden bg-transparent border-none shadow-none">

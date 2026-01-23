@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendIndicator } from "./TrendIndicator";
 import { ChartTypeSelector, ChartType } from "./ChartTypeSelector";
 import {
@@ -22,7 +23,7 @@ import {
     Tooltip,
     Legend,
 } from "recharts";
-import { analyticsService, FinancialMetrics, TimeSeriesData } from "@/services/analyticsService";
+import { analyticsService, FinancialMetrics, TimeSeriesData, RevenueSource } from "@/services/analyticsService";
 import { DollarSign, TrendingUp, Calculator, PiggyBank, Target, BarChart3 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Button } from "@/components/ui/button";
@@ -31,35 +32,46 @@ import { cn } from "@/lib/utils";
 
 interface FinancialAnalyticsTabProps {
     timePeriod?: number;
+    revenueSource?: RevenueSource;
 }
 
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444", "#ec4899"];
 
-export function FinancialAnalyticsTab({ timePeriod = 30 }: FinancialAnalyticsTabProps) {
+export function FinancialAnalyticsTab({ timePeriod = 30, revenueSource = 'sales' }: FinancialAnalyticsTabProps) {
     const [metrics, setMetrics] = useState<FinancialMetrics | null>(null);
     const [revenueData, setRevenueData] = useState<TimeSeriesData[]>([]);
     const [forecast, setForecast] = useState<TimeSeriesData[]>([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState<string | null>(null);
     const [chartType, setChartType] = useState<ChartType>("area");
     const [showAdvanced, setShowAdvanced] = useState(false);
 
+    // Local overrides
+    const [localRevenueSource, setLocalRevenueSource] = useState<RevenueSource>(revenueSource);
+
+    useEffect(() => {
+        setLocalRevenueSource(revenueSource);
+    }, [revenueSource]);
+
     useEffect(() => {
         loadData();
-    }, [timePeriod]);
+    }, [timePeriod, revenueSource]);
 
     const loadData = async () => {
         setLoading(true);
+        setError(null);
         try {
             const [financialMetrics, revenue, forecastData] = await Promise.all([
-                analyticsService.getFinancialMetrics(timePeriod),
-                analyticsService.getRevenueTimeSeries(timePeriod),
+                analyticsService.getFinancialMetrics(timePeriod, revenueSource),
+                analyticsService.getRevenueTimeSeries(timePeriod, revenueSource),
                 analyticsService.getProjectedRevenue(7),
             ]);
             setMetrics(financialMetrics);
             setRevenueData(revenue);
             setForecast(forecastData);
-        } catch (error) {
-            console.error("Failed to load financial data:", error);
+        } catch (err) {
+            console.error("Failed to load financial data:", err);
+            setError("Failed to load some financial metrics. Please check your connection and try again.");
         } finally {
             setLoading(false);
         }
@@ -70,7 +82,7 @@ export function FinancialAnalyticsTab({ timePeriod = 30 }: FinancialAnalyticsTab
         ...forecast.map((d) => ({ ...d, type: "forecast" })),
     ];
 
-    if (loading || !metrics) {
+    if (loading) {
         return (
             <div className="space-y-4">
                 <div className="grid gap-4 md:grid-cols-4">
@@ -83,8 +95,30 @@ export function FinancialAnalyticsTab({ timePeriod = 30 }: FinancialAnalyticsTab
         );
     }
 
+    if (error || !metrics) {
+        return (
+            <Card className="border-destructive/50 bg-destructive/5">
+                <CardHeader>
+                    <CardTitle className="text-destructive flex items-center gap-2">
+                        <BarChart3 className="h-5 w-5" />
+                        Data Unavailable
+                    </CardTitle>
+                    <CardDescription>
+                        {error || "Financial metrics are currently unavailable."}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={loadData} variant="outline" className="gap-2">
+                        <ChevronDown className="h-4 w-4 rotate-90" />
+                        Retry Loading
+                    </Button>
+                </CardContent>
+            </Card>
+        );
+    }
+
     const renderChart = () => {
-        const chartData = revenueData.slice(-14); // Last 14 days for cleaner view
+        const chartData = revenueData; // Show full period
 
         const commonProps = {
             data: chartData,
@@ -157,8 +191,24 @@ export function FinancialAnalyticsTab({ timePeriod = 30 }: FinancialAnalyticsTab
                         <DollarSign className="h-4 w-4 text-purple-200" />
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold">${metrics.totalRevenue.toLocaleString()}</div>
-                        <p className="text-xs text-purple-100">Last {timePeriod} days</p>
+                        <div className="text-2xl font-bold">
+                            ${localRevenueSource === 'sales' ? metrics.salesRevenue.toLocaleString() :
+                                localRevenueSource === 'game' ? metrics.machineRevenue.toLocaleString() :
+                                    metrics.totalRevenue.toLocaleString()}
+                        </div>
+                        <p className="text-xs text-purple-100 flex items-center justify-between">
+                            <span>Last {timePeriod} days</span>
+                            <Select value={localRevenueSource} onValueChange={(v) => setLocalRevenueSource(v as RevenueSource)}>
+                                <SelectTrigger className="h-5 w-20 bg-white/10 border-none text-[9px] py-0 text-white">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="sales">Sales</SelectItem>
+                                    <SelectItem value="game">Game</SelectItem>
+                                    <SelectItem value="both">Both</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </p>
                     </CardContent>
                 </Card>
 

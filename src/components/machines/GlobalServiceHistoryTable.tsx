@@ -318,9 +318,9 @@ export function GlobalServiceHistoryTable() {
             </div>
 
             <div className="rounded-md border bg-card">
-                <Table>
+                <Table containerClassName="max-h-[calc(100vh-280px)] overflow-y-auto">
                     <TableHeader>
-                        <TableRow>
+                        <TableRow className="bg-background/95 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
                             <TableHead
                                 className="cursor-pointer hover:bg-muted/50 transition-colors"
                                 onClick={() => handleSort('timestamp')}

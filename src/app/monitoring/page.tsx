@@ -1870,9 +1870,9 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
     return (
         <div className="flex flex-col gap-4">
             <div className="rounded-md border bg-card">
-                <Table>
+                <Table containerClassName="max-h-[calc(100vh-220px)] overflow-y-auto">
                     <TableHeader>
-                        <TableRow className="bg-muted/50">
+                        <TableRow className="bg-muted/95 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
                             {renderSortableHeader("Status", "payoutStatus", "w-[85px] px-0.5 text-center", "Payout Health Status")}
                             {renderSortableHeader("Tag", "tag", "w-[45px] px-0.5 text-center", "Machine ID / Asset Tag")}
                             {renderSortableHeader("Description", "description", "min-w-[120px] px-0.5 text-center", "Machine Name & Identity")}
@@ -2125,11 +2125,11 @@ function StatDetailDialog({
                     <div className="space-y-4">
                         <h4 className="text-sm font-bold uppercase text-muted-foreground">List Breakdown</h4>
                         <div className="rounded-md border bg-muted/20">
-                            <Table>
+                            <Table containerClassName="max-h-[300px] overflow-y-auto">
                                 <TableHeader>
-                                    <TableRow>
+                                    <TableRow className="sticky top-0 z-10 bg-muted hover:bg-muted shadow-sm">
                                         <TableHead className="text-xs">Machine</TableHead>
-                                        <TableHead className="text-xs text-right">
+                                        <TableHead className="text-xs text-right pr-6">
                                             {type === 'revenue' ? 'Revenue' : (type === 'accuracy' ? 'Accuracy' : 'Plays')}
                                         </TableHead>
                                     </TableRow>
@@ -2152,7 +2152,7 @@ function StatDetailDialog({
                                                     </div>
                                                 </div>
                                             </TableCell>
-                                            <TableCell className="text-right py-2">
+                                            <TableCell className="text-right py-2 pr-6">
                                                 {type === 'revenue' && <span className="font-mono text-xs">${(m.revenue || 0).toFixed(0)}</span>}
                                                 {type === 'activity' && <span className="font-mono text-xs">{m.customerPlays}</span>}
                                                 {type === 'accuracy' && (

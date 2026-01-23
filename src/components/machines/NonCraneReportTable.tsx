@@ -149,9 +149,9 @@ export function NonCraneReportTable({ data }: NonCraneReportTableProps) {
     return (
         <div className="flex flex-col gap-4">
             <div className="rounded-md border bg-card">
-                <Table>
+                <Table containerClassName="max-h-[calc(100vh-220px)] overflow-y-auto">
                     <TableHeader>
-                        <TableRow className="bg-muted/50">
+                        <TableRow className="bg-muted/95 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
                             {renderSortableHeader("Status", "status", "w-[80px] px-0.5")}
                             {renderSortableHeader("Tag", "tag", "w-[50px] px-0.5")}
                             {renderSortableHeader("Machine", "description", "min-w-[120px] px-0.5")}

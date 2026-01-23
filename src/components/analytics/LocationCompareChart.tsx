@@ -17,23 +17,24 @@ import { analyticsService, LocationComparison } from "@/services/analyticsServic
 import { MapPin, DollarSign, PlayCircle, Activity } from "lucide-react";
 
 interface LocationCompareChartProps {
+    days?: number;
     className?: string;
 }
 
 const COLORS = ["#8b5cf6", "#06b6d4", "#10b981", "#f59e0b", "#ef4444"];
 
-export function LocationCompareChart({ className }: LocationCompareChartProps) {
+export function LocationCompareChart({ days = 30, className }: LocationCompareChartProps) {
     const [data, setData] = useState<LocationComparison[]>([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [days]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const locationData = await analyticsService.compareLocations();
+            const locationData = await analyticsService.compareLocations(days);
             setData(locationData);
         } catch (error) {
             console.error("Failed to load location comparison:", error);

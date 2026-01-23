@@ -135,27 +135,27 @@ export function MachineQuickStats({ assetTag, apiTag, groups }: QuickStatsProps)
     ];
 
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
             {cards.map((card, i) => (
-                <div key={i} className="relative group">
-                    <Card className="overflow-hidden border border-border/40 shadow-sm bg-card hover:border-primary/20 transition-all duration-300">
-                        <CardContent className="p-4">
+                <div key={i} className="relative group w-full">
+                    <Card className="overflow-hidden border border-border/40 shadow-sm bg-card hover:border-primary/20 transition-all duration-300 h-full">
+                        <CardContent className="p-4 h-full flex flex-col justify-center">
                             <div className="flex items-center gap-4">
                                 <div className={cn(
-                                    "p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110",
+                                    "p-2.5 rounded-xl transition-transform duration-300 group-hover:scale-110 shrink-0",
                                     card.color
                                 )}>
                                     <card.icon className="h-5 w-5" />
                                 </div>
-                                <div className="space-y-0.5 min-w-0">
-                                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80 leading-none">
+                                <div className="space-y-0.5 min-w-0 flex-1">
+                                    <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-muted-foreground/80 leading-none truncate">
                                         {card.label}
                                     </p>
-                                    <p className="text-xl font-black tracking-tight text-foreground">
+                                    <p className="text-xl md:text-2xl font-black tracking-tight text-foreground truncate">
                                         {card.value}
                                     </p>
                                     <div className="flex items-center gap-1.5">
-                                        <div className="h-1 w-1 rounded-full bg-primary/30" />
+                                        <div className="h-1 w-1 rounded-full bg-primary/30 shrink-0" />
                                         <p className="text-[10px] text-muted-foreground font-medium truncate italic">
                                             {card.subLabel}
                                         </p>

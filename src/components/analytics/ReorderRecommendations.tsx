@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 interface ReorderRecommendationsProps {
     className?: string;
     maxItems?: number;
+    days?: number;
 }
 
 const priorityConfig = {
@@ -20,19 +21,19 @@ const priorityConfig = {
     low: { color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400", label: "Low" },
 };
 
-export function ReorderRecommendations({ className, maxItems = 10 }: ReorderRecommendationsProps) {
+export function ReorderRecommendations({ className, maxItems = 10, days = 30 }: ReorderRecommendationsProps) {
     const [recommendations, setRecommendations] = useState<ReorderRecommendation[]>([]);
     const [loading, setLoading] = useState(true);
     const [showAll, setShowAll] = useState(false);
 
     useEffect(() => {
         loadData();
-    }, []);
+    }, [days]);
 
     const loadData = async () => {
         setLoading(true);
         try {
-            const data = await analyticsService.getReorderRecommendations();
+            const data = await analyticsService.getReorderRecommendations(days);
             setRecommendations(data);
         } catch (error) {
             console.error("Failed to load reorder recommendations:", error);
