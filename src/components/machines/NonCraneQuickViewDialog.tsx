@@ -454,24 +454,24 @@ export function NonCraneQuickViewDialog({
                                             <div className="space-y-2 pt-2">
                                                 <div className="flex justify-between text-sm">
                                                     <span>Customer Plays:</span>
-                                                    <span className="font-bold text-green-600">{periodCustomer}</span>
+                                                    <span className="font-bold text-green-600">{!isNaN(Number(periodCustomer)) ? periodCustomer : 0}</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm">
                                                     <span>Staff Plays:</span>
-                                                    <span className="font-bold text-blue-600">{periodStaff}</span>
+                                                    <span className="font-bold text-blue-600">{!isNaN(Number(periodStaff)) ? periodStaff : 0}</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm border-t pt-2 font-semibold">
                                                     <span>Total:</span>
-                                                    <span>{periodTotal}</span>
+                                                    <span>{!isNaN(Number(periodTotal)) ? periodTotal : 0}</span>
                                                 </div>
                                             </div>
                                         </DialogContent>
                                     </Dialog>
                                 </div>
                                 <div className="flex items-baseline gap-2">
-                                    <p className="text-xl font-bold">{periodTotal}</p>
+                                    <p className="text-xl font-bold">{!isNaN(Number(periodTotal)) ? periodTotal : 0}</p>
                                     <p className="text-[10px] text-muted-foreground">
-                                        ({periodCustomer} + <span className="text-blue-500">{periodStaff}</span>)
+                                        ({!isNaN(Number(periodCustomer)) ? periodCustomer : 0} + <span className="text-blue-500">{!isNaN(Number(periodStaff)) ? periodStaff : 0}</span>)
                                     </p>
                                 </div>
                             </Card>
@@ -729,7 +729,7 @@ export function NonCraneQuickViewDialog({
                             </div>
                             <div className="flex flex-col gap-0.5">
                                 <span className="text-xl font-bold text-blue-700 dark:text-blue-300">
-                                    ${(machine.revenue || 0).toFixed(0)}
+                                    ${isNaN(Number(machine.revenue)) ? '0' : (machine.revenue || 0).toFixed(0)}
                                 </span>
                                 {isToday && momentum && (
                                     <div className="flex items-center gap-1">
@@ -737,9 +737,9 @@ export function NonCraneQuickViewDialog({
                                             "text-[10px] font-bold",
                                             momentum.isPositive ? "text-green-600" : "text-red-500"
                                         )}>
-                                            {momentum.isPositive ? '↑' : '↓'}{Math.abs(momentum.percent)}%
+                                            {momentum.isPositive ? '↑' : '↓'}{!isNaN(Number(momentum.percent)) ? Math.abs(momentum.percent) : 0}%
                                         </span>
-                                        <span className="text-[9px] text-blue-600/40">vs ${momentum.yesterdayRevenue.toFixed(0)}</span>
+                                        <span className="text-[9px] text-blue-600/40">vs ${!isNaN(Number(momentum.yesterdayRevenue)) ? momentum.yesterdayRevenue.toFixed(0) : '0'}</span>
                                     </div>
                                 )}
                             </div>
@@ -747,12 +747,12 @@ export function NonCraneQuickViewDialog({
                             <div className="mt-2 pt-2 border-t border-blue-200/30 dark:border-blue-800/30">
                                 <div className="flex items-center gap-1 text-[10px]">
                                     <span className="text-blue-600/60 dark:text-blue-400/60">
-                                        <span className="font-semibold text-blue-700 dark:text-blue-300">${(machine.cashRevenue || 0).toFixed(2)}</span>
+                                        <span className="font-semibold text-blue-700 dark:text-blue-300">${isNaN(Number(machine.cashRevenue)) ? '0.00' : (machine.cashRevenue || 0).toFixed(2)}</span>
                                         <span className="text-blue-500/50 mx-1">cash</span>
                                     </span>
                                     <span className="text-blue-400/50">+</span>
                                     <span className="text-blue-600/60 dark:text-blue-400/60">
-                                        <span className="font-semibold text-blue-700 dark:text-blue-300">${(machine.bonusRevenue || 0).toFixed(2)}</span>
+                                        <span className="font-semibold text-blue-700 dark:text-blue-300">${isNaN(Number(machine.bonusRevenue)) ? '0.00' : (machine.bonusRevenue || 0).toFixed(2)}</span>
                                         <span className="text-blue-500/50 mx-1">bonus</span>
                                     </span>
                                 </div>
@@ -975,7 +975,7 @@ export function NonCraneQuickViewDialog({
                                             </div>
                                         ) : hallOfFame ? (
                                             <>
-                                                <span className="font-bold text-xl text-yellow-700 dark:text-yellow-400">${hallOfFame.maxRev.toFixed(0)}</span>
+                                                <span className="font-bold text-xl text-yellow-700 dark:text-yellow-400">${!isNaN(Number(hallOfFame.maxRev)) ? hallOfFame.maxRev.toFixed(0) : '0'}</span>
                                                 <span className="text-[9px] text-yellow-600/50">Top: {hallOfFame.bestDate}</span>
                                             </>
                                         ) : (
@@ -1035,7 +1035,7 @@ export function NonCraneQuickViewDialog({
                                                     <span className={cn("font-bold font-mono w-4", i === 0 ? "text-amber-600" : "text-muted-foreground")}>{i + 1}</span>
                                                     <span className="font-medium">{day.time}</span>
                                                 </div>
-                                                <span className="font-bold text-amber-700 dark:text-amber-500">${day.revenue.toFixed(0)}</span>
+                                                <span className="font-bold text-amber-700 dark:text-amber-500">${!isNaN(Number(day.revenue)) ? day.revenue.toFixed(0) : '0'}</span>
                                             </div>
                                         ))
                                     )}
@@ -1054,7 +1054,7 @@ export function NonCraneQuickViewDialog({
                                         <span className={cn("text-[9px] font-bold uppercase", heavyLifter.color)}>Contribution</span>
                                     </div>
                                     <div className="flex flex-col gap-0.5">
-                                        <span className={cn("font-bold text-xl", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</span>
+                                        <span className={cn("font-bold text-xl", heavyLifter.color)}>{!isNaN(Number(heavyLifter.percent)) ? heavyLifter.percent.toFixed(1) : '0.0'}%</span>
                                         <span className="text-[9px] text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
                                             {isToday ? 'Today' : 'of Selected Period'}
                                         </span>
@@ -1110,15 +1110,15 @@ export function NonCraneQuickViewDialog({
                                             <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">
                                                 {contributionScope === 'store' ? 'Store' : contributionScope === 'location' ? 'Location' : 'Group'} Total
                                             </p>
-                                            <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${heavyLifter.totalRev.toFixed(0)}</p>
+                                            <p className="text-lg font-bold text-slate-700 dark:text-slate-300">${!isNaN(Number(heavyLifter.totalRev)) ? heavyLifter.totalRev.toFixed(0) : '0'}</p>
                                         </div>
                                         <div>
                                             <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">This Machine</p>
-                                            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">${heavyLifter.myRev.toFixed(0)}</p>
+                                            <p className="text-lg font-bold text-blue-600 dark:text-blue-400">${!isNaN(Number(heavyLifter.myRev)) ? heavyLifter.myRev.toFixed(0) : '0'}</p>
                                         </div>
                                         <div>
                                             <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">Contribution</p>
-                                            <p className={cn("text-lg font-bold", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</p>
+                                            <p className={cn("text-lg font-bold", heavyLifter.color)}>{!isNaN(Number(heavyLifter.percent)) ? heavyLifter.percent.toFixed(1) : '0.0'}%</p>
                                         </div>
                                     </div>
                                 </div>
@@ -1203,7 +1203,7 @@ export function NonCraneQuickViewDialog({
                                                 )}
                                                 <div className="col-span-3 text-right">
                                                     <span className={cn("font-bold", m.id === machine.id ? heavyLifter.color : "text-slate-600 dark:text-slate-400")}>
-                                                        {m.percent.toFixed(1)}%
+                                                        {!isNaN(Number(m.percent)) ? m.percent.toFixed(1) : '0.0'}%
                                                     </span>
                                                 </div>
                                             </div>

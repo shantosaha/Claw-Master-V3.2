@@ -38,14 +38,15 @@ class ServiceReportService {
                 const rawData = await response.json();
                 console.log("Data received from API:", rawData);
 
-                // The API returns { status: "success", response: [...] }
-                // Extract the actual data array from the nested structure
+                // Handle both array and {response: [...]} formats, and {status: "success", response: [...]}
                 let dataArray: any[] = [];
                 if (rawData && rawData.response && Array.isArray(rawData.response)) {
                     dataArray = rawData.response;
                 } else if (Array.isArray(rawData)) {
                     dataArray = rawData;
-                } else if (rawData && !rawData.status) {
+                } else if (rawData && rawData.data && Array.isArray(rawData.data)) {
+                    dataArray = rawData.data;
+                } else if (rawData && !rawData.status && !Array.isArray(rawData)) {
                     dataArray = [rawData];
                 }
 

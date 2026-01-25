@@ -125,15 +125,56 @@ async function fetchGameReport(
             return [];
         }
 
-        const data = await response.json();
+        const rawData = await response.json();
 
-        // Handle both array and {response: [...]} formats
-        let results: GameReportItem[] = [];
-        if (Array.isArray(data)) {
-            results = data;
-        } else if (data.response && Array.isArray(data.response)) {
-            results = data.response;
+        // Handle both array and {response: [...]} formats, and {status: "success", response: [...]}
+        let dataArray: any[] = [];
+        if (rawData && rawData.response && Array.isArray(rawData.response)) {
+            dataArray = rawData.response;
+        } else if (Array.isArray(rawData)) {
+            dataArray = rawData;
+        } else if (rawData && !rawData.status && !Array.isArray(rawData)) {
+            // Single object response
+            dataArray = [rawData];
+        } else if (rawData && rawData.data && Array.isArray(rawData.data)) {
+            // Fallback for some APIs that use 'data' instead of 'response'
+            dataArray = rawData.data;
         }
+
+        // Helper to normalize field names from various API formats
+        const normalizeItem = (item: any): GameReportItem => {
+            const val = (keys: string[]) => {
+                for (const k of keys) {
+                    if (item[k] !== undefined) return item[k];
+                    const foundKey = Object.keys(item).find(ik =>
+                        ik.toLowerCase().replace(/[\s_-]/g, '') === k.toLowerCase().replace(/[\s_-]/g, '')
+                    );
+                    if (foundKey) return item[foundKey];
+                }
+                return undefined;
+            };
+
+            return {
+                tag: Number(val(['tag', 'Tag']) || 0),
+                description: String(val(['description', 'Description']) || ''),
+                assetTag: String(val(['assetTag', 'asset_tag']) || val(['tag', 'Tag']) || ''),
+                location: String(val(['location', 'Location']) || ''),
+                group: String(val(['group', 'Group']) || ''),
+                subGroup: String(val(['subGroup', 'SubGroup', 'sub_group']) || ''),
+                cashDebit: Number(val(['cashDebit', 'cash_debit', 'CardCashPlayPrice']) || 0),
+                cashDebitBonus: Number(val(['cashDebitBonus', 'cash_bonus', 'CashDebitBonus']) || 0),
+                points: Number(val(['points', 'Points', 'merchandise', 'PointsPerPlay']) || 0),
+                standardPlays: Number(val(['standardPlays', 'standard_plays', 'StandardPlay']) || 0),
+                empPlays: Number(val(['empPlays', 'emp_plays', 'EmpPlay']) || 0),
+                totalRev: Number(val(['totalRev', 'total_revenue', 'total_rev']) || 0),
+                merchandise: Number(val(['merchandise', 'points', 'wins']) || 0),
+                cashRev: Number(val(['cashRev', 'cash_revenue', 'cash_rev']) || 0),
+                bonusRev: Number(val(['bonusRev', 'bonus_revenue', 'bonus_rev']) || 0),
+                date: val(['date', 'submissionDate', 'timestamp', 'CreatedAt'])
+            };
+        };
+
+        let results: GameReportItem[] = dataArray.map(normalizeItem);
 
         // Client-side filtering by tag if provided
         // PRODUCTION COMPLIANCE: Upstream doesn't support tag filtering in body, so we must filter here.

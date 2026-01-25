@@ -11,7 +11,7 @@ import Link from "next/link";
 import { getThumbnailUrl } from "@/lib/utils/imageUtils";
 import { MachineStatus, MonitoringReportItem } from "@/services/monitoringService";
 
-type ExtendedMachineStatus = MachineStatus & Partial<MonitoringReportItem> & { group?: string };
+type ExtendedMachineStatus = MachineStatus & Partial<MonitoringReportItem> & { group?: string; points?: number };
 
 interface NonCraneMachineCardProps {
     machine: ExtendedMachineStatus;
@@ -37,8 +37,10 @@ export function NonCraneMachineCard({ machine, onAction }: NonCraneMachineCardPr
         maintenance: "bg-yellow-100 text-yellow-800 border-yellow-200",
     };
 
-    // Estimate revenue from plays (assuming $3.60 per 2 plays average)
-    const estimatedRevenue = ((machine.customerPlays || 0) * 1.8).toFixed(0);
+    // Estimate revenue from plays (assuming $1.80 per play average)
+    const rawCustomerPlays = Number(machine.customerPlays);
+    const estimatedRevValue = isNaN(rawCustomerPlays) ? 0 : rawCustomerPlays * 1.8;
+    const estimatedRevenue = estimatedRevValue.toFixed(0);
 
     return (
         <Card className={cn(
@@ -142,11 +144,15 @@ export function NonCraneMachineCard({ machine, onAction }: NonCraneMachineCardPr
                                 <Users className="h-3 w-3" />
                                 Cust. Plays:
                             </span>
-                            <span className="font-medium">{machine.customerPlays ?? '-'}</span>
+                            <span className="font-medium">
+                                {!isNaN(Number(machine.customerPlays)) ? machine.customerPlays : '-'}
+                            </span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-muted-foreground">Staff Plays:</span>
-                            <span className="font-medium">{machine.staffPlays ?? '-'}</span>
+                            <span className="font-medium">
+                                {!isNaN(Number(machine.staffPlays)) ? machine.staffPlays : '-'}
+                            </span>
                         </div>
                         <div className="flex justify-between items-center">
                             <span className="text-muted-foreground flex items-center gap-1">
@@ -160,7 +166,9 @@ export function NonCraneMachineCard({ machine, onAction }: NonCraneMachineCardPr
                                 <Ticket className="h-3 w-3" />
                                 Points:
                             </span>
-                            <span className="font-medium text-purple-600">{(machine as any).points ?? '-'}</span>
+                            <span className="font-medium text-purple-600">
+                                {machine.points !== undefined && !isNaN(Number(machine.points)) ? machine.points : '-'}
+                            </span>
                         </div>
                     </div>
 

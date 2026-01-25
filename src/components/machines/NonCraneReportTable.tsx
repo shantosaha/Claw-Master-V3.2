@@ -11,7 +11,7 @@ import Link from "next/link";
 import { format } from "date-fns";
 import { MachineStatus, MonitoringReportItem } from "@/services/monitoringService";
 
-type ExtendedMachineStatus = MachineStatus & Partial<MonitoringReportItem> & { group?: string };
+type ExtendedMachineStatus = MachineStatus & Partial<MonitoringReportItem> & { group?: string; points?: number };
 
 interface NonCraneReportTableProps {
     data: ExtendedMachineStatus[];
@@ -189,12 +189,24 @@ export function NonCraneReportTable({ data }: NonCraneReportTableProps) {
                                         </Link>
                                     </TableCell>
                                     <TableCell className="text-muted-foreground text-xs px-0.5 text-center">{item.location}</TableCell>
-                                    <TableCell className="text-center font-medium text-xs px-0.5">{item.customerPlays ?? '-'}</TableCell>
-                                    <TableCell className="text-center text-muted-foreground text-xs px-0.5">{item.staffPlays ?? '-'}</TableCell>
-                                    <TableCell className="text-center font-medium text-purple-600 text-xs px-0.5">{(item as any).points ?? '-'}</TableCell>
-                                    <TableCell className="text-center font-medium text-green-600 text-xs px-0.5">${estimatedRevenue}</TableCell>
-                                    <TableCell className="text-center text-xs px-0.5 text-muted-foreground">${(item.cashRevenue || 0).toFixed(0)}</TableCell>
-                                    <TableCell className="text-center text-xs px-0.5 text-orange-600">${(item.bonusRevenue || 0).toFixed(0)}</TableCell>
+                                    <TableCell className="text-center font-medium text-xs px-0.5">
+                                        {!isNaN(Number(item.customerPlays)) ? item.customerPlays : '-'}
+                                    </TableCell>
+                                    <TableCell className="text-center text-muted-foreground text-xs px-0.5">
+                                        {!isNaN(Number(item.staffPlays)) ? item.staffPlays : '-'}
+                                    </TableCell>
+                                    <TableCell className="text-center font-medium text-purple-600 text-xs px-0.5">
+                                        {item.points !== undefined && !isNaN(Number(item.points)) ? item.points : '-'}
+                                    </TableCell>
+                                    <TableCell className="text-center font-medium text-green-600 text-xs px-0.5">
+                                        ${isNaN(Number(item.revenue)) ? '0' : (item.revenue || 0).toFixed(0)}
+                                    </TableCell>
+                                    <TableCell className="text-center text-xs px-0.5 text-muted-foreground">
+                                        ${isNaN(Number(item.cashRevenue)) ? '0' : (item.cashRevenue || 0).toFixed(0)}
+                                    </TableCell>
+                                    <TableCell className="text-center text-xs px-0.5 text-orange-600">
+                                        ${isNaN(Number(item.bonusRevenue)) ? '0' : (item.bonusRevenue || 0).toFixed(0)}
+                                    </TableCell>
                                     <TableCell className="text-center text-[10px] px-0.5 leading-tight text-muted-foreground">
                                         {item.lastUpdated ? (
                                             <>

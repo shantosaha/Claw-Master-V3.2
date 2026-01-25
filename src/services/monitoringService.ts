@@ -370,19 +370,69 @@ class MonitoringService {
 
             // Create a map of tag -> game report data (support both Production and Local)
             // IMPORTANT: Aggregate data from multiple days when a date range is selected
-            const gameDataByTag = new Map<string, { standardPlays: number; empPlays: number; points: number; totalRev: number; cashDebit: number; cashDebitBonus: number }>();
+            const gameDataByTag = new Map<string, {
+                standardPlays: number;
+                empPlays: number;
+                points: number;
+                totalRev: number;
+                cashDebit: number;
+                cashDebitBonus: number;
+                c1?: number;
+                c2?: number;
+                c3?: number;
+                c4?: number;
+                payoutSettings?: number;
+                strongTime?: number;
+                weakTime?: number;
+                imageUrl?: string;
+                remarks?: string;
+                staffName?: string;
+                timestamp?: Date;
+            }>();
+
             for (const item of gameReportData) {
                 // UNIVERSAL RULE: Always use 'tag' for identification.
                 // Do not use assetTag for data mapping.
                 const numericTag = item.tag ? String(item.tag).trim() : null;
 
+                // Field name helper for various API formats
+                const val = (keys: string[]) => {
+                    const obj = item as any;
+                    for (const k of keys) {
+                        if (obj[k] !== undefined) return obj[k];
+                        const foundKey = Object.keys(obj).find(ik =>
+                            ik.toLowerCase().replace(/[\s_-]/g, '') === k.toLowerCase()
+                        );
+                        if (foundKey) return obj[foundKey];
+                    }
+                    return undefined;
+                };
+
+                // Helper to ensure we get a valid number
+                const safeNum = (v: any) => {
+                    const n = Number(v);
+                    return isNaN(n) ? 0 : n;
+                };
+
                 const newData = {
-                    standardPlays: Number(item.standardPlays || 0),
-                    empPlays: Number(item.empPlays || 0),
-                    points: Number(item.merchandise || item.points || 0),
-                    totalRev: Number(item.totalRev || 0),
-                    cashDebit: Number(item.cashDebit || 0),
-                    cashDebitBonus: Number(item.cashDebitBonus || 0),
+                    standardPlays: safeNum(item.standardPlays || val(['standardPlays', 'StandardPlay', 'plays']) || 0),
+                    empPlays: safeNum(item.empPlays || val(['empPlays', 'EmpPlay', 'staff_plays']) || 0),
+                    points: safeNum(item.merchandise || item.points || val(['merchandise', 'points', 'wins']) || 0),
+                    totalRev: safeNum(item.totalRev || val(['totalRev', 'total_revenue', 'revenue']) || 0),
+                    cashDebit: safeNum(item.cashDebit || val(['cashDebit', 'cash_debit', 'cash']) || 0),
+                    cashDebitBonus: safeNum(item.cashDebitBonus || val(['cashDebitBonus', 'cash_bonus', 'bonus']) || 0),
+                    // Pull settings if present in API response
+                    c1: val(['C1', 'c1']) !== undefined ? safeNum(val(['C1', 'c1'])) : undefined,
+                    c2: val(['C2', 'c2']) !== undefined ? safeNum(val(['C2', 'c2'])) : undefined,
+                    c3: val(['C3', 'c3']) !== undefined ? safeNum(val(['C3', 'c3'])) : undefined,
+                    c4: val(['C4', 'c4']) !== undefined ? safeNum(val(['C4', 'c4'])) : undefined,
+                    payoutSettings: val(['payoutSettings', 'playPerWin', 'Target']) !== undefined ? safeNum(val(['payoutSettings', 'playPerWin', 'Target'])) : undefined,
+                    strongTime: val(['timeStrong', 'strongTime']) !== undefined ? safeNum(val(['timeStrong', 'strongTime'])) : undefined,
+                    weakTime: val(['timeWeak', 'weakTime']) !== undefined ? safeNum(val(['timeWeak', 'weakTime'])) : undefined,
+                    imageUrl: val(['imageUrl', 'image_url', 'image']),
+                    remarks: val(['remarks', 'notes', 'comment']),
+                    staffName: val(['firstName', 'lastName']) !== undefined ? `${val(['firstName', 'first_name']) || ''} ${val(['lastName', 'last_name']) || ''}`.trim() : val(['staffName', 'staff_name', 'staff']),
+                    timestamp: val(['submissionDate', 'timestamp', 'date']) ? new Date(val(['submissionDate', 'timestamp', 'date'])) : undefined
                 };
 
                 // Helper function to aggregate data
@@ -390,12 +440,25 @@ class MonitoringService {
                     const existing = gameDataByTag.get(key);
                     if (existing) {
                         gameDataByTag.set(key, {
+                            ...existing,
                             standardPlays: existing.standardPlays + newData.standardPlays,
                             empPlays: existing.empPlays + newData.empPlays,
                             points: existing.points + newData.points,
                             totalRev: existing.totalRev + newData.totalRev,
                             cashDebit: existing.cashDebit + newData.cashDebit,
                             cashDebitBonus: existing.cashDebitBonus + newData.cashDebitBonus,
+                            // Settings (take latest/existing if available)
+                            c1: newData.c1 ?? existing.c1,
+                            c2: newData.c2 ?? existing.c2,
+                            c3: newData.c3 ?? existing.c3,
+                            c4: newData.c4 ?? existing.c4,
+                            payoutSettings: newData.payoutSettings ?? existing.payoutSettings,
+                            strongTime: newData.strongTime ?? existing.strongTime,
+                            weakTime: newData.weakTime ?? existing.weakTime,
+                            imageUrl: newData.imageUrl || existing.imageUrl,
+                            remarks: newData.remarks || existing.remarks,
+                            staffName: newData.staffName || existing.staffName,
+                            timestamp: newData.timestamp || existing.timestamp
                         });
                     } else {
                         gameDataByTag.set(key, { ...newData });
@@ -435,6 +498,37 @@ class MonitoringService {
                 }
             }
 
+            // Also integrate data from service reports for any missing settings or more recent updates
+            for (const report of serviceReports) {
+                const tag = String(report.inflowSku || report.machineId || '').trim();
+                // FIX: Use filter instead of find to handle multiple machines with same tag (e.g. Trend Top/Bottom)
+                const matchingMachines = machines.filter(m =>
+                    (m as any).tag && String((m as any).tag).trim() === tag ||
+                    m.id === report.machineId ||
+                    m.assetTag === tag
+                );
+
+                for (const machine of matchingMachines) {
+                    const existing = settingsByMachine.get(machine.id);
+                    // Only override if more recent or missing
+                    if (!existing || new Date(report.timestamp).getTime() > existing.timestamp!.getTime()) {
+                        settingsByMachine.set(machine.id, {
+                            c1: report.c1 ?? 0,
+                            c2: report.c2 ?? 0,
+                            c3: report.c3 ?? 0,
+                            c4: report.c4 ?? 0,
+                            strongTime: report.strongTime,
+                            weakTime: report.weakTime,
+                            payoutRate: report.playPerWin ?? 0,
+                            imageUrl: report.imageUrl,
+                            staffName: report.staffName,
+                            timestamp: new Date(report.timestamp),
+                            remarks: report.remarks
+                        });
+                    }
+                }
+            }
+
             return machines.map(machine => {
                 // Get real settings if available
                 const machineSettings = settingsByMachine.get(machine.id);
@@ -448,22 +542,39 @@ class MonitoringService {
                 const machineTag = (machine as any).tag ? String((machine as any).tag).trim() : null;
                 const gameData = machineTag ? gameDataByTag.get(machineTag) : null;
 
-                const customerPlays = gameData?.standardPlays ?? 0;
-                const staffPlays = gameData?.empPlays ?? 0;
-                const payouts = gameData?.points ?? 0;
+                const safeNum = (v: any) => {
+                    const n = Number(v);
+                    return isNaN(n) ? 0 : n;
+                };
+
+                const customerPlays = safeNum(gameData?.standardPlays ?? 0);
+                const staffPlays = safeNum(gameData?.empPlays ?? 0);
+                const payouts = safeNum(gameData?.points ?? 0);
 
                 // Decide revenue multiplier based on group
                 const isCrane = machine.group?.toLowerCase().includes('crane') ||
                     machine.type?.toLowerCase().includes('crane') ||
                     (machine.group && machine.group.includes('Group 4'));
                 const multiplier = isCrane ? 3.6 : 1.8;
-                // Calculate plays per payout
+                // Calculate plays per payout - protected against NaN
                 const playsPerPayout = payouts > 0 ? Math.round((customerPlays + staffPlays) / payouts) : 0;
 
                 // Calculate Payout Accuracy % (Target / Actual)
                 const payoutAccuracy = playsPerPayout > 0 && payoutSettings > 0
                     ? Math.round((payoutSettings / playsPerPayout) * 100)
                     : 0;
+
+                // Determine settings source for this machine (Game Data might have newer info in some environments)
+                const c1Final = gameData?.c1 ?? c1;
+                const c2Final = gameData?.c2 ?? c2;
+                const c3Final = gameData?.c3 ?? c3;
+                const c4Final = gameData?.c4 ?? c4;
+                const payoutSettingsFinal = gameData?.payoutSettings ?? payoutSettings;
+                const strongTimeFinal = gameData?.strongTime ?? machineSettings?.strongTime;
+                const weakTimeFinal = gameData?.weakTime ?? machineSettings?.weakTime;
+                const settingsDateFinal = gameData?.timestamp || machineSettings?.timestamp || new Date();
+                const staffNameFinal = gameData?.staffName || machineSettings?.staffName || 'Unknown';
+                const imageUrlFinal = gameData?.imageUrl || machineSettings?.imageUrl || machine.imageUrl;
 
                 // Determine status using the logic
                 const totalPlays = customerPlays + staffPlays;
@@ -483,18 +594,18 @@ class MonitoringService {
                     staffPlays,
                     payouts,
                     playsPerPayout,
-                    payoutSettings,
+                    payoutSettings: payoutSettingsFinal,
                     payoutAccuracy,
-                    settingsDate: machineSettings?.timestamp || new Date(),
-                    staffName: machineSettings?.staffName || 'Unknown',
-                    c1,
-                    c2,
-                    c3,
-                    c4,
-                    strongTime: machineSettings?.strongTime,
-                    weakTime: machineSettings?.weakTime,
-                    imageUrl: machineSettings?.imageUrl || machine.imageUrl,
-                    remarks: (machineTag ? remarksByTag.get(machineTag) : undefined) || machineSettings?.remarks,
+                    settingsDate: settingsDateFinal,
+                    staffName: staffNameFinal,
+                    c1: c1Final,
+                    c2: c2Final,
+                    c3: c3Final,
+                    c4: c4Final,
+                    strongTime: strongTimeFinal,
+                    weakTime: weakTimeFinal,
+                    imageUrl: imageUrlFinal,
+                    remarks: (machineTag ? (remarksByTag.get(machineTag) || gameData?.remarks) : undefined) || machineSettings?.remarks,
                     payoutStatus,
                     revenue: totalRevenue,
                     cashRevenue,

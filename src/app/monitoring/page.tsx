@@ -617,10 +617,10 @@ function MachineQuickViewDialog({
                             <Card className="p-3 bg-muted/30">
                                 <p className="text-[10px] uppercase text-muted-foreground font-bold">Accuracy</p>
                                 <div className="flex items-end gap-1">
-                                    <p className="text-xl font-bold">{machine.payoutAccuracy ?? 0}%</p>
+                                    <p className="text-xl font-bold">{!isNaN(Number(machine.payoutAccuracy)) ? machine.payoutAccuracy : 0}%</p>
                                     <p className={cn(
                                         "text-[10px] mb-1 font-medium",
-                                        machine.payoutAccuracy && machine.payoutAccuracy > 100 ? "text-red-500" : "text-green-500"
+                                        (Number(machine.payoutAccuracy) || 0) > 100 ? "text-red-500" : "text-green-500"
                                     )}>
                                         {machine.payoutStatus || 'N/A'}
                                     </p>
@@ -642,24 +642,24 @@ function MachineQuickViewDialog({
                                             <div className="space-y-2 pt-2">
                                                 <div className="flex justify-between text-sm">
                                                     <span>Customer Plays:</span>
-                                                    <span className="font-bold text-green-600">{periodCustomer}</span>
+                                                    <span className="font-bold text-green-600">{!isNaN(Number(periodCustomer)) ? periodCustomer : 0}</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm">
                                                     <span>Staff Plays:</span>
-                                                    <span className="font-bold text-blue-600">{periodStaff}</span>
+                                                    <span className="font-bold text-blue-600">{!isNaN(Number(periodStaff)) ? periodStaff : 0}</span>
                                                 </div>
                                                 <div className="flex justify-between text-sm border-t pt-2 font-semibold">
                                                     <span>Total:</span>
-                                                    <span>{periodTotal}</span>
+                                                    <span>{!isNaN(Number(periodTotal)) ? periodTotal : 0}</span>
                                                 </div>
                                             </div>
                                         </DialogContent>
                                     </Dialog>
                                 </div>
                                 <div className="flex items-baseline gap-2">
-                                    <p className="text-xl font-bold">{periodTotal}</p>
+                                    <p className="text-xl font-bold">{!isNaN(Number(periodTotal)) ? periodTotal : 0}</p>
                                     <p className="text-[10px] text-muted-foreground">
-                                        ({periodCustomer} + <span className="text-blue-500">{periodStaff}</span>)
+                                        ({!isNaN(Number(periodCustomer)) ? periodCustomer : 0} + <span className="text-blue-500">{!isNaN(Number(periodStaff)) ? periodStaff : 0}</span>)
                                     </p>
                                 </div>
                             </Card>
@@ -671,33 +671,37 @@ function MachineQuickViewDialog({
                                 <div className="space-y-1">
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground text-[11px]">Payouts:</span>
-                                        <span className="font-mono font-bold text-amber-600">{periodPayouts}</span>
+                                        <span className="font-mono font-bold text-amber-600">{!isNaN(Number(periodPayouts)) ? periodPayouts : 0}</span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground text-[11px]">Plays/Win:</span>
-                                        <span className="font-mono font-bold">{machine.playsPerPayout?.toFixed(1) ?? '0.0'}</span>
+                                        <span className="font-mono font-bold">
+                                            {machine.playsPerPayout !== undefined && !isNaN(Number(machine.playsPerPayout)) ? machine.playsPerPayout.toFixed(1) : '0.0'}
+                                        </span>
                                     </div>
                                     <div className="flex justify-between">
                                         <span className="text-muted-foreground text-[11px]">Target P/W:</span>
-                                        <span className="font-mono font-bold text-muted-foreground">{machine.payoutSettings ?? 0}</span>
+                                        <span className="font-mono font-bold text-muted-foreground">
+                                            {machine.payoutSettings !== undefined && !isNaN(Number(machine.payoutSettings)) ? machine.payoutSettings : 0}
+                                        </span>
                                     </div>
                                 </div>
                                 <div className="grid grid-cols-2 gap-2 bg-muted/20 p-2 rounded">
                                     <div className="flex flex-col items-center">
                                         <span className="text-[9px] uppercase font-bold text-muted-foreground">C1</span>
-                                        <span className="font-bold text-xs">{machine.c1 ?? 0}</span>
+                                        <span className="font-bold text-xs">{!isNaN(Number(machine.c1)) ? machine.c1 : 0}</span>
                                     </div>
                                     <div className="flex flex-col items-center">
                                         <span className="text-[9px] uppercase font-bold text-muted-foreground">C2</span>
-                                        <span className="font-bold text-xs">{machine.c2 ?? 0}</span>
+                                        <span className="font-bold text-xs">{!isNaN(Number(machine.c2)) ? machine.c2 : 0}</span>
                                     </div>
                                     <div className="flex flex-col items-center">
                                         <span className="text-[9px] uppercase font-bold text-muted-foreground">C3</span>
-                                        <span className="font-bold text-xs">{machine.c3 ?? 0}</span>
+                                        <span className="font-bold text-xs">{!isNaN(Number(machine.c3)) ? machine.c3 : 0}</span>
                                     </div>
                                     <div className="flex flex-col items-center">
                                         <span className="text-[9px] uppercase font-bold text-muted-foreground">C4</span>
-                                        <span className="font-bold text-xs font-mono text-blue-600">{machine.c4 ?? 0}</span>
+                                        <span className="font-bold text-xs font-mono text-blue-600">{!isNaN(Number(machine.c4)) ? machine.c4 : 0}</span>
                                     </div>
                                 </div>
                             </div>
@@ -722,10 +726,10 @@ function MachineQuickViewDialog({
                                                         "text-[10px] font-bold leading-none",
                                                         momentum.isPositive ? "text-green-600" : "text-red-500"
                                                     )}>
-                                                        {momentum.isPositive ? '↑' : '↓'}{Math.abs(momentum.percent)}%
+                                                        {momentum.isPositive ? '↑' : '↓'}{Math.abs(Number(momentum.percent) || 0)}%
                                                     </span>
                                                     <span className="text-[9px] text-blue-600/40 font-medium whitespace-nowrap">
-                                                        vs ${momentum.yesterdayRevenue.toFixed(0)} (yest)
+                                                        vs ${!isNaN(Number(momentum.yesterdayRevenue)) ? Number(momentum.yesterdayRevenue).toFixed(0) : '0'} (yest)
                                                     </span>
                                                 </div>
                                             )}
@@ -1044,7 +1048,7 @@ function MachineQuickViewDialog({
                                                     <span className={cn("text-[9px] font-bold uppercase", heavyLifter.color)}>Contribution</span>
                                                 </div>
                                                 <div className="flex flex-col gap-0.5">
-                                                    <span className={cn("font-bold text-xl", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</span>
+                                                    <span className={cn("font-bold text-xl", heavyLifter.color)}>{!isNaN(Number(heavyLifter.percent)) ? heavyLifter.percent.toFixed(1) : '0.0'}%</span>
                                                     <span className="text-[9px] text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis">
                                                         {isToday ? 'Today' : 'of Selected Period'}
                                                     </span>
@@ -1108,7 +1112,7 @@ function MachineQuickViewDialog({
                                                     </div>
                                                     <div>
                                                         <p className="text-[9px] uppercase text-muted-foreground font-bold mb-1">Contribution</p>
-                                                        <p className={cn("text-lg font-bold", heavyLifter.color)}>{heavyLifter.percent.toFixed(1)}%</p>
+                                                        <p className={cn("text-lg font-bold", heavyLifter.color)}>{!isNaN(Number(heavyLifter.percent)) ? heavyLifter.percent.toFixed(1) : '0.0'}%</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1193,7 +1197,7 @@ function MachineQuickViewDialog({
                                                             )}
                                                             <div className="col-span-3 text-right">
                                                                 <span className={cn("font-bold", m.id === machine.id ? heavyLifter.color : "text-slate-600 dark:text-slate-400")}>
-                                                                    {m.percent.toFixed(1)}%
+                                                                    {!isNaN(Number(m.percent)) ? m.percent.toFixed(1) : '0.0'}%
                                                                 </span>
                                                             </div>
                                                         </div>
@@ -1409,11 +1413,11 @@ function MachineQuickViewDialog({
                                         <div key={i} className="flex items-center justify-between text-[11px] p-2 bg-muted/30 rounded">
                                             <span className="font-medium text-muted-foreground w-16">{h.date}</span>
                                             <div className="flex gap-1 items-center">
-                                                <span className="font-mono">{h.c1}-{h.c2}-{h.c3}</span>
+                                                <span className="font-mono">{!isNaN(Number(h.c1)) ? h.c1 : 0}-{!isNaN(Number(h.c2)) ? h.c2 : 0}-{!isNaN(Number(h.c3)) ? h.c3 : 0}</span>
                                                 <span className="text-[9px] text-muted-foreground">C4:</span>
-                                                <span className="font-mono text-blue-600">{h.c4}</span>
+                                                <span className="font-mono text-blue-600">{!isNaN(Number(h.c4)) ? h.c4 : 0}</span>
                                                 <span className="text-[9px] text-muted-foreground ml-1">TW:</span>
-                                                <span className="font-mono text-amber-600">{h.targetWin}</span>
+                                                <span className="font-mono text-amber-600">{!isNaN(Number(h.targetWin)) ? h.targetWin : 0}</span>
                                             </div>
                                             <span className="text-blue-500 font-medium">{h.staff}</span>
                                         </div>
@@ -1565,23 +1569,33 @@ function MachineStatusCard({ machine, onAction }: { machine: ExtendedMachineStat
                     <div className="grid grid-cols-2 gap-x-2 gap-y-1 text-xs border-t pt-2">
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Cust. Plays:</span>
-                            <span className="font-medium">{machine.customerPlays ?? '-'}</span>
+                            <span className="font-medium">
+                                {machine.customerPlays !== undefined && !isNaN(Number(machine.customerPlays)) ? machine.customerPlays : '-'}
+                            </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Staff Plays:</span>
-                            <span className="font-medium">{machine.staffPlays ?? '-'}</span>
+                            <span className="font-medium">
+                                {machine.staffPlays !== undefined && !isNaN(Number(machine.staffPlays)) ? machine.staffPlays : '-'}
+                            </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Payouts:</span>
-                            <span className="font-medium">{machine.payouts ?? '-'}</span>
+                            <span className="font-medium">
+                                {machine.payouts !== undefined && !isNaN(Number(machine.payouts)) ? machine.payouts : '-'}
+                            </span>
                         </div>
                         <div className="flex justify-between">
                             <span className="text-muted-foreground">Plays/Win:</span>
-                            <span className="font-medium">{machine.playsPerPayout ?? '-'}</span>
+                            <span className="font-medium">
+                                {machine.playsPerPayout !== undefined && !isNaN(Number(machine.playsPerPayout)) ? machine.playsPerPayout : '-'}
+                            </span>
                         </div>
                         <div className="flex justify-between col-span-2 border-t border-dashed pt-1 mt-1">
                             <span className="text-muted-foreground">Target Plays/Win:</span>
-                            <span className="font-medium">{machine.payoutSettings ?? '-'}</span>
+                            <span className="font-medium">
+                                {machine.payoutSettings !== undefined && !isNaN(Number(machine.payoutSettings)) ? machine.payoutSettings : '-'}
+                            </span>
                         </div>
                     </div>
 
@@ -1590,19 +1604,19 @@ function MachineStatusCard({ machine, onAction }: { machine: ExtendedMachineStat
                         <div className="grid grid-cols-4 gap-1 text-[10px] pt-1 border-t">
                             <div className="text-center bg-muted/40 rounded py-0.5">
                                 <span className="text-muted-foreground block">C1</span>
-                                <span className="font-medium">{machine.c1}</span>
+                                <span className="font-medium">{!isNaN(Number(machine.c1)) ? machine.c1 : 0}</span>
                             </div>
                             <div className="text-center bg-muted/40 rounded py-0.5">
                                 <span className="text-muted-foreground block">C2</span>
-                                <span className="font-medium">{machine.c2}</span>
+                                <span className="font-medium">{!isNaN(Number(machine.c2)) ? machine.c2 : 0}</span>
                             </div>
                             <div className="text-center bg-muted/40 rounded py-0.5">
                                 <span className="text-muted-foreground block">C3</span>
-                                <span className="font-medium">{machine.c3}</span>
+                                <span className="font-medium">{!isNaN(Number(machine.c3)) ? machine.c3 : 0}</span>
                             </div>
                             <div className="text-center bg-muted/40 rounded py-0.5">
                                 <span className="text-muted-foreground block">C4</span>
-                                <span className="font-medium">{machine.c4}</span>
+                                <span className="font-medium">{!isNaN(Number(machine.c4)) ? machine.c4 : 0}</span>
                             </div>
                         </div>
                     )}
@@ -1923,15 +1937,15 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                         {item.description}
                                     </Link>
                                 </TableCell>
-                                <TableCell className="text-center text-xs px-1">{item.customerPlays}</TableCell>
-                                <TableCell className="text-center text-xs px-1">{item.staffPlays}</TableCell>
-                                <TableCell className="text-center text-xs px-1">{item.payouts}</TableCell>
-                                <TableCell className="text-center font-medium text-xs px-1">{item.playsPerPayout}</TableCell>
-                                <TableCell className="text-center text-muted-foreground text-xs px-1">{item.payoutSettings}</TableCell>
-                                <TableCell className="text-center text-[10px] px-1">{item.c1}</TableCell>
-                                <TableCell className="text-center text-[10px] px-1">{item.c2}</TableCell>
-                                <TableCell className="text-center text-[10px] px-1">{item.c3}</TableCell>
-                                <TableCell className="text-center text-[10px] px-1">{item.c4}</TableCell>
+                                <TableCell className="text-center text-xs px-1">{isNaN(Number(item.customerPlays)) ? 0 : item.customerPlays}</TableCell>
+                                <TableCell className="text-center text-xs px-1">{isNaN(Number(item.staffPlays)) ? 0 : item.staffPlays}</TableCell>
+                                <TableCell className="text-center text-xs px-1">{isNaN(Number(item.payouts)) ? 0 : item.payouts}</TableCell>
+                                <TableCell className="text-center font-medium text-xs px-1">{isNaN(Number(item.playsPerPayout)) ? 0 : item.playsPerPayout}</TableCell>
+                                <TableCell className="text-center text-muted-foreground text-xs px-1">{isNaN(Number(item.payoutSettings)) ? 0 : item.payoutSettings}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{isNaN(Number(item.c1)) ? 0 : item.c1}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{isNaN(Number(item.c2)) ? 0 : item.c2}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{isNaN(Number(item.c3)) ? 0 : item.c3}</TableCell>
+                                <TableCell className="text-center text-[10px] px-1">{isNaN(Number(item.c4)) ? 0 : item.c4}</TableCell>
                                 <TableCell className="text-center text-[10px] px-1">{item.strongTime !== undefined && !isNaN(item.strongTime) ? item.strongTime : '-'}</TableCell>
                                 <TableCell className="text-center text-[10px] px-1">{item.weakTime !== undefined && !isNaN(item.weakTime) ? item.weakTime : '-'}</TableCell>
                                 <TableCell className="text-center font-medium text-[10px] px-1">
@@ -1939,7 +1953,7 @@ function MonitoringReportTable({ data }: { data: MonitoringReportItem[] }) {
                                         <span className={cn(
                                             item.payoutAccuracy > 100 ? "text-red-500" : (item.payoutAccuracy < 50 ? "text-orange-500" : "text-green-500")
                                         )}>
-                                            {item.payoutAccuracy}%
+                                            {isNaN(Number(item.payoutAccuracy)) ? 0 : item.payoutAccuracy}%
                                         </span>
                                     ) : (
                                         <span className="text-muted-foreground text-[10px]">N/A</span>
@@ -2153,8 +2167,8 @@ function StatDetailDialog({
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right py-2 pr-6">
-                                                {type === 'revenue' && <span className="font-mono text-xs">${(m.revenue || 0).toFixed(0)}</span>}
-                                                {type === 'activity' && <span className="font-mono text-xs">{m.customerPlays}</span>}
+                                                {type === 'revenue' && <span className="font-mono text-xs">${isNaN(Number(m.revenue)) ? '0' : (m.revenue || 0).toFixed(0)}</span>}
+                                                {type === 'activity' && <span className="font-mono text-xs">{isNaN(Number(m.customerPlays)) ? 0 : m.customerPlays}</span>}
                                                 {type === 'accuracy' && (
                                                     <div className="flex flex-col items-end gap-0.5">
                                                         <span className={cn(
@@ -2254,6 +2268,7 @@ export default function MonitoringPage() {
 
     // Helper to format currency without rounding up
     const formatNoRound = (num: number) => {
+        if (num === undefined || num === null || isNaN(num)) return "0.00";
         return (Math.floor(num * 100) / 100).toLocaleString(undefined, {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
@@ -2334,9 +2349,12 @@ export default function MonitoringPage() {
         // Count for attention alerts (Group 4 / Crane) - use reportData for status
         const craneReportData = reportData.filter(r => {
             const machine = machines.find(m => m.id === r.machineId);
-            return machine?.group?.toLowerCase().includes('crane') ||
+            const isCrane = machine?.group?.toLowerCase().includes('crane') ||
                 machine?.group?.includes('Group 4') ||
-                machine?.type?.toLowerCase().includes('crane');
+                machine?.type?.toLowerCase().includes('crane') ||
+                r.group?.toLowerCase().includes('crane') ||
+                r.group?.includes('Group 4');
+            return !!isCrane;
         });
         const veryHighCount = craneReportData.filter(r => r.payoutStatus === 'Very High').length;
         const highCount = craneReportData.filter(r => r.payoutStatus === 'High').length;
@@ -2351,8 +2369,8 @@ export default function MonitoringPage() {
             : 0;
 
         // Yesterday comparison for momentum
-        const yesterdayRevenue = yesterdayData.reduce((acc, curr) => acc + (curr.revenue || 0), 0);
-        const revenueMomentum = yesterdayRevenue > 0
+        const yesterdayRevenue = yesterdayData.reduce((acc, curr) => acc + (Number(curr.revenue) || 0), 0);
+        const revenueMomentum = yesterdayRevenue > 0 && !isNaN(totalRevenue) && !isNaN(yesterdayRevenue)
             ? Math.round(((totalRevenue - yesterdayRevenue) / yesterdayRevenue) * 100)
             : 0;
 
@@ -2640,7 +2658,7 @@ export default function MonitoringPage() {
                                     stats.revenueMomentum > 0 ? "text-emerald-600" : "text-rose-600"
                                 )}>
                                     {stats.revenueMomentum > 0 ? <ArrowUp className="h-3 w-3 mr-0.5" /> : <ArrowDown className="h-3 w-3 mr-0.5" />}
-                                    {Math.abs(stats.revenueMomentum)}%
+                                    {Math.abs(Number(stats.revenueMomentum) || 0)}%
                                 </div>
                             )}
                         </div>
