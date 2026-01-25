@@ -21,6 +21,7 @@ const normalizeDateStr = (dateInput: string | Date | undefined): string | null =
 export interface AnalyticsFilter {
     location?: string;
     machineType?: string;
+    group?: string;
 }
 
 // Keep Stock Performance Helper for now
@@ -122,10 +123,15 @@ export interface MachinePerformance {
     type: string;
     plays: number;
     revenue: number;
+    cashRevenue: number;
+    bonusRevenue: number;
     winRate: number;
     uptime: number;
     avgPlayValue: number;
     status: string;
+    tag?: string;
+    group?: string;
+    subGroup?: string;
 }
 
 export interface StockPerformance {
@@ -222,10 +228,12 @@ export const analyticsService = {
 
         const machineTagToLocation = new Map<number, string>();
         const machineTagToType = new Map<number, string>();
+        const machineTagToGroup = new Map<number, string>();
         machines.forEach(m => {
             if (m.tag) {
                 machineTagToLocation.set(Number(m.tag), m.location);
                 if (m.type) machineTagToType.set(Number(m.tag), m.type);
+                if (m.group) machineTagToGroup.set(Number(m.tag), m.group);
             }
         });
 
@@ -234,8 +242,10 @@ export const analyticsService = {
             return items.filter(item => {
                 const type = machineTagToType.get(item.tag);
                 const loc = machineTagToLocation.get(item.tag) || item.location;
+                const grp = machineTagToGroup.get(item.tag) || item.group;
                 if (filter.location && filter.location !== "All Locations" && loc !== filter.location) return false;
                 if (filter.machineType && filter.machineType !== "All Types" && type !== filter.machineType) return false;
+                if (filter.group && filter.group !== "All Groups" && grp !== filter.group) return false;
                 return true;
             });
         };
@@ -330,10 +340,12 @@ export const analyticsService = {
         const machines = await machineService.getAll();
         const machineTagToLocation = new Map<number, string>();
         const machineTagToType = new Map<number, string>();
+        const machineTagToGroup = new Map<number, string>();
         machines.forEach(m => {
             if (m.tag) {
                 machineTagToLocation.set(Number(m.tag), m.location);
                 if (m.type) machineTagToType.set(Number(m.tag), m.type);
+                if (m.group) machineTagToGroup.set(Number(m.tag), m.group);
             }
         });
 
@@ -345,7 +357,12 @@ export const analyticsService = {
                 const dateStr = format(date, 'yyyy-MM-dd');
 
                 const [gameReport, revenue] = await Promise.all([
-                    gameReportApiService.fetchGameReport({ startDate: dateStart, endDate: dateEnd, aggregate: true }),
+                    gameReportApiService.fetchGameReport({
+                        startDate: dateStart,
+                        endDate: dateEnd,
+                        aggregate: true,
+                        groups: filter?.group && filter.group !== "All Groups" ? [filter.group] : undefined
+                    }),
                     revenueApiService.fetchRevenue({ startDate: dateStart, endDate: dateEnd })
                 ]);
 
@@ -353,8 +370,10 @@ export const analyticsService = {
                     if (!filter) return true;
                     const type = machineTagToType.get(item.tag);
                     const loc = machineTagToLocation.get(item.tag) || item.location;
+                    const grp = machineTagToGroup.get(item.tag) || item.group;
                     if (filter.location && filter.location !== "All Locations" && loc !== filter.location) return false;
                     if (filter.machineType && filter.machineType !== "All Types" && type !== filter.machineType) return false;
+                    if (filter.group && filter.group !== "All Groups" && grp !== filter.group) return false;
                     return true;
                 });
 
@@ -404,6 +423,8 @@ export const analyticsService = {
             const existing = reportMap.get(item.tag);
             if (existing) {
                 existing.totalRev += Number(item.totalRev) || 0;
+                existing.cashRev = (existing.cashRev || 0) + (Number(item.cashRev) || 0);
+                existing.bonusRev = (existing.bonusRev || 0) + (Number(item.bonusRev) || 0);
                 existing.standardPlays += Number(item.standardPlays) || 0;
                 existing.empPlays += Number(item.empPlays) || 0;
                 existing.merchandise = (existing.merchandise || 0) + (Number(item.merchandise) || 0);
@@ -427,6 +448,8 @@ export const analyticsService = {
 
             const plays = report ? (Number(report.standardPlays) + Number(report.empPlays)) : 0;
             const revenue = report ? Number(report.totalRev) : 0;
+            const cashRevenue = report ? (Number(report.cashRev) || 0) : 0;
+            const bonusRevenue = report ? (Number(report.bonusRev) || 0) : 0;
             const wins = report ? (Number(report.merchandise) || 0) : 0;
 
             const winRate = plays > 0 ? +((wins / plays) * 100).toFixed(1) : 0;
@@ -439,10 +462,15 @@ export const analyticsService = {
                 type: machine.type || "Unknown",
                 plays,
                 revenue,
+                cashRevenue,
+                bonusRevenue,
                 winRate,
                 uptime: machine.status === 'Online' ? 98 : machine.status === 'Maintenance' ? 0 : 50,
                 avgPlayValue,
                 status: machine.status,
+                tag: (machine as any).tag ? String((machine as any).tag) : undefined,
+                group: machine.group || "No Group",
+                subGroup: machine.subGroup || "No Sub-Group",
             };
         });
     },
@@ -571,7 +599,7 @@ export const analyticsService = {
         }
     },
 
-    getRevenueByMachineType: async (days: number = 30, revenueSource: RevenueSource = 'game', customRange?: { startDate: Date; endDate: Date }, filter?: AnalyticsFilter): Promise<{ type: string; revenue: number; count: number; avgRevenue: number }[]> => {
+    getRevenueByMachineType: async (days: number = 30, revenueSource: RevenueSource = 'game', customRange?: { startDate: Date; endDate: Date }, filter?: AnalyticsFilter): Promise<{ type: string; revenue: number; cashRevenue: number; bonusRevenue: number; count: number; avgRevenue: number }[]> => {
         const endDate = customRange?.endDate || endOfDay(new Date());
         const startDate = customRange?.startDate || startOfDay(subDays(endDate, days - 1));
 
@@ -589,7 +617,7 @@ export const analyticsService = {
             }
         });
 
-        const typeMap = new Map<string, { revenue: number; machines: Set<number> }>();
+        const typeMap = new Map<string, { revenue: number; cashRevenue: number; bonusRevenue: number; machines: Set<number> }>();
 
         reportData.forEach(item => {
             const definedType = machineTagToType.get(item.tag);
@@ -601,9 +629,11 @@ export const analyticsService = {
             }
 
             const type = item.group || definedType || "Unknown";
-            const existing = typeMap.get(type) || { revenue: 0, machines: new Set<number>() };
+            const existing = typeMap.get(type) || { revenue: 0, cashRevenue: 0, bonusRevenue: 0, machines: new Set<number>() };
 
             existing.revenue += Number(item.totalRev) || 0;
+            existing.cashRevenue += Number(item.cashRev) || 0;
+            existing.bonusRevenue += Number(item.bonusRev) || 0;
             existing.machines.add(item.tag);
 
             typeMap.set(type, existing);
@@ -612,6 +642,8 @@ export const analyticsService = {
         return Array.from(typeMap.entries()).map(([type, data]) => ({
             type,
             revenue: +data.revenue.toFixed(2),
+            cashRevenue: +data.cashRevenue.toFixed(2),
+            bonusRevenue: +data.bonusRevenue.toFixed(2),
             count: data.machines.size,
             avgRevenue: data.machines.size > 0 ? +(data.revenue / data.machines.size).toFixed(2) : 0,
         }));

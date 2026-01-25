@@ -168,8 +168,8 @@ async function fetchGameReport(
                 empPlays: Number(val(['empPlays', 'emp_plays', 'EmpPlay']) || 0),
                 totalRev: Number(val(['totalRev', 'total_revenue', 'total_rev']) || 0),
                 merchandise: Number(val(['merchandise', 'points', 'wins']) || 0),
-                cashRev: Number(val(['cashRev', 'cash_revenue', 'cash_rev']) || 0),
-                bonusRev: Number(val(['bonusRev', 'bonus_revenue', 'bonus_rev']) || 0),
+                cashRev: Number(val(['cashRev', 'cash_revenue', 'cash_rev', 'cashDebit', 'CardCashPlayPrice']) || 0),
+                bonusRev: Number(val(['bonusRev', 'bonus_revenue', 'bonus_rev', 'cashDebitBonus', 'CashDebitBonus']) || 0),
                 date: val(['date', 'submissionDate', 'timestamp', 'CreatedAt'])
             };
         };

@@ -17,6 +17,7 @@ interface DatePickerWithRangeProps {
     className?: string
     date?: DateRange
     onDateChange?: (date: DateRange | undefined) => void
+    footer?: React.ReactNode
 }
 
 const presets = [
@@ -84,6 +85,7 @@ export function DatePickerWithRange({
     className,
     date,
     onDateChange,
+    footer,
 }: DatePickerWithRangeProps) {
     const [isOpen, setIsOpen] = React.useState(false);
     const [currentMonth, setCurrentMonth] = React.useState(new Date());
@@ -200,21 +202,23 @@ export function DatePickerWithRange({
                         <span className="truncate">{getDisplayText()}</span>
                     </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 flex flex-row overflow-hidden shadow-xl border-muted/20" align="start">
+                <PopoverContent className="w-auto p-0 flex flex-col md:flex-row overflow-hidden shadow-xl border-muted/20" align="start">
                     {/* Presets Sidebar */}
-                    <div className="w-36 border-r bg-muted/10 p-2 flex flex-col gap-1">
-                        <div className="text-[10px] font-semibold text-muted-foreground/60 px-2 py-1 uppercase tracking-wider">Presets</div>
-                        {presets.map((preset) => (
-                            <Button
-                                key={preset.value}
-                                variant="ghost"
-                                size="sm"
-                                className="justify-start text-xs font-normal h-8 hover:bg-primary/5 hover:text-primary transition-colors"
-                                onClick={() => handlePresetClick(preset.getValue)}
-                            >
-                                {preset.label}
-                            </Button>
-                        ))}
+                    <div className="w-full md:w-36 border-b md:border-b-0 md:border-r bg-muted/10 p-2 flex flex-col gap-1">
+                        <div className="text-[10px] font-semibold text-muted-foreground/60 px-2 py-1 uppercase tracking-wider hidden md:block">Presets</div>
+                        <div className="flex flex-wrap md:flex-col gap-1">
+                            {presets.map((preset) => (
+                                <Button
+                                    key={preset.value}
+                                    variant="ghost"
+                                    size="sm"
+                                    className="justify-start text-xs font-normal h-8 hover:bg-primary/5 hover:text-primary transition-colors flex-1 md:flex-none"
+                                    onClick={() => handlePresetClick(preset.getValue)}
+                                >
+                                    {preset.label}
+                                </Button>
+                            ))}
+                        </div>
                     </div>
 
                     {/* Calendar Area */}
@@ -282,6 +286,11 @@ export function DatePickerWithRange({
                                 Apply Range
                             </Button>
                         </div>
+                        {footer && (
+                            <div className="mt-4 pt-4 border-t border-muted/20">
+                                {footer}
+                            </div>
+                        )}
                     </div>
                 </PopoverContent>
             </Popover>

@@ -52,6 +52,15 @@ export function NonCraneQuickViewDialog({
     const [storeRankOpen, setStoreRankOpen] = useState(false);
     const [rankScope, setRankScope] = useState<'store' | 'location' | 'group'>('store');
     const [visibleFields, setVisibleFields] = useState<Set<string>>(new Set(['plays', 'customer', 'staff']));
+
+    // Sync visible fields when trend type changes
+    useEffect(() => {
+        if (trendType === 'plays') {
+            setVisibleFields(new Set(['plays', 'customer', 'staff', 'wins']));
+        } else {
+            setVisibleFields(new Set(['revenue', 'cashRev', 'bonusRev']));
+        }
+    }, [trendType]);
     const [hallOfFameOpen, setHallOfFameOpen] = useState(false);
     const [hallOfFameEnabled, setHallOfFameEnabled] = useState(false);
     const [hallOfFameRange, setHallOfFameRange] = useState<'1m' | '3m' | '6m' | '1y' | 'all' | null>(null);
@@ -222,7 +231,9 @@ export function NonCraneQuickViewDialog({
                 plays: customer + staff,
                 customer,
                 staff,
-                revenue: customer * 1.8 // Simulated revenue for non-crane
+                revenue: customer * 1.8, // Simulated revenue for non-crane
+                cashRev: customer * 1.2,
+                bonusRev: customer * 0.6
             };
         });
     }, [machine?.id, machine?.telemetry?.playCountToday, trendRange, realTrendData]);

@@ -5,7 +5,7 @@ import { BarChart3, LineChart, PieChart, AreaChart, Activity } from "lucide-reac
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 
-export type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'radar';
+export type ChartType = 'bar' | 'line' | 'area' | 'pie' | 'radar' | 'composed';
 
 interface ChartTypeSelectorProps {
     value: ChartType;
@@ -21,6 +21,7 @@ const chartIcons: Record<ChartType, React.ComponentType<{ className?: string }>>
     area: AreaChart,
     pie: PieChart,
     radar: Activity,
+    composed: Activity,
 };
 
 const chartLabels: Record<ChartType, string> = {
@@ -29,6 +30,7 @@ const chartLabels: Record<ChartType, string> = {
     area: 'Area',
     pie: 'Pie',
     radar: 'Radar',
+    composed: 'Mixed',
 };
 
 export function ChartTypeSelector({

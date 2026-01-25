@@ -1,5 +1,5 @@
 {
-  "jotformApiUrl": "https://api.kokoamusement.com.au",
+  "jotformApiUrl": "http://localhost:8000",
   "jotformFormId": "614",
   "jotformEnabled": true,
   "jotformApiKey": "",
@@ -35,6 +35,6 @@
       "value": "https://api.kokoamusement.com.au"
     }
   ],
-  "updatedAt": "2026-01-25T15:28:59.210Z",
+  "updatedAt": "2026-01-25T16:54:51.109Z",
   "updatedBy": "mock-admin"
 }
