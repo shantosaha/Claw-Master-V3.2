@@ -1759,18 +1759,19 @@ export default function AnalyticsPage() {
                                                     })}
                                                     cx="50%"
                                                     cy="50%"
-                                                    innerRadius={80}
-                                                    outerRadius={120}
+                                                    innerRadius={65}
+                                                    outerRadius={105}
                                                     paddingAngle={2}
                                                     dataKey={typeBreakdown.length === 1 && typeBreakdown[0] === 'cash' ? 'cashRevenue' :
                                                         typeBreakdown.length === 1 && typeBreakdown[0] === 'bonus' ? 'bonusRevenue' : 'revenue'}
                                                     nameKey="type"
-                                                    label={false}
+                                                    label={({ name, percent }) => `${name}: ${((percent || 0) * 100).toFixed(0)}%`}
+                                                    labelLine={true}
                                                     strokeWidth={2}
                                                     stroke="#fff"
                                                 >
                                                     {typeRevenue.map((entry, index) => (
-                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeOpacity={0.5} />
+                                                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} strokeOpacity={0.8} />
                                                     ))}
                                                 </Pie>
                                                 <Tooltip
@@ -1816,23 +1817,6 @@ export default function AnalyticsPage() {
                                                             );
                                                         }
                                                         return null;
-                                                    }}
-                                                />
-                                                <Legend
-                                                    layout="vertical"
-                                                    verticalAlign="middle"
-                                                    align="right"
-                                                    iconType="circle"
-                                                    formatter={(value, entry: any) => {
-                                                        const val = Number(entry.payload.value || 0);
-                                                        return (
-                                                            <span className="text-xs font-medium text-gray-600 ml-2">
-                                                                {value}
-                                                                <span className="font-bold text-indigo-950 ml-2">
-                                                                    ${val >= 1000 ? (val / 1000).toFixed(1) + 'k' : val.toLocaleString()}
-                                                                </span>
-                                                            </span>
-                                                        );
                                                     }}
                                                 />
                                             </PieChart>
